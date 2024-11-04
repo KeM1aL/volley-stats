@@ -10,7 +10,6 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Match, Set } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase/client";
 
 export default function LiveMatchPage() {
   const { matchId } = useParams();
