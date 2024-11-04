@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Match } from "@/lib/supabase/types";
+import { Match, Set } from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type ScoreBoardProps = {
   match: Match;
+  set: Set
 };
 
-export function ScoreBoard({ match }: ScoreBoardProps) {
+export function ScoreBoard({ match, set }: ScoreBoardProps) {
   const { db } = useDb();
   const [isUpdating, setIsUpdating] = useState(false);
 

@@ -14,6 +14,7 @@ export function useDatabase() {
         const database = await getDatabase();
         setDb(database);
       } catch (err) {
+        console.log(err);
         setError(err instanceof Error ? err : new Error('Failed to initialize database'));
       } finally {
         setIsLoading(false);

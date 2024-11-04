@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Match } from "@/lib/supabase/types";
+import { Match, Set } from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,9 +21,10 @@ import { StatType, StatResult } from "@/lib/types";
 
 type StatTrackerProps = {
   match: Match;
+  set: Set
 };
 
-export function StatTracker({ match }: StatTrackerProps) {
+export function StatTracker({ match, set }: StatTrackerProps) {
   const { db } = useDb();
   const [selectedPlayer, setSelectedPlayer] = useState<string>("");
   const [selectedStatType, setSelectedStatType] = useState<StatType | "">("");
@@ -36,6 +37,7 @@ export function StatTracker({ match }: StatTrackerProps) {
     try {
       await db?.player_stats.insert({
         id: crypto.randomUUID(),
+        set_id: set.id,
         match_id: match.id,
         player_id: selectedPlayer,
         stat_type: selectedStatType,

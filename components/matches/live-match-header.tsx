@@ -1,6 +1,6 @@
 "use client";
 
-import { Match } from "@/lib/supabase/types";
+import { Match, Set } from "@/lib/supabase/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,10 @@ import { useRouter } from "next/navigation";
 
 type LiveMatchHeaderProps = {
   match: Match;
+  set: Set
 };
 
-export function LiveMatchHeader({ match }: LiveMatchHeaderProps) {
+export function LiveMatchHeader({ match, set }: LiveMatchHeaderProps) {
   const { db } = useDb();
   const router = useRouter();
   const [isEnding, setIsEnding] = useState(false);

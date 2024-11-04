@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { PlayerPosition } from "@/lib/types";
+import { toast } from "@/hooks/use-toast";
 
 type MatchSetupProps = {
   matchId: string;
@@ -21,8 +22,8 @@ type MatchSetupProps = {
 
 export function MatchSetup({ matchId, onComplete }: MatchSetupProps) {
   const { db } = useDb();
-  const [homeLineup, setHomeLineup] = useState<Record<PlayerPosition, string>>({});
-  const [awayLineup, setAwayLineup] = useState<Record<PlayerPosition, string>>({});
+  const [homeLineup, setHomeLineup] = useState<Record<PlayerPosition, string>>({} as Record<PlayerPosition, string>);
+  const [awayLineup, setAwayLineup] = useState<Record<PlayerPosition, string>>({}  as Record<PlayerPosition, string>);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleComplete = async () => {
@@ -39,6 +40,11 @@ export function MatchSetup({ matchId, onComplete }: MatchSetupProps) {
       onComplete();
     } catch (error) {
       console.error("Failed to start match:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to start match",
+      });
     } finally {
       setIsLoading(false);
     }
