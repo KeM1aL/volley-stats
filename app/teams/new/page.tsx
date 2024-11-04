@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { NewTeamForm } from "@/components/teams/new-team-form";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function NewTeamPage() {
   const [matchId, setTeamId] = useState<string | null>(null);
@@ -15,7 +15,14 @@ export default function NewTeamPage() {
 
   return (
     <Card className="max-w-2xl mx-auto p-6">
-      <NewTeamForm onTeamCreated={onTeamCreated} />
+      <CardHeader>
+        <CardTitle className="text-2xl text-center">
+          Create a new Team
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <NewTeamForm onTeamCreated={onTeamCreated} />
+      </CardContent>
     </Card>
   );
 }

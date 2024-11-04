@@ -23,7 +23,6 @@ type MatchSetupProps = {
 export function MatchSetup({ matchId, onComplete }: MatchSetupProps) {
   const { db } = useDb();
   const [homeLineup, setHomeLineup] = useState<Record<PlayerPosition, string>>({} as Record<PlayerPosition, string>);
-  const [awayLineup, setAwayLineup] = useState<Record<PlayerPosition, string>>({}  as Record<PlayerPosition, string>);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleComplete = async () => {
@@ -34,7 +33,6 @@ export function MatchSetup({ matchId, onComplete }: MatchSetupProps) {
         $set: {
           status: "live",
           home_lineup: homeLineup,
-          away_lineup: awayLineup,
         },
       });
       onComplete();
@@ -75,30 +73,7 @@ export function MatchSetup({ matchId, onComplete }: MatchSetupProps) {
         </div>
       </div>
 
-      <Separator />
-
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Away Team Lineup</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {Object.values(PlayerPosition).map((position) => (
-            <div key={position}>
-              <Label>{position}</Label>
-              <Select
-                onValueChange={(value) =>
-                  setAwayLineup((prev) => ({ ...prev, [position]: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={`Select ${position}`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Add player selection items */}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* <Separator /> */}
 
       <Button
         onClick={handleComplete}

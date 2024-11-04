@@ -1,8 +1,10 @@
 export enum PlayerPosition {
   SETTER = "Setter",
-  OUTSIDE = "Outside Hitter",
-  MIDDLE = "Middle Blocker",
   OPPOSITE = "Opposite",
+  OUTSIDE_FRONT = "Outside Hitter (Front)",
+  OUTSIDE_BACK = "Outside Hitter (Back)",
+  MIDDLE_FRONT = "Middle Blocker (Front)",
+  MIDDLE_BACK = "Middle Blocker (Back)",
   LIBERO = "Libero",
 }
 

@@ -14,19 +14,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/lib/supabase/client";
 
 const formSchema = z.object({
-  homeTeamId: z.string(),
-  awayTeamId: z.string(),
+  teamName: z.string(),
 });
 
 type NewTeamFormProps = {
@@ -36,7 +29,6 @@ type NewTeamFormProps = {
 export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
   const { db } = useDb();
   const { toast } = useToast();
-  const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -46,26 +38,28 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
-        .from("matches")
+        .from("teams")
         .insert({
-          home_team_id: values.homeTeamId,
-          away_team_id: values.awayTeamId,
-          date: new Date().toISOString(),
-          status: "upcoming",
+          name: values.teamName,
+          created_at: new Date().toISOString(),
+          user_id: session.user.id,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      await db?.matches.insert(data);
+      await db?.teams.insert(data);
       onTeamCreated(data.id);
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create match",
+        description: "Failed to create team",
       });
     } finally {
       setIsLoading(false);
@@ -78,53 +72,16 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
         <div className="space-y-4">
           <FormField
             control={form.control}
-            name="homeTeamId"
+            name="teamName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Home Team</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select home team" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormLabel>Name</FormLabel>
+                <Input type="text" placeholder="Choose a name" onChange={field.onChange} defaultValue={field.value} />
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="awayTeamId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Away Team</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select away team" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>

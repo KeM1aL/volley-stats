@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from "@/lib/supabase/client";
+import { createClient, supabase } from "@/lib/supabase/client";
 
 const formSchema = z.object({
   homeTeamId: z.string(),
@@ -37,11 +37,24 @@ export function NewMatchForm({ onMatchCreated }: NewMatchFormProps) {
   const { db } = useDb();
   const { toast } = useToast();
   const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
+
+  useEffect(() => {
+    const loadTeams = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("teams").select("*");
+      if (error) throw error;
+      setTeams(data);
+
+      setIsLoading(false);
+    };
+
+    loadTeams();
+  }, [db]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
