@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { DatabaseProvider } from '@/components/providers/database-provider';
+import { AuthProvider } from '@/contexts/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
 
@@ -28,15 +29,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <DatabaseProvider>
-            <div className="min-h-screen bg-background">
-              <Navigation />
-              <main className="container mx-auto px-4 py-4">
-                {children}
-              </main>
-            </div>
-            <Toaster />
-          </DatabaseProvider>
+          <AuthProvider>
+            <DatabaseProvider>
+              <div className="min-h-screen bg-background">
+                <Navigation />
+                <main className="container mx-auto px-4 py-4">
+                  {children}
+                </main>
+              </div>
+              <Toaster />
+            </DatabaseProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

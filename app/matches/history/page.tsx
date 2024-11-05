@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
-import { BarChart3, Filter } from "lucide-react";
+import { BarChart3, Filter, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MatchHistoryTable } from "@/components/matches/history/match-history-table";
@@ -16,6 +16,7 @@ import { useDb } from "@/components/providers/database-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Match, Team } from "@/lib/supabase/types";
+import Link from "next/link";
 
 export default function MatchHistoryPage() {
   const router = useRouter();
@@ -96,6 +97,12 @@ export default function MatchHistoryPage() {
           </p>
         </div>
         <div className="flex gap-4">
+          <Button asChild>
+            <Link href="/matches/new">
+              <Plus className="h-4 w-4 mr-2" />
+              New Match
+            </Link>
+          </Button>
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}

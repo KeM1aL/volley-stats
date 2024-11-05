@@ -2,8 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Volleyball, Trophy, BarChart3, Users } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <div className="flex flex-col gap-8">
       <section className="text-center py-12 md:py-20">
@@ -13,18 +20,13 @@ export default function Home() {
         <p className="text-xl text-muted-foreground mb-8">
           Track, analyze, and improve your team's performance with advanced analytics
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
+        {!user && <div className="flex flex-wrap justify-center gap-4">
           <Button asChild size="lg">
-            <Link href="/matches/new">
-              New Match
+            <Link href="/auth">
+              Get Started
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/matches/history">
-              View Matches
-            </Link>
-          </Button>
-        </div>
+        </div>}
       </section>
 
       <section className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">

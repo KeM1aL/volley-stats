@@ -2,6 +2,8 @@ import { toTypedRxJsonSchema } from 'rxdb';
 import type { RxJsonSchema } from 'rxdb';
 import type { Team, Player, Match, Set, PlayerStat, Substitution, ScorePoint } from '@/lib/supabase/types';
 
+export type CollectionName = 'teams' | 'players' | 'matches' | 'sets' | 'substitutions' | 'score_points' | 'player_stats';
+
 // Team Schema
 export const teamSchema = toTypedRxJsonSchema({
   version: 0,
