@@ -2,7 +2,7 @@
 
 import { supabase } from '@/lib/supabase/client';
 import { getDatabase } from './database';
-import type { Team, Player, Match, Set, PlayerStat } from '@/lib/supabase/types';
+import type { Team, Player, Match, Set, PlayerStat, Substitution, ScorePoint } from '@/lib/supabase/types';
 
 export async function syncData() {
   const db = await getDatabase();
@@ -67,8 +67,38 @@ export async function syncData() {
     );
   }
 
-  // Sync player stats
-  const { data: stats, error: statsError } = await supabase
+  // Sync substitutions
+  const { data: substitutions, error: substitutionsError } = await supabase
+    .from('substitutions')
+    .select('*');
+  
+  if (substitutionsError) {
+    console.error('Error fetching substitutions:', substitutionsError);
+  } else {
+    await Promise.all(
+      substitutions.map((substitution: Substitution) =>
+        db.substitutions.upsert(substitution)
+      )
+    );
+  }
+
+  // Sync score points
+  const { data: scorePoints, error: scorePointsError } = await supabase
+    .from('score_points')
+    .select('*');
+  
+  if (scorePointsError) {
+    console.error('Error fetching score points:', scorePointsError);
+  } else {
+    await Promise.all(
+      scorePoints.map((point: ScorePoint) =>
+        db.score_points.upsert(point)
+      )
+    );
+  }
+
+    // Sync player stats
+    const { data: stats, error: statsError } = await supabase
     .from('player_stats')
     .select('*');
   

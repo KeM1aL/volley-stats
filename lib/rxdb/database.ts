@@ -5,8 +5,24 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
-import { teamSchema, playerSchema, matchSchema, setSchema, playerStatSchema } from './schema';
-import type { Team, Player, Match, Set, PlayerStat } from '@/lib/supabase/types';
+import { 
+  teamSchema, 
+  playerSchema, 
+  matchSchema, 
+  setSchema, 
+  playerStatSchema,
+  substitutionSchema,
+  scorePointSchema 
+} from './schema';
+import type { 
+  Team, 
+  Player, 
+  Match, 
+  Set, 
+  PlayerStat,
+  Substitution,
+  ScorePoint 
+} from '@/lib/supabase/types';
 
 // Add plugins
 addRxPlugin(RxDBDevModePlugin);
@@ -18,6 +34,8 @@ type DatabaseCollections = {
   players: RxCollection<Player>;
   matches: RxCollection<Match>;
   sets: RxCollection<Set>;
+  substitutions: RxCollection<Substitution>;
+  score_points: RxCollection<ScorePoint>;
   player_stats: RxCollection<PlayerStat>;
 };
 
@@ -47,6 +65,12 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
       },
       sets: {
         schema: setSchema,
+      },
+      substitutions: {
+        schema: substitutionSchema,
+      },
+      score_points: {
+        schema: scorePointSchema,
       },
       player_stats: {
         schema: playerStatSchema,

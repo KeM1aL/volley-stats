@@ -52,7 +52,7 @@ export function AuthForm() {
           description: "Please check your email to verify your account.",
         });
       } else {
-        router.push("/matches");
+        router.push("/teams");
         router.refresh();
       }
     } catch (error) {

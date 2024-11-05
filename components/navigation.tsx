@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 const routes = [
   {
-    href: "/matches",
+    href: "/matches/history",
     label: "Matches",
     icon: Volleyball,
   },

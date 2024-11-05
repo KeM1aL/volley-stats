@@ -20,7 +20,7 @@ export default function Home() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/matches">
+            <Link href="/matches/history">
               View Matches
             </Link>
           </Button>

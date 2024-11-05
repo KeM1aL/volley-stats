@@ -17,11 +17,13 @@ export type Player = {
 export type Match = {
   id: string;
   date: string;
+  location: string;
   home_team_id: string;
   away_team_id: string;
   home_score: number;
   away_score: number;
   status: 'upcoming' | 'live' | 'completed';
+  available_players: string[];
   created_at: string;
 };
 
@@ -32,6 +34,44 @@ export type Set = {
   home_score: number;
   away_score: number;
   status: 'upcoming' | 'live' | 'completed';
+  current_lineup: {
+    position1: string;
+    position2: string;
+    position3: string;
+    position4: string;
+    position5: string;
+    position6: string;
+  };
+};
+
+export type Substitution = {
+  id: string;
+  match_id: string;
+  set_id: string;
+  player_out_id: string;
+  player_in_id: string;
+  position: number;
+  timestamp: string;
+};
+
+export type ScorePoint = {
+  id: string;
+  match_id: string;
+  set_id: string;
+  scoring_team: 'home' | 'away';
+  point_type: 'serve' | 'spike' | 'block' | 'opponent_error';
+  player_id: string | null;
+  timestamp: string;
+  home_score: number;
+  away_score: number;
+  current_rotation: {
+    position1: string;
+    position2: string;
+    position3: string;
+    position4: string;
+    position5: string;
+    position6: string;
+  };
 };
 
 export type PlayerStat = {
