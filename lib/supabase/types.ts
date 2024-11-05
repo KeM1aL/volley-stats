@@ -11,6 +11,7 @@ export type Player = {
   name: string;
   number: number;
   position: string;
+  avatar_url?: string | null;
   created_at: string;
 };
 

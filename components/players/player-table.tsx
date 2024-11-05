@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -21,10 +22,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Player } from "@/lib/supabase/types";
 import { supabase } from "@/lib/supabase/client";
 import { useDb } from "@/components/providers/database-provider";
+import { deleteAvatar } from "@/lib/supabase/storage";
 
 type PlayerTableProps = {
   players: Player[];
@@ -43,6 +46,10 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
 
     setIsDeleting(true);
     try {
+      if (deletePlayer.avatar_url) {
+        await deleteAvatar(deletePlayer.id);
+      }
+
       const { error } = await supabase
         .from("players")
         .delete()
@@ -75,6 +82,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Avatar</TableHead>
             <TableHead>Number</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Position</TableHead>
@@ -84,6 +92,17 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
         <TableBody>
           {players.map((player) => (
             <TableRow key={player.id}>
+              <TableCell>
+                <Avatar>
+                  {player.avatar_url ? (
+                    <AvatarImage src={player.avatar_url} alt={player.name} />
+                  ) : (
+                    <AvatarFallback>
+                      {player.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </TableCell>
               <TableCell>{player.number}</TableCell>
               <TableCell className="font-medium">{player.name}</TableCell>
               <TableCell>{player.position}</TableCell>

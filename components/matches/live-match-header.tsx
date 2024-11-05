@@ -9,10 +9,9 @@ import { useRouter } from "next/navigation";
 
 type LiveMatchHeaderProps = {
   match: Match;
-  set: Set
 };
 
-export function LiveMatchHeader({ match, set }: LiveMatchHeaderProps) {
+export function LiveMatchHeader({ match }: LiveMatchHeaderProps) {
   const { db } = useDb();
   const router = useRouter();
   const [isEnding, setIsEnding] = useState(false);

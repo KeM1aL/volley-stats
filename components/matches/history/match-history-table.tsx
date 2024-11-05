@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, BarChart2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  BarChart2,
+  Upload,
+  Volleyball,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Match } from "@/lib/supabase/types";
+import { MatchStatus } from "@/lib/types";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
@@ -19,9 +26,14 @@ type SortDirection = "asc" | "desc";
 type MatchHistoryTableProps = {
   matches: Match[];
   onViewStats: (match: Match) => void;
+  onMatchStarted: (matchId: string) => void;
 };
 
-export function MatchHistoryTable({ matches, onViewStats }: MatchHistoryTableProps) {
+export function MatchHistoryTable({
+  matches,
+  onViewStats,
+  onMatchStarted
+}: MatchHistoryTableProps) {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -34,9 +46,7 @@ export function MatchHistoryTable({ matches, onViewStats }: MatchHistoryTablePro
       case "score":
         const aScore = Math.abs(a.home_score - a.away_score);
         const bScore = Math.abs(b.home_score - b.away_score);
-        return sortDirection === "asc"
-          ? aScore - bScore
-          : bScore - aScore;
+        return sortDirection === "asc" ? aScore - bScore : bScore - aScore;
       default:
         return 0;
     }
@@ -90,9 +100,7 @@ export function MatchHistoryTable({ matches, onViewStats }: MatchHistoryTablePro
       <TableBody>
         {[...matches].sort(sortMatches).map((match) => (
           <TableRow key={match.id}>
-            <TableCell>
-              {new Date(match.date).toLocaleDateString()}
-            </TableCell>
+            <TableCell>{new Date(match.date).toLocaleDateString()}</TableCell>
             <TableCell>
               {match.home_team.name} vs {match.away_team.name}
             </TableCell>
@@ -103,14 +111,26 @@ export function MatchHistoryTable({ matches, onViewStats }: MatchHistoryTablePro
               <span className="capitalize">{match.status}</span>
             </TableCell>
             <TableCell>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onViewStats(match)}
-              >
-                <BarChart2 className="h-4 w-4 mr-2" />
-                Stats
-              </Button>
+              {match.status === MatchStatus.UPCOMING && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onMatchStarted(match.id)}
+                >
+                  <Volleyball className="h-4 w-4 mr-2" />
+                  Start
+                </Button>
+              )}
+              {match.status === MatchStatus.COMPLETED && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onViewStats(match)}
+                >
+                  <BarChart2 className="h-4 w-4 mr-2" />
+                  Stats
+                </Button>
+              )}
             </TableCell>
           </TableRow>
         ))}

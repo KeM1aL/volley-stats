@@ -20,3 +20,9 @@ export enum StatResult {
   ERROR = "error",
   ATTEMPT = "attempt",
 }
+
+export enum MatchStatus {
+  UPCOMING = "upcoming",
+  LIVE = "live",
+  COMPLETED = "completed",
+}

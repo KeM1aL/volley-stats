@@ -30,6 +30,10 @@ export default function MatchHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
+  const onMatchStarted = (matchId: string) => {
+    router.push(`/matches/${matchId}/start`);
+  };
+
   useEffect(() => {
     const loadData = async () => {
       const supabase = createClient();
@@ -136,6 +140,7 @@ export default function MatchHistoryPage() {
           <MatchHistoryTable
             matches={matches}
             onViewStats={setSelectedMatch}
+            onMatchStarted={onMatchStarted}
           />
         </CardContent>
       </Card>

@@ -1,94 +1,180 @@
 "use client";
 
-import { useState } from "react";
-import { Match, Set } from "@/lib/supabase/types";
+import { useState, useEffect } from "react";
+import { Match, Set, ScorePoint, Player } from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CourtDiagram } from "./scoreboard/court-diagram";
+import { PointsHistory } from "./scoreboard/points-history";
+import { ActionPanel } from "./scoreboard/action-panel";
+import { PlayerStats } from "./scoreboard/player-stats";
+import { useToast } from "@/hooks/use-toast";
 
 type ScoreBoardProps = {
   match: Match;
-  set: Set
+  set: Set;
 };
 
 export function ScoreBoard({ match, set }: ScoreBoardProps) {
   const { db } = useDb();
-  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
+  const [points, setPoints] = useState<ScorePoint[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const updateScore = async (team: "home" | "away", increment: boolean) => {
-    setIsUpdating(true);
+  useEffect(() => {
+    const loadData = async () => {
+      if (!db) return;
+
+      const [pointDocs, playerDocs] = await Promise.all([
+        db.score_points
+          .find({
+            selector: {
+              match_id: match.id,
+              set_id: set.id,
+            },
+          })
+          .exec(),
+        db.players
+          .find({
+            selector: {
+              team_id: match.home_team_id,
+            },
+          })
+          .exec(),
+      ]);
+
+      setPoints(pointDocs.map(doc => doc.toJSON()));
+      setPlayers(playerDocs.map(doc => doc.toJSON()));
+    };
+
+    loadData();
+  }, [db, match.id, set.id]);
+
+  const handleAction = async (type: "win" | "lose" | "neutral") => {
+    setIsLoading(true);
     try {
-      const field = `${team}_score` as const;
-      const newScore = match[field] + (increment ? 1 : -1);
-      if (newScore >= 0) {
-        await db?.matches.findOne(match.id).update({
-          $set: {
-            [field]: newScore,
-          },
-        });
+      if (type === "neutral") return;
+
+      const isWin = type === "win";
+      const scoringTeam = isWin ? "home" : "away";
+      const newHomeScore = match.home_score + (isWin ? 1 : 0);
+      const newAwayScore = match.away_score + (isWin ? 0 : 1);
+
+      // Update match score
+      await db?.matches.findOne(match.id).update({
+        $set: {
+          home_score: newHomeScore,
+          away_score: newAwayScore,
+        },
+      });
+
+      // Record point
+      const point = await db?.score_points.insert({
+        id: crypto.randomUUID(),
+        match_id: match.id,
+        set_id: set.id,
+        scoring_team: scoringTeam,
+        point_type: "opponent_error",
+        player_id: selectedPlayer?.id || null,
+        timestamp: new Date().toISOString(),
+        home_score: newHomeScore,
+        away_score: newAwayScore,
+        current_rotation: set.current_lineup,
+      });
+
+      if (point) {
+        setPoints([...points, point.toJSON()]);
       }
     } catch (error) {
-      console.error("Failed to update score:", error);
+      console.error("Failed to record action:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to record action",
+      });
     } finally {
-      setIsUpdating(false);
+      setIsLoading(false);
     }
   };
 
+  const handleUndo = async () => {
+    if (points.length === 0) return;
+
+    setIsLoading(true);
+    try {
+      const lastPoint = points[points.length - 1];
+      
+      // Remove point
+      await db?.score_points.findOne(lastPoint.id).remove();
+
+      // Update match score
+      await db?.matches.findOne(match.id).update({
+        $set: {
+          home_score: lastPoint.home_score - 1,
+          away_score: lastPoint.away_score - 1,
+        },
+      });
+
+      setPoints(points.slice(0, -1));
+    } catch (error) {
+      console.error("Failed to undo action:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to undo action",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRotate = async () => {
+    // Implement rotation logic
+  };
+
   return (
-    <div className="space-y-6">
-      <CardHeader>
-        <CardTitle>Score Board</CardTitle>
-      </CardHeader>
-
-      <CardContent className="grid grid-cols-2 gap-8">
+    <div className="grid lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         <Card>
-          <CardContent className="p-6 text-center">
-            <h3 className="text-lg font-semibold mb-4">Home Team</h3>
-            <div className="text-4xl font-bold mb-4">{match.home_score}</div>
-            <div className="flex justify-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => updateScore("home", false)}
-                disabled={isUpdating || match.home_score === 0}
-              >
-                -
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => updateScore("home", true)}
-                disabled={isUpdating}
-              >
-                +
-              </Button>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <div className="text-4xl font-bold mb-2">
+                {match.home_score} - {match.away_score}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Set {set.set_number}
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6 text-center">
-            <h3 className="text-lg font-semibold mb-4">Away Team</h3>
-            <div className="text-4xl font-bold mb-4">{match.away_score}</div>
-            <div className="flex justify-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => updateScore("away", false)}
-                disabled={isUpdating || match.away_score === 0}
-              >
-                -
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => updateScore("away", true)}
-                disabled={isUpdating}
-              >
-                +
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </CardContent>
+        <CourtDiagram
+          players={players}
+          onRotate={handleRotate}
+        />
+      </div>
+
+      <div className="space-y-6">
+        <ActionPanel
+          match={match}
+          set={set}
+          selectedPlayer={selectedPlayer}
+          onAction={handleAction}
+          onUndo={handleUndo}
+        />
+
+        {selectedPlayer && (
+          <PlayerStats
+            match={match}
+            set={set}
+            player={selectedPlayer}
+          />
+        )}
+      </div>
+
+      <PointsHistory points={points} />
     </div>
   );
 }

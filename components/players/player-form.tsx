@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { PlayerPosition } from "@/lib/types";
 import { Player } from "@/lib/supabase/types";
+import { AvatarUpload } from "./avatar-upload";
 
 const formSchema = z.object({
   name: z.string().min(1, "Player name is required"),
@@ -29,6 +30,7 @@ const formSchema = z.object({
     z.number().min(0, "Number must be positive").max(99, "Number must be less than 100")
   ),
   position: z.string().min(1, "Position is required"),
+  avatar_url: z.string().nullable(),
 });
 
 type PlayerFormProps = {
@@ -50,14 +52,33 @@ export function PlayerForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: defaultValues?.name || "",
-      number: defaultValues?.number?.toString() || "",
+      number: defaultValues?.number || 0,
       position: defaultValues?.position || "",
+      avatar_url: defaultValues?.avatar_url || null,
     },
   });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="avatar_url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Avatar</FormLabel>
+              <FormControl>
+                <AvatarUpload
+                  playerId={defaultValues?.id}
+                  currentAvatar={field.value}
+                  onAvatarChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="name"

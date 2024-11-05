@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Match, Set } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
+import { SetSetup } from "@/components/sets/set-setup";
 
 export default function LiveMatchPage() {
   const { matchId } = useParams();
@@ -17,6 +18,10 @@ export default function LiveMatchPage() {
   const [match, setMatch] = useState<Match | null>(null);
   const [set, setSet] = useState<Set | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const onSetSetupComplete  = (set: Set) => {
+    setSet(set);
+  }
 
   useEffect(() => {
     const loadMatch = async () => {
@@ -24,18 +29,7 @@ export default function LiveMatchPage() {
 
       const matchDoc = await db.matches.findOne(matchId as string).exec();
       if (matchDoc) {
-        setMatch(matchDoc.toJSON());
-        const setDoc = await db.sets.insert({
-          id: crypto.randomUUID(),
-          match_id: matchId as string,
-          status: 'live',
-          set_number: 1,
-          home_score: 0,
-          away_score: 0
-        });
-        if (setDoc) {
-          setSet(setDoc.toJSON());
-        }
+        setMatch(matchDoc.toMutableJSON());
       }
       setIsLoading(false);
     };
@@ -51,17 +45,12 @@ export default function LiveMatchPage() {
     return <div>Match not found</div>;
   }
 
-  if (!set) {
-    return <div>Set not found</div>;
-  }
-
   return (
-    <div className="space-y-6">
-      <LiveMatchHeader match={match} set={set} />
-
+    <div className="space-y-4">
+      <LiveMatchHeader match={match} />
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-6">
-          <ScoreBoard match={match} set={set} />
+          {(!set || set.status === 'completed') ? <SetSetup onComplete={onSetSetupComplete} /> : <ScoreBoard match={match} set={set} />}
         </Card>
 
         <Card className="p-6">
