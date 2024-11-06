@@ -33,7 +33,9 @@ export function StatTracker({ match, set }: StatTrackerProps) {
       const setPlayerIds = Object.values(set.current_lineup);
       const setPlayerDocs = await db.players.findByIds(setPlayerIds).exec();
       if (setPlayerDocs) {
-        setPlayers(Array.from(setPlayerDocs.values()).map(doc => doc.toJSON()));
+        setPlayers(
+          Array.from(setPlayerDocs.values()).map((doc) => doc.toJSON())
+        );
       }
       setIsLoading(false);
     };
@@ -128,30 +130,37 @@ export function StatTracker({ match, set }: StatTrackerProps) {
 
   return (
     <div className="space-y-6">
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         <PlayerSelector
           players={players}
           selectedPlayer={selectedPlayer}
           onPlayerSelect={setSelectedPlayer}
         />
         {Object.values(StatType).map((type) => (
-          <Card key={type}>
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4 capitalize text-center">
-                {type.replace("_", " ")}
-              </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {Object.values(StatResult).map((result) => (
-                  <StatButton
-                    key={result}
-                    result={result}
-                    onClick={() => recordStat(type, result)}
-                    disabled={isRecording || !selectedPlayer}
-                    isLoading={isRecording}
-                  />
-                ))}
+          <Card key={type} className="w-full max-w-3xl mx-auto overflow-hidden">
+            <div className="flex">
+              {/* Vertical text on the left side */}
+              <div className="bg-primary text-primary-foreground p-4 flex items-center justify-center relative">
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
+                  {type.replace("_", " ").substring(0, 5)}
+                </span>
               </div>
-            </CardContent>
+              <div className="flex-1">
+                <CardContent className="p-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.values(StatResult).map((result) => (
+                      <StatButton
+                        key={result}
+                        result={result}
+                        onClick={() => recordStat(type, result)}
+                        disabled={isRecording || !selectedPlayer}
+                        isLoading={isRecording}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </div>
+            </div>
           </Card>
         ))}
       </CardContent>
