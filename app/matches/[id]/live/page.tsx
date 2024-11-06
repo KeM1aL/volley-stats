@@ -8,7 +8,7 @@ import { ScoreBoard } from "@/components/matches/score-board";
 import { StatTracker } from "@/components/matches/stat-tracker";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Match, Set } from "@/lib/supabase/types";
+import type { Match, ScorePoint, Set } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
 
@@ -17,10 +17,17 @@ export default function LiveMatchPage() {
   const { db } = useDb();
   const [match, setMatch] = useState<Match | null>(null);
   const [set, setSet] = useState<Set | null>(null);
+  const [points, setPoints] = useState<ScorePoint[]>([]);
+  const [sets, setSets] = useState<Set[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const onSetSetupComplete  = (set: Set) => {
     setSet(set);
+    setSets([...sets, set]);
+  }
+
+  const onPointRecorded = (point: ScorePoint) => {
+    setPoints([...points, point]);
   }
 
   useEffect(() => {
@@ -47,14 +54,14 @@ export default function LiveMatchPage() {
 
   return (
     <div className="space-y-4">
-      <LiveMatchHeader match={match} />
+      <LiveMatchHeader match={match} points={points} />
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-6">
           {set && <ScoreBoard match={match} set={set} />}
         </Card>
 
         <Card className="p-6">
-          {(!set || set.status === 'completed') ? <SetSetup match={match} onComplete={onSetSetupComplete} /> : <StatTracker match={match} set={set} />}
+          {(!set || set.status === 'completed') ? <SetSetup match={match} onComplete={onSetSetupComplete} /> : <StatTracker onPoint={onPointRecorded} match={match} set={set} />}
         </Card>
       </div>
     </div>

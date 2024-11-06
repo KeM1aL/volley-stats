@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Match, Player, Set } from "@/lib/supabase/types";
+import { Match, Player, ScorePoint, Set } from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,13 +15,15 @@ import { Skeleton } from "../ui/skeleton";
 type StatTrackerProps = {
   match: Match;
   set: Set;
+  onPoint: (point: ScorePoint) => void;
 };
 
-export function StatTracker({ match, set }: StatTrackerProps) {
+export function StatTracker({ match, set, onPoint }: StatTrackerProps) {
   const { db } = useDb();
   const { toast } = useToast();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [scores, setScores] = useState({ home: 0, away: 0 })
   const [selectedStatType, setSelectedStatType] = useState<StatType | "">("");
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +42,10 @@ export function StatTracker({ match, set }: StatTrackerProps) {
       setIsLoading(false);
     };
 
+    if(!isLoading) {
+      setIsLoading(true);
+    }
+    setScores({ home: set.home_score, away: set.away_score });
     loadData();
   }, [db, match.id, set.id]);
 
@@ -56,15 +62,10 @@ export function StatTracker({ match, set }: StatTrackerProps) {
     setIsRecording(true);
     try {
       const isSuccess = result === StatResult.SUCCESS;
-      const newHomeScore = match.home_score + (isSuccess ? 1 : 0);
-      const newAwayScore = match.away_score + (!isSuccess ? 1 : 0);
-
-      await db?.matches.findOne(match.id).update({
-        $set: {
-          home_score: newHomeScore,
-          away_score: newAwayScore,
-        },
-      });
+      const isError = result === StatResult.ERROR;
+      const newHomeScore = scores.home + (isSuccess ? 1 : 0);
+      const newAwayScore = scores.away + (isError ? 1 : 0);
+      setScores((prev) => ({ home: newHomeScore, away: newAwayScore }));
 
       await db?.player_stats.insert({
         id: crypto.randomUUID(),
@@ -78,9 +79,9 @@ export function StatTracker({ match, set }: StatTrackerProps) {
       });
 
       if (result === StatResult.ERROR || result === StatResult.SUCCESS) {
-        if (Object.keys(PointType).includes(type)) {
+        if (Object.values(PointType).includes(type as string as PointType)) {
           const pointType = type as string as PointType;
-          await db?.score_points.insert({
+          const point = {
             id: crypto.randomUUID(),
             match_id: match.id,
             set_id: set.id,
@@ -93,7 +94,10 @@ export function StatTracker({ match, set }: StatTrackerProps) {
             home_score: newHomeScore,
             away_score: newAwayScore,
             current_rotation: set.current_lineup,
-          });
+          } as ScorePoint;
+
+          await db?.score_points.insert(point);
+          onPoint(point);
         }
       }
 

@@ -1,17 +1,19 @@
 "use client";
 
-import { Match, Set } from "@/lib/supabase/types";
+import { Match, ScorePoint, Set } from "@/lib/supabase/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { PointsHistory } from "./points-history";
 
 type LiveMatchHeaderProps = {
   match: Match;
+  points: ScorePoint[];
 };
 
-export function LiveMatchHeader({ match }: LiveMatchHeaderProps) {
+export function LiveMatchHeader({ match, points }: LiveMatchHeaderProps) {
   const { db } = useDb();
   const router = useRouter();
   const [isEnding, setIsEnding] = useState(false);
@@ -24,7 +26,7 @@ export function LiveMatchHeader({ match }: LiveMatchHeaderProps) {
           status: "completed",
         },
       });
-      router.push("/matches");
+      router.push(`/matches/${match.id}/stats`);
     } catch (error) {
       console.error("Failed to end match:", error);
     } finally {
@@ -41,6 +43,8 @@ export function LiveMatchHeader({ match }: LiveMatchHeaderProps) {
             {new Date(match.date).toLocaleDateString()}
           </p>
         </div>
+
+        <PointsHistory points={points} />
 
         <Button
           variant="destructive"
