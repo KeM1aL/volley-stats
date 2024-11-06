@@ -80,7 +80,7 @@ export function Navigation() {
           </div>
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <Volleyball className="h-5 w-5" />
-            <span>VolleyStats Pro</span>
+            <span>VolleyStats for Dummies</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 mx-6">
             {routes.map((route) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { supabase } from '@/lib/supabase/client';
-import { getDatabase } from './database';
+import { getDatabase } from '../database';
 import type { Team, Player, Match, Set, PlayerStat, Substitution, ScorePoint } from '@/lib/supabase/types';
 
 export async function syncData() {

@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { createClient, supabase } from "@/lib/supabase/client";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Skeleton } from "../ui/skeleton";
+import { Match } from "@/lib/supabase/types";
 
 const formSchema = z.object({
   homeTeamId: z.string().min(1, "Home team is required"),
@@ -48,10 +49,14 @@ export function NewMatchForm({ onMatchCreated }: NewMatchFormProps) {
 
   useEffect(() => {
     const loadTeams = async () => {
+      if(!db) return;
+
       const supabase = createClient();
       const { data, error } = await supabase.from("teams").select("*");
       if (error) throw error;
-      setTeams(data);
+
+      const teamDocs = await db.teams.find().exec();
+      setTeams(teamDocs.map((doc) => doc.toJSON()));
       setIsLoading(false);
     };
 
@@ -68,29 +73,42 @@ export function NewMatchForm({ onMatchCreated }: NewMatchFormProps) {
 
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
-        .from("matches")
-        .insert({
-          home_team_id: values.homeTeamId,
-          away_team_id: values.awayTeamId,
-          date: new Date().toISOString(),
-          status: "upcoming",
-          home_score: 0,
-          away_score: 0,
-        })
-        .select()
-        .single();
+      const match = {
+        id: crypto.randomUUID(),
+        home_team_id: values.homeTeamId,
+        away_team_id: values.awayTeamId,
+        date: new Date().toISOString(), // TODO Date must be in the form
+        status: "upcoming",
+        home_score: 0,
+        away_score: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as Match;
 
-      if (error) throw error;
+      // const { data, error } = await supabase
+      //   .from("matches")
+      //   .insert({
+      //     home_team_id: values.homeTeamId,
+      //     away_team_id: values.awayTeamId,
+      //     date: new Date().toISOString(),
+      //     status: "upcoming",
+      //     home_score: 0,
+      //     away_score: 0,
+      //   })
+      //   .select()
+      //   .single();
 
-      await db?.matches.insert(data);
-      onMatchCreated(data.id);
+      // if (error) throw error;
+
+      await db?.matches.insert(match);
+      onMatchCreated(match.id);
       
       toast({
         title: "Match created",
         description: "Your new match has been created successfully.",
       });
     } catch (error) {
+      console.error("Failed to create match:", error);
       toast({
         variant: "destructive",
         title: "Error",

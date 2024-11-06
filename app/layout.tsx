@@ -10,7 +10,7 @@ import { Navigation } from '@/components/navigation';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'VolleyStats Pro',
+  title: 'VolleyStats for Dummies',
   description: 'Professional volleyball statistics tracking and analysis',
   manifest: '/manifest.webmanifest',
 };

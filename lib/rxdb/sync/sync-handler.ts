@@ -5,7 +5,7 @@ import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supab
 import { supabase } from '@/lib/supabase/client';
 import { retryWithBackoff } from '@/lib/utils/retry';
 import { toast } from 'sonner';
-import { CollectionName } from './schema';
+import { CollectionName } from '../schema';
 
 interface SyncQueueItem<T = any> {
   collection: CollectionName;
@@ -16,16 +16,18 @@ interface SyncQueueItem<T = any> {
   retryCount: number;
 }
 
-class SyncHandler {
+export class SyncHandler {
   private channels: Map<CollectionName, RealtimeChannel> = new Map();
   private syncQueue: SyncQueueItem[] = [];
   private isOnline: boolean = true;
   private collections: Map<CollectionName, RxCollection> = new Map();
   private syncInProgress: boolean = false;
+  private syncFromSupabase: boolean;
   private maxRetries: number = 3;
   private queueProcessInterval: NodeJS.Timeout | null = null;
 
-  constructor() {
+  constructor(syncFromSupabase = false) {
+    this.syncFromSupabase = syncFromSupabase;
     this.setupOnlineListener();
     this.startQueueProcessor();
   }
@@ -67,14 +69,14 @@ class SyncHandler {
 
   async initializeSync(collections: Map<CollectionName, RxCollection>) {
     this.collections = collections;
-    
-    const entries = Array.from(this.collections.entries());
-    for (const [name, collection] of entries) {
-      await this.setupCollectionSync(name, collection);
-    }
 
     if (this.isOnline) {
       await this.performInitialSync();
+    }
+
+    const entries = Array.from(this.collections.entries());
+    for (const [name, collection] of entries) {
+      await this.setupCollectionSync(name, collection);
     }
   }
 
@@ -89,6 +91,7 @@ class SyncHandler {
 
         if (error) throw error;
 
+        let failRecords = 0;
         await Promise.all(
           data.map(async (record) => {
             try {
@@ -98,9 +101,11 @@ class SyncHandler {
               });
             } catch (err) {
               console.error(`Error upserting record in ${name}:`, err);
+              failRecords++;
             }
           })
         );
+        toast.info(`Initial sync of ${name} complete with ${data.length} records`);
       } catch (error) {
         console.error(`Error during initial sync of ${name}:`, error);
         toast.error(`Failed to sync ${name}`, {
@@ -120,6 +125,7 @@ class SyncHandler {
       await this.syncToSupabase(name, changeEvent);
     });
 
+    if(!this.syncFromSupabase) return;
     const channel = supabase
       .channel(`${name}_changes`)
       .on(
@@ -177,7 +183,10 @@ class SyncHandler {
       ...changeEvent.documentData,
       updated_at: new Date().toISOString()
     };
-
+    delete (doc as any)._rev;
+    delete (doc as any)._attachments;
+    delete (doc as any)._deleted;
+    delete (doc as any)._meta;
     try {
       await retryWithBackoff(async () => {
         switch (operation) {
@@ -249,7 +258,7 @@ class SyncHandler {
         } as RxChangeEvent<any>);
       } catch (error) {
         console.error('Error processing sync queue:', error);
-        
+
         if (item.retryCount < this.maxRetries) {
           this.syncQueue.push({
             ...item,
@@ -299,13 +308,11 @@ class SyncHandler {
       window.removeEventListener('online', this.handleOnline);
       window.removeEventListener('offline', this.handleOffline);
     }
-    
+
     this.channels.forEach(channel => channel.unsubscribe());
-    
+
     if (this.queueProcessInterval) {
       clearInterval(this.queueProcessInterval);
     }
   }
 }
-
-export const syncHandler = new SyncHandler();

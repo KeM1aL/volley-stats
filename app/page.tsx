@@ -15,10 +15,10 @@ export default async function Home() {
     <div className="flex flex-col gap-8">
       <section className="text-center py-12 md:py-20">
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
-          Professional Volleyball Statistics
+          Volleyball Statistics for Dummies
         </h1>
         <p className="text-xl text-muted-foreground mb-8">
-          Track, analyze, and improve your team's performance with advanced analytics
+          Track, analyze, and improve your team's performance with simple analytics
         </p>
         {!user && <div className="flex flex-wrap justify-center gap-4">
           <Button asChild size="lg">

@@ -50,12 +50,12 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
         await deleteAvatar(deletePlayer.id);
       }
 
-      const { error } = await supabase
-        .from("players")
-        .delete()
-        .eq("id", deletePlayer.id);
+      // const { error } = await supabase
+      //   .from("players")
+      //   .delete()
+      //   .eq("id", deletePlayer.id);
 
-      if (error) throw error;
+      // if (error) throw error;
 
       await db?.players.findOne(deletePlayer.id).remove();
 
@@ -66,6 +66,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
         description: "The player has been successfully deleted.",
       });
     } catch (error) {
+      console.error("Failed to delete player:", error);
       toast({
         variant: "destructive",
         title: "Error",

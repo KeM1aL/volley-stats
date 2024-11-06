@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/lib/supabase/client";
 import { LoadingSpinner } from "../ui/loading-spinner";
+import { Team } from "@/lib/supabase/types";
 
 const formSchema = z.object({
   teamName: z.string().min(1, "Team name is required"),
@@ -42,26 +43,31 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
-        .from("teams")
-        .insert({
-          name: values.teamName,
-          created_at: new Date().toISOString(),
-          user_id: session.user.id,
-        })
-        .select()
-        .single();
+      const team = {
+        id: crypto.randomUUID(),
+        name: values.teamName,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        user_id: session.user.id,
+      } as Team;
 
-      if (error) throw error;
+      // const { data, error } = await supabase
+      //   .from("teams")
+      //   .insert(team)
+      //   .select()
+      //   .single();
 
-      await db?.teams.insert(data);
-      onTeamCreated(data.id);
+      // if (error) throw error;
+
+      await db?.teams.insert(team);
+      onTeamCreated(team.id);
       
       toast({
         title: "Team created",
         description: "Your new team has been created successfully.",
       });
     } catch (error) {
+      console.error("Failed to create team:", error);
       toast({
         variant: "destructive",
         title: "Error",

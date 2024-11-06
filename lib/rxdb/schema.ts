@@ -5,8 +5,8 @@ import type { Team, Player, Match, Set, PlayerStat, Substitution, ScorePoint } f
 export type CollectionName = 'teams' | 'players' | 'matches' | 'sets' | 'substitutions' | 'score_points' | 'player_stats';
 
 const timestampFields = {
-  created_at: { type: 'string', "format": "date-time", maxLength: 24 },
-  updated_at: { type: 'string', "format": "date-time", maxLength: 24 }
+  created_at: { type: 'string', "format": "date-time", maxLength: 32 },
+  updated_at: { type: 'string', "format": "date-time", maxLength: 32 }
 };
 
 // Team Schema
@@ -50,7 +50,7 @@ export const matchSchema = toTypedRxJsonSchema({
   properties: {
     id: { type: 'string', maxLength: 36 },
     date: { type: 'string' },
-    location: { type: 'string' },
+    location: { type: ['string', 'null'] },
     home_team_id: { type: 'string', maxLength: 36 },
     away_team_id: { type: 'string', maxLength: 36 },
     home_score: { type: 'number' },

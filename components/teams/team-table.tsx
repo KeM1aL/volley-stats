@@ -44,12 +44,12 @@ export function TeamTable({ teams, onEdit }: TeamTableProps) {
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from("teams")
-        .delete()
-        .eq("id", deleteTeam.id);
+      // const { error } = await supabase
+      //   .from("teams")
+      //   .delete()
+      //   .eq("id", deleteTeam.id);
 
-      if (error) throw error;
+      // if (error) throw error;
 
       await db?.teams.findOne(deleteTeam.id).remove();
 
@@ -60,6 +60,7 @@ export function TeamTable({ teams, onEdit }: TeamTableProps) {
 
       router.refresh();
     } catch (error) {
+      console.error("Failed to delete team:", error);
       toast({
         variant: "destructive",
         title: "Error",

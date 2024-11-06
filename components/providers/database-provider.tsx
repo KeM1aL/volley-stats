@@ -2,13 +2,13 @@
 
 import { createContext, useContext, useEffect } from 'react';
 import { useDatabase } from '@/hooks/use-database';
-import { syncHandler } from '@/lib/rxdb/sync-handler';
+import { SyncHandler } from '@/lib/rxdb/sync/sync-handler';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2 } from 'lucide-react';
 import { SyncIndicator } from '@/components/sync-indicator';
 import { CollectionName } from '@/lib/rxdb/schema';
 import { RxCollection } from 'rxdb';
-import { syncData } from '@/lib/rxdb/sync';
+import { syncData } from '@/lib/rxdb/sync/sync';
 
 const DatabaseContext = createContext<ReturnType<typeof useDatabase> | null>(null);
 
@@ -18,23 +18,24 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (database.db && user) {
-      syncData().catch(console.error);
+      // syncData().catch(console.error);
 
-      // const collections = new Map<CollectionName, RxCollection>([
-      //   ['teams', database.db.teams],
-      //   ['players', database.db.players],
-      //   ['matches', database.db.matches],
-      //   ['sets', database.db.sets],
-      //   ['substitutions', database.db.substitutions],
-      //   ['score_points', database.db.score_points],
-      //   ['player_stats', database.db.player_stats],
-      // ]);
+      const syncHandler = new SyncHandler();
+      const collections = new Map<CollectionName, RxCollection>([
+        ['teams', database.db.teams],
+        ['players', database.db.players],
+        ['matches', database.db.matches],
+        ['sets', database.db.sets],
+        ['substitutions', database.db.substitutions],
+        ['score_points', database.db.score_points],
+        ['player_stats', database.db.player_stats],
+      ]);
 
-      // syncHandler.initializeSync(collections);
+      syncHandler.initializeSync(collections);
 
-      // return () => {
-      //   syncHandler.cleanup();
-      // };
+      return () => {
+        syncHandler.cleanup();
+      };
     }
   }, [database.db, user]);
 

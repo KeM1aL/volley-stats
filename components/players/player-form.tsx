@@ -71,7 +71,7 @@ export function PlayerForm({
                 <AvatarUpload
                   playerId={defaultValues?.id}
                   currentAvatar={field.value}
-                  onAvatarChange={field.onChange}
+                  onAvatarChange={(url) => field.onChange(url)}
                 />
               </FormControl>
               <FormMessage />

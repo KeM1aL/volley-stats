@@ -33,23 +33,27 @@ export function NewPlayerDialog({
   const onSubmit = async (values: any) => {
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
-        .from("players")
-        .insert({
-          team_id: teamId,
-          name: values.name,
-          number: values.number,
-          position: values.position,
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+      const player = {
+        id: crypto.randomUUID(),
+        team_id: teamId,
+        name: values.name,
+        number: values.number,
+        position: values.position,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as Player;
 
-      if (error) throw error;
+      // const { data, error } = await supabase
+      //   .from("players")
+      //   .insert(player)
+      //   .select()
+      //   .single();
 
-      await db?.players.insert(data);
+      // if (error) throw error;
 
-      onPlayerCreated(data);
+      await db?.players.insert(player);
+
+      onPlayerCreated(player);
 
       toast({
         title: "Player created",
@@ -58,6 +62,7 @@ export function NewPlayerDialog({
 
       onClose();
     } catch (error) {
+      console.error("Failed to create player:", error);
       toast({
         variant: "destructive",
         title: "Error",

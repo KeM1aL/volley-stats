@@ -53,17 +53,19 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("teams")
-        .update({ name: values.name })
-        .eq("id", team.id)
-        .select()
-        .single();
+      // const { data, error } = await supabase
+      //   .from("teams")
+      //   .update({ name: values.name })
+      //   .eq("id", team.id)
+      //   .select()
+      //   .single();
 
-      if (error) throw error;
+      // if (error) throw error;
 
       await db?.teams.findOne(team.id).update({
-        $set: { name: values.name },
+        $set: { 
+          name: values.name 
+        },
       });
 
       toast({
@@ -74,6 +76,7 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
       router.refresh();
       onClose();
     } catch (error) {
+      console.error("Failed to update team:", error);
       toast({
         variant: "destructive",
         title: "Error",

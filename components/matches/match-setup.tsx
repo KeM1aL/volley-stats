@@ -18,7 +18,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Match, Player } from "@/lib/supabase/types";
 import { Check, Square, SquareCheckBig } from "lucide-react";
 import { Toggle } from "../ui/toggle";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../ui/form";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "../ui/form";
 import { Switch } from "../ui/switch";
 
 type MatchSetupProps = {
@@ -34,17 +40,28 @@ export function MatchSetup({ match, onComplete }: MatchSetupProps) {
 
   useEffect(() => {
     const loadData = async () => {
-      const supabase = createClient();
+      if (!db) return;
+
       const teamId = match.home_team_id as string;
 
-      const playersResponse = await supabase
-        .from("players")
-        .select("*")
-        .eq("team_id", teamId);
+      // const supabase = createClient();
 
-      if (playersResponse.error) throw playersResponse.error;
+      // const playersResponse = await supabase
+      //   .from("players")
+      //   .select("*")
+      //   .eq("team_id", teamId);
 
-      setPlayers(playersResponse.data);
+      // if (playersResponse.error) throw playersResponse.error;
+
+      const playerDocs = await db.players
+        .find({
+          selector: {
+            team_id: teamId,
+          },
+        })
+        .exec();
+
+      setPlayers(playerDocs.map((doc) => doc.toJSON()));
       setIsLoading(false);
     };
 
@@ -54,7 +71,7 @@ export function MatchSetup({ match, onComplete }: MatchSetupProps) {
   const sortPlayers = (a: Player, b: Player) => {
     const aLower = a.name.toLowerCase();
     const bLower = b.name.toLowerCase();
-  
+
     if (aLower < bLower) return -1;
     if (aLower > bLower) return 1;
     return 0;
@@ -97,8 +114,17 @@ export function MatchSetup({ match, onComplete }: MatchSetupProps) {
         <h2 className="text-lg font-semibold mb-4">Match Line-up</h2>
         <div className="grid grid-cols-1 gap-4">
           {[...players].sort(sortPlayers).map((player) => (
-            <Toggle key={player.id} variant="outline" aria-label="Toggle player availability" className="gap-4" onClick={() => togglePlayerAvailability(player)}>
-              {player.name} {availablePlayers.includes(player.id) && <Check className="h-4 w-4" />}
+            <Toggle
+              key={player.id}
+              variant="outline"
+              aria-label="Toggle player availability"
+              className="gap-4"
+              onClick={() => togglePlayerAvailability(player)}
+            >
+              {player.name}{" "}
+              {availablePlayers.includes(player.id) && (
+                <Check className="h-4 w-4" />
+              )}
             </Toggle>
           ))}
         </div>

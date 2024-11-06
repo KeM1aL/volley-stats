@@ -33,18 +33,18 @@ export function EditPlayerDialog({
 
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
-        .from("players")
-        .update({
-          name: values.name,
-          number: values.number,
-          position: values.position,
-        })
-        .eq("id", player.id)
-        .select()
-        .single();
+      // const { data, error } = await supabase
+      //   .from("players")
+      //   .update({
+      //     name: values.name,
+      //     number: values.number,
+      //     position: values.position,
+      //   })
+      //   .eq("id", player.id)
+      //   .select()
+      //   .single();
 
-      if (error) throw error;
+      // if (error) throw error;
 
       await db?.players.findOne(player.id).update({
         $set: {
@@ -54,7 +54,7 @@ export function EditPlayerDialog({
         },
       });
 
-      onPlayerUpdated(data);
+      onPlayerUpdated(player);
 
       toast({
         title: "Player updated",
@@ -63,6 +63,7 @@ export function EditPlayerDialog({
 
       onClose();
     } catch (error) {
+      console.error("Failed to update player:", error);
       toast({
         variant: "destructive",
         title: "Error",

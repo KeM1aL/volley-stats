@@ -61,6 +61,7 @@ export function AuthForm() {
         router.refresh()
       }
     } catch (error) {
+      console.error("Failed to sign in:", error);
       toast({
         variant: "destructive",
         title: "Error",

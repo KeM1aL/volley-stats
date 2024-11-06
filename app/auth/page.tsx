@@ -7,7 +7,7 @@ export default function AuthPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            Welcome to VolleyStats Pro
+            Welcome to VolleyStats for Dummies
           </CardTitle>
         </CardHeader>
         <CardContent>

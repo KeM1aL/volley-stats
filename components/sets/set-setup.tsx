@@ -54,6 +54,8 @@ export function SetSetup({ match, onComplete }: SetSetupProps) {
         home_score: 0,
         away_score: 0,
         status: 'live',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         current_lineup: {
           position1: lineup[PlayerPosition.SETTER],
           position2: lineup[PlayerPosition.OPPOSITE],
