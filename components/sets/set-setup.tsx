@@ -30,7 +30,6 @@ export function SetSetup({ match, onComplete }: SetSetupProps) {
 
   useEffect(() => {
     const loadAvailablePlayers = async () => {
-      console.log('loadAvailablePlayers', match);
       if (!db) return;
 
       const availablePlayerDocs = await db.players.findByIds(match.available_players).exec();

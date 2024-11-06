@@ -4,10 +4,7 @@ import { useState, useEffect } from "react";
 import { Match, Set, ScorePoint, Player } from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
 import { Card, CardContent } from "@/components/ui/card";
-import { CourtDiagram } from "./scoreboard/court-diagram";
-import { PointsHistory } from "./scoreboard/points-history";
-import { ActionPanel } from "./scoreboard/action-panel";
-import { PlayerStats } from "./scoreboard/player-stats";
+import { CourtDiagram } from "./court-diagram";
 import { useToast } from "@/hooks/use-toast";
 
 type ScoreBoardProps = {
@@ -45,8 +42,8 @@ export function ScoreBoard({ match, set }: ScoreBoardProps) {
           .exec(),
       ]);
 
-      setPoints(pointDocs.map(doc => doc.toJSON()));
-      setPlayers(playerDocs.map(doc => doc.toJSON()));
+      setPoints(pointDocs.map((doc) => doc.toJSON()));
+      setPlayers(playerDocs.map((doc) => doc.toJSON()));
     };
 
     loadData();
@@ -105,7 +102,7 @@ export function ScoreBoard({ match, set }: ScoreBoardProps) {
     setIsLoading(true);
     try {
       const lastPoint = points[points.length - 1];
-      
+
       // Remove point
       await db?.score_points.findOne(lastPoint.id).remove();
 
@@ -130,51 +127,25 @@ export function ScoreBoard({ match, set }: ScoreBoardProps) {
     }
   };
 
-  const handleRotate = async () => {
-    // Implement rotation logic
-  };
-
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
-      <div className="space-y-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-2">
-                {match.home_score} - {match.away_score}
+    <>
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <div className="text-4xl font-bold mb-2">
+                  {match.home_score} - {match.away_score}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Set {set.set_number}
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground">
-                Set {set.set_number}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <CourtDiagram
-          players={players}
-          onRotate={handleRotate}
-        />
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      <div className="space-y-6">
-        <ActionPanel
-          match={match}
-          set={set}
-          selectedPlayer={selectedPlayer}
-          onAction={handleAction}
-          onUndo={handleUndo}
-        />
-
-        {selectedPlayer && (
-          <PlayerStats
-            match={match}
-            set={set}
-            player={selectedPlayer}
-          />
-        )}
-      </div>
-
-      <PointsHistory points={points} />
-    </div>
+      <CourtDiagram players={players} />
+    </>
   );
 }

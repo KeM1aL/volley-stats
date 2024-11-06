@@ -50,7 +50,7 @@ export default function LiveMatchPage() {
       <LiveMatchHeader match={match} />
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-6">
-          {/* <ScoreBoard match={match} set={set} /> */}
+          {set && <ScoreBoard match={match} set={set} />}
         </Card>
 
         <Card className="p-6">
