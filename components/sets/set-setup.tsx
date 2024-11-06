@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,29 +13,60 @@ import {
 } from "@/components/ui/select";
 import { PlayerPosition } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { Set } from "@/lib/supabase/types";
+import { Match, Player, Set } from "@/lib/supabase/types";
 
 type SetSetupProps = {
-  matchId: string;
+  match: Match;
   onComplete: (set: Set) => void;
 };
 
-export function SetSetup({ matchId, onComplete }: SetSetupProps) {
+export function SetSetup({ match, onComplete }: SetSetupProps) {
   const { db } = useDb();
-  const [homeLineup, setHomeLineup] = useState<Record<PlayerPosition, string>>({} as Record<PlayerPosition, string>);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [lineup, setLineup] = useState<Record<PlayerPosition, string>>(
+    {} as Record<PlayerPosition, string>
+  );
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadAvailablePlayers = async () => {
+      console.log('loadAvailablePlayers', match);
+      if (!db) return;
+
+      const availablePlayerDocs = await db.players.findByIds(match.available_players).exec();
+      if (availablePlayerDocs) {
+        setPlayers(Array.from(availablePlayerDocs.values()).map(doc => doc.toJSON()));
+      }
+      setIsLoading(false);
+    };
+
+    loadAvailablePlayers();
+  }, [db, match.id]);
 
   const handleComplete = async () => {
     setIsLoading(true);
     try {
+      // Add start position for each player
       // Save lineups and start the set
-      const setDoc = await db?.sets.findOne(setId).update({
-        $set: {
-          status: "live",
-          home_lineup: homeLineup,
-        },
+      const setDoc = await db?.sets.insert({
+        id: crypto.randomUUID(),
+        match_id: match.id,
+        set_number: 1, // TODO: Implement set number selection
+        home_score: 0,
+        away_score: 0,
+        status: 'live',
+        current_lineup: {
+          position1: lineup[PlayerPosition.SETTER],
+          position2: lineup[PlayerPosition.OPPOSITE],
+          position3: lineup[PlayerPosition.OUTSIDE_BACK],
+          position4: lineup[PlayerPosition.OUTSIDE_FRONT],
+          position5: lineup[PlayerPosition.MIDDLE_BACK],
+          position6: lineup[PlayerPosition.MIDDLE_FRONT],
+        }
       });
-      onComplete();
+      if(setDoc) {
+        onComplete(setDoc.toJSON());
+      }
     } catch (error) {
       console.error("Failed to start set:", error);
       toast({
@@ -58,14 +89,18 @@ export function SetSetup({ matchId, onComplete }: SetSetupProps) {
               <Label>{position}</Label>
               <Select
                 onValueChange={(value) =>
-                  setHomeLineup((prev) => ({ ...prev, [position]: value }))
+                  setLineup((prev) => ({ ...prev, [position]: value }))
                 }
               >
                 <SelectTrigger>
                   <SelectValue placeholder={`Select ${position}`} />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* Add player selection items */}
+                  {players.map((player) => (
+                    <SelectItem key={player.id} value={player.id}>
+                      {player.number} - {player.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -75,11 +110,7 @@ export function SetSetup({ matchId, onComplete }: SetSetupProps) {
 
       {/* <Separator /> */}
 
-      <Button
-        onClick={handleComplete}
-        className="w-full"
-        disabled={isLoading}
-      >
+      <Button onClick={handleComplete} className="w-full" disabled={isLoading}>
         Start Set
       </Button>
     </div>

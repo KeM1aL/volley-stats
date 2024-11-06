@@ -50,11 +50,11 @@ export default function LiveMatchPage() {
       <LiveMatchHeader match={match} />
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-6">
-          {(!set || set.status === 'completed') ? <SetSetup onComplete={onSetSetupComplete} /> : <ScoreBoard match={match} set={set} />}
+          {/* <ScoreBoard match={match} set={set} /> */}
         </Card>
 
         <Card className="p-6">
-          <StatTracker match={match} set={set} />
+          {(!set || set.status === 'completed') ? <SetSetup match={match} onComplete={onSetSetupComplete} /> : <StatTracker match={match} set={set} />}
         </Card>
       </div>
     </div>
