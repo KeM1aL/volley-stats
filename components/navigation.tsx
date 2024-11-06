@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Volleyball, BarChart3, Users, Settings, Menu, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Volleyball,
+  BarChart3,
+  Users,
+  Settings,
+  Menu,
+  LogOut,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
+import { ThemeToggle } from "./theme-toggle";
 
 const routes = [
   {
@@ -99,13 +103,15 @@ export function Navigation() {
             })}
           </nav>
         </div>
-
-        {user && (
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        )}
+        <div className="flex items-center">
+          <ThemeToggle />
+          {user && (
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          )}
+        </div>
       </div>
     </header>
   );

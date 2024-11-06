@@ -1,8 +1,13 @@
 import { toTypedRxJsonSchema } from 'rxdb';
-import type { RxJsonSchema } from 'rxdb';
+import { RxJsonSchema } from 'rxdb';
 import type { Team, Player, Match, Set, PlayerStat, Substitution, ScorePoint } from '@/lib/supabase/types';
 
 export type CollectionName = 'teams' | 'players' | 'matches' | 'sets' | 'substitutions' | 'score_points' | 'player_stats';
+
+const timestampFields = {
+  created_at: { type: 'string', "format": "date-time", maxLength: 24 },
+  updated_at: { type: 'string', "format": "date-time", maxLength: 24 }
+};
 
 // Team Schema
 export const teamSchema = toTypedRxJsonSchema({
@@ -13,10 +18,10 @@ export const teamSchema = toTypedRxJsonSchema({
     id: { type: 'string', maxLength: 36 },
     name: { type: 'string' },
     user_id: { type: 'string', maxLength: 36 },
-    created_at: { type: 'string' },
+    ...timestampFields
   },
-  required: ['id', 'name', 'user_id', 'created_at'],
-  indexes: ['user_id'],
+  required: ['id', 'name', 'user_id', 'created_at', 'updated_at'],
+  indexes: ['user_id', 'created_at', 'updated_at']
 });
 
 // Player Schema
@@ -30,10 +35,11 @@ export const playerSchema = toTypedRxJsonSchema({
     name: { type: 'string' },
     number: { type: 'number' },
     position: { type: 'string' },
-    created_at: { type: 'string' },
+    avatar_url: { type: ['string', 'null'] },
+    ...timestampFields
   },
-  required: ['id', 'team_id', 'name', 'number', 'position', 'created_at'],
-  indexes: ['team_id'],
+  required: ['id', 'team_id', 'name', 'number', 'position', 'created_at', 'updated_at'],
+  indexes: ['team_id', 'created_at', 'updated_at']
 });
 
 // Match Schema
@@ -54,10 +60,10 @@ export const matchSchema = toTypedRxJsonSchema({
       type: 'array',
       items: { type: 'string', maxLength: 36 }
     },
-    created_at: { type: 'string' },
+    ...timestampFields
   },
-  required: ['id', 'date', 'home_team_id', 'away_team_id', 'status', 'created_at'],
-  indexes: ['home_team_id', 'away_team_id', 'status'],
+  required: ['id', 'date', 'home_team_id', 'away_team_id', 'status', 'created_at', 'updated_at'],
+  indexes: ['home_team_id', 'away_team_id', 'status', 'created_at', 'updated_at']
 });
 
 // Set Schema
@@ -83,9 +89,10 @@ export const setSchema = toTypedRxJsonSchema({
         position6: { type: 'string', maxLength: 36 },
       },
     },
+    ...timestampFields
   },
-  required: ['id', 'match_id', 'set_number', 'status'],
-  indexes: ['match_id'],
+  required: ['id', 'match_id', 'set_number', 'status', 'created_at', 'updated_at'],
+  indexes: ['match_id', 'created_at', 'updated_at']
 });
 
 // Substitution Schema
@@ -101,9 +108,10 @@ export const substitutionSchema = toTypedRxJsonSchema({
     player_in_id: { type: 'string', maxLength: 36 },
     position: { type: 'number', minimum: 1, maximum: 6 },
     timestamp: { type: 'string' },
+    ...timestampFields
   },
-  required: ['id', 'match_id', 'set_id', 'player_out_id', 'player_in_id', 'position', 'timestamp'],
-  indexes: ['match_id', 'set_id'],
+  required: ['id', 'match_id', 'set_id', 'player_out_id', 'player_in_id', 'position', 'timestamp', 'created_at', 'updated_at'],
+  indexes: ['match_id', 'set_id', 'created_at', 'updated_at']
 });
 
 // ScorePoint Schema
@@ -132,9 +140,10 @@ export const scorePointSchema = toTypedRxJsonSchema({
         position6: { type: 'string', maxLength: 36 },
       },
     },
+    ...timestampFields
   },
-  required: ['id', 'match_id', 'set_id', 'scoring_team', 'point_type', 'timestamp', 'home_score', 'away_score', 'current_rotation'],
-  indexes: ['match_id', 'set_id'],
+  required: ['id', 'match_id', 'set_id', 'scoring_team', 'point_type', 'timestamp', 'home_score', 'away_score', 'current_rotation', 'created_at', 'updated_at'],
+  indexes: ['match_id', 'set_id', 'created_at', 'updated_at']
 });
 
 // PlayerStat Schema
@@ -149,8 +158,8 @@ export const playerStatSchema = toTypedRxJsonSchema({
     player_id: { type: 'string', maxLength: 36 },
     stat_type: { type: 'string', enum: ['serve', 'spike', 'block', 'reception'] },
     result: { type: 'string', enum: ['success', 'error', 'attempt'] },
-    created_at: { type: 'string' },
+    ...timestampFields
   },
-  required: ['id', 'match_id', 'set_id', 'player_id', 'stat_type', 'result', 'created_at'],
-  indexes: ['match_id', 'set_id', 'player_id'],
+  required: ['id', 'match_id', 'set_id', 'player_id', 'stat_type', 'result', 'created_at', 'updated_at'],
+  indexes: ['match_id', 'set_id', 'player_id', 'created_at', 'updated_at']
 });

@@ -2,6 +2,7 @@ export type Team = {
   id: string;
   name: string;
   created_at: string;
+  updated_at: string;
   user_id: string;
 };
 
@@ -13,6 +14,7 @@ export type Player = {
   position: string;
   avatar_url?: string | null;
   created_at: string;
+  updated_at: string;
 };
 
 export type Match = {
@@ -26,6 +28,7 @@ export type Match = {
   status: 'upcoming' | 'live' | 'completed';
   available_players: string[];
   created_at: string;
+  updated_at: string;
 };
 
 export type Set = {
@@ -43,6 +46,8 @@ export type Set = {
     position5: string;
     position6: string;
   };
+  created_at: string;
+  updated_at: string;
 };
 
 export type Substitution = {
@@ -53,6 +58,8 @@ export type Substitution = {
   player_in_id: string;
   position: number;
   timestamp: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ScorePoint = {
@@ -73,6 +80,8 @@ export type ScorePoint = {
     position5: string;
     position6: string;
   };
+  created_at: string;
+  updated_at: string;
 };
 
 export type PlayerStat = {
@@ -83,4 +92,5 @@ export type PlayerStat = {
   stat_type: 'serve' | 'spike' | 'block' | 'reception';
   result: 'success' | 'error' | 'attempt';
   created_at: string;
+  updated_at: string;
 };

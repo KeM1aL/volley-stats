@@ -17,9 +17,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/lib/supabase/client";
+import { LoadingSpinner } from "../ui/loading-spinner";
 
 const formSchema = z.object({
-  teamName: z.string(),
+  teamName: z.string().min(1, "Team name is required"),
 });
 
 type NewTeamFormProps = {
@@ -55,11 +56,16 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
 
       await db?.teams.insert(data);
       onTeamCreated(data.id);
+      
+      toast({
+        title: "Team created",
+        description: "Your new team has been created successfully.",
+      });
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create team",
+        description: "Failed to create team. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -69,23 +75,33 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="teamName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <Input type="text" placeholder="Choose a name" onChange={field.onChange} defaultValue={field.value} />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-        </div>
+        <FormField
+          control={form.control}
+          name="teamName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Enter team name" 
+                  {...field} 
+                  disabled={isLoading}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <Button type="submit" className="w-full" disabled={isLoading}>
-          Create Team
+          {isLoading ? (
+            <>
+              <LoadingSpinner size="sm" className="mr-2" />
+              Creating Team...
+            </>
+          ) : (
+            "Create Team"
+          )}
         </Button>
       </form>
     </Form>

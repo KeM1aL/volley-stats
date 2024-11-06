@@ -83,7 +83,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
         <TableHeader>
           <TableRow>
             <TableHead>Avatar</TableHead>
-            <TableHead>Number</TableHead>
+            <TableHead>#</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Position</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>

@@ -52,7 +52,7 @@ export function PlayerForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: defaultValues?.name || "",
-      number: defaultValues?.number || 0,
+      number: defaultValues?.number.toString() || "0",
       position: defaultValues?.position || "",
       avatar_url: defaultValues?.avatar_url || null,
     },

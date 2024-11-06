@@ -1,115 +1,84 @@
--- Create tables for the volleyball statistics app
-create table public.teams (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  user_id uuid references auth.users(id) not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
+-- Enable RLS
+alter table public.teams enable row level security;
+alter table public.players enable row level security;
+alter table public.matches enable row level security;
+alter table public.sets enable row level security;
+alter table public.substitutions enable row level security;
+alter table public.score_points enable row level security;
+alter table public.player_stats enable row level security;
 
-create table public.players (
-  id uuid default gen_random_uuid() primary key,
-  team_id uuid references public.teams(id) not null,
-  name text not null,
-  number integer not null,
-  position text not null,
-  avatar_url text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
+-- Add updated_at columns and triggers
+ALTER TABLE public.teams 
+ADD COLUMN updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL;
 
--- Create storage bucket for player avatars
-insert into storage.buckets (id, name, public) 
-values ('player-avatars', 'player-avatars', true);
+ALTER TABLE public.players 
+ADD COLUMN updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL;
 
--- Set up storage policies
-create policy "Avatar images are publicly accessible"
-  on storage.objects for select
-  using ( bucket_id = 'player-avatars' );
+ALTER TABLE public.matches 
+ADD COLUMN updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL;
 
-create policy "Users can upload avatar images"
-  on storage.objects for insert
-  with check (
-    bucket_id = 'player-avatars' AND
-    auth.role() = 'authenticated'
-  );
+ALTER TABLE public.sets 
+ADD COLUMN updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL;
 
-create policy "Users can update their avatar images"
-  on storage.objects for update
-  using (
-    bucket_id = 'player-avatars' AND
-    auth.role() = 'authenticated'
-  );
+ALTER TABLE public.substitutions 
+ADD COLUMN updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL;
 
-create policy "Users can delete their avatar images"
-  on storage.objects for delete
-  using (
-    bucket_id = 'player-avatars' AND
-    auth.role() = 'authenticated'
-  );
+ALTER TABLE public.score_points 
+ADD COLUMN updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL;
 
--- Rest of the schema remains unchanged
-create table public.matches (
-  id uuid default gen_random_uuid() primary key,
-  date timestamp with time zone not null,
-  location text,
-  home_team_id uuid references public.teams(id) not null,
-  away_team_id uuid references public.teams(id) not null,
-  home_score integer default 0 not null,
-  away_score integer default 0 not null,
-  status text default 'upcoming' not null,
-  available_players uuid[] default array[]::uuid[],
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  constraint status_check check (status in ('upcoming', 'live', 'completed'))
-);
+ALTER TABLE public.player_stats 
+ADD COLUMN updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL;
 
-create table public.sets (
-  id uuid default gen_random_uuid() primary key,
-  match_id uuid references public.matches(id) not null,
-  set_number integer not null,
-  home_score integer default 0 not null,
-  away_score integer default 0 not null,
-  status text default 'upcoming' not null,
-  current_lineup jsonb not null default '{
-    "position1": null,
-    "position2": null,
-    "position3": null,
-    "position4": null,
-    "position5": null,
-    "position6": null
-  }',
-  constraint status_check check (status in ('upcoming', 'live', 'completed'))
-);
+-- Create function to update timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = timezone('utc'::text, now());
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
-create table public.substitutions (
-  id uuid default gen_random_uuid() primary key,
-  match_id uuid references public.matches(id) not null,
-  set_id uuid references public.sets(id) not null,
-  player_out_id uuid references public.players(id) not null,
-  player_in_id uuid references public.players(id) not null,
-  position integer not null check (position between 1 and 6),
-  timestamp timestamp with time zone default timezone('utc'::text, now()) not null
-);
+-- Create triggers for all tables
+CREATE TRIGGER update_teams_updated_at
+    BEFORE UPDATE ON public.teams
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
-create table public.score_points (
-  id uuid default gen_random_uuid() primary key,
-  match_id uuid references public.matches(id) not null,
-  set_id uuid references public.sets(id) not null,
-  scoring_team text not null check (scoring_team in ('home', 'away')),
-  point_type text not null check (point_type in ('serve', 'spike', 'block', 'opponent_error')),
-  player_id uuid references public.players(id),
-  timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
-  home_score integer not null,
-  away_score integer not null,
-  current_rotation jsonb not null
-);
+CREATE TRIGGER update_players_updated_at
+    BEFORE UPDATE ON public.players
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
-create table public.player_stats (
-  id uuid default gen_random_uuid() primary key,
-  match_id uuid references public.matches(id) not null,
-  set_id uuid references public.sets(id) not null,
-  player_id uuid references public.players(id) not null,
-  stat_type text not null,
-  result text not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  constraint stat_type_check check (stat_type in ('serve', 'spike', 'block', 'reception')),
-  constraint result_check check (result in ('success', 'error', 'attempt'))
-);
+CREATE TRIGGER update_matches_updated_at
+    BEFORE UPDATE ON public.matches
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_sets_updated_at
+    BEFORE UPDATE ON public.sets
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_substitutions_updated_at
+    BEFORE UPDATE ON public.substitutions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_score_points_updated_at
+    BEFORE UPDATE ON public.score_points
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_player_stats_updated_at
+    BEFORE UPDATE ON public.player_stats
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Add indexes for timestamp columns
+CREATE INDEX idx_teams_timestamps ON public.teams (created_at, updated_at);
+CREATE INDEX idx_players_timestamps ON public.players (created_at, updated_at);
+CREATE INDEX idx_matches_timestamps ON public.matches (created_at, updated_at);
+CREATE INDEX idx_sets_timestamps ON public.sets (created_at, updated_at);
+CREATE INDEX idx_substitutions_timestamps ON public.substitutions (created_at, updated_at);
+CREATE INDEX idx_score_points_timestamps ON public.score_points (created_at, updated_at);
+CREATE INDEX idx_player_stats_timestamps ON public.player_stats (created_at, updated_at);

@@ -3,11 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { StatResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { LoadingSpinner } from "../ui/loading-spinner";
 
 interface StatButtonProps {
   result: StatResult;
   onClick: () => void;
   disabled?: boolean;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -15,6 +17,7 @@ export function StatButton({
   result,
   onClick,
   disabled,
+  isLoading,
   className,
 }: StatButtonProps) {
   const variants = {
@@ -26,17 +29,20 @@ export function StatButton({
   return (
     <Button
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || isLoading}
       className={cn(
         "h-16 text-lg font-semibold transition-transform active:scale-95",
         variants[result],
         className
       )}
     >
-      <div>
-        <div className="text-md font-medium">
-          {result.charAt(0).toUpperCase() + result.slice(1)}
-        </div>
+      {isLoading ? (
+        <LoadingSpinner size="sm" className="text-white" />
+      ) : (
+        <div>
+          <div className="text-md font-medium">
+            {result.charAt(0).toUpperCase() + result.slice(1)}
+          </div>
           {(() => {
             switch (result) {
               case StatResult.SUCCESS:
@@ -44,10 +50,11 @@ export function StatButton({
               case StatResult.ERROR:
                 return <div className="text-sm opacity-75">-1</div>;
               default:
-                return;
+                return null;
             }
           })()}
-      </div>
+        </div>
+      )}
     </Button>
   );
 }

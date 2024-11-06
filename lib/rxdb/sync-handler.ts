@@ -73,7 +73,6 @@ class SyncHandler {
       await this.setupCollectionSync(name, collection);
     }
 
-    // Initial sync
     if (this.isOnline) {
       await this.performInitialSync();
     }
@@ -86,14 +85,17 @@ class SyncHandler {
         const { data, error } = await supabase
           .from(name)
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('updated_at', { ascending: false });
 
         if (error) throw error;
 
         await Promise.all(
           data.map(async (record) => {
             try {
-              await collection.upsert(record);
+              await collection.upsert({
+                ...record,
+                updated_at: record.updated_at || new Date().toISOString()
+              });
             } catch (err) {
               console.error(`Error upserting record in ${name}:`, err);
             }
@@ -109,7 +111,6 @@ class SyncHandler {
   }
 
   private async setupCollectionSync<T extends { id: string }>(name: CollectionName, collection: RxCollection<T>) {
-    // Set up change tracking
     collection.$.subscribe(async (changeEvent: RxChangeEvent<T>) => {
       if (!this.isOnline) {
         this.queueChange(name, changeEvent);
@@ -119,7 +120,6 @@ class SyncHandler {
       await this.syncToSupabase(name, changeEvent);
     });
 
-    // Set up Supabase realtime subscription
     const channel = supabase
       .channel(`${name}_changes`)
       .on(
@@ -133,11 +133,7 @@ class SyncHandler {
           await this.handleSupabaseChange(collection, payload);
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`Subscribed to changes in ${name}`);
-        }
-      });
+      .subscribe();
 
     this.channels.set(name, channel);
   }
@@ -152,7 +148,10 @@ class SyncHandler {
       switch (eventType) {
         case 'INSERT':
         case 'UPDATE':
-          await collection.upsert(newRecord);
+          await collection.upsert({
+            ...newRecord,
+            updated_at: newRecord.updated_at || new Date().toISOString()
+          });
           break;
         case 'DELETE':
           const doc = await collection.findOne(oldRecord.id).exec();
@@ -174,7 +173,10 @@ class SyncHandler {
     changeEvent: RxChangeEvent<T>
   ) {
     const operation = changeEvent.operation;
-    const doc = changeEvent.documentData;
+    const doc = {
+      ...changeEvent.documentData,
+      updated_at: new Date().toISOString()
+    };
 
     try {
       await retryWithBackoff(async () => {
@@ -217,7 +219,10 @@ class SyncHandler {
       collection: collectionName,
       operation: changeEvent.operation,
       documentId: changeEvent.documentId,
-      data: changeEvent.documentData,
+      data: {
+        ...changeEvent.documentData,
+        updated_at: new Date().toISOString()
+      },
       timestamp: Date.now(),
       retryCount: 0
     };
@@ -245,7 +250,6 @@ class SyncHandler {
       } catch (error) {
         console.error('Error processing sync queue:', error);
         
-        // Requeue if under max retries
         if (item.retryCount < this.maxRetries) {
           this.syncQueue.push({
             ...item,

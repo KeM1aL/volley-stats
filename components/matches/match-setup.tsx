@@ -51,6 +51,15 @@ export function MatchSetup({ match, onComplete }: MatchSetupProps) {
     loadData();
   }, [db, match.id]);
 
+  const sortPlayers = (a: Player, b: Player) => {
+    const aLower = a.name.toLowerCase();
+    const bLower = b.name.toLowerCase();
+  
+    if (aLower < bLower) return -1;
+    if (aLower > bLower) return 1;
+    return 0;
+  };
+
   const togglePlayerAvailability = (player: Player) => {
     if (availablePlayers.includes(player.id)) {
       setAvailablePlayers(availablePlayers.filter((id) => id !== player.id));
@@ -85,9 +94,9 @@ export function MatchSetup({ match, onComplete }: MatchSetupProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4">Team Lineup</h2>
+        <h2 className="text-lg font-semibold mb-4">Match Line-up</h2>
         <div className="grid grid-cols-1 gap-4">
-          {players.map((player) => (
+          {[...players].sort(sortPlayers).map((player) => (
             <Toggle key={player.id} variant="outline" aria-label="Toggle player availability" className="gap-4" onClick={() => togglePlayerAvailability(player)}>
               {player.name} {availablePlayers.includes(player.id) && <Check className="h-4 w-4" />}
             </Toggle>
