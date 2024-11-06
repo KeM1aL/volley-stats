@@ -8,17 +8,24 @@ export enum PlayerPosition {
   LIBERO = "Libero",
 }
 
+export enum PointType {
+  SERVE = "serve",
+  SPIKE = "spike",
+  BLOCK = "block",
+  OPPONENT_ERROR = "opponent_error",
+}
+
 export enum StatType {
   SERVE = "serve",
-  ATTACK = "attack",
+  SPIKE = "spike",
   BLOCK = "block",
   RECEPTION = "reception",
 }
 
 export enum StatResult {
-  SUCCESS = "success",
   ERROR = "error",
   ATTEMPT = "attempt",
+  SUCCESS = "success",
 }
 
 export enum MatchStatus {

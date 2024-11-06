@@ -14,13 +14,14 @@ import { StatisticsDialog } from "@/components/matches/history/statistics-dialog
 import { CompareDialog } from "@/components/matches/history/compare-dialog";
 import { useDb } from "@/components/providers/database-provider";
 import { createClient } from "@/lib/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Match, Team } from "@/lib/supabase/types";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MatchHistoryPage() {
   const router = useRouter();
   const { db } = useDb();
+  const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
@@ -29,6 +30,7 @@ export default function MatchHistoryPage() {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [compareMatches, setCompareMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const onMatchStarted = (matchId: string) => {
@@ -37,55 +39,73 @@ export default function MatchHistoryPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      const supabase = createClient();
-      
-      // Load teams first
-      const { data: teamsData, error: teamsError } = await supabase
-        .from("teams")
-        .select("*");
+      setIsLoading(true);
+      setError(null);
 
-      if (teamsError) throw teamsError;
-      setTeams(teamsData);
+      try {
+        const supabase = createClient();
 
-      // If a team is selected, load its matches
-      if (selectedTeam) {
-        let query = supabase
-          .from("matches")
-          .select(`
-            *,
-            home_team:teams!matches_home_team_id_fkey(*),
-            away_team:teams!matches_away_team_id_fkey(*)
-          `)
-          .or(`home_team_id.eq.${selectedTeam},away_team_id.eq.${selectedTeam}`);
+        // Load teams first
+        const { data: teamsData, error: teamsError } = await supabase
+          .from("teams")
+          .select("*");
 
-        // Apply date range filter
-        if (dateRange?.from) {
-          query = query.gte('date', format(dateRange.from, 'yyyy-MM-dd'));
+        if (teamsError) throw teamsError;
+        setTeams(teamsData);
+
+        // If a team is selected, load its matches
+        if (selectedTeam) {
+          let query = supabase
+            .from("matches")
+            .select(
+              `
+              *,
+              home_team:teams!matches_home_team_id_fkey(*),
+              away_team:teams!matches_away_team_id_fkey(*)
+            `
+            )
+            .or(
+              `home_team_id.eq.${selectedTeam},away_team_id.eq.${selectedTeam}`
+            );
+
+          // Apply date range filter
+          if (dateRange?.from) {
+            query = query.gte("date", format(dateRange.from, "yyyy-MM-dd"));
+          }
+          if (dateRange?.to) {
+            query = query.lte("date", format(dateRange.to, "yyyy-MM-dd"));
+          }
+
+          // Apply opponent filter
+          if (opponent) {
+            query = query.or(
+              `home_team_id.eq.${opponent},away_team_id.eq.${opponent}`
+            );
+          }
+
+          const { data: matchesData, error: matchesError } = await query;
+
+          if (matchesError) throw matchesError;
+          setMatches(matchesData);
         }
-        if (dateRange?.to) {
-          query = query.lte('date', format(dateRange.to, 'yyyy-MM-dd'));
-        }
-
-        // Apply opponent filter
-        if (opponent) {
-          query = query.or(`home_team_id.eq.${opponent},away_team_id.eq.${opponent}`);
-        }
-
-        const { data: matchesData, error: matchesError } = await query;
-        
-        if (matchesError) throw matchesError;
-        setMatches(matchesData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setError(
+          error instanceof Error ? error : new Error("Failed to load data")
+        );
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description:
+            "Failed to load matches. Please try refreshing the page.",
+        });
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     loadData();
-  }, [db, selectedTeam, dateRange, opponent]);
-
-  if (isLoading) {
-    return <Skeleton className="h-[600px] w-full" />;
-  }
+  }, [db, selectedTeam, dateRange, opponent, toast]);
 
   return (
     <div className="space-y-8">
@@ -111,9 +131,7 @@ export default function MatchHistoryPage() {
             Filters
           </Button>
           {matches.length >= 2 && (
-            <Button
-              onClick={() => setCompareMatches(matches.slice(0, 2))}
-            >
+            <Button onClick={() => setCompareMatches(matches.slice(0, 2))}>
               <BarChart3 className="h-4 w-4 mr-2" />
               Compare Matches
             </Button>
@@ -144,11 +162,20 @@ export default function MatchHistoryPage() {
           <CardTitle>Matches</CardTitle>
         </CardHeader>
         <CardContent>
-          <MatchHistoryTable
-            matches={matches}
-            onViewStats={setSelectedMatch}
-            onMatchStarted={onMatchStarted}
-          />
+          {!selectedTeam && (
+            <div className="text-center py-8 text-muted-foreground">
+              No team selected.
+            </div>
+          )}
+          {selectedTeam && (
+            <MatchHistoryTable
+              matches={matches}
+              onViewStats={setSelectedMatch}
+              onMatchStarted={onMatchStarted}
+              error={error}
+              isLoading={isLoading}
+            />
+          )}
         </CardContent>
       </Card>
 

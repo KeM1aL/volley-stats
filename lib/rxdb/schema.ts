@@ -147,7 +147,7 @@ export const playerStatSchema = toTypedRxJsonSchema({
     match_id: { type: 'string', maxLength: 36 },
     set_id: { type: 'string', maxLength: 36 },
     player_id: { type: 'string', maxLength: 36 },
-    stat_type: { type: 'string', enum: ['serve', 'attack', 'block', 'reception'] },
+    stat_type: { type: 'string', enum: ['serve', 'spike', 'block', 'reception'] },
     result: { type: 'string', enum: ['success', 'error', 'attempt'] },
     created_at: { type: 'string' },
   },

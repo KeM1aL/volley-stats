@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Match } from "@/lib/supabase/types";
 import { MatchStatus } from "@/lib/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
@@ -27,12 +28,16 @@ type MatchHistoryTableProps = {
   matches: Match[];
   onViewStats: (match: Match) => void;
   onMatchStarted: (matchId: string) => void;
+  error?: Error | null;
+  isLoading?: boolean;
 };
 
 export function MatchHistoryTable({
   matches,
   onViewStats,
-  onMatchStarted
+  onMatchStarted,
+  error,
+  isLoading
 }: MatchHistoryTableProps) {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -70,6 +75,34 @@ export function MatchHistoryTable({
     );
   };
 
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          Failed to load matches. Please try refreshing the page.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-16 bg-muted animate-pulse rounded-md" />
+        ))}
+      </div>
+    );
+  }
+
+  if (matches.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No matches found.
+      </div>
+    );
+  }
+
   return (
     <Table>
       <TableHeader>
@@ -102,7 +135,7 @@ export function MatchHistoryTable({
           <TableRow key={match.id}>
             <TableCell>{new Date(match.date).toLocaleDateString()}</TableCell>
             <TableCell>
-              {match.home_team.name} vs {match.away_team.name}
+              {match.home_team?.name || "Unknown"} vs {match.away_team?.name || "Unknown"}
             </TableCell>
             <TableCell>
               {match.home_score} - {match.away_score}

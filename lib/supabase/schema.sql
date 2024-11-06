@@ -110,6 +110,6 @@ create table public.player_stats (
   stat_type text not null,
   result text not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  constraint stat_type_check check (stat_type in ('serve', 'attack', 'block', 'reception')),
+  constraint stat_type_check check (stat_type in ('serve', 'spike', 'block', 'reception')),
   constraint result_check check (result in ('success', 'error', 'attempt'))
 );

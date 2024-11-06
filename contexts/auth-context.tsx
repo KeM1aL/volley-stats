@@ -10,6 +10,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  setSession: (session: Session | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+
+    window.location.href = "/";
   };
 
   if (isLoading) {
@@ -52,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, signOut, setSession }}>
       {children}
     </AuthContext.Provider>
   );

@@ -95,7 +95,9 @@ export function SetSetup({ match, onComplete }: SetSetupProps) {
                   <SelectValue placeholder={`Select ${position}`} />
                 </SelectTrigger>
                 <SelectContent>
-                  {players.map((player) => (
+                  {players
+                    // .filter((player) => lineup..id !== selectedTeam)
+                    .map((player) => (
                     <SelectItem key={player.id} value={player.id}>
                       {player.number} - {player.name}
                     </SelectItem>

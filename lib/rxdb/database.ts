@@ -1,6 +1,6 @@
 "use client";
 
-import { createRxDatabase, addRxPlugin, type RxDatabase, type RxCollection } from 'rxdb';
+import { createRxDatabase, addRxPlugin, type RxDatabase, type RxCollection, removeRxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
@@ -46,6 +46,7 @@ let dbPromise: Promise<VolleyballDatabase> | null = null;
 export const getDatabase = async (): Promise<VolleyballDatabase> => {
   if (dbPromise) return dbPromise;
 
+  removeRxDatabase('volleystats_db', getRxStorageDexie());
   dbPromise = createRxDatabase<DatabaseCollections>({
     name: 'volleystats_db',
     storage: getRxStorageDexie(),

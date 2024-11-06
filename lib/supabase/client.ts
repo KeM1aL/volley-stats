@@ -9,9 +9,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export function createClient() {
   return createBrowserClient(
-    supabaseUrl!, 
-    supabaseAnonKey!
-  )
+    supabaseUrl!,
+    supabaseAnonKey!,
+    {
+      auth: {
+        persistSession: true,
+        detectSessionInUrl: true,
+      }
+    }
+  );
 }
 
 export const supabase = createClient();

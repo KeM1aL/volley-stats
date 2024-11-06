@@ -80,7 +80,7 @@ export type PlayerStat = {
   match_id: string;
   set_id: string;
   player_id: string;
-  stat_type: 'serve' | 'attack' | 'block' | 'reception';
+  stat_type: 'serve' | 'spike' | 'block' | 'reception';
   result: 'success' | 'error' | 'attempt';
   created_at: string;
 };

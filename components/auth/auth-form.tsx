@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from "@/contexts/auth-context";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -28,6 +29,7 @@ export function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { setSession } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,11 +42,11 @@ export function AuthForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const { error } = isSignUp
+      const authResponse = isSignUp
         ? await supabase.auth.signUp(values)
         : await supabase.auth.signInWithPassword(values);
 
-      if (error) throw error;
+      if (authResponse.error) throw authResponse.error;
 
       if (isSignUp) {
         toast({
@@ -52,8 +54,11 @@ export function AuthForm() {
           description: "Please check your email to verify your account.",
         });
       } else {
+        // Update session in context
+        setSession(authResponse.data.session);
+        
         router.push("/teams");
-        router.refresh();
+        router.refresh()
       }
     } catch (error) {
       toast({
