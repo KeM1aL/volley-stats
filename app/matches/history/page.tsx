@@ -50,6 +50,16 @@ export default function MatchHistoryPage() {
       setIsLoading(true);
       setError(null);
 
+      // TODO Improve with useSettings hook
+      // Load saved settings from localStorage
+      const savedSettings = localStorage.getItem("userSettings");
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        if(settings.favoriteTeam) {
+          setSelectedTeam(settings.favoriteTeam);
+        }
+      }
+
       try {
         const supabase = createClient();
 
@@ -178,7 +188,7 @@ export default function MatchHistoryPage() {
           {selectedTeam && (
             <MatchHistoryTable
               matches={matches}
-              onViewStats={setSelectedMatch}
+              onViewStats={onMatchViewStats}
               onStart={onMatchStarted}
               onEdit={onMatchLive}
               error={error}

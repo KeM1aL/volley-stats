@@ -98,7 +98,7 @@ export function SetSetup({ match, onComplete }: SetSetupProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {players
-                    // .filter((player) => lineup..id !== selectedTeam)
+                    .filter((player) => Object.entries(lineup).every(([key, value]) => key === position || value !== player.id))
                     .map((player) => (
                     <SelectItem key={player.id} value={player.id}>
                       {player.number} - {player.name}
