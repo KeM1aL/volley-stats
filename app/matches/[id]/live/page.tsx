@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useDb } from "@/components/providers/database-provider";
-import { LiveMatchHeader } from "@/components/matches/live-match-header";
-import { ScoreBoard } from "@/components/matches/score-board";
-import { StatTracker } from "@/components/matches/stat-tracker";
+import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
+import { ScoreBoard } from "@/components/matches/live/score-board";
+import { StatTracker } from "@/components/matches/live/stat-tracker";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Match, PlayerStat, ScorePoint, Set } from "@/lib/supabase/types";

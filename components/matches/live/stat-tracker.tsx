@@ -5,12 +5,12 @@ import { Match, Player, ScorePoint, Set } from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatType, StatResult, PointType } from "@/lib/types";
+import { StatType, StatResult, PointType, Score } from "@/lib/types";
 import { StatButton } from "./stat-button";
 import { useToast } from "@/hooks/use-toast";
 import { PlayerSelector } from "./player-selector";
-import { LoadingSpinner } from "../ui/loading-spinner";
-import { Skeleton } from "../ui/skeleton";
+import { LoadingSpinner } from "../../ui/loading-spinner";
+import { Skeleton } from "../../ui/skeleton";
 
 type StatTrackerProps = {
   match: Match;
@@ -23,7 +23,7 @@ export function StatTracker({ match, set, onPoint }: StatTrackerProps) {
   const { toast } = useToast();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [scores, setScores] = useState({ home: 0, away: 0 })
+  const [scores, setScores] = useState<Score>({ home: 0, away: 0 });
   const [selectedStatType, setSelectedStatType] = useState<StatType | "">("");
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

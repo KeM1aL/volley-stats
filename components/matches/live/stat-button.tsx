@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { StatResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { LoadingSpinner } from "../ui/loading-spinner";
+import { LoadingSpinner } from "../../ui/loading-spinner";
 
 interface StatButtonProps {
   result: StatResult;

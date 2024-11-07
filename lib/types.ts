@@ -33,3 +33,8 @@ export enum MatchStatus {
   LIVE = "live",
   COMPLETED = "completed",
 }
+
+export type Score = {
+  home: number,
+  away: number,
+}

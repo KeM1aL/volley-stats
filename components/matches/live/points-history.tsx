@@ -1,10 +1,10 @@
 "use client";
 
 import { ScorePoint } from "@/lib/supabase/types";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "../ui/badge";
+import { Badge } from "../../ui/badge";
 
 interface PointsHistoryProps {
   points: ScorePoint[];
