@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import { retryWithBackoff } from '@/lib/utils/retry';
 import { toast } from 'sonner';
 import { CollectionName } from '../schema';
+import { Subscription } from 'rxjs';
 
 interface SyncQueueItem<T = any> {
   collection: CollectionName;
@@ -18,6 +19,7 @@ interface SyncQueueItem<T = any> {
 
 export class SyncHandler {
   private channels: Map<CollectionName, RealtimeChannel> = new Map();
+  private rxSubscriptions: Map<CollectionName, Subscription> = new Map();
   private syncQueue: SyncQueueItem[] = [];
   private isOnline: boolean = true;
   private collections: Map<CollectionName, RxCollection> = new Map();
@@ -68,6 +70,7 @@ export class SyncHandler {
   };
 
   async initializeSync(collections: Map<CollectionName, RxCollection>) {
+    this.cleanup();
     this.collections = collections;
 
     if (this.isOnline) {
@@ -124,7 +127,7 @@ export class SyncHandler {
   }
 
   private async setupCollectionSync<T extends { id: string }>(name: CollectionName, collection: RxCollection<T>) {
-    collection.$.subscribe(async (changeEvent: RxChangeEvent<T>) => {
+    const subscription = collection.$.subscribe(async (changeEvent: RxChangeEvent<T>) => {
       if (!this.isOnline) {
         this.queueChange(name, changeEvent);
         return;
@@ -132,6 +135,7 @@ export class SyncHandler {
 
       await this.syncToSupabase(name, changeEvent);
     });
+    this.rxSubscriptions.set(name, subscription);
 
     if(!this.syncFromSupabase) return;
     const channel = supabase
@@ -318,6 +322,8 @@ export class SyncHandler {
     }
 
     this.channels.forEach(channel => channel.unsubscribe());
+
+    this.rxSubscriptions.forEach(subscription => subscription.unsubscribe());
 
     if (this.queueProcessInterval) {
       clearInterval(this.queueProcessInterval);

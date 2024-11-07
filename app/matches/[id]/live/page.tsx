@@ -8,17 +8,18 @@ import { ScoreBoard } from "@/components/matches/score-board";
 import { StatTracker } from "@/components/matches/stat-tracker";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Match, ScorePoint, Set } from "@/lib/supabase/types";
+import type { Match, PlayerStat, ScorePoint, Set } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
 
 export default function LiveMatchPage() {
-  const { matchId } = useParams();
+  const { id: matchId } = useParams();
   const { db } = useDb();
   const [match, setMatch] = useState<Match | null>(null);
   const [set, setSet] = useState<Set | null>(null);
   const [points, setPoints] = useState<ScorePoint[]>([]);
   const [sets, setSets] = useState<Set[]>([]);
+  const [stats, setStats] = useState<PlayerStat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const onSetSetupComplete  = (set: Set) => {
@@ -31,17 +32,68 @@ export default function LiveMatchPage() {
   }
 
   useEffect(() => {
-    const loadMatch = async () => {
+    const loadData = async () => {
       if (!db) return;
 
-      const matchDoc = await db.matches.findOne(matchId as string).exec();
-      if (matchDoc) {
-        setMatch(matchDoc.toMutableJSON());
+      try {
+        const [matchDoc, pointDocs, statDocs, setDocs] = await Promise.all([
+          db.matches.findOne(matchId as string).exec(),
+          db.score_points
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+              sort: [
+                {updated_at: 'asc'}
+              ]
+            })
+            .exec(),
+          db.player_stats
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+              sort: [
+                {updated_at: 'asc'}
+              ]
+            })
+            .exec(),
+          db.sets
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+              sort: [
+                {updated_at: 'asc'}
+              ]
+            })
+            .exec(),
+        ]);
+
+        if (matchDoc) {
+          setMatch(matchDoc.toMutableJSON());
+        }
+        setPoints(pointDocs.map(doc => doc.toJSON()));
+        setStats(statDocs.map(doc => doc.toJSON()));
+        if(setDocs) {
+          setSets(setDocs.map(doc => doc.toJSON()));
+          if(setDocs.length > 0) {
+            setSet(setDocs[setDocs.length - 1].toJSON());
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load match data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load match data",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    loadMatch();
+    loadData();
   }, [db, matchId]);
 
   if (isLoading) {

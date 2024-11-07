@@ -35,7 +35,7 @@ import { ScoreProgression } from "@/components/matches/stats/score-progression";
 import { TeamPerformance } from "@/components/matches/stats/team-performance";
 
 export default function MatchStatsPage() {
-  const { matchId } = useParams();
+  const { id: matchId } = useParams();
   const { db } = useDb();
   const [match, setMatch] = useState<Match | null>(null);
   const [points, setPoints] = useState<ScorePoint[]>([]);
@@ -78,7 +78,7 @@ export default function MatchStatsPage() {
         ]);
 
         if (matchDoc) {
-          setMatch(matchDoc.toJSON());
+          setMatch(matchDoc.toMutableJSON());
           const teamPlayers = playerDocs.filter(doc => 
             doc.team_id === matchDoc.home_team_id || 
             doc.team_id === matchDoc.away_team_id
