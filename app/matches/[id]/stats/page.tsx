@@ -3,11 +3,24 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useDb } from "@/components/providers/database-provider";
-import { LiveMatchHeader } from "@/components/matches/live-match-header";
-import { ScoreBoard } from "@/components/matches/score-board";
-import { StatTracker } from "@/components/matches/stat-tracker";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Download, Share2 } from "lucide-react";
+import { jsPDF } from "jspdf";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import type {
   Match,
   Player,
@@ -16,7 +29,10 @@ import type {
   Set,
 } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
-import { SetSetup } from "@/components/sets/set-setup";
+import { SetBreakdown } from "@/components/matches/stats/set-breakdown";
+import { PlayerPerformance } from "@/components/matches/stats/player-performance";
+import { ScoreProgression } from "@/components/matches/stats/score-progression";
+import { TeamPerformance } from "@/components/matches/stats/team-performance";
 
 export default function MatchStatsPage() {
   const { matchId } = useParams();
@@ -32,58 +48,210 @@ export default function MatchStatsPage() {
     const loadData = async () => {
       if (!db) return;
 
-      const matchDoc = await db.matches.findOne(matchId as string).exec();
-      if (matchDoc) {
-        setMatch(matchDoc.toMutableJSON());
-      }
-      const [pointDocs, statDocs, setDocs] = await Promise.all([
-        db.score_points
-          .find({
-            selector: {
-              match_id: matchId as string,
-            },
-          })
-          .exec(),
-        db.player_stats
-          .find({
-            selector: {
-              match_id: matchId as string,
-            },
-          })
-          .exec(),
-        db.sets
-          .find({
-            selector: {
-              match_id: matchId as string,
-            },
-          })
-          .exec(),
-        // db.players
-        //   .find({
-        //     selector: {
-        //       team_id: match.home_team_id,
-        //     },
-        //   })
-        //   .exec(),
-      ]);
+      try {
+        const [matchDoc, pointDocs, statDocs, setDocs, playerDocs] = await Promise.all([
+          db.matches.findOne(matchId as string).exec(),
+          db.score_points
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+            })
+            .exec(),
+          db.player_stats
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+            })
+            .exec(),
+          db.sets
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+            })
+            .exec(),
+          db.players
+            .find()
+            .exec(),
+        ]);
 
-      setPoints(pointDocs.map((doc) => doc.toJSON()));
-      setStats(statDocs.map((doc) => doc.toJSON()));
-      setSets(setDocs.map((doc) => doc.toJSON()));
-      // setPlayers(playerDocs.map((doc) => doc.toJSON()));
-      setIsLoading(false);
+        if (matchDoc) {
+          setMatch(matchDoc.toJSON());
+          const teamPlayers = playerDocs.filter(doc => 
+            doc.team_id === matchDoc.home_team_id || 
+            doc.team_id === matchDoc.away_team_id
+          );
+          setPlayers(teamPlayers.map(doc => doc.toJSON()));
+        }
+        setPoints(pointDocs.map(doc => doc.toJSON()));
+        setStats(statDocs.map(doc => doc.toJSON()));
+        setSets(setDocs.map(doc => doc.toJSON()));
+      } catch (error) {
+        console.error("Failed to load match data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load match data",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadData();
   }, [db, matchId]);
 
+  const exportToPDF = async () => {
+    const doc = new jsPDF();
+    
+    // Add match details
+    doc.setFontSize(20);
+    doc.text("Match Report", 20, 20);
+    
+    if (match) {
+      doc.setFontSize(12);
+      doc.text(`Date: ${new Date(match.date).toLocaleDateString()}`, 20, 40);
+      doc.text(`Score: ${match.home_score} - ${match.away_score}`, 20, 50);
+    }
+    
+    // Add more sections...
+    
+    doc.save("match-report.pdf");
+  };
+
+  const exportToCSV = () => {
+    // Convert match data to CSV format
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      // Add CSV data here
+      "Match Statistics";
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "match-stats.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const shareStats = async () => {
+    try {
+      await navigator.share({
+        title: "Match Statistics",
+        text: "Check out the statistics from our latest match!",
+        url: window.location.href,
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
+
   if (isLoading) {
-    return <Skeleton className="h-[600px] w-full" />;
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-[100px] w-full" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
   }
 
   if (!match) {
     return <div>Match not found</div>;
   }
 
-  return <div className="space-y-4"></div>;
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Match Statistics</h1>
+          <p className="text-muted-foreground">
+            {new Date(match.date).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportToCSV}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button variant="outline" onClick={exportToPDF}>
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+          <Button variant="outline" onClick={shareStats}>
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-6">
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="sets">Sets</TabsTrigger>
+              <TabsTrigger value="players">Players</TabsTrigger>
+              <TabsTrigger value="progression">Progression</TabsTrigger>
+              <TabsTrigger value="team">Team</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview">
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Final Score</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold text-center">
+                      {match.home_score} - {match.away_score}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Match Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p>Total Sets: {sets.length}</p>
+                      <p>Total Points: {points.length}</p>
+                      <p>Duration: {sets.length * 25} minutes</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="sets">
+              <SetBreakdown sets={sets} points={points} />
+            </TabsContent>
+
+            <TabsContent value="players">
+              <PlayerPerformance 
+                players={players}
+                stats={stats}
+                points={points}
+              />
+            </TabsContent>
+
+            <TabsContent value="progression">
+              <ScoreProgression points={points} />
+            </TabsContent>
+
+            <TabsContent value="team">
+              <TeamPerformance
+                match={match}
+                sets={sets}
+                points={points}
+                stats={stats}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

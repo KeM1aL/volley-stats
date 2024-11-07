@@ -7,6 +7,7 @@ import {
   BarChart2,
   Upload,
   Volleyball,
+  Pencil,
 } from "lucide-react";
 import {
   Table,
@@ -27,7 +28,8 @@ type SortDirection = "asc" | "desc";
 type MatchHistoryTableProps = {
   matches: Match[];
   onViewStats: (match: Match) => void;
-  onMatchStarted: (matchId: string) => void;
+  onStart: (match: Match) => void;
+  onEdit: (match: Match) => void;
   error?: Error | null;
   isLoading?: boolean;
 };
@@ -35,9 +37,10 @@ type MatchHistoryTableProps = {
 export function MatchHistoryTable({
   matches,
   onViewStats,
-  onMatchStarted,
+  onStart,
+  onEdit,
   error,
-  isLoading
+  isLoading,
 }: MatchHistoryTableProps) {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -135,7 +138,8 @@ export function MatchHistoryTable({
           <TableRow key={match.id}>
             <TableCell>{new Date(match.date).toLocaleDateString()}</TableCell>
             <TableCell>
-              {match.home_team?.name || "Unknown"} vs {match.away_team?.name || "Unknown"}
+              {match.home_team?.name || "Unknown"} vs{" "}
+              {match.away_team?.name || "Unknown"}
             </TableCell>
             <TableCell>
               {match.home_score} - {match.away_score}
@@ -144,16 +148,45 @@ export function MatchHistoryTable({
               <span className="capitalize">{match.status}</span>
             </TableCell>
             <TableCell>
-              {match.status === MatchStatus.UPCOMING && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onMatchStarted(match.id)}
-                >
-                  <Volleyball className="h-4 w-4 mr-2" />
-                  Start
-                </Button>
-              )}
+              {(() => {
+                switch (match.status) {
+                  case MatchStatus.UPCOMING:
+                    return (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onStart(match)}
+                      >
+                        <Volleyball className="h-4 w-4 mr-2" />
+                        Start
+                      </Button>
+                    );
+                  case MatchStatus.COMPLETED:
+                    return (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onViewStats(match)}
+                      >
+                        <BarChart2 className="h-4 w-4 mr-2" />
+                        Stats
+                      </Button>
+                    );
+                  case MatchStatus.LIVE:
+                    return (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(match)}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    );
+                  default:
+                    return null;
+                }
+              })()}
               {match.status === MatchStatus.COMPLETED && (
                 <Button
                   variant="ghost"
