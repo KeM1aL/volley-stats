@@ -84,9 +84,17 @@ export class SyncHandler {
     const entries = Array.from(this.collections.entries());
     for (const [name, collection] of entries) {
       try {
+        // const latestRecord = await collection.findOne({
+        //   selector: {},
+        //   sort: [
+        //     {updated_at: 'asc'}
+        //   ]
+        // }).exec();
+
         const { data, error } = await supabase
           .from(name)
           .select('*')
+          // .gte('updated_at', latestRecord?.updated_at ?? new Date(2024, 1, 1).toISOString())
           .order('updated_at', { ascending: false });
 
         if (error) throw error;
