@@ -64,7 +64,8 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
 
       await db?.teams.findOne(team.id).update({
         $set: { 
-          name: values.name 
+          name: values.name,
+          updated_at: new Date().toISOString(),
         },
       });
 

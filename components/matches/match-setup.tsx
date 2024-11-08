@@ -26,6 +26,7 @@ import {
   FormLabel,
 } from "../ui/form";
 import { Switch } from "../ui/switch";
+import { update } from "rxdb/plugins/update";
 
 type MatchSetupProps = {
   match: Match;
@@ -93,6 +94,7 @@ export function MatchSetup({ match, onComplete }: MatchSetupProps) {
         $set: {
           status: "live",
           available_players: availablePlayers,
+          updated_at: new Date().toISOString(),
         },
       });
       onComplete();

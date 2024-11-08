@@ -6,16 +6,17 @@ import { useDb } from "@/components/providers/database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CourtDiagram } from "./court-diagram";
 import { useToast } from "@/hooks/use-toast";
+import { Score } from "@/lib/types";
 
 type ScoreBoardProps = {
   match: Match;
   set: Set;
+  score: Score;
 };
 
-export function ScoreBoard({ match, set }: ScoreBoardProps) {
+export function ScoreBoard({ match, set, score }: ScoreBoardProps) {
   const { db } = useDb();
   const { toast } = useToast();
-  const [points, setPoints] = useState<ScorePoint[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,25 +24,14 @@ export function ScoreBoard({ match, set }: ScoreBoardProps) {
     const loadData = async () => {
       if (!db) return;
 
-      const [pointDocs, playerDocs] = await Promise.all([
-        db.score_points
-          .find({
-            selector: {
-              match_id: match.id,
-              set_id: set.id,
-            },
-          })
-          .exec(),
-        db.players
-          .find({
-            selector: {
-              team_id: match.home_team_id,
-            },
-          })
-          .exec(),
-      ]);
+      const playerDocs = await db.players
+        .find({
+          selector: {
+            team_id: match.home_team_id,
+          },
+        })
+        .exec();
 
-      setPoints(pointDocs.map((doc) => doc.toJSON()));
       setPlayers(playerDocs.map((doc) => doc.toJSON()));
     };
 
@@ -52,22 +42,20 @@ export function ScoreBoard({ match, set }: ScoreBoardProps) {
     <div className="gap-6">
       <div className="space-y-6">
         <div className="grid grid-cols-3 gap-2">
-        <Card>
-            <CardContent className="p-6">
-              
-            </CardContent>
+          <Card>
+            <CardContent className="p-6"></CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col items-center space-y-2">
                   <h2 className="text-2xl font-bold">Home</h2>
-                  <div className="text-4xl font-bold">{match.home_score}</div>
+                  <div className="text-4xl font-bold">{set.home_score}</div>
                 </div>
                 <div className="text-6xl font-bold mx-4">-</div>
                 <div className="flex flex-col items-center space-y-2">
                   <h2 className="text-2xl font-bold">Ext.</h2>
-                  <div className="text-4xl font-bold">{match.away_score}</div>
+                  <div className="text-4xl font-bold">{set.away_score}</div>
                 </div>
               </div>
               <div className="text-sm text-center text-muted-foreground">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PointsHistory } from "./points-history";
+import { update } from "rxdb/plugins/update";
 
 type LiveMatchHeaderProps = {
   match: Match;
@@ -24,6 +25,7 @@ export function LiveMatchHeader({ match, points }: LiveMatchHeaderProps) {
       await db?.matches.findOne(match.id).update({
         $set: {
           status: "completed",
+          updated_at: new Date().toISOString(),
         },
       });
       router.push(`/matches/${match.id}/stats`);

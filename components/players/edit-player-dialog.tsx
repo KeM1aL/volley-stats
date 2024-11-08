@@ -12,6 +12,7 @@ import { Player } from "@/lib/supabase/types";
 import { supabase } from "@/lib/supabase/client";
 import { useDb } from "@/components/providers/database-provider";
 import { PlayerForm } from "./player-form";
+import { update } from "rxdb/plugins/update";
 
 type EditPlayerDialogProps = {
   player: Player | null;
@@ -51,6 +52,7 @@ export function EditPlayerDialog({
           name: values.name,
           number: values.number,
           position: values.position,
+          updated_at: new Date().toISOString(),
         },
       });
 
