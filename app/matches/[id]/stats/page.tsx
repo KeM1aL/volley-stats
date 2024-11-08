@@ -33,6 +33,7 @@ import { SetBreakdown } from "@/components/matches/stats/set-breakdown";
 import { PlayerPerformance } from "@/components/matches/stats/player-performance";
 import { ScoreProgression } from "@/components/matches/stats/score-progression";
 import { TeamPerformance } from "@/components/matches/stats/team-performance";
+import { MatchAnalysis } from "@/components/matches/stats/match-analysis";
 
 export default function MatchStatsPage() {
   const { id: matchId } = useParams();
@@ -195,6 +196,7 @@ export default function MatchStatsPage() {
               <TabsTrigger value="players">Players</TabsTrigger>
               <TabsTrigger value="progression">Progression</TabsTrigger>
               <TabsTrigger value="team">Team</TabsTrigger>
+              <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
@@ -247,6 +249,16 @@ export default function MatchStatsPage() {
                 sets={sets}
                 points={points}
                 stats={stats}
+              />
+            </TabsContent>
+
+            <TabsContent value="analysis">
+              <MatchAnalysis
+                match={match}
+                sets={sets}
+                points={points}
+                stats={stats}
+                players={players}
               />
             </TabsContent>
           </Tabs>
