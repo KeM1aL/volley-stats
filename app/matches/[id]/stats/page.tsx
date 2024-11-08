@@ -57,6 +57,7 @@ export default function MatchStatsPage() {
               selector: {
                 match_id: matchId as string,
               },
+              sort: [{ updated_at: "asc" }],
             })
             .exec(),
           db.player_stats
@@ -64,6 +65,7 @@ export default function MatchStatsPage() {
               selector: {
                 match_id: matchId as string,
               },
+              sort: [{ updated_at: "asc" }],
             })
             .exec(),
           db.sets
@@ -71,6 +73,7 @@ export default function MatchStatsPage() {
               selector: {
                 match_id: matchId as string,
               },
+              sort: [{ updated_at: "asc" }],
             })
             .exec(),
           db.players

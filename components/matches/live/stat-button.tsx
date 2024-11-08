@@ -13,6 +13,12 @@ interface StatButtonProps {
   className?: string;
 }
 
+export const variants = {
+  [StatResult.SUCCESS]: "bg-green-500 hover:bg-green-600 text-white",
+  [StatResult.ERROR]: "bg-red-500 hover:bg-red-600 text-white",
+  [StatResult.ATTEMPT]: "bg-yellow-500 hover:bg-yellow-600 text-white",
+};
+
 export function StatButton({
   result,
   onClick,
@@ -20,11 +26,7 @@ export function StatButton({
   isLoading,
   className,
 }: StatButtonProps) {
-  const variants = {
-    [StatResult.SUCCESS]: "bg-green-500 hover:bg-green-600 text-white",
-    [StatResult.ERROR]: "bg-red-500 hover:bg-red-600 text-white",
-    [StatResult.ATTEMPT]: "bg-yellow-500 hover:bg-yellow-600 text-white",
-  };
+  
 
   return (
     <Button

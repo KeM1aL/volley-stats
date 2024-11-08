@@ -80,7 +80,7 @@ create table if not exists public.score_points (
   match_id uuid references public.matches(id) not null,
   set_id uuid references public.sets(id) not null,
   scoring_team text not null check (scoring_team in ('home', 'away')),
-  point_type text not null check (point_type in ('serve', 'spike', 'block', 'opponent_error')),
+  point_type text not null check (point_type in ('serve', 'spike', 'block', 'reception', 'unknown')),
   player_id uuid references public.players(id),
   timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,

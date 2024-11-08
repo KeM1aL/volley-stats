@@ -187,16 +187,6 @@ export function MatchHistoryTable({
                     return null;
                 }
               })()}
-              {match.status === MatchStatus.COMPLETED && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onViewStats(match)}
-                >
-                  <BarChart2 className="h-4 w-4 mr-2" />
-                  Stats
-                </Button>
-              )}
             </TableCell>
           </TableRow>
         ))}

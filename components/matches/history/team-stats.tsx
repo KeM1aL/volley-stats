@@ -31,10 +31,26 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
   const winRate = totalMatches > 0 ? (wins / totalMatches) * 100 : 0;
 
   const totalPoints = teamMatches.reduce((sum, match) => {
-    const points = match.home_team_id === teamId
+
+    if(match.status !== 'completed') {
+      return sum;
+    }
+    const myScore = match.home_team_id === teamId
       ? match.home_score
       : match.away_score;
-    return sum + points;
+    const opponentScore = match.home_team_id === teamId
+      ? match.away_score
+      : match.home_score;
+    if(opponentScore > myScore + 1) {
+      return sum;
+    }
+    if(myScore > opponentScore + 1) {
+      return sum + 3;
+    }
+    if(myScore > opponentScore) {
+      return sum + 2;
+    }
+    return sum + 1;
   }, 0);
 
   const averagePoints = totalMatches > 0

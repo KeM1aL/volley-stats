@@ -15,27 +15,7 @@ type LiveMatchHeaderProps = {
 };
 
 export function LiveMatchHeader({ match, points }: LiveMatchHeaderProps) {
-  const { db } = useDb();
-  const router = useRouter();
-  const [isEnding, setIsEnding] = useState(false);
-
-  const endMatch = async () => {
-    setIsEnding(true);
-    try {
-      await db?.matches.findOne(match.id).update({
-        $set: {
-          status: "completed",
-          updated_at: new Date().toISOString(),
-        },
-      });
-      router.push(`/matches/${match.id}/stats`);
-    } catch (error) {
-      console.error("Failed to end match:", error);
-    } finally {
-      setIsEnding(false);
-    }
-  };
-
+  
   return (
     <Card>
       <CardContent className="flex items-center justify-between p-6">
@@ -47,14 +27,6 @@ export function LiveMatchHeader({ match, points }: LiveMatchHeaderProps) {
         </div>
 
         <PointsHistory points={points} />
-
-        <Button
-          variant="destructive"
-          onClick={endMatch}
-          disabled={isEnding}
-        >
-          End Match
-        </Button>
       </CardContent>
     </Card>
   );

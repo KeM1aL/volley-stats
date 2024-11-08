@@ -17,10 +17,13 @@ import { Match, Player, Set } from "@/lib/supabase/types";
 
 type SetSetupProps = {
   match: Match;
+  setNumber: number;
   onComplete: (set: Set) => void;
 };
 
-export function SetSetup({ match, onComplete }: SetSetupProps) {
+const NAMES = ['First Set', 'Second Set', 'Third Set', 'Fourth Set', 'Tie-Break'];
+
+export function SetSetup({ match, setNumber, onComplete }: SetSetupProps) {
   const { db } = useDb();
   const [players, setPlayers] = useState<Player[]>([]);
   const [lineup, setLineup] = useState<Record<PlayerPosition, string>>(
@@ -50,7 +53,7 @@ export function SetSetup({ match, onComplete }: SetSetupProps) {
       const setDoc = await db?.sets.insert({
         id: crypto.randomUUID(),
         match_id: match.id,
-        set_number: 1, // TODO: Implement set number selection
+        set_number: setNumber,
         home_score: 0,
         away_score: 0,
         status: 'live',
@@ -83,7 +86,7 @@ export function SetSetup({ match, onComplete }: SetSetupProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4">Next Set Lineup</h2>
+        <h2 className="text-lg font-semibold mb-4">{`${NAMES[setNumber - 1]} Lineup`}</h2>
         <div className="grid grid-cols-2 gap-4">
           {Object.values(PlayerPosition).map((position) => (
             <div key={position}>

@@ -124,7 +124,7 @@ export const scorePointSchema = toTypedRxJsonSchema({
     match_id: { type: 'string', maxLength: 36 },
     set_id: { type: 'string', maxLength: 36 },
     scoring_team: { type: 'string', enum: ['home', 'away'] },
-    point_type: { type: 'string', enum: ['serve', 'spike', 'block', 'opponent_error'] },
+    point_type: { type: 'string', enum: ['serve', 'spike', 'block', 'reception', 'unknown'] },
     player_id: { type: ['string', 'null'], maxLength: 36 },
     timestamp: { type: 'string' },
     home_score: { type: 'number' },

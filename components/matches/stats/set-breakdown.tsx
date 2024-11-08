@@ -41,15 +41,15 @@ export function SetBreakdown({ sets, points }: SetBreakdownProps) {
       serves: setPoints.filter((p) => p.point_type === "serve").length,
       spikes: setPoints.filter((p) => p.point_type === "spike").length,
       blocks: setPoints.filter((p) => p.point_type === "block").length,
-      errors: setPoints.filter((p) => p.point_type === "opponent_error").length,
+      errors: setPoints.filter((p) => p.point_type === "unknown").length,
       homeServes: homePoints.filter(p => p.point_type === "serve").length,
       homeSpikes: homePoints.filter(p => p.point_type === "spike").length,
       homeBlocks: homePoints.filter(p => p.point_type === "block").length,
-      homeErrors: homePoints.filter(p => p.point_type === "opponent_error").length,
+      homeErrors: homePoints.filter(p => p.point_type === "unknown").length,
       awayServes: awayPoints.filter(p => p.point_type === "serve").length,
       awaySpikes: awayPoints.filter(p => p.point_type === "spike").length,
       awayBlocks: awayPoints.filter(p => p.point_type === "block").length,
-      awayErrors: awayPoints.filter(p => p.point_type === "opponent_error").length,
+      awayErrors: awayPoints.filter(p => p.point_type === "unknown").length,
     };
   });
 
@@ -94,7 +94,7 @@ export function SetBreakdown({ sets, points }: SetBreakdownProps) {
                   <p>Serves: {points.filter(p => p.set_id === set.id && p.point_type === 'serve').length}</p>
                   <p>Spikes: {points.filter(p => p.set_id === set.id && p.point_type === 'spike').length}</p>
                   <p>Blocks: {points.filter(p => p.set_id === set.id && p.point_type === 'block').length}</p>
-                  <p>Opponent Errors: {points.filter(p => p.set_id === set.id && p.point_type === 'opponent_error').length}</p>
+                  <p>Opponent Errors: {points.filter(p => p.set_id === set.id && p.point_type === 'unknown').length}</p>
                 </div>
               </div>
             </CardContent>
@@ -147,34 +147,6 @@ export function SetBreakdown({ sets, points }: SetBreakdownProps) {
           </ResponsiveContainer>
         </CardContent>
       </Card>
-
-      {sets.map((set) => (
-        <Card key={`momentum-${set.id}`}>
-          <CardHeader>
-            <CardTitle>Set {set.set_number} Momentum</CardTitle>
-            <CardDescription>Point-by-point momentum shifts and scoring patterns</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={getMomentumData(set)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="point" />
-                <YAxis domain={[-100, 100]} />
-                <Tooltip />
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="momentum"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.3}
-                  name="Momentum"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 }

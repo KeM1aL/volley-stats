@@ -41,11 +41,8 @@ export function ScoreBoard({ match, set, score }: ScoreBoardProps) {
   return (
     <div className="gap-6">
       <div className="space-y-6">
-        <div className="grid grid-cols-3 gap-2">
-          <Card>
-            <CardContent className="p-6"></CardContent>
-          </Card>
-          <Card>
+        <div className="flex flex-row justify-center gap-2">
+          <Card className="basis-1/3">
             <CardContent className="p-6">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col items-center space-y-2">

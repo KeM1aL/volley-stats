@@ -33,7 +33,7 @@ export default function RootLayout({
             <DatabaseProvider>
               <div className="min-h-screen bg-background">
                 <Navigation />
-                <main className="container mx-auto px-4 py-4">
+                <main className="2xl:container 2xl:mx-auto px-4 py-4">
                   {children}
                 </main>
               </div>

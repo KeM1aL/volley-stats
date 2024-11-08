@@ -10,11 +10,14 @@ import {
 } from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatType, StatResult, Score } from "@/lib/types";
-import { StatButton } from "./stat-button";
+import { StatType, StatResult, Score, PointType } from "@/lib/types";
+import { StatButton, variants } from "./stat-button";
 import { useToast } from "@/hooks/use-toast";
 import { PlayerSelector } from "./player-selector";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScorePoint } from "../../../lib/supabase/types";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type StatTrackerProps = {
   match: Match;
@@ -33,7 +36,7 @@ export function StatTracker({
   sets,
   stats,
   points,
-  score: scores,
+  score,
   onPoint,
   onStat,
 }: StatTrackerProps) {
@@ -92,6 +95,33 @@ export function StatTracker({
     }
   };
 
+  const recordPoint = async (type: PointType, result: StatResult) => {
+    setIsRecording(true);
+    try {
+      const isSuccess = result === StatResult.SUCCESS;
+      const isError = result === StatResult.ERROR;
+      const newHomeScore = score.home + (isSuccess ? 1 : 0);
+      const newAwayScore = score.away + (isError ? 1 : 0);
+      const point = {
+        id: crypto.randomUUID(),
+        match_id: match.id,
+        set_id: currentSet.id,
+        scoring_team: isSuccess ? "home" : "away",
+        point_type: type,
+        player_id: null,
+        timestamp: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        home_score: newHomeScore,
+        away_score: newAwayScore,
+        current_rotation: currentSet!.current_lineup,
+      } as ScorePoint;
+      await onPoint(point);
+    } finally {
+      setIsRecording(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -130,7 +160,7 @@ export function StatTracker({
                 </div>
                 <div className="flex-1">
                   <CardContent className="p-2">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-4">
                       {Object.values(StatResult).map((result) => (
                         <StatButton
                           key={result}
@@ -146,6 +176,36 @@ export function StatTracker({
               </div>
             </Card>
           ))}
+        </div>
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              onClick={() => recordPoint(PointType.UNKNOWN, StatResult.ERROR)}
+              disabled={isRecording || isLoading}
+              className={cn(
+                "h-16 text-lg font-semibold transition-transform active:scale-95",
+                variants[StatResult.ERROR]
+              )}
+            >
+              <div>
+                <div className="text-md font-medium">Opponent Point</div>
+                <div className="text-sm opacity-75">-1</div>
+              </div>
+            </Button>
+            <Button
+              onClick={() => recordPoint(PointType.UNKNOWN, StatResult.SUCCESS)}
+              disabled={isRecording || isLoading}
+              className={cn(
+                "h-16 text-lg font-semibold transition-transform active:scale-95",
+                variants[StatResult.SUCCESS]
+              )}
+            >
+              <div>
+                <div className="text-md font-medium">Opponent Error</div>
+                <div className="text-sm opacity-75">+1</div>
+              </div>
+            </Button>
+          </div>
         </div>
       </CardContent>
     </div>

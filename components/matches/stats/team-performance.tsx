@@ -57,7 +57,7 @@ export function TeamPerformance({
         serves: teamPoints.filter(p => p.point_type === 'serve').length,
         spikes: teamPoints.filter(p => p.point_type === 'spike').length,
         blocks: teamPoints.filter(p => p.point_type === 'block').length,
-        opponentErrors: teamPoints.filter(p => p.point_type === 'opponent_error').length,
+        opponentErrors: teamPoints.filter(p => p.point_type === 'unknown').length,
       },
       stats: {
         serves: {

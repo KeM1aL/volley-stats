@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useDb } from "@/components/providers/database-provider";
 import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { ScoreBoard } from "@/components/matches/live/score-board";
@@ -12,12 +12,11 @@ import type { Match, PlayerStat, ScorePoint, Set } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
 import { PointType, Score, StatResult } from "@/lib/types";
-import { on } from "events";
-import { update } from "rxdb/plugins/update";
 
 export default function LiveMatchPage() {
   const { id: matchId } = useParams();
   const { db } = useDb();
+  const router = useRouter();
   const [match, setMatch] = useState<Match | null>(null);
   const [set, setSet] = useState<Set | null>(null);
   const [points, setPoints] = useState<ScorePoint[]>([]);
@@ -29,6 +28,9 @@ export default function LiveMatchPage() {
   const onSetSetupComplete = (set: Set) => {
     setSet(set);
     setSets([...sets, set]);
+    setScore({ home: 0, away: 0 });
+    setPoints([]);
+    setStats([]);
   };
 
   const onPlayerStatRecorded = async (stat: PlayerStat) => {
@@ -83,41 +85,44 @@ export default function LiveMatchPage() {
     await db?.score_points.insert(point);
     setPoints([...points, point]);
 
+    const setNumber = set!.set_number;
+    const homeScore = point.home_score;
+    const awayScore = point.away_score;
+    setScore((prev) => ({ home: point.home_score, away: point.away_score }));
+
+    const setUpdatedFields = {
+      updated_at: new Date().toISOString(),
+      home_score: homeScore,
+      away_score: awayScore,
+    } as Partial<Set>;
+
+    let setTerminated = false;
+    if (
+      (setNumber < 5 &&
+        (homeScore >= 25 || awayScore >= 25) &&
+        Math.abs(homeScore - awayScore) >= 2) ||
+      (setNumber === 5 &&
+        (homeScore >= 15 || awayScore >= 15) &&
+        Math.abs(homeScore - awayScore) >= 2)
+    ) {
+      setUpdatedFields.status = "completed";
+      setTerminated = true;
+    }
     await db?.sets.findOne(set!.id).update({
-      $set: {
-        home_score: point.home_score,
-        away_score: point.away_score,
-        updated_at: new Date().toISOString(),
-      },
+      $set: setUpdatedFields,
     });
     const updatedSet = {
       ...set!,
-      home_score: point.home_score,
-      away_score: point.away_score,
+      ...setUpdatedFields,
     };
     setSet(updatedSet);
-    setScore((prev) => ({ home: point.home_score, away: point.away_score }));
 
-    if (
-      (updatedSet.set_number < 5 &&
-        (updatedSet.home_score >= 25 || updatedSet.away_score >= 25) &&
-        Math.abs(updatedSet.home_score - updatedSet.away_score) === 2) ||
-      (updatedSet.set_number === 5 &&
-        (updatedSet.home_score >= 15 || updatedSet.away_score >= 15) &&
-        Math.abs(updatedSet.home_score - updatedSet.away_score) === 2)
-    ) {
+    if (setTerminated) {
       onSetTerminated(updatedSet);
     }
   };
 
   const onSetTerminated = async (set: Set) => {
-    await db?.sets.findOne(set.id).update({
-      $set: {
-        status: "completed",
-        updated_at: new Date().toISOString(),
-      },
-    });
-    
     const matchUpdatedFields = {
       updated_at: new Date().toISOString(),
     } as Partial<Match>;
@@ -126,39 +131,38 @@ export default function LiveMatchPage() {
     } else {
       matchUpdatedFields.away_score = match!.away_score + 1;
     }
-    if (set.set_number === 5) {
+    let matchTerminated = false;
+    if (
+      matchUpdatedFields.home_score === 3 ||
+      matchUpdatedFields.away_score === 3
+    ) {
+      matchTerminated = true;
       matchUpdatedFields.status = "completed";
     }
     await db?.matches.findOne(set.match_id).update({
       $set: matchUpdatedFields,
     });
+    const updatedMatch = {
+      ...match!,
+      ...matchUpdatedFields,
+    };
+    setMatch(updatedMatch);
+    if (matchTerminated) {
+      onMatchTerminated(updatedMatch);
+    }
   };
 
-  const onMatchTerminated = async (match: Match) => {};
+  const onMatchTerminated = async (match: Match) => {
+    router.push(`/matches/${match.id}/stats`);
+  };
 
   useEffect(() => {
     const loadData = async () => {
       if (!db) return;
 
       try {
-        const [matchDoc, pointDocs, statDocs, setDocs] = await Promise.all([
+        const [matchDoc, setDocs] = await Promise.all([
           db.matches.findOne(matchId as string).exec(),
-          db.score_points
-            .find({
-              selector: {
-                match_id: matchId as string,
-              },
-              sort: [{ updated_at: "asc" }],
-            })
-            .exec(),
-          db.player_stats
-            .find({
-              selector: {
-                match_id: matchId as string,
-              },
-              sort: [{ updated_at: "asc" }],
-            })
-            .exec(),
           db.sets
             .find({
               selector: {
@@ -172,12 +176,33 @@ export default function LiveMatchPage() {
         if (matchDoc) {
           setMatch(matchDoc.toMutableJSON());
         }
-        setPoints(pointDocs.map((doc) => doc.toJSON()));
-        setStats(statDocs.map((doc) => doc.toJSON()));
         if (setDocs) {
           setSets(setDocs.map((doc) => doc.toJSON()));
           if (setDocs.length > 0) {
-            setSet(setDocs[setDocs.length - 1].toJSON());
+            const set = setDocs[setDocs.length - 1].toJSON();
+            setSet(set);
+            const [pointDocs, statDocs] = await Promise.all([
+              db.score_points
+                .find({
+                  selector: {
+                    match_id: matchId as string,
+                    set_id: set.id,
+                  },
+                  sort: [{ updated_at: "asc" }],
+                })
+                .exec(),
+              db.player_stats
+                .find({
+                  selector: {
+                    match_id: matchId as string,
+                    set_id: set.id,
+                  },
+                  sort: [{ updated_at: "asc" }],
+                })
+                .exec(),
+            ]);
+            setPoints(pointDocs.map((doc) => doc.toJSON()));
+            setStats(statDocs.map((doc) => doc.toJSON()));
           }
         }
       } catch (error) {
@@ -213,7 +238,11 @@ export default function LiveMatchPage() {
 
         <Card className="p-6">
           {!set || set.status === "completed" ? (
-            <SetSetup match={match} onComplete={onSetSetupComplete} />
+            <SetSetup
+              match={match}
+              setNumber={set ? set.set_number + 1 : 1}
+              onComplete={onSetSetupComplete}
+            />
           ) : (
             <StatTracker
               onStat={onPlayerStatRecorded}

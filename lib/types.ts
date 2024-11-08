@@ -12,7 +12,8 @@ export enum PointType {
   SERVE = "serve",
   SPIKE = "spike",
   BLOCK = "block",
-  OPPONENT_ERROR = "opponent_error",
+  RECEPTION = "reception",
+  UNKNOWN = "unknown",
 }
 
 export enum StatType {
