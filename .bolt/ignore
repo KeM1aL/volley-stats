@@ -18,6 +18,6 @@ app/matches/history/*
 app/matches/new/*
 app/auth/*
 app/teams/*
-lib/rxdb/*
-lib/utils/*
-lib/supabase/*
+# lib/rxdb/*
+# lib/utils/*
+# lib/supabase/*
