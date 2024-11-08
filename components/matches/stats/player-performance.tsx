@@ -29,8 +29,12 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  LineChart,
+  Line,
 } from "recharts";
 import { Player, PlayerStat, ScorePoint } from "@/lib/supabase/types";
+import { Button } from "@/components/ui/button";
+import { GitCompareArrows } from "lucide-react";
 
 interface PlayerPerformanceProps {
   players: Player[];
@@ -44,138 +48,331 @@ export function PlayerPerformance({
   points,
 }: PlayerPerformanceProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [comparePlayer, setComparePlayer] = useState<string | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
 
-  const playerStats = players.map((player) => {
-    const playerPoints = points.filter((p) => p.player_id === player.id);
-    const playerStatRecords = stats.filter((s) => s.player_id === player.id);
+  const calculatePlayerStats = (playerId: string) => {
+    const playerPoints = points.filter((p) => p.player_id === playerId);
+    const playerStatRecords = stats.filter((s) => s.player_id === playerId);
+    
+    const serveStats = playerStatRecords.filter(s => s.stat_type === 'serve');
+    const spikeStats = playerStatRecords.filter(s => s.stat_type === 'spike');
+    const blockStats = playerStatRecords.filter(s => s.stat_type === 'block');
+    const receptionStats = playerStatRecords.filter(s => s.stat_type === 'reception');
 
     return {
-      id: player.id,
-      name: player.name,
-      number: player.number,
-      serves: playerPoints.filter((p) => p.point_type === "serve").length,
-      spikes: playerPoints.filter((p) => p.point_type === "spike").length,
-      blocks: playerPoints.filter((p) => p.point_type === "block").length,
-      errors: playerStatRecords.filter((s) => s.result === "error").length,
-      successRate:
-        (playerStatRecords.filter((s) => s.result === "success").length /
-          playerStatRecords.length) *
-        100 || 0,
+      serves: {
+        total: serveStats.length,
+        aces: playerPoints.filter(p => p.point_type === 'serve').length,
+        errors: serveStats.filter(s => s.result === 'error').length,
+        successRate: (serveStats.filter(s => s.result === 'success').length / serveStats.length) * 100 || 0
+      },
+      spikes: {
+        total: spikeStats.length,
+        kills: playerPoints.filter(p => p.point_type === 'spike').length,
+        errors: spikeStats.filter(s => s.result === 'error').length,
+        successRate: (spikeStats.filter(s => s.result === 'success').length / spikeStats.length) * 100 || 0
+      },
+      blocks: {
+        total: blockStats.length,
+        points: playerPoints.filter(p => p.point_type === 'block').length,
+        errors: blockStats.filter(s => s.result === 'error').length,
+        successRate: (blockStats.filter(s => s.result === 'success').length / blockStats.length) * 100 || 0
+      },
+      reception: {
+        total: receptionStats.length,
+        perfect: receptionStats.filter(s => s.result === 'success').length,
+        errors: receptionStats.filter(s => s.result === 'error').length,
+        successRate: (receptionStats.filter(s => s.result === 'success').length / receptionStats.length) * 100 || 0
+      }
     };
-  });
+  };
 
-  const selectedPlayerStats = selectedPlayer
-    ? playerStats.find((p) => p.id === selectedPlayer)
-    : null;
+  const selectedPlayerStats = selectedPlayer ? calculatePlayerStats(selectedPlayer) : null;
+  const comparePlayerStats = comparePlayer ? calculatePlayerStats(comparePlayer) : null;
 
-  const radarData = selectedPlayerStats
-    ? [
-        {
-          subject: "Serves",
-          value: selectedPlayerStats.serves,
-          fullMark: Math.max(...playerStats.map((p) => p.serves)),
-        },
-        {
-          subject: "Spikes",
-          value: selectedPlayerStats.spikes,
-          fullMark: Math.max(...playerStats.map((p) => p.spikes)),
-        },
-        {
-          subject: "Blocks",
-          value: selectedPlayerStats.blocks,
-          fullMark: Math.max(...playerStats.map((p) => p.blocks)),
-        },
-        {
-          subject: "Success Rate",
-          value: selectedPlayerStats.successRate,
-          fullMark: 100,
-        },
-      ]
-    : [];
+  const getRadarData = (playerStats: ReturnType<typeof calculatePlayerStats>) => [
+    { subject: 'Serve Success', value: playerStats.serves.successRate },
+    { subject: 'Spike Success', value: playerStats.spikes.successRate },
+    { subject: 'Block Success', value: playerStats.blocks.successRate },
+    { subject: 'Reception Success', value: playerStats.reception.successRate },
+  ];
+
+  const getPerformanceTrend = (playerId: string) => {
+    return points
+      .filter(p => p.player_id === playerId)
+      .map((_, index) => ({
+        point: index + 1,
+        value: stats
+          .filter(s => s.player_id === playerId)
+          .slice(0, index + 1)
+          .filter(s => s.result === 'success').length / (index + 1) * 100
+      }));
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Player Analysis</h3>
-        <Select
-          value={selectedPlayer || undefined}
-          onValueChange={setSelectedPlayer}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Select player" />
-          </SelectTrigger>
-          <SelectContent>
-            {players.map((player) => (
-              <SelectItem key={player.id} value={player.id}>
-                #{player.number} {player.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-4 items-center">
+          <Select
+            value={selectedPlayer || undefined}
+            onValueChange={setSelectedPlayer}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select player" />
+            </SelectTrigger>
+            <SelectContent>
+              {players.map((player) => (
+                <SelectItem key={player.id} value={player.id}>
+                  #{player.number} {player.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {selectedPlayer && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowComparison(!showComparison)}
+              >
+                <GitCompareArrows className="h-4 w-4 mr-2" />
+                {showComparison ? "Hide Comparison" : "Compare Players"}
+              </Button>
+
+              {showComparison && (
+                <Select
+                  value={comparePlayer || undefined}
+                  onValueChange={setComparePlayer}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select player to compare" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {players
+                      .filter(p => p.id !== selectedPlayer)
+                      .map((player) => (
+                        <SelectItem key={player.id} value={player.id}>
+                          #{player.number} {player.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Performance Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={playerStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar
-                  dataKey="serves"
-                  fill="hsl(var(--chart-1))"
-                  name="Serves"
-                />
-                <Bar
-                  dataKey="spikes"
-                  fill="hsl(var(--chart-2))"
-                  name="Spikes"
-                />
-                <Bar
-                  dataKey="blocks"
-                  fill="hsl(var(--chart-3))"
-                  name="Blocks"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {selectedPlayerStats && (
+      {selectedPlayerStats && selectedPlayer && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>
-                Player Profile: {selectedPlayerStats.name}
-              </CardTitle>
-              <CardDescription>
-                #{selectedPlayerStats.number}
-              </CardDescription>
+              <CardTitle>Performance Radar</CardTitle>
+              <CardDescription>Overall success rates across skills</CardDescription>
             </CardHeader>
             <CardContent className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData}>
+                <RadarChart data={getRadarData(selectedPlayerStats)}>
                   <PolarGrid />
                   <PolarAngleAxis dataKey="subject" />
-                  <PolarRadiusAxis />
+                  <PolarRadiusAxis domain={[0, 100]} />
                   <Radar
-                    name={selectedPlayerStats.name}
+                    name={players.find(p => p.id === selectedPlayer)?.name}
                     dataKey="value"
                     stroke="hsl(var(--primary))"
                     fill="hsl(var(--primary))"
                     fillOpacity={0.6}
                   />
+                  {comparePlayerStats && (
+                    <Radar
+                      name={players.find(p => p.id === comparePlayer)?.name}
+                      dataKey="value"
+                      stroke="hsl(var(--chart-1))"
+                      fill="hsl(var(--chart-1))"
+                      fillOpacity={0.6}
+                    />
+                  )}
+                  <Legend />
                 </RadarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-        )}
-      </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance Trend</CardTitle>
+              <CardDescription>Success rate evolution during the match</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="point" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    data={getPerformanceTrend(selectedPlayer)}
+                    type="monotone"
+                    dataKey="value"
+                    name={players.find(p => p.id === selectedPlayer)?.name}
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                  />
+                  {comparePlayer && (
+                    <Line
+                      data={getPerformanceTrend(comparePlayer)}
+                      type="monotone"
+                      dataKey="value"
+                      name={players.find(p => p.id === comparePlayer)?.name}
+                      stroke="hsl(var(--chart-1))"
+                      strokeWidth={2}
+                    />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Detailed Statistics</CardTitle>
+              <CardDescription>Breakdown by skill type</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-semibold mb-2">Serves</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total: {selectedPlayerStats.serves.total}</p>
+                      <p className="text-sm text-muted-foreground">Aces: {selectedPlayerStats.serves.aces}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Errors: {selectedPlayerStats.serves.errors}</p>
+                      <p className="text-sm text-muted-foreground">Success Rate: {selectedPlayerStats.serves.successRate.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Spikes</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total: {selectedPlayerStats.spikes.total}</p>
+                      <p className="text-sm text-muted-foreground">Kills: {selectedPlayerStats.spikes.kills}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Errors: {selectedPlayerStats.spikes.errors}</p>
+                      <p className="text-sm text-muted-foreground">Success Rate: {selectedPlayerStats.spikes.successRate.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Blocks</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total: {selectedPlayerStats.blocks.total}</p>
+                      <p className="text-sm text-muted-foreground">Points: {selectedPlayerStats.blocks.points}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Errors: {selectedPlayerStats.blocks.errors}</p>
+                      <p className="text-sm text-muted-foreground">Success Rate: {selectedPlayerStats.blocks.successRate.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Reception</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total: {selectedPlayerStats.reception.total}</p>
+                      <p className="text-sm text-muted-foreground">Perfect: {selectedPlayerStats.reception.perfect}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Errors: {selectedPlayerStats.reception.errors}</p>
+                      <p className="text-sm text-muted-foreground">Success Rate: {selectedPlayerStats.reception.successRate.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {comparePlayerStats && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Comparison</CardTitle>
+                <CardDescription>Head-to-head statistics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-semibold mb-2">Serves</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">{players.find(p => p.id === selectedPlayer)?.name}</p>
+                        <p className="text-sm text-muted-foreground">Aces: {selectedPlayerStats.serves.aces}</p>
+                        <p className="text-sm text-muted-foreground">Success: {selectedPlayerStats.serves.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{players.find(p => p.id === comparePlayer)?.name}</p>
+                        <p className="text-sm text-muted-foreground">Aces: {comparePlayerStats.serves.aces}</p>
+                        <p className="text-sm text-muted-foreground">Success: {comparePlayerStats.serves.successRate.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-2">Spikes</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Kills: {selectedPlayerStats.spikes.kills}</p>
+                        <p className="text-sm text-muted-foreground">Success: {selectedPlayerStats.spikes.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Kills: {comparePlayerStats.spikes.kills}</p>
+                        <p className="text-sm text-muted-foreground">Success: {comparePlayerStats.spikes.successRate.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-2">Blocks</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Points: {selectedPlayerStats.blocks.points}</p>
+                        <p className="text-sm text-muted-foreground">Success: {selectedPlayerStats.blocks.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Points: {comparePlayerStats.blocks.points}</p>
+                        <p className="text-sm text-muted-foreground">Success: {comparePlayerStats.blocks.successRate.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-2">Reception</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Perfect: {selectedPlayerStats.reception.perfect}</p>
+                        <p className="text-sm text-muted-foreground">Success: {selectedPlayerStats.reception.successRate.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Perfect: {comparePlayerStats.reception.perfect}</p>
+                        <p className="text-sm text-muted-foreground">Success: {comparePlayerStats.reception.successRate.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 }
