@@ -7,14 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CourtDiagram } from "./court-diagram";
 import { useToast } from "@/hooks/use-toast";
 import { Score } from "@/lib/types";
+import { PointsHistory } from "./points-history";
 
 type ScoreBoardProps = {
   match: Match;
   set: Set;
   score: Score;
+  points: ScorePoint[];
 };
 
-export function ScoreBoard({ match, set, score }: ScoreBoardProps) {
+export function ScoreBoard({ match, set, score, points }: ScoreBoardProps) {
   const { db } = useDb();
   const { toast } = useToast();
   const [players, setPlayers] = useState<Player[]>([]);
@@ -43,7 +45,7 @@ export function ScoreBoard({ match, set, score }: ScoreBoardProps) {
       <div className="space-y-6">
         <div className="flex flex-row justify-center gap-2">
           <Card className="basis-1/3">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col items-center space-y-2">
                   <h2 className="text-2xl font-bold">Home</h2>
@@ -61,6 +63,7 @@ export function ScoreBoard({ match, set, score }: ScoreBoardProps) {
             </CardContent>
           </Card>
         </div>
+        <PointsHistory points={points} />
 
         <CourtDiagram players={players} />
       </div>

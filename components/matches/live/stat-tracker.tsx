@@ -15,7 +15,6 @@ import { StatButton, variants } from "./stat-button";
 import { useToast } from "@/hooks/use-toast";
 import { PlayerSelector } from "./player-selector";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScorePoint } from "../../../lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -139,7 +138,7 @@ export function StatTracker({
 
   return (
     <div className="space-y-6">
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-4">
         <PlayerSelector
           players={players}
           selectedPlayer={selectedPlayer}

@@ -230,13 +230,13 @@ export default function LiveMatchPage() {
 
   return (
     <div className="space-y-4">
-      <LiveMatchHeader match={match} points={points} />
+      <LiveMatchHeader match={match} sets={sets} />
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          {set && <ScoreBoard match={match} set={set} score={score} />}
+        <Card className="p-4">
+          {set && <ScoreBoard match={match} set={set} score={score} points={points} />}
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-4">
           {!set || set.status === "completed" ? (
             <SetSetup
               match={match}
