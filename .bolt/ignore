@@ -1,2 +1,20 @@
 components/ui/*
 hooks/use-toast.ts
+
+components/players/*
+components/settings/*
+components/sets/*
+components/matches/history/*
+components/matches/live/*
+# components/matches/stats/*
+components/auth/*
+components/teams/*
+public/*
+app/settings/*
+app/matches/[id]/start/*
+app/matches/[id]/live/*
+# app/matches/[id]/stats/*
+app/matches/history/*
+app/matches/new/*
+app/auth/*
+app/teams/*
