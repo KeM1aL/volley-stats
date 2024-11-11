@@ -57,7 +57,7 @@ export function CompareDialog({ matches, onClose }: CompareDialogProps) {
               </CardHeader>
               <CardContent>
                 <p>
-                  {match1.home_team.name} vs {match1.away_team.name}
+                  {match1.home_team?.name} vs {match1.away_team?.name}
                 </p>
                 <p className="text-muted-foreground">
                   {new Date(match1.date).toLocaleDateString()}
@@ -71,7 +71,7 @@ export function CompareDialog({ matches, onClose }: CompareDialogProps) {
               </CardHeader>
               <CardContent>
                 <p>
-                  {match2.home_team.name} vs {match2.away_team.name}
+                  {match2.home_team?.name} vs {match2.away_team?.name}
                 </p>
                 <p className="text-muted-foreground">
                   {new Date(match2.date).toLocaleDateString()}

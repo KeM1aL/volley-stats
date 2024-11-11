@@ -18,6 +18,8 @@ export type Player = {
 };
 
 export type Match = {
+  away_team?: Team;
+  home_team?: Team;
   id: string;
   date: string;
   location: string;
