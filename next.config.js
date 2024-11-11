@@ -5,9 +5,6 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
   publicExcludes: ['!icons/**/*'],
   buildExcludes: [/chunks\/.*$/],
-  cacheOnFrontEndNav: true,
-  reloadOnOnline: true,
-  swcMinify: true,
   workboxOptions: {
     runtimeCaching: [
       {
