@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useTheme } from "next-themes";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,11 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { Team } from "@/lib/supabase/types";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useSettings, settingsSchema, type Settings } from "@/hooks/use-settings";
 
 const languages = [
   { value: "en", label: "English" },
@@ -37,76 +36,53 @@ const languages = [
   { value: "de", label: "Deutsch" },
 ];
 
-const formSchema = z.object({
-  favoriteTeam: z.string().min(1, "Please select a team"),
-  language: z.string().min(1, "Please select a language"),
-  theme: z.enum(["light", "dark", "system"]),
-  notifications: z.object({
-    matchReminders: z.boolean(),
-    scoreUpdates: z.boolean(),
-    teamNews: z.boolean(),
-  }),
-});
-
-type SettingsFormValues = z.infer<typeof formSchema>;
-
 export default function SettingsPage() {
-  const { theme, setTheme } = useTheme();
   const { db } = useDb();
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const { settings, isLoading: isLoadingSettings, updateSettings, resetSettings } = useSettings();
 
-  const form = useForm<SettingsFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      theme: (theme as "light" | "dark" | "system") || "system",
-      notifications: {
-        matchReminders: true,
-        scoreUpdates: true,
-        teamNews: false,
-      },
-    },
+  const form = useForm<Settings>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: settings,
   });
 
   useEffect(() => {
-    const loadSettings = async () => {
+    const loadTeams = async () => {
       if (!db) return;
 
       try {
-        // Load teams
         const teamDocs = await db.teams.find().exec();
         setTeams(teamDocs.map(doc => doc.toJSON()));
-
-        // Load saved settings from localStorage
-        const savedSettings = localStorage.getItem("userSettings");
-        if (savedSettings) {
-          const settings = JSON.parse(savedSettings);
-          form.reset(settings);
-        }
       } catch (error) {
-        console.error("Failed to load settings:", error);
+        console.error("Failed to load teams:", error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load settings",
+          description: "Failed to load teams",
         });
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadSettings();
-  }, [db, form]);
+    loadTeams();
+  }, [db]);
 
-  const onSubmit = async (values: SettingsFormValues) => {
+  useEffect(() => {
+    if (!isLoadingSettings) {
+      form.reset(settings);
+    }
+  }, [settings, isLoadingSettings, form]);
+
+  const onSubmit = async (values: Settings) => {
     setIsSaving(true);
     try {
-      // Save settings to localStorage
-      localStorage.setItem("userSettings", JSON.stringify(values));
-      
-      // Update theme
-      setTheme(values.theme);
+      const result = await updateSettings(values);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
       toast({
         title: "Settings saved",
@@ -124,28 +100,16 @@ export default function SettingsPage() {
     }
   };
 
-  const resetSettings = () => {
-    const defaultValues = {
-      theme: ("system" as "light" | "dark" | "system"),
-      language: "en",
-      notifications: {
-        matchReminders: true,
-        scoreUpdates: true,
-        teamNews: false,
-      },
-    };
-
-    form.reset(defaultValues);
-    localStorage.removeItem("userSettings");
-    setTheme(defaultValues.theme);
-
+  const handleResetSettings = () => {
+    const defaults = resetSettings();
+    form.reset(defaults);
     toast({
       title: "Settings reset",
       description: "Your preferences have been reset to default values.",
     });
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingSettings) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -328,7 +292,7 @@ export default function SettingsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={resetSettings}
+                  onClick={handleResetSettings}
                   disabled={isSaving}
                 >
                   Reset to Defaults
