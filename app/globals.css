@@ -82,5 +82,26 @@
   
   .border-r-2 {
     border-right-width: 2px;
+  }
 }
+
+/* Loading bar animations */
+@keyframes loading-bar-shine {
+  0% {
+    background-position: -100px;
+  }
+  100% {
+    background-position: 100px;
+  }
+}
+
+.loading-bar-shine {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  background-size: 200px 100%;
+  animation: loading-bar-shine 1.5s infinite linear;
 }

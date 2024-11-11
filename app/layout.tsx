@@ -6,6 +6,7 @@ import { DatabaseProvider } from '@/components/providers/database-provider';
 import { AuthProvider } from '@/contexts/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
+import { LoadingBar } from '@/components/ui/loading-bar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -71,6 +72,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <DatabaseProvider>
+              <LoadingBar />
               <div className="min-h-screen bg-background">
                 <Navigation />
                 <main className="2xl:container 2xl:mx-auto px-4 py-4">
