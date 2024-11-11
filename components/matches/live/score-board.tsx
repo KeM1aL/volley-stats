@@ -8,6 +8,7 @@ import { CourtDiagram } from "./court-diagram";
 import { useToast } from "@/hooks/use-toast";
 import { Score } from "@/lib/types";
 import { PointsHistory } from "./points-history";
+import { Badge } from "@/components/ui/badge";
 
 type ScoreBoardProps = {
   match: Match;
@@ -50,6 +51,9 @@ export function ScoreBoard({ match, set, score, points }: ScoreBoardProps) {
                 <div className="flex flex-col items-center space-y-2">
                   <h2 className="text-2xl font-bold">Home</h2>
                   <div className="text-4xl font-bold">{set.home_score}</div>
+                  <Badge variant="secondary" className="mt-2">
+                    Serving
+                  </Badge>
                 </div>
                 <div className="text-6xl font-bold mx-4">-</div>
                 <div className="flex flex-col items-center space-y-2">

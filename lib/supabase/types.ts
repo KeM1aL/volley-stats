@@ -38,6 +38,7 @@ export type Set = {
   home_score: number;
   away_score: number;
   status: 'upcoming' | 'live' | 'completed';
+  first_server: 'home' | 'away';
   current_lineup: {
     position1: string;
     position2: string;

@@ -32,7 +32,7 @@ export function CourtDiagram({ players, className }: CourtDiagramProps) {
   ];
 
   return (
-    <div className={cn("relative aspect-[3/2] bg-muted rounded-lg p-4", className)}>
+    <div className={cn("relative aspect-[3/2] bg-muted rounded-lg", className)}>
       {/* Court outline */}
       <div className="absolute inset-4 border-2 border-primary rounded">
         {/* 3-meter line */}
