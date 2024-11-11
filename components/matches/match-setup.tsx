@@ -3,30 +3,10 @@
 import { useEffect, useState } from "react";
 import { useDb } from "@/components/providers/database-provider";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { PlayerPosition } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { createClient } from "@/lib/supabase/client";
 import { Match, Player } from "@/lib/supabase/types";
-import { Check, Square, SquareCheckBig } from "lucide-react";
+import { Check } from "lucide-react";
 import { Toggle } from "../ui/toggle";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "../ui/form";
-import { Switch } from "../ui/switch";
-import { update } from "rxdb/plugins/update";
 
 type MatchSetupProps = {
   match: Match;

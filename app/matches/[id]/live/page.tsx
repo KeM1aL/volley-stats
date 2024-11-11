@@ -8,7 +8,13 @@ import { ScoreBoard } from "@/components/matches/live/score-board";
 import { StatTracker } from "@/components/matches/live/stat-tracker";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Match, PlayerStat, ScorePoint, Set } from "@/lib/supabase/types";
+import type {
+  Match,
+  PlayerStat,
+  ScorePoint,
+  Set,
+  Team,
+} from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
 import { PointType, Score, StatResult } from "@/lib/types";
@@ -18,12 +24,86 @@ export default function LiveMatchPage() {
   const { db } = useDb();
   const router = useRouter();
   const [match, setMatch] = useState<Match | null>(null);
+  const [homeTeam, setHomeTeam] = useState<Team | null>(null);
+  const [awayTeam, setAwayTeam] = useState<Team | null>(null);
+  const [server, setServer] = useState<"home" | "away">("home");
   const [set, setSet] = useState<Set | null>(null);
   const [points, setPoints] = useState<ScorePoint[]>([]);
   const [sets, setSets] = useState<Set[]>([]);
   const [stats, setStats] = useState<PlayerStat[]>([]);
   const [score, setScore] = useState<Score>({ home: 0, away: 0 });
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!db) return;
+
+      try {
+        const [matchDoc, setDocs] = await Promise.all([
+          db.matches.findOne(matchId as string).exec(),
+          db.sets
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+              sort: [{ updated_at: "asc" }],
+            })
+            .exec(),
+        ]);
+
+        if (matchDoc) {
+          const match = matchDoc.toMutableJSON() as Match;
+          setMatch(match);
+          const teamDocs = await db.teams.findByIds([match.home_team_id, match.away_team_id]).exec();
+          if (teamDocs && teamDocs.size === 2) {
+            const teams = Array.from(teamDocs.values());
+            setHomeTeam(teams[0].toJSON());
+            setAwayTeam(teams[1].toJSON());
+          }
+        }
+        if (setDocs) {
+          setSets(setDocs.map((doc) => doc.toJSON()));
+          if (setDocs.length > 0) {
+            const set = setDocs[setDocs.length - 1].toJSON();
+            setSet(set);
+            const [pointDocs, statDocs] = await Promise.all([
+              db.score_points
+                .find({
+                  selector: {
+                    match_id: matchId as string,
+                    set_id: set.id,
+                  },
+                  sort: [{ updated_at: "asc" }],
+                })
+                .exec(),
+              db.player_stats
+                .find({
+                  selector: {
+                    match_id: matchId as string,
+                    set_id: set.id,
+                  },
+                  sort: [{ updated_at: "asc" }],
+                })
+                .exec(),
+            ]);
+            setPoints(pointDocs.map((doc) => doc.toJSON()));
+            setStats(statDocs.map((doc) => doc.toJSON()));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load match data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load match data",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [db, matchId]);
 
   const onSetSetupComplete = (set: Set) => {
     setSet(set);
@@ -156,70 +236,6 @@ export default function LiveMatchPage() {
     router.push(`/matches/${match.id}/stats`);
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      if (!db) return;
-
-      try {
-        const [matchDoc, setDocs] = await Promise.all([
-          db.matches.findOne(matchId as string).exec(),
-          db.sets
-            .find({
-              selector: {
-                match_id: matchId as string,
-              },
-              sort: [{ updated_at: "asc" }],
-            })
-            .exec(),
-        ]);
-
-        if (matchDoc) {
-          setMatch(matchDoc.toMutableJSON());
-        }
-        if (setDocs) {
-          setSets(setDocs.map((doc) => doc.toJSON()));
-          if (setDocs.length > 0) {
-            const set = setDocs[setDocs.length - 1].toJSON();
-            setSet(set);
-            const [pointDocs, statDocs] = await Promise.all([
-              db.score_points
-                .find({
-                  selector: {
-                    match_id: matchId as string,
-                    set_id: set.id,
-                  },
-                  sort: [{ updated_at: "asc" }],
-                })
-                .exec(),
-              db.player_stats
-                .find({
-                  selector: {
-                    match_id: matchId as string,
-                    set_id: set.id,
-                  },
-                  sort: [{ updated_at: "asc" }],
-                })
-                .exec(),
-            ]);
-            setPoints(pointDocs.map((doc) => doc.toJSON()));
-            setStats(statDocs.map((doc) => doc.toJSON()));
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load match data:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load match data",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [db, matchId]);
-
   if (isLoading) {
     return <Skeleton className="h-[600px] w-full" />;
   }
@@ -233,13 +249,17 @@ export default function LiveMatchPage() {
       <LiveMatchHeader match={match} sets={sets} />
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-4">
-          {set && <ScoreBoard match={match} set={set} score={score} points={points} />}
+          {set && (
+            <ScoreBoard match={match} set={set} score={score} points={points} />
+          )}
         </Card>
 
         <Card className="p-4">
           {!set || set.status === "completed" ? (
             <SetSetup
               match={match}
+              homeTeam={homeTeam!}
+              awayTeam={awayTeam!}
               setNumber={set ? set.set_number + 1 : 1}
               onComplete={onSetSetupComplete}
             />

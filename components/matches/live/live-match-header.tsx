@@ -2,7 +2,6 @@
 
 import { Match, Set } from "@/lib/supabase/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
 
 type LiveMatchHeaderProps = {
   match: Match;
@@ -20,7 +19,7 @@ export function LiveMatchHeader({ match, sets }: LiveMatchHeaderProps) {
             {new Date(match.date).toLocaleDateString()}
           </p>
         </div>
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="w-full max-w-4xl ml-auto">
           <div className="text-primary">
             <div className="grid grid-cols-7 gap-4">
               {/* Team 1 Row */}

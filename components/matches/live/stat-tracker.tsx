@@ -17,6 +17,7 @@ import { PlayerSelector } from "./player-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { RotateCcw } from "lucide-react";
 
 type StatTrackerProps = {
   match: Match;
@@ -65,6 +66,8 @@ export function StatTracker({
     }
     loadData();
   }, [db, match.id, currentSet.id]);
+
+  const cancelLastAction = async () => {};
 
   const recordStat = async (type: StatType, result: StatResult) => {
     if (!selectedPlayer) {
@@ -138,7 +141,7 @@ export function StatTracker({
 
   return (
     <div className="space-y-6">
-      <CardContent className="space-y-6 p-4">
+      <CardContent className="space-y-6 p-0">
         <PlayerSelector
           players={players}
           selectedPlayer={selectedPlayer}
@@ -187,6 +190,32 @@ export function StatTracker({
               )}
             >
               <div>
+                <div className="text-md font-medium">Team Error</div>
+                <div className="text-sm opacity-75">-1</div>
+              </div>
+            </Button>
+            <Button
+              onClick={() => recordPoint(PointType.UNKNOWN, StatResult.SUCCESS)}
+              disabled={isRecording || isLoading}
+              className={cn(
+                "h-16 text-lg font-semibold transition-transform active:scale-95",
+                variants[StatResult.SUCCESS]
+              )}
+            >
+              <div>
+                <div className="text-md font-medium">Team Point</div>
+                <div className="text-sm opacity-75">+1</div>
+              </div>
+            </Button>
+            <Button
+              onClick={() => recordPoint(PointType.UNKNOWN, StatResult.ERROR)}
+              disabled={isRecording || isLoading}
+              className={cn(
+                "h-16 text-lg font-semibold transition-transform active:scale-95",
+                variants[StatResult.ERROR]
+              )}
+            >
+              <div>
                 <div className="text-md font-medium">Opponent Point</div>
                 <div className="text-sm opacity-75">-1</div>
               </div>
@@ -203,6 +232,20 @@ export function StatTracker({
                 <div className="text-md font-medium">Opponent Error</div>
                 <div className="text-sm opacity-75">+1</div>
               </div>
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-4">
+            <Button
+              variant="outline"
+              onClick={() => cancelLastAction()}
+              disabled={isRecording || isLoading}
+              className={cn(
+                "h-16 text-lg font-semibold transition-transform active:scale-95"
+              )}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" /> Cancel Last Action
             </Button>
           </div>
         </div>
