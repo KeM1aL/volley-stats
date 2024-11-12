@@ -26,9 +26,7 @@ import { AvatarUpload } from "./avatar-upload";
 
 const formSchema = z.object({
   name: z.string().min(1, "Player name is required"),
-  number: z.string().transform(Number).pipe(
-    z.number().min(0, "Number must be positive").max(99, "Number must be less than 100")
-  ),
+  number: z.coerce.number().min(0, "Number must be positive").max(99, "Number must be less than 100"),
   position: z.string().min(1, "Position is required"),
   avatar_url: z.string().nullable(),
 });
@@ -52,7 +50,7 @@ export function PlayerForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: defaultValues?.name || "",
-      number: defaultValues?.number.toString() || "0",
+      number: defaultValues?.number || 0,
       position: defaultValues?.position || "",
       avatar_url: defaultValues?.avatar_url || null,
     },
