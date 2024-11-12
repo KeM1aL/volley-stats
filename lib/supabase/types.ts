@@ -70,7 +70,7 @@ export type ScorePoint = {
   match_id: string;
   set_id: string;
   scoring_team: 'home' | 'away';
-  point_type: 'serve' | 'spike' | 'block' | 'unknown';
+  point_type: 'serve' | 'spike' | 'block' | 'reception' | 'unknown';
   player_id: string | null;
   timestamp: string;
   home_score: number;
