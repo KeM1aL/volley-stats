@@ -47,7 +47,7 @@ export function ScoreBoard({ match, set, score, points }: ScoreBoardProps) {
         <div className="flex flex-row justify-center gap-2">
           <Card className="basis-1/3">
             <CardContent className="p-4">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between">
                 <div className="flex flex-col items-center space-y-2">
                   <h2 className="text-2xl font-bold">Home</h2>
                   <div className="text-4xl font-bold">{set.home_score}</div>

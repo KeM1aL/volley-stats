@@ -42,12 +42,12 @@ export type Set = {
   status: 'upcoming' | 'live' | 'completed';
   first_server: 'home' | 'away';
   current_lineup: {
-    position1: string;
-    position2: string;
-    position3: string;
-    position4: string;
-    position5: string;
-    position6: string;
+    p1: string;
+    p2: string;
+    p3: string;
+    p4: string;
+    p5: string;
+    p6: string;
   };
   created_at: string;
   updated_at: string;
@@ -76,12 +76,12 @@ export type ScorePoint = {
   home_score: number;
   away_score: number;
   current_rotation: {
-    position1: string;
-    position2: string;
-    position3: string;
-    position4: string;
-    position5: string;
-    position6: string;
+    p1: string;
+    p2: string;
+    p3: string;
+    p4: string;
+    p5: string;
+    p6: string;
   };
   created_at: string;
   updated_at: string;

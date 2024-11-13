@@ -82,12 +82,12 @@ export const setSchema = toTypedRxJsonSchema({
     current_lineup: {
       type: 'object',
       properties: {
-        position1: { type: 'string', maxLength: 36 },
-        position2: { type: 'string', maxLength: 36 },
-        position3: { type: 'string', maxLength: 36 },
-        position4: { type: 'string', maxLength: 36 },
-        position5: { type: 'string', maxLength: 36 },
-        position6: { type: 'string', maxLength: 36 },
+        p1: { type: 'string', maxLength: 36 },
+        p2: { type: 'string', maxLength: 36 },
+        p3: { type: 'string', maxLength: 36 },
+        p4: { type: 'string', maxLength: 36 },
+        p5: { type: 'string', maxLength: 36 },
+        p6: { type: 'string', maxLength: 36 },
       },
     },
     ...timestampFields
@@ -133,12 +133,12 @@ export const scorePointSchema = toTypedRxJsonSchema({
     current_rotation: {
       type: 'object',
       properties: {
-        position1: { type: 'string', maxLength: 36 },
-        position2: { type: 'string', maxLength: 36 },
-        position3: { type: 'string', maxLength: 36 },
-        position4: { type: 'string', maxLength: 36 },
-        position5: { type: 'string', maxLength: 36 },
-        position6: { type: 'string', maxLength: 36 },
+        p1: { type: 'string', maxLength: 36 },
+        p2: { type: 'string', maxLength: 36 },
+        p3: { type: 'string', maxLength: 36 },
+        p4: { type: 'string', maxLength: 36 },
+        p5: { type: 'string', maxLength: 36 },
+        p6: { type: 'string', maxLength: 36 },
       },
     },
     ...timestampFields

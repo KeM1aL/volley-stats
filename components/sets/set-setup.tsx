@@ -67,7 +67,22 @@ export function SetSetup({
   const handleComplete = async () => {
     setIsLoading(true);
     try {
-      // Add start position for each player
+      if (
+        !lineup[PlayerPosition.SETTER] ||
+        !lineup[PlayerPosition.OPPOSITE] ||
+        !lineup[PlayerPosition.OUTSIDE_BACK] ||
+        !lineup[PlayerPosition.OUTSIDE_FRONT] ||
+        !lineup[PlayerPosition.MIDDLE_BACK] ||
+        !lineup[PlayerPosition.MIDDLE_FRONT]
+      ) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "All positions (except Libero) must be filled",
+        });
+        setIsLoading(false);
+        return;
+      }
       // Save lineups and start the set
       const setDoc = await db?.sets.insert({
         id: crypto.randomUUID(),
@@ -80,12 +95,12 @@ export function SetSetup({
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         current_lineup: {
-          position1: lineup[PlayerPosition.SETTER],
-          position2: lineup[PlayerPosition.OPPOSITE],
-          position3: lineup[PlayerPosition.OUTSIDE_BACK],
-          position4: lineup[PlayerPosition.OUTSIDE_FRONT],
-          position5: lineup[PlayerPosition.MIDDLE_BACK],
-          position6: lineup[PlayerPosition.MIDDLE_FRONT],
+          p1: lineup[PlayerPosition.SETTER],
+          p2: lineup[PlayerPosition.OPPOSITE],
+          p3: lineup[PlayerPosition.OUTSIDE_BACK],
+          p4: lineup[PlayerPosition.OUTSIDE_FRONT],
+          p5: lineup[PlayerPosition.MIDDLE_BACK],
+          p6: lineup[PlayerPosition.MIDDLE_FRONT],
         },
       });
       if (setDoc) {
