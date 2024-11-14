@@ -51,14 +51,21 @@ export function ScoreBoard({ match, set, score, points }: ScoreBoardProps) {
                 <div className="flex flex-col items-center space-y-2">
                   <h2 className="text-2xl font-bold">Home</h2>
                   <div className="text-4xl font-bold">{set.home_score}</div>
-                  <Badge variant="secondary" className="mt-2">
-                    Serving
-                  </Badge>
+                  {set.server === "home" && (
+                    <Badge variant="secondary" className="mt-2">
+                      Serving
+                    </Badge>
+                  )}
                 </div>
                 <div className="text-6xl font-bold mx-4">-</div>
                 <div className="flex flex-col items-center space-y-2">
                   <h2 className="text-2xl font-bold">Ext.</h2>
                   <div className="text-4xl font-bold">{set.away_score}</div>
+                  {set.server === "away" && (
+                    <Badge variant="secondary" className="mt-2">
+                      Serving
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="text-sm text-center text-muted-foreground">

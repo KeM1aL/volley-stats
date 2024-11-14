@@ -92,6 +92,7 @@ export function SetSetup({
         away_score: 0,
         status: "live",
         first_server: server!,
+        server: server!,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         current_lineup: {

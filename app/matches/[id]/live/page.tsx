@@ -46,6 +46,7 @@ export default function LiveMatchPage() {
   const { db } = useDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
+  const [managedTeam, setManagedTeam] = useState<Team>();
   const [isLoading, setIsLoading] = useState(true);
 
   // Memoized data loading function
@@ -219,13 +220,16 @@ export default function LiveMatchPage() {
         }));
 
         const setNumber = matchState.set.set_number;
-        const { home_score: homeScore, away_score: awayScore } = point;
+        const { home_score: homeScore, away_score: awayScore, scoring_team: scoringTeam } = point;
 
         const setUpdatedFields: Partial<Set> = {
           updated_at: new Date().toISOString(),
           home_score: homeScore,
           away_score: awayScore,
         };
+        if (matchState.set.server !== scoringTeam) {
+          setUpdatedFields.server = scoringTeam;
+        }
 
         let setTerminated = false;
         if (

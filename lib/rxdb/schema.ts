@@ -79,6 +79,7 @@ export const setSchema = toTypedRxJsonSchema({
     away_score: { type: 'number' },
     status: { type: 'string', enum: ['upcoming', 'live', 'completed'] },
     first_server: { type: 'string', enum: ['home', 'away'] },
+    server: { type: 'string', enum: ['home', 'away'] },
     current_lineup: {
       type: 'object',
       properties: {

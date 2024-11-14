@@ -47,6 +47,7 @@ create table if not exists public.sets (
   away_score integer default 0 not null,
   status text default 'upcoming' not null,
   first_server text default 'home' not null,
+  server text default 'home' not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   current_lineup jsonb not null default '{
@@ -59,6 +60,7 @@ create table if not exists public.sets (
   }',
   constraint status_check check (status in ('upcoming', 'live', 'completed')),
   constraint first_server check (first_server in ('home', 'away')),
+  constraint server check (server in ('home', 'away')),
 );
 
 alter publication supabase_realtime add table "public"."sets";
