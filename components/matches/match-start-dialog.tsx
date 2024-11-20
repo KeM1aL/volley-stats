@@ -4,11 +4,13 @@ import type { Match, Player, Team } from "@/lib/supabase/types";
 import { MatchLineupSetup } from "@/components/matches/match-lineup-setup";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
-} from "@radix-ui/react-dialog";
-import { DialogHeader, DialogFooter } from "@/components/ui/dialog";
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Volleyball } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -164,7 +166,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
             className="w-full"
             disabled={isLoading || availablePlayers.length < 6}
           >
-            Start Match {availablePlayers.length}
+            Start Match
           </Button>
         </DialogFooter>
       </DialogContent>

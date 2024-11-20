@@ -42,7 +42,7 @@ export function MatchLineupSetup({ match, players, availablePlayers, setAvailabl
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-4">Match Roster</h2>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {[...players].sort(sortPlayers).map((player) => (
             <Toggle
               key={player.id}

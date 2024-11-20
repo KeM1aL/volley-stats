@@ -35,7 +35,7 @@ export function MatchManagedTeamSetup({
               id="homeTeam"
               className="peer sr-only"
             />
-            <div className="aspect-video flex-1 border border-gray-200 transition-colors rounded-lg peer-aria-checked:border-gray-900 peer-aria-checked:ring-gray-900 ring-1 ring-transparent w-full text-gray-500 flex items-center justify-center peer-aria-checked:text-gray-900 dark:border-gray-800 dark:peer-aria-checked:border-gray-50 dark:peer-aria-checked:ring-gray-50 dark:text-gray-400 dark:peer-aria-checked:text-gray-50">
+            <div className="p-10 cursor-pointer flex-1 border border-gray-200 transition-colors rounded-lg peer-aria-checked:border-gray-900 peer-aria-checked:ring-gray-900 ring-1 ring-transparent w-full text-gray-500 flex items-center justify-center peer-aria-checked:text-gray-900 dark:border-gray-800 dark:peer-aria-checked:border-gray-50 dark:peer-aria-checked:ring-gray-50 dark:text-gray-400 dark:peer-aria-checked:text-gray-50">
               {homeTeam.name}
             </div>
           </Label>
@@ -45,7 +45,7 @@ export function MatchManagedTeamSetup({
               id="awayTeam"
               className="peer sr-only"
             />
-            <div className="aspect-video flex-1 border border-gray-200 transition-colors rounded-lg peer-aria-checked:border-gray-900 peer-aria-checked:ring-gray-900 ring-1 ring-transparent w-full text-gray-500 flex items-center justify-center peer-aria-checked:text-gray-900 dark:border-gray-800 dark:peer-aria-checked:border-gray-50 dark:peer-aria-checked:ring-gray-50 dark:text-gray-400 dark:peer-aria-checked:text-gray-50">
+            <div className="p-10 cursor-pointer flex-1 border border-gray-200 transition-colors rounded-lg peer-aria-checked:border-gray-900 peer-aria-checked:ring-gray-900 ring-1 ring-transparent w-full text-gray-500 flex items-center justify-center peer-aria-checked:text-gray-900 dark:border-gray-800 dark:peer-aria-checked:border-gray-50 dark:peer-aria-checked:ring-gray-50 dark:text-gray-400 dark:peer-aria-checked:text-gray-50">
               {awayTeam.name}
             </div>
           </Label>
