@@ -11,7 +11,6 @@ export const settingsSchema = z.object({
   notifications: z.object({
     matchReminders: z.boolean(),
     scoreUpdates: z.boolean(),
-    teamNews: z.boolean(),
   }),
 });
 
@@ -23,7 +22,6 @@ const defaultSettings: Settings = {
   notifications: {
     matchReminders: true,
     scoreUpdates: true,
-    teamNews: false,
   },
 };
 

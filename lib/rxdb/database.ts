@@ -58,7 +58,7 @@ function getStorageKey(): string {
 /**
 * Easy toggle of the storage engine via query parameter.
 */
-function getStorage(): RxStorage<any, any> {
+export function getStorage(): RxStorage<any, any> {
   const storageKey = getStorageKey();
   if (storageKey === 'memory') {
     return getRxStorageMemory();
@@ -74,7 +74,7 @@ function getStorage(): RxStorage<any, any> {
 * In the e2e-test we get the database-name from the get-parameter
 * In normal mode, the database name is 'heroesdb'
 */
-function getDatabaseName() {
+export function getDatabaseName() {
   const url_string = window.location.href;
   const url = new URL(url_string);
   const dbNameFromUrl = url.searchParams.get('database');

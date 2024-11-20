@@ -14,10 +14,6 @@ export const metadata: Metadata = {
   title: 'VolleyStats for Dummies',
   description: 'Professional volleyball statistics tracking and analysis',
   manifest: '/manifest.webmanifest',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' }
-  ],
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -36,12 +32,6 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'VolleyStats for Dummies',
     description: 'Professional volleyball statistics tracking and analysis',
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
   },
 };
 

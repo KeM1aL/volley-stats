@@ -18,9 +18,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Match } from "@/lib/supabase/types";
+import { Match, Team } from "@/lib/supabase/types";
 import { MatchStatus } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import MatchStartDialog from "../match-start-dialog";
+import MatchEditDialog from "../match-edit-dialog";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
@@ -28,8 +30,7 @@ type SortDirection = "asc" | "desc";
 type MatchHistoryTableProps = {
   matches: Match[];
   onViewStats: (match: Match) => void;
-  onStart: (match: Match) => void;
-  onEdit: (match: Match) => void;
+  onEdit: (match: Match, managedTeam: Team) => void;
   error?: Error | null;
   isLoading?: boolean;
 };
@@ -37,7 +38,6 @@ type MatchHistoryTableProps = {
 export function MatchHistoryTable({
   matches,
   onViewStats,
-  onStart,
   onEdit,
   error,
   isLoading,
@@ -151,16 +151,7 @@ export function MatchHistoryTable({
               {(() => {
                 switch (match.status) {
                   case MatchStatus.UPCOMING:
-                    return (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onStart(match)}
-                      >
-                        <Volleyball className="h-4 w-4 mr-2" />
-                        Start
-                      </Button>
-                    );
+                    return <MatchStartDialog match={match} />;
                   case MatchStatus.COMPLETED:
                     return (
                       <Button
@@ -173,16 +164,7 @@ export function MatchHistoryTable({
                       </Button>
                     );
                   case MatchStatus.LIVE:
-                    return (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEdit(match)}
-                      >
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    );
+                    return <MatchEditDialog match={match} />;
                   default:
                     return null;
                 }

@@ -27,7 +27,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { Team } from "@/lib/supabase/types";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useSettings, settingsSchema, type Settings } from "@/hooks/use-settings";
+import {
+  useSettings,
+  settingsSchema,
+  type Settings,
+} from "@/hooks/use-settings";
+import { Label } from "@radix-ui/react-label";
+import { removeRxDatabase } from "rxdb";
+import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
 
 const languages = [
   { value: "en", label: "English" },
@@ -41,7 +48,14 @@ export default function SettingsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const { settings, isLoading: isLoadingSettings, updateSettings, resetSettings } = useSettings();
+  const [isDeletingCache, setIsDeletingCache] = useState(false);
+
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+    resetSettings,
+  } = useSettings();
 
   const form = useForm<Settings>({
     resolver: zodResolver(settingsSchema),
@@ -54,7 +68,7 @@ export default function SettingsPage() {
 
       try {
         const teamDocs = await db.teams.find().exec();
-        setTeams(teamDocs.map(doc => doc.toJSON()));
+        setTeams(teamDocs.map((doc) => doc.toJSON()));
       } catch (error) {
         console.error("Failed to load teams:", error);
         toast({
@@ -97,6 +111,79 @@ export default function SettingsPage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleResetLocalStats = (loadingIndicator: boolean = true) => {
+    if (loadingIndicator) setIsDeletingCache(true);
+    try {
+      db!.substitutions?.remove();
+      db!.score_points?.remove();
+      db!.player_stats?.remove();
+      if (loadingIndicator) {
+        toast({
+          title: "Cache cleared",
+          description: "Your local statistics cache has been cleared",
+        });
+      }
+    } catch (error) {
+      console.error("Error resetting local stats:", error);
+    } finally {
+      if (loadingIndicator) setIsDeletingCache(false);
+    }
+  };
+
+  const handleResetLocalMatches = (loadingIndicator: boolean = true) => {
+    if (loadingIndicator) setIsDeletingCache(true);
+    try {
+      handleResetLocalStats(false);
+      db!.matches?.remove();
+      db!.sets?.remove();
+      if (loadingIndicator) {
+        toast({
+          title: "Cache cleared",
+          description: "Your local matches cache has been cleared",
+        });
+      }
+    } catch (error) {
+      console.error("Error resetting local matches:", error);
+    } finally {
+      if (loadingIndicator) setIsDeletingCache(false);
+    }
+  };
+
+  const handleResetLocalTeams = (loadingIndicator: boolean = true) => {
+    if (loadingIndicator) setIsDeletingCache(true);
+    try {
+      handleResetLocalMatches(false);
+      db!.teams?.remove();
+      db!.players?.remove();
+      if (loadingIndicator) {
+        toast({
+          title: "Cache cleared",
+          description: "Your local teams cache has been cleared",
+        });
+      }
+    } catch (error) {
+      console.error("Error resetting local teams:", error);
+    } finally {
+      if (loadingIndicator) setIsDeletingCache(false);
+    }
+  };
+
+  const handleResetLocalCache = () => {
+    setIsDeletingCache(true);
+    try {
+      removeRxDatabase(getDatabaseName(), getStorage());
+
+      toast({
+        title: "Cache cleared",
+        description: "Your local cache has been cleared",
+      });
+    } catch (error) {
+      console.error("Error resetting local cache:", error);
+    } finally {
+      setIsDeletingCache(false);
     }
   };
 
@@ -187,7 +274,10 @@ export default function SettingsPage() {
                       </FormControl>
                       <SelectContent>
                         {languages.map((language) => (
-                          <SelectItem key={language.value} value={language.value}>
+                          <SelectItem
+                            key={language.value}
+                            value={language.value}
+                          >
                             {language.label}
                           </SelectItem>
                         ))}
@@ -224,6 +314,85 @@ export default function SettingsPage() {
                 )}
               />
 
+              {db && (
+                <div className="space-y-4">
+                  <Label>Local data</Label>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">
+                          Clear Local Stats
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Clear the local stats cache
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleResetLocalStats()}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">
+                          Clear Local Matches
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Clear the local matches cache
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleResetLocalMatches()}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">
+                          Clear Local Teams
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Clear the local teams cache
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleResetLocalTeams()}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={isDeletingCache}
+                      onClick={() => handleResetLocalCache()}
+                    >
+                      {isDeletingCache ? (
+                        <>
+                          <LoadingSpinner size="sm" className="mr-2" />
+                          Deleting...
+                        </>
+                      ) : (
+                        "Clear All"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <FormLabel>Notifications</FormLabel>
                 <FormField
@@ -255,26 +424,6 @@ export default function SettingsPage() {
                         <FormLabel>Score Updates</FormLabel>
                         <FormDescription>
                           Get notified about score changes during matches
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="notifications.teamNews"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Team News</FormLabel>
-                        <FormDescription>
-                          Stay updated with team announcements
                         </FormDescription>
                       </div>
                       <FormControl>

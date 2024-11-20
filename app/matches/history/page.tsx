@@ -33,16 +33,12 @@ export default function MatchHistoryPage() {
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const onMatchStarted = (match: Match) => {
-    router.push(`/matches/${match.id}/start`);
+  const onMatchEdit = (match: Match, managedTeam: Team) => {
+    router.push(`/matches/${match.id}/live`);
   };
 
   const onMatchViewStats = (match: Match) => {
     router.push(`/matches/${match.id}/stats`);
-  };
-
-  const onMatchLive = (match: Match) => {
-    router.push(`/matches/${match.id}/live`);
   };
 
   useEffect(() => {
@@ -189,8 +185,7 @@ export default function MatchHistoryPage() {
             <MatchHistoryTable
               matches={matches}
               onViewStats={onMatchViewStats}
-              onStart={onMatchStarted}
-              onEdit={onMatchLive}
+              onEdit={onMatchEdit}
               error={error}
               isLoading={isLoading}
             />
