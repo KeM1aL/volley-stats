@@ -1,24 +1,77 @@
 "use client";
 
-import type { Match } from "@/lib/supabase/types";
+import type { Match, Team } from "@/lib/supabase/types";
 import { MatchLineupSetup } from "@/components/matches/match-lineup-setup";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
-} from "@radix-ui/react-dialog";
-import { DialogHeader, DialogFooter } from "@/components/ui/dialog";
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Pencil, Volleyball } from "lucide-react";
+import { MatchManagedTeamSetup } from "./match-managed-setup";
+import { useRouter } from "next/router";
+import { useState, useEffect } from "react";
+import { useDb } from "../providers/database-provider";
+import { toast } from "@/hooks/use-toast";
 
 type MatchStartDialogProps = {
   match: Match;
 };
 
 export default function MatchEditDialog({ match }: MatchStartDialogProps) {
-  function onSetupComplete(): void {
-    throw new Error("Function not implemented.");
+  const { db } = useDb();
+  const router = useRouter();
+  const [homeTeam, setHomeTeam] = useState<Team | null>(null);
+  const [awayTeam, setAwayTeam] = useState<Team | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadTeams = async () => {
+      if (!db) return;
+      setIsLoading(true);
+      try {
+        const teamDocs = await db.teams
+          .findByIds([match.home_team_id, match.away_team_id])
+          .exec();
+
+        if (!teamDocs || teamDocs.size !== 2) {
+          throw new Error("Teams not found");
+        }
+
+        const teams = Array.from(teamDocs.values());
+        setHomeTeam(teams[0].toJSON());
+        setAwayTeam(teams[1].toJSON());
+      } catch (error) {
+        console.error("Failed to load teams:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load teams",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTeams();
+  }, [db, match.id]);
+
+  async function onManagedTeamSelected(teamId: string): Promise<void> {
+    let selectedTeamId;
+    if (teamId === match.away_team_id) {
+      selectedTeamId = match.away_team_id;
+    } else {
+      selectedTeamId = match.home_team_id;
+    }
+    const params = new URLSearchParams();
+    params.set("team", selectedTeamId);
+
+    router.push(`/matches/${match.id}/live?${params.toString}`);
   }
 
   return (
@@ -34,7 +87,11 @@ export default function MatchEditDialog({ match }: MatchStartDialogProps) {
           <DialogTitle>Select Managing Team</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <MatchLineupSetup match={match} onComplete={onSetupComplete} />
+          <MatchManagedTeamSetup
+            homeTeam={homeTeam!}
+            awayTeam={awayTeam!}
+            onTeamSelected={onManagedTeamSelected}
+          />
         </div>
         <DialogFooter>
           <Button type="submit">Save changes</Button>

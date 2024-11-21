@@ -23,27 +23,29 @@ import { MatchStatus } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MatchStartDialog from "../match-start-dialog";
 import MatchEditDialog from "../match-edit-dialog";
+import { useRouter } from "next/router";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
 
 type MatchHistoryTableProps = {
   matches: Match[];
-  onViewStats: (match: Match) => void;
-  onEdit: (match: Match, managedTeam: Team) => void;
   error?: Error | null;
   isLoading?: boolean;
 };
 
 export function MatchHistoryTable({
   matches,
-  onViewStats,
-  onEdit,
   error,
   isLoading,
 }: MatchHistoryTableProps) {
+  const router = useRouter();
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  const onHandleViewStats = (match: Match) => {
+    router.push(`/matches/${match.id}/stats`);
+  };
 
   const sortMatches = (a: Match, b: Match) => {
     switch (sortField) {
@@ -157,7 +159,7 @@ export function MatchHistoryTable({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onViewStats(match)}
+                        onClick={() => onHandleViewStats(match)}
                       >
                         <BarChart2 className="h-4 w-4 mr-2" />
                         Stats

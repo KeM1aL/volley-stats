@@ -32,9 +32,9 @@ import {
   settingsSchema,
   type Settings,
 } from "@/hooks/use-settings";
-import { Label } from "@radix-ui/react-label";
 import { removeRxDatabase } from "rxdb";
 import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
+import { Label } from "@/components/ui/label";
 
 const languages = [
   { value: "en", label: "English" },

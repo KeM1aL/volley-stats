@@ -19,7 +19,6 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MatchHistoryPage() {
-  const router = useRouter();
   const { db } = useDb();
   const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);
@@ -32,14 +31,6 @@ export default function MatchHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-
-  const onMatchEdit = (match: Match, managedTeam: Team) => {
-    router.push(`/matches/${match.id}/live`);
-  };
-
-  const onMatchViewStats = (match: Match) => {
-    router.push(`/matches/${match.id}/stats`);
-  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -184,8 +175,6 @@ export default function MatchHistoryPage() {
           {selectedTeam && (
             <MatchHistoryTable
               matches={matches}
-              onViewStats={onMatchViewStats}
-              onEdit={onMatchEdit}
               error={error}
               isLoading={isLoading}
             />

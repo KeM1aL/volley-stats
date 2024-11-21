@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useDb } from "@/components/providers/database-provider";
 import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { ScoreBoard } from "@/components/matches/live/score-board";
@@ -43,6 +43,7 @@ const initialMatchState: MatchState = {
 
 export default function LiveMatchPage() {
   const { id: matchId } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const { db } = useDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);

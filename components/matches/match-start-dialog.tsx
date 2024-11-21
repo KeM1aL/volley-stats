@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { useDb } from "../providers/database-provider";
 import { toast } from "@/hooks/use-toast";
 import { MatchManagedTeamSetup } from "./match-managed-setup";
+import { useRouter } from "next/router";
 
 type MatchStartDialogProps = {
   match: Match;
@@ -24,6 +25,7 @@ type MatchStartDialogProps = {
 
 export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   const { db } = useDb();
+  const router = useRouter();
   const [managedTeam, setManagedTeam] = useState<Team | null>(null);
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);
   const [awayTeam, setAwayTeam] = useState<Team | null>(null);
@@ -100,6 +102,8 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   };
 
   const onSetupComplete = async () => {
+    if (!db) return;
+    if(!managedTeam) return;
     setIsLoading(true);
     try {
       // Save available players and start the match
@@ -110,6 +114,10 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
           updated_at: new Date().toISOString(),
         },
       });
+      const params = new URLSearchParams();
+      params.set('team', managedTeam!.id)
+
+      router.push(`/matches/${match.id}/live?${params.toString}`);
     } catch (error) {
       console.error("Failed to start match:", error);
       toast({
