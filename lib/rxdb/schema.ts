@@ -84,6 +84,17 @@ export const setSchema = toTypedRxJsonSchema({
     status: { type: 'string', enum: ['upcoming', 'live', 'completed'] },
     first_server: { type: 'string', enum: ['home', 'away'] },
     server: { type: 'string', enum: ['home', 'away'] },
+    first_lineup: {
+      type: 'object',
+      properties: {
+        p1: { type: 'string', maxLength: 36 },
+        p2: { type: 'string', maxLength: 36 },
+        p3: { type: 'string', maxLength: 36 },
+        p4: { type: 'string', maxLength: 36 },
+        p5: { type: 'string', maxLength: 36 },
+        p6: { type: 'string', maxLength: 36 },
+      },
+    },
     current_lineup: {
       type: 'object',
       properties: {

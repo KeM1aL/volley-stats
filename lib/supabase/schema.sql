@@ -59,6 +59,14 @@ create table if not exists public.sets (
     "p5": null,
     "p6": null
   }',
+  first_lineup jsonb not null default '{
+    "p1": null,
+    "p2": null,
+    "p3": null,
+    "p4": null,
+    "p5": null,
+    "p6": null
+  }',
   constraint status_check check (status in ('upcoming', 'live', 'completed')),
   constraint first_server check (first_server in ('home', 'away')),
   constraint server check (server in ('home', 'away')),

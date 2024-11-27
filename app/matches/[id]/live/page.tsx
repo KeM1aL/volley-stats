@@ -123,7 +123,7 @@ export default function LiveMatchPage() {
                 match_id: matchId,
                 set_id: currentSet.id,
               },
-              sort: [{ updated_at: "asc" }],
+              sort: [{ created_at: "asc" }],
             })
             .exec()
             .then((docs) => docs.map((doc) => doc.toJSON())),
@@ -133,12 +133,13 @@ export default function LiveMatchPage() {
                 match_id: matchId,
                 set_id: currentSet.id,
               },
-              sort: [{ updated_at: "asc" }],
+              sort: [{ created_at: "asc" }],
             })
             .exec()
             .then((docs) => docs.map((doc) => doc.toJSON())),
         ]);
       }
+      console.table(points);
 
       setMatchState({
         match,

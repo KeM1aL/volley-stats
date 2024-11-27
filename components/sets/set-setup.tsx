@@ -97,6 +97,14 @@ export function SetSetup({
         server: server!,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        first_lineup: {
+          p1: positions[PlayerPosition.P1],
+          p2: positions[PlayerPosition.P2],
+          p3: positions[PlayerPosition.P3],
+          p4: positions[PlayerPosition.P4],
+          p5: positions[PlayerPosition.P5],
+          p6: positions[PlayerPosition.P6],
+        },
         current_lineup: {
           p1: positions[PlayerPosition.P1],
           p2: positions[PlayerPosition.P2],
