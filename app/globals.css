@@ -101,6 +101,10 @@
   }
 }
 
+:fullscreen header{
+  display: none;
+}
+
 /* Loading bar animations */
 @keyframes loading-bar-shine {
   0% {

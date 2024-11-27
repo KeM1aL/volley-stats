@@ -33,7 +33,7 @@ export function StatButton({
       onClick={onClick}
       disabled={disabled || isLoading}
       className={cn(
-        "h-16 text-lg font-semibold transition-transform active:scale-95",
+        "h-14 text-lg font-semibold transition-transform active:scale-95",
         variants[result],
         className
       )}

@@ -7,6 +7,7 @@ import {
   PlayerStat,
   ScorePoint,
   Set,
+  Team,
 } from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +22,8 @@ import { RotateCcw } from "lucide-react";
 
 type StatTrackerProps = {
   match: Match;
+  opponentTeam: Team;
+  managedTeam: Team;
   currentSet: Set;
   sets: Set[];
   stats: PlayerStat[];
@@ -33,6 +36,8 @@ type StatTrackerProps = {
 export function StatTracker({
   match,
   currentSet,
+  opponentTeam,
+  managedTeam,
   sets,
   stats,
   points,
@@ -140,116 +145,119 @@ export function StatTracker({
   }
 
   return (
-    <div className="space-y-6">
-      <CardContent className="space-y-6 p-0">
-        <PlayerSelector
-          players={players}
-          selectedPlayer={selectedPlayer}
-          onPlayerSelect={setSelectedPlayer}
-        />
-        <div className="space-y-2">
-          {Object.values(StatType).map((type) => (
-            <Card
-              key={type}
-              className="w-full max-w-3xl mx-auto overflow-hidden"
-            >
-              <div className="flex">
-                {/* Vertical text on the left side */}
-                <div className="bg-primary text-primary-foreground p-4 flex items-center justify-center relative">
-                  <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
-                    {type.replace("_", " ").substring(0, 5)}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <CardContent className="p-2">
-                    <div className="grid grid-cols-3 gap-4">
-                      {Object.values(StatResult).map((result) => (
-                        <StatButton
-                          key={result}
-                          result={result}
-                          onClick={() => recordStat(type, result)}
-                          disabled={isRecording || !selectedPlayer}
-                          isLoading={isRecording}
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </div>
+    <CardContent className="space-y-2 p-0">
+      <PlayerSelector
+        players={players}
+        selectedPlayer={selectedPlayer}
+        onPlayerSelect={setSelectedPlayer}
+      />
+      <div className="space-y-1">
+        {Object.values(StatType).map((type) => (
+          <Card key={type} className="w-full max-w-3xl mx-auto overflow-hidden">
+            <div className="flex">
+              {/* Vertical text on the left side */}
+              <div className="bg-primary text-primary-foreground p-4 flex items-center justify-center relative">
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
+                  {type.replace("_", " ").substring(0, 5)}
+                </span>
               </div>
-            </Card>
-          ))}
+              <div className="flex-1">
+                <CardContent className="p-1">
+                  <div className="grid grid-cols-3 gap-4">
+                    {Object.values(StatResult).map((result) => (
+                      <StatButton
+                        key={result}
+                        result={result}
+                        onClick={() => recordStat(type, result)}
+                        disabled={isRecording || !selectedPlayer}
+                        isLoading={isRecording}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <div className="space-y-1">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <Button
+            onClick={() => recordPoint(PointType.UNKNOWN, StatResult.ERROR)}
+            disabled={isRecording || isLoading}
+            className={cn(
+              "h-14 text-lg font-semibold transition-transform active:scale-95",
+              variants[StatResult.ERROR]
+            )}
+          >
+            <div>
+              <div className="text-md font-medium">
+                '{managedTeam.name}' Error
+              </div>
+              <div className="text-sm opacity-75">-1</div>
+            </div>
+          </Button>
+          <Button
+            onClick={() => recordPoint(PointType.UNKNOWN, StatResult.SUCCESS)}
+            disabled={isRecording || isLoading}
+            className={cn(
+              "h-14 text-lg font-semibold transition-transform active:scale-95",
+              variants[StatResult.SUCCESS]
+            )}
+          >
+            <div>
+              <div className="text-md font-medium">
+                '{managedTeam.name}' Point
+              </div>
+              <div className="text-sm opacity-75">+1</div>
+            </div>
+          </Button>
+          <Button
+            onClick={() => recordPoint(PointType.UNKNOWN, StatResult.ERROR)}
+            disabled={isRecording || isLoading}
+            className={cn(
+              "h-14 text-lg font-semibold transition-transform active:scale-95",
+              variants[StatResult.ERROR]
+            )}
+          >
+            <div>
+              <div className="text-md font-medium">
+                '{opponentTeam.name}' Point
+              </div>
+              <div className="text-sm opacity-75">-1</div>
+            </div>
+          </Button>
+          <Button
+            onClick={() => recordPoint(PointType.UNKNOWN, StatResult.SUCCESS)}
+            disabled={isRecording || isLoading}
+            className={cn(
+              "h-14 text-lg font-semibold transition-transform active:scale-95",
+              variants[StatResult.SUCCESS]
+            )}
+          >
+            <div>
+              <div className="text-md font-medium">
+                '{opponentTeam.name}' Error
+              </div>
+              <div className="text-sm opacity-75">+1</div>
+            </div>
+          </Button>
         </div>
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              onClick={() => recordPoint(PointType.UNKNOWN, StatResult.ERROR)}
-              disabled={isRecording || isLoading}
-              className={cn(
-                "h-16 text-lg font-semibold transition-transform active:scale-95",
-                variants[StatResult.ERROR]
-              )}
-            >
-              <div>
-                <div className="text-md font-medium">Team Error</div>
-                <div className="text-sm opacity-75">-1</div>
-              </div>
-            </Button>
-            <Button
-              onClick={() => recordPoint(PointType.UNKNOWN, StatResult.SUCCESS)}
-              disabled={isRecording || isLoading}
-              className={cn(
-                "h-16 text-lg font-semibold transition-transform active:scale-95",
-                variants[StatResult.SUCCESS]
-              )}
-            >
-              <div>
-                <div className="text-md font-medium">Team Point</div>
-                <div className="text-sm opacity-75">+1</div>
-              </div>
-            </Button>
-            <Button
-              onClick={() => recordPoint(PointType.UNKNOWN, StatResult.ERROR)}
-              disabled={isRecording || isLoading}
-              className={cn(
-                "h-16 text-lg font-semibold transition-transform active:scale-95",
-                variants[StatResult.ERROR]
-              )}
-            >
-              <div>
-                <div className="text-md font-medium">Opponent Point</div>
-                <div className="text-sm opacity-75">-1</div>
-              </div>
-            </Button>
-            <Button
-              onClick={() => recordPoint(PointType.UNKNOWN, StatResult.SUCCESS)}
-              disabled={isRecording || isLoading}
-              className={cn(
-                "h-16 text-lg font-semibold transition-transform active:scale-95",
-                variants[StatResult.SUCCESS]
-              )}
-            >
-              <div>
-                <div className="text-md font-medium">Opponent Error</div>
-                <div className="text-sm opacity-75">+1</div>
-              </div>
-            </Button>
-          </div>
+      </div>
+      <div className="space-y-1">
+        <div className="grid grid-cols-1">
+          <Button
+            variant="outline"
+            onClick={() => cancelLastAction()}
+            disabled={isRecording || isLoading}
+            className={cn(
+              "h-12 text-lg font-semibold transition-transform active:scale-95"
+            )}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" /> Cancel Last Action
+          </Button>
         </div>
-        <div className="space-y-2">
-          <div className="grid grid-cols-1 gap-4">
-            <Button
-              variant="outline"
-              onClick={() => cancelLastAction()}
-              disabled={isRecording || isLoading}
-              className={cn(
-                "h-16 text-lg font-semibold transition-transform active:scale-95"
-              )}
-            >
-              <RotateCcw className="h-4 w-4 mr-2" /> Cancel Last Action
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </div>
+      </div>
+    </CardContent>
   );
 }

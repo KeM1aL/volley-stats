@@ -50,6 +50,7 @@ export default function LiveMatchPage() {
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
   const [players, setPlayers] = useState<Player[]>([]);
   const [managedTeam, setManagedTeam] = useState<Team>();
+  const [opponentTeam, setOpponentTeam] = useState<Team>();
   const [isLoading, setIsLoading] = useState(true);
 
   // Memoized data loading function
@@ -96,6 +97,7 @@ export default function LiveMatchPage() {
         throw new Error("Managed Team not found");
       }
       setManagedTeam(teams.find((team) => team.id === teamId));
+      setOpponentTeam(teams.find((team) => team.id !== teamId));
       const playerIds =
         teamId === match.home_team_id
           ? match.home_available_players
@@ -336,10 +338,10 @@ export default function LiveMatchPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <LiveMatchHeader match={matchState.match} sets={matchState.sets} />
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="p-4">
+        <Card className="p-2">
           {matchState.set && (
             <ScoreBoard
               match={matchState.match}
@@ -350,7 +352,7 @@ export default function LiveMatchPage() {
           )}
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-2">
           {!matchState.set || matchState.set.status === "completed" ? (
             <SetSetup
               match={matchState.match}
@@ -364,6 +366,8 @@ export default function LiveMatchPage() {
             <StatTracker
               onStat={onPlayerStatRecorded}
               onPoint={onPointRecorded}
+              opponentTeam={opponentTeam!}
+              managedTeam={managedTeam!}
               match={matchState.match}
               currentSet={matchState.set}
               sets={matchState.sets}

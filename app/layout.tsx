@@ -65,7 +65,7 @@ export default function RootLayout({
               <LoadingBar />
               <div className="min-h-screen bg-background">
                 <Navigation />
-                <main className="2xl:container 2xl:mx-auto px-4 py-4">
+                <main className="2xl:container 2xl:mx-auto px-2 py-2">
                   {children}
                 </main>
               </div>

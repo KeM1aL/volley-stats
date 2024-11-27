@@ -42,42 +42,40 @@ export function ScoreBoard({ match, set, score, points }: ScoreBoardProps) {
   }, [db, match.id, set.id]);
 
   return (
-    <div className="gap-6">
-      <div className="space-y-6">
-        <div className="flex flex-row justify-center gap-2">
-          <Card className="basis-1/3">
-            <CardContent className="p-4">
-              <div className="flex justify-between">
-                <div className="flex flex-col items-center space-y-2">
-                  <h2 className="text-2xl font-bold">Home</h2>
-                  <div className="text-4xl font-bold">{set.home_score}</div>
-                  {set.server === "home" && (
-                    <Badge variant="secondary" className="mt-2">
-                      Serving
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-6xl font-bold mx-4">-</div>
-                <div className="flex flex-col items-center space-y-2">
-                  <h2 className="text-2xl font-bold">Ext.</h2>
-                  <div className="text-4xl font-bold">{set.away_score}</div>
-                  {set.server === "away" && (
-                    <Badge variant="secondary" className="mt-2">
-                      Serving
-                    </Badge>
-                  )}
-                </div>
+    <div className="space-y-2">
+      <div className="flex flex-row justify-center gap-2">
+        <Card className="basis-1/3">
+          <CardContent className="p-2">
+            <div className="flex justify-between">
+              <div className="flex flex-col items-center space-y-2">
+                <h2 className="text-2xl font-bold">Home</h2>
+                <div className="text-4xl font-bold">{set.home_score}</div>
+                {set.server === "home" && (
+                  <Badge variant="secondary" className="mt-2">
+                    Serving
+                  </Badge>
+                )}
               </div>
-              <div className="text-sm text-center text-muted-foreground">
-                Set {set.set_number}
+              <div className="text-6xl font-bold mx-4">-</div>
+              <div className="flex flex-col items-center space-y-2">
+                <h2 className="text-2xl font-bold">Ext.</h2>
+                <div className="text-4xl font-bold">{set.away_score}</div>
+                {set.server === "away" && (
+                  <Badge variant="secondary" className="mt-2">
+                    Serving
+                  </Badge>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        <PointsHistory points={points} />
-
-        <CourtDiagram players={players} />
+            </div>
+            <div className="text-sm text-center text-muted-foreground">
+              Set {set.set_number}
+            </div>
+          </CardContent>
+        </Card>
       </div>
+      <PointsHistory points={points} />
+
+      <CourtDiagram players={players} />
     </div>
   );
 }

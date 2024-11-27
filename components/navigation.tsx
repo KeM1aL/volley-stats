@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { ThemeToggle } from "./theme-toggle";
+import { FullScreenToggle } from "./fullscreen-toggle";
 
 const routes = [
   {
@@ -44,7 +45,7 @@ export function Navigation() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex mx-auto h-14 items-center justify-between">
         <div className="flex items-center">
           <div className="md:hidden">
@@ -104,6 +105,7 @@ export function Navigation() {
           </nav>
         </div>
         <div className="flex items-center">
+          <FullScreenToggle />
           <ThemeToggle />
           {user && (
             <Button variant="ghost" size="sm" onClick={signOut}>
