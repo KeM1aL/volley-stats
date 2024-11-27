@@ -263,6 +263,22 @@ export default function LiveMatchPage() {
         };
         if (matchState.set.server !== scoringTeam) {
           setUpdatedFields.server = scoringTeam;
+          if (
+            (managedTeam!.id === matchState.match.home_team_id &&
+              scoringTeam === "home") ||
+            (managedTeam!.id === matchState.match.away_team_id &&
+              scoringTeam === "away")
+          ) {
+            const current_lineup = matchState.set.current_lineup;
+            const p1Player = current_lineup.p1;
+            current_lineup.p1 = current_lineup.p2;
+            current_lineup.p2 = current_lineup.p3;
+            current_lineup.p3 = current_lineup.p4;
+            current_lineup.p4 = current_lineup.p5;
+            current_lineup.p5 = current_lineup.p6;
+            current_lineup.p6 = p1Player;
+            setUpdatedFields.current_lineup = current_lineup;
+          }
         }
 
         let setTerminated = false;
