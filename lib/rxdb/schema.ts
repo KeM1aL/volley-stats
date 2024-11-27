@@ -34,11 +34,11 @@ export const playerSchema = toTypedRxJsonSchema({
     team_id: { type: 'string', maxLength: 36 },
     name: { type: 'string' },
     number: { type: 'number' },
-    position: { type: 'string' },
+    role: { type: 'string' },
     avatar_url: { type: ['string', 'null'] },
     ...timestampFields
   },
-  required: ['id', 'team_id', 'name', 'number', 'position', 'created_at', 'updated_at'],
+  required: ['id', 'team_id', 'name', 'number', 'role', 'created_at', 'updated_at'],
   indexes: ['team_id', 'created_at', 'updated_at']
 });
 
@@ -56,7 +56,11 @@ export const matchSchema = toTypedRxJsonSchema({
     home_score: { type: 'number' },
     away_score: { type: 'number' },
     status: { type: 'string', enum: ['upcoming', 'live', 'completed'], maxLength: 10 },
-    available_players: { 
+    home_available_players: {
+      type: 'array',
+      items: { type: 'string', maxLength: 36 }
+    },
+    away_available_players: { 
       type: 'array',
       items: { type: 'string', maxLength: 36 }
     },

@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import { useDb } from "../providers/database-provider";
 import { toast } from "@/hooks/use-toast";
 import { MatchManagedTeamSetup } from "./match-managed-setup";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 type MatchStartDialogProps = {
   match: Match;
@@ -106,18 +106,23 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     if(!managedTeam) return;
     setIsLoading(true);
     try {
-      // Save available players and start the match
+      // Save available players for managed team and start the match
+      const matchUpdatedFields: Partial<Match> = {
+        status: "live",
+        updated_at: new Date().toISOString(),
+      };
+      if(managedTeam.id !== match.home_team_id) {
+        matchUpdatedFields.home_available_players = availablePlayers;
+      } else {
+        matchUpdatedFields.away_available_players = availablePlayers;
+      }
       await db?.matches.findOne(match.id).update({
-        $set: {
-          status: "live",
-          available_players: availablePlayers,
-          updated_at: new Date().toISOString(),
-        },
+        $set: matchUpdatedFields,
       });
       const params = new URLSearchParams();
       params.set('team', managedTeam!.id)
 
-      router.push(`/matches/${match.id}/live?${params.toString}`);
+      router.push(`/matches/${match.id}/live?${params.toString()}`);
     } catch (error) {
       console.error("Failed to start match:", error);
       toast({

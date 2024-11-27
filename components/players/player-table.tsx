@@ -106,7 +106,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
               </TableCell>
               <TableCell>{player.number}</TableCell>
               <TableCell className="font-medium">{player.name}</TableCell>
-              <TableCell>{player.position}</TableCell>
+              <TableCell>{player.role}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button

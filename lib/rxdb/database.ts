@@ -1,6 +1,6 @@
 "use client";
 
-import { createRxDatabase, addRxPlugin, type RxDatabase, type RxCollection, removeRxDatabase, RxStorage } from 'rxdb';
+import { createRxDatabase, addRxPlugin, type RxDatabase, type RxCollection, removeRxDatabase, RxStorage, RxError } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
@@ -90,7 +90,6 @@ export function getDatabaseName() {
 export const getDatabase = async (): Promise<VolleyballDatabase> => {
   if (dbPromise) return dbPromise;
 
-  // removeRxDatabase('volleystats_db', getRxStorageDexie());
   dbPromise = createRxDatabase<DatabaseCollections>({
     name: getDatabaseName(),
     storage: wrappedValidateAjvStorage({
@@ -100,29 +99,36 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
     ignoreDuplicate: true,
   }).then(async (db) => {
     // Create collections
-    await db.addCollections({
-      teams: {
-        schema: teamSchema,
-      },
-      players: {
-        schema: playerSchema,
-      },
-      matches: {
-        schema: matchSchema,
-      },
-      sets: {
-        schema: setSchema,
-      },
-      substitutions: {
-        schema: substitutionSchema,
-      },
-      score_points: {
-        schema: scorePointSchema,
-      },
-      player_stats: {
-        schema: playerStatSchema,
-      },
-    });
+    try {
+      await db.addCollections({
+        teams: {
+          schema: teamSchema,
+        },
+        players: {
+          schema: playerSchema,
+        },
+        matches: {
+          schema: matchSchema,
+        },
+        sets: {
+          schema: setSchema,
+        },
+        substitutions: {
+          schema: substitutionSchema,
+        },
+        score_points: {
+          schema: scorePointSchema,
+        },
+        player_stats: {
+          schema: playerStatSchema,
+        },
+      });
+    } catch (error) {
+      if (error instanceof RxError) {
+        removeRxDatabase(getDatabaseName(), getRxStorageDexie());
+      }
+      throw error;
+    }
 
     return db;
   });

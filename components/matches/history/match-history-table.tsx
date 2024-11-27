@@ -23,7 +23,7 @@ import { MatchStatus } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MatchStartDialog from "../match-start-dialog";
 import MatchEditDialog from "../match-edit-dialog";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";

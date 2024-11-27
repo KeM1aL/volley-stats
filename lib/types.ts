@@ -1,4 +1,4 @@
-export enum PlayerPosition {
+export enum PlayerRole {
   SETTER = "Setter",
   OPPOSITE = "Opposite",
   OUTSIDE_FRONT = "Outside Hitter (Front)",
@@ -6,6 +6,15 @@ export enum PlayerPosition {
   MIDDLE_FRONT = "Middle Blocker (Front)",
   MIDDLE_BACK = "Middle Blocker (Back)",
   LIBERO = "Libero",
+}
+
+export enum PlayerPosition {
+  P1 = "P1",
+  P2 = "P2",
+  P3 = "P3",
+  P4 = "P4",
+  P5 = "P5",
+  P6 = "P6",
 }
 
 export enum PointType {

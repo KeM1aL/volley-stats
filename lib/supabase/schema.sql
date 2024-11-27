@@ -14,7 +14,7 @@ create table if not exists public.players (
   team_id uuid references public.teams(id) not null,
   name text not null,
   number integer not null,
-  position text not null,
+  role text not null,
   avatar_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -31,7 +31,8 @@ create table if not exists public.matches (
   home_score integer default 0 not null,
   away_score integer default 0 not null,
   status text default 'upcoming' not null,
-  available_players uuid[] default array[]::uuid[],
+  home_available_players uuid[] default array[]::uuid[],
+  away_available_players uuid[] default array[]::uuid[],
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   constraint status_check check (status in ('upcoming', 'live', 'completed'))

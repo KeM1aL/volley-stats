@@ -11,7 +11,7 @@ export type Player = {
   team_id: string;
   name: string;
   number: number;
-  position: string;
+  role: string;
   avatar_url?: string | null;
   created_at: string;
   updated_at: string;
@@ -28,7 +28,8 @@ export type Match = {
   home_score: number;
   away_score: number;
   status: 'upcoming' | 'live' | 'completed';
-  available_players: string[];
+  home_available_players: string[];
+  away_available_players: string[];
   created_at: string;
   updated_at: string;
 };

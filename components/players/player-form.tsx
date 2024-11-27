@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlayerPosition } from "@/lib/types";
+import { PlayerRole } from "@/lib/types";
 import { Player } from "@/lib/supabase/types";
 import { AvatarUpload } from "./avatar-upload";
 
@@ -51,7 +51,7 @@ export function PlayerForm({
     defaultValues: {
       name: defaultValues?.name || "",
       number: defaultValues?.number || 0,
-      position: defaultValues?.position || "",
+      position: defaultValues?.role || "",
       avatar_url: defaultValues?.avatar_url || null,
     },
   });
@@ -118,7 +118,7 @@ export function PlayerForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {Object.values(PlayerPosition).map((position) => (
+                  {Object.values(PlayerRole).map((position) => (
                     <SelectItem key={position} value={position}>
                       {position}
                     </SelectItem>

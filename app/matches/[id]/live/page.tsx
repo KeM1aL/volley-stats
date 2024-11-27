@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
   Match,
+  Player,
   PlayerStat,
   ScorePoint,
   Set,
@@ -47,6 +48,7 @@ export default function LiveMatchPage() {
   const { db } = useDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [managedTeam, setManagedTeam] = useState<Team>();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,6 +57,8 @@ export default function LiveMatchPage() {
     if (!db) return;
 
     try {
+      setIsLoading(true);
+
       const [matchDoc, setDocs] = await Promise.all([
         db.matches.findOne(matchId).exec(),
         db.sets
@@ -80,7 +84,20 @@ export default function LiveMatchPage() {
         throw new Error("Teams not found");
       }
 
-      const teams = Array.from(teamDocs.values());
+      const teams = Array.from(teamDocs.values()).map((doc) => doc.toJSON());
+
+      const managedTeamParam = searchParams.get("team");
+      if (!managedTeamParam) {
+        throw new Error("Please select your managed team");
+      }
+
+      const teamId = searchParams.get("team");
+      if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
+        throw new Error("Managed Team not found");
+      }
+      setManagedTeam(teams.find((team) => team.id === teamId));
+      await loadAvailablePlayers(teamId);
+
       const sets = setDocs.map((doc) => doc.toJSON());
       const currentSet = sets[sets.length - 1];
 
@@ -114,8 +131,8 @@ export default function LiveMatchPage() {
 
       setMatchState({
         match,
-        homeTeam: teams[0].toJSON(),
-        awayTeam: teams[1].toJSON(),
+        homeTeam: teams[0],
+        awayTeam: teams[1],
         set: currentSet || null,
         points,
         sets,
@@ -141,6 +158,22 @@ export default function LiveMatchPage() {
   useEffect(() => {
     loadMatchData();
   }, [loadMatchData]);
+
+  const loadAvailablePlayers = async (teamId: string) => {
+    if (!db) return;
+    if (!matchState.match) return;
+
+    const playerIds =
+      teamId === matchState.match.home_team_id
+        ? matchState.match.home_available_players
+        : matchState.match.away_available_players;
+    const availablePlayerDocs = await db.players.findByIds(playerIds).exec();
+    if (availablePlayerDocs) {
+      setPlayers(
+        Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())
+      );
+    }
+  };
 
   const onSetSetupComplete = useCallback(async (newSet: Set) => {
     setMatchState((prev) => ({
@@ -221,7 +254,11 @@ export default function LiveMatchPage() {
         }));
 
         const setNumber = matchState.set.set_number;
-        const { home_score: homeScore, away_score: awayScore, scoring_team: scoringTeam } = point;
+        const {
+          home_score: homeScore,
+          away_score: awayScore,
+          scoring_team: scoringTeam,
+        } = point;
 
         const setUpdatedFields: Partial<Set> = {
           updated_at: new Date().toISOString(),
@@ -327,6 +364,7 @@ export default function LiveMatchPage() {
               homeTeam={matchState.homeTeam}
               awayTeam={matchState.awayTeam}
               setNumber={matchState.set ? matchState.set.set_number + 1 : 1}
+              players={players}
               onComplete={onSetSetupComplete}
             />
           ) : (

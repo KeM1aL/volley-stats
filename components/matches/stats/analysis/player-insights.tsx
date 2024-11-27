@@ -62,7 +62,7 @@ export function PlayerInsights({
     });
 
     // Position-specific metrics
-    switch (player.position) {
+    switch (player.role) {
       case "Setter":
         const setterEfficiency = playerStats
           .filter((s) => s.stat_type === "spike")
@@ -138,7 +138,7 @@ export function PlayerInsights({
       <div className="flex items-center gap-2">
         <Star className="h-4 w-4" />
         <h3 className="font-semibold">
-          #{player.number} {player.name} - {player.position}
+          #{player.number} {player.name} - {player.role}
         </h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

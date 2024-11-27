@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Volleyball } from "lucide-react";
 import { MatchManagedTeamSetup } from "./match-managed-setup";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useDb } from "../providers/database-provider";
 import { toast } from "@/hooks/use-toast";
@@ -71,7 +71,7 @@ export default function MatchEditDialog({ match }: MatchStartDialogProps) {
     const params = new URLSearchParams();
     params.set("team", selectedTeamId);
 
-    router.push(`/matches/${match.id}/live?${params.toString}`);
+    router.push(`/matches/${match.id}/live?${params.toString()}`);
   }
 
   return (
