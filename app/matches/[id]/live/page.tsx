@@ -96,7 +96,16 @@ export default function LiveMatchPage() {
         throw new Error("Managed Team not found");
       }
       setManagedTeam(teams.find((team) => team.id === teamId));
-      await loadAvailablePlayers(teamId);
+      const playerIds =
+        teamId === match.home_team_id
+          ? match.home_available_players
+          : match.away_available_players;
+      const availablePlayerDocs = await db.players.findByIds(playerIds).exec();
+      if (availablePlayerDocs) {
+        setPlayers(
+          Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())
+        );
+      }
 
       const sets = setDocs.map((doc) => doc.toJSON());
       const currentSet = sets[sets.length - 1];
@@ -158,22 +167,6 @@ export default function LiveMatchPage() {
   useEffect(() => {
     loadMatchData();
   }, [loadMatchData]);
-
-  const loadAvailablePlayers = async (teamId: string) => {
-    if (!db) return;
-    if (!matchState.match) return;
-
-    const playerIds =
-      teamId === matchState.match.home_team_id
-        ? matchState.match.home_available_players
-        : matchState.match.away_available_players;
-    const availablePlayerDocs = await db.players.findByIds(playerIds).exec();
-    if (availablePlayerDocs) {
-      setPlayers(
-        Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())
-      );
-    }
-  };
 
   const onSetSetupComplete = useCallback(async (newSet: Set) => {
     setMatchState((prev) => ({

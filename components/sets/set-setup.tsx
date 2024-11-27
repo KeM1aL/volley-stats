@@ -163,8 +163,23 @@ export function SetSetup({
                 </Select>
                 {role !== PlayerRole.LIBERO && (
                   <Select
-                    onValueChange={(value) =>
-                      setPosition((prev) => ({ ...prev, [value]: lineup[role] }))
+                    onValueChange={(value: PlayerPosition) =>
+                      setPosition((prev) => {
+                        const filteredPositions: Record<
+                          PlayerPosition,
+                          string
+                        > = {} as Record<PlayerPosition, string>;
+                        Object.keys(prev).forEach((key) => {
+                          const playerId = prev[key as PlayerPosition];
+                          if (playerId !== lineup[role]) {
+                            filteredPositions[key as PlayerPosition] = playerId;
+                          }
+                        });
+                        if (value) {
+                          filteredPositions[value] = lineup[role];
+                        }
+                        return filteredPositions;
+                      })
                     }
                     disabled={!lineup[role]}
                   >
@@ -172,12 +187,20 @@ export function SetSetup({
                       <SelectValue placeholder="Position" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value={null as unknown as string}>
+                        None
+                      </SelectItem>
                       {Object.values(PlayerPosition)
-                      .map((position) => (
-                        <SelectItem key={position} value={position as string}>
-                          {position}
-                        </SelectItem>
-                      ))}
+                        .filter(
+                          (position) =>
+                            !positions[position] ||
+                            positions[position] === lineup[role]
+                        )
+                        .map((position) => (
+                          <SelectItem key={position} value={position as string}>
+                            {position}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 )}
