@@ -75,7 +75,7 @@ export function ScoreBoard({ match, set, score, points }: ScoreBoardProps) {
       </div>
       <PointsHistory points={points} />
 
-      <CourtDiagram players={players} />
+      <CourtDiagram players={players} current_lineup={set.current_lineup} />
     </div>
   );
 }

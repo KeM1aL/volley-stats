@@ -67,7 +67,7 @@ export default function LiveMatchPage() {
             selector: {
               match_id: matchId,
             },
-            sort: [{ updated_at: "asc" }],
+            sort: [{ created_at: "asc" }],
           })
           .exec(),
       ]);
@@ -139,7 +139,6 @@ export default function LiveMatchPage() {
             .then((docs) => docs.map((doc) => doc.toJSON())),
         ]);
       }
-      console.table(points);
 
       setMatchState({
         match,
@@ -269,7 +268,7 @@ export default function LiveMatchPage() {
             (managedTeam!.id === matchState.match.away_team_id &&
               scoringTeam === "away")
           ) {
-            const current_lineup = matchState.set.current_lineup;
+            let current_lineup = { ...matchState.set.current_lineup };
             const p1Player = current_lineup.p1;
             current_lineup.p1 = current_lineup.p2;
             current_lineup.p2 = current_lineup.p3;

@@ -1,3 +1,5 @@
+import { PlayerPosition } from "../types";
+
 export type Team = {
   id: string;
   name: string;
@@ -43,22 +45,8 @@ export type Set = {
   status: 'upcoming' | 'live' | 'completed';
   first_server: 'home' | 'away';
   server: 'home' | 'away';
-  first_lineup: {
-    p1: string;
-    p2: string;
-    p3: string;
-    p4: string;
-    p5: string;
-    p6: string;
-  };
-  current_lineup: {
-    p1: string;
-    p2: string;
-    p3: string;
-    p4: string;
-    p5: string;
-    p6: string;
-  };
+  first_lineup: { [key in PlayerPosition]: string };
+  current_lineup: { [key in PlayerPosition]: string };
   created_at: string;
   updated_at: string;
 };
