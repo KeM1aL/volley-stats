@@ -49,9 +49,22 @@ export default function LiveMatchPage() {
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [playerById, setPlayerById] = useState<Map<string, Player>>(new Map());
   const [managedTeam, setManagedTeam] = useState<Team>();
   const [opponentTeam, setOpponentTeam] = useState<Team>();
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const playerById: Map<string, Player> = new Map();
+      players.forEach((player) => {
+        playerById.set(player.id, player);
+      });
+      setPlayerById(playerById);
+    };
+
+    loadData();
+  }, [players]);
 
   // Memoized data loading function
   const loadMatchData = useCallback(async () => {
@@ -364,6 +377,8 @@ export default function LiveMatchPage() {
               set={matchState.set}
               score={matchState.score}
               points={matchState.points}
+              players={players}
+              playerById={playerById}
             />
           )}
         </Card>
