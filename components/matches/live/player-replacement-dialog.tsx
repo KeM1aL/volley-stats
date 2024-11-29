@@ -59,7 +59,7 @@ export default function PlayerReplacementDialog({
     defaultValues: {
       oldPlayerId: "",
       newPlayerId: "",
-      comments: null,
+      comments: "",
     },
   });
 
