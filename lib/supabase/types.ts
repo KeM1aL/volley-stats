@@ -54,10 +54,12 @@ export type Set = {
 export type Substitution = {
   id: string;
   match_id: string;
+  team_id: string;
   set_id: string;
   player_out_id: string;
   player_in_id: string;
-  position: number;
+  position: string;
+  comments: string;
   timestamp: string;
   created_at: string;
   updated_at: string;

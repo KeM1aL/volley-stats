@@ -60,7 +60,7 @@ export const matchSchema = toTypedRxJsonSchema({
       type: 'array',
       items: { type: 'string', maxLength: 36 }
     },
-    away_available_players: { 
+    away_available_players: {
       type: 'array',
       items: { type: 'string', maxLength: 36 }
     },
@@ -120,10 +120,12 @@ export const substitutionSchema = toTypedRxJsonSchema({
   properties: {
     id: { type: 'string', maxLength: 36 },
     match_id: { type: 'string', maxLength: 36 },
+    team_id: { type: 'string', maxLength: 36 },
     set_id: { type: 'string', maxLength: 36 },
     player_out_id: { type: 'string', maxLength: 36 },
     player_in_id: { type: 'string', maxLength: 36 },
-    position: { type: 'number', minimum: 1, maximum: 6 },
+    position: { type: 'string', enum: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'] },
+    comments: { type: 'string' },
     timestamp: { type: 'string' },
     ...timestampFields
   },

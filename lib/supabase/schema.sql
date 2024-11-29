@@ -77,13 +77,16 @@ alter publication supabase_realtime add table "public"."sets";
  create table if not exists public.substitutions (
   id uuid default gen_random_uuid() primary key,
   match_id uuid references public.matches(id) not null,
+  team_id uuid references public.teams(id) not null,
   set_id uuid references public.sets(id) not null,
   player_out_id uuid references public.players(id) not null,
   player_in_id uuid references public.players(id) not null,
-  position integer not null check (position between 1 and 6),
+  position text not null,
+  comments text,
   timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  constraint position_check check (position in ('p1', 'p2', 'p3', 'p4', 'p5', 'p6'))
 );
 
 alter publication supabase_realtime add table "public"."substitutions";

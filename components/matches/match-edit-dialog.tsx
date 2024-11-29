@@ -93,9 +93,6 @@ export default function MatchEditDialog({ match }: MatchStartDialogProps) {
             onTeamSelected={onManagedTeamSelected}
           />
         </div>
-        <DialogFooter>
-          <Button type="submit">Save changes</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

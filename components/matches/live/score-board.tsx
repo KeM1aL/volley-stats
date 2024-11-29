@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Match, Set, ScorePoint, Player } from "@/lib/supabase/types";
+import {
+  Match,
+  Set,
+  ScorePoint,
+  Player,
+  Substitution,
+  Team,
+} from "@/lib/supabase/types";
 import { useDb } from "@/components/providers/database-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourtDiagram } from "./court-diagram";
@@ -15,26 +22,38 @@ type ScoreBoardProps = {
   match: Match;
   set: Set;
   score: Score;
+  managedTeam: Team;
   players: Player[];
   playerById: Map<string, Player>;
   points: ScorePoint[];
+  onSubstitution: (substitution: Substitution) => Promise<void>;
 };
 
 export function ScoreBoard({
   match,
   set,
   score,
+  managedTeam,
   players,
   playerById,
   points,
+  onSubstitution,
 }: ScoreBoardProps) {
   const { toast } = useToast();
 
   return (
     <div className="space-y-2">
       <div className="flex flex-row justify-center gap-2">
-        <div className="basis-1/3">
-          <PlayerReplacementDialog set={set} match={match} players={players} playerById={playerById} />
+        <div className="basis-1/3 flex flex-col items-center space-y-2">
+          {managedTeam && managedTeam.id === match.home_team_id && (
+            <PlayerReplacementDialog
+              set={set}
+              match={match}
+              players={players}
+              playerById={playerById}
+              onSubstitution={onSubstitution}
+            />
+          )}
         </div>
         <Card className="basis-1/3">
           <CardContent className="p-2">
@@ -64,6 +83,17 @@ export function ScoreBoard({
             </div>
           </CardContent>
         </Card>
+        <div className="basis-1/3 flex flex-col items-center space-y-2">
+          {managedTeam && managedTeam.id === match.away_team_id && (
+            <PlayerReplacementDialog
+              set={set}
+              match={match}
+              players={players}
+              playerById={playerById}
+              onSubstitution={onSubstitution}
+            />
+          )}
+        </div>
       </div>
       <PointsHistory points={points} />
 

@@ -1,6 +1,12 @@
 "use client";
 
-import type { Match, Player, Team, Set } from "@/lib/supabase/types";
+import type {
+  Match,
+  Player,
+  Team,
+  Set,
+  Substitution,
+} from "@/lib/supabase/types";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +51,7 @@ type PlayerReplacementDialogProps = {
   set: Set;
   players: Player[];
   playerById: Map<string, Player>;
+  onSubstitution: (substitution: Substitution) => Promise<void>;
 };
 
 export default function PlayerReplacementDialog({
@@ -52,6 +59,7 @@ export default function PlayerReplacementDialog({
   set,
   players,
   playerById,
+  onSubstitution,
 }: PlayerReplacementDialogProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -68,7 +76,38 @@ export default function PlayerReplacementDialog({
   const onSubmit = async (
     values: z.infer<typeof formSchema>
   ): Promise<void> => {
-    console.log(values);
+    setIsLoading(true);
+    try {
+      const substitution: Substitution = {
+        id: crypto.randomUUID(),
+        match_id: match.id,
+        team_id: match.home_team_id,
+        set_id: set.id,
+        player_out_id: values.oldPlayerId,
+        player_in_id: values.newPlayerId,
+        position: Object.entries(set.current_lineup).find(
+          ([_position, playerId]) => playerId === values.oldPlayerId
+        )![0],
+        comments: values.comments,
+        timestamp: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      await onSubstitution(substitution);
+
+      toast({
+        title: "Replacement Successful",
+        description: "The replacement was successful",
+      });
+    } catch (error) {
+      toast({
+        title: "Replacement Failed",
+        description: "The replacement failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -93,7 +132,10 @@ export default function PlayerReplacementDialog({
                   <FormItem>
                     <FormLabel>Leaving Player</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Player" />
                         </SelectTrigger>
@@ -119,7 +161,10 @@ export default function PlayerReplacementDialog({
                   <FormItem>
                     <FormLabel>New Player</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Player" />
                         </SelectTrigger>
@@ -155,9 +200,11 @@ export default function PlayerReplacementDialog({
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-            Perform Replacement
-          </Button>
+              <DialogTrigger asChild>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  Perform Replacement
+                </Button>
+              </DialogTrigger>
             </form>
           </Form>
         </div>

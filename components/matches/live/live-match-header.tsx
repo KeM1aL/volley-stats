@@ -1,14 +1,16 @@
 "use client";
 
-import { Match, Set } from "@/lib/supabase/types";
+import { Match, Set, Team } from "@/lib/supabase/types";
 import { Card, CardContent } from "@/components/ui/card";
 
 type LiveMatchHeaderProps = {
   match: Match;
   sets: Set[];
+  homeTeam: Team;
+  awayTeam: Team;
 };
 
-export function LiveMatchHeader({ match, sets }: LiveMatchHeaderProps) {
+export function LiveMatchHeader({ match, sets, homeTeam, awayTeam }: LiveMatchHeaderProps) {
   
   return (
     <Card>
@@ -21,10 +23,10 @@ export function LiveMatchHeader({ match, sets }: LiveMatchHeaderProps) {
         </div>
         <div className="w-full max-w-4xl ml-auto">
           <div className="text-primary">
-            <div className="grid grid-cols-7 gap-4">
+            <div className="grid grid-cols-8 gap-4">
               {/* Team 1 Row */}
-              <div className="col-span-1 bg-primary/10 p-2 rounded-lg flex items-center justify-center text-xl font-bold">
-                Home
+              <div className="col-span-2 bg-primary/10 p-2 rounded-lg flex items-center justify-center text-xl font-bold">
+               {homeTeam.name}
               </div>
               {sets.map((set, index) => (
                 <div
@@ -45,8 +47,8 @@ export function LiveMatchHeader({ match, sets }: LiveMatchHeaderProps) {
             </div>
 
             {/* Set Labels */}
-            <div className="grid grid-cols-7 gap-4">
-              <div className="col-span-1"></div>
+            <div className="grid grid-cols-8 gap-4">
+              <div className="col-span-2"></div>
               <div className="col-span-1 text-center text-primary/70">SET 1</div>
               <div className="col-span-1 text-center text-primary/70">SET 2</div>
               <div className="col-span-1 text-center text-primary/70">SET 3</div>
@@ -56,9 +58,9 @@ export function LiveMatchHeader({ match, sets }: LiveMatchHeaderProps) {
             </div>
 
             {/* Team 2 Row */}
-            <div className="grid grid-cols-7 gap-4">
-              <div className="col-span-1 bg-primary/10 p-2 rounded-lg flex items-center justify-center text-xl font-bold">
-                Ext.
+            <div className="grid grid-cols-8 gap-4">
+              <div className="col-span-2 bg-primary/10 p-2 rounded-lg flex items-center justify-center text-xl font-bold">
+                {awayTeam.name}
               </div>
               {sets.map((set, index) => (
                 <div

@@ -70,7 +70,7 @@ export function StatTracker({
       setIsLoading(true);
     }
     loadData();
-  }, [db, match.id, currentSet.id]);
+  }, [db, match.id, currentSet]);
 
   const cancelLastAction = async () => {};
 

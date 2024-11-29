@@ -14,6 +14,7 @@ import type {
   PlayerStat,
   ScorePoint,
   Set,
+  Substitution,
   Team,
 } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
@@ -194,6 +195,42 @@ export default function LiveMatchPage() {
     }));
   }, []);
 
+  const onSubstitutionRecorded = useCallback(
+    async (substitution: Substitution) => {
+      try {
+        await db?.substitutions.insert(substitution);
+
+        const setUpdatedFields: Partial<Set> = {
+          updated_at: new Date().toISOString(),
+          current_lineup: {
+            ...matchState.set!.current_lineup,
+            [substitution.position]: substitution.player_in_id,
+          },
+        };
+        await db?.sets.findOne(matchState.set!.id).update({
+          $set: setUpdatedFields,
+        });
+        setMatchState((prev) => ({
+          ...prev,
+          set: { ...prev.set!, ...setUpdatedFields },
+        }));
+
+        toast({
+          title: "Subscription recorded",
+          description: `Player #${playerById.get(substitution.player_out_id)!.number} substituted for ${playerById.get(substitution.player_in_id)!.number}`,
+        });
+      } catch (error) {
+        console.error("Failed to record substitution:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to record substitution",
+        });
+      }
+    },
+    [db, matchState.set]
+  );
+
   const onPlayerStatRecorded = useCallback(
     async (stat: PlayerStat) => {
       try {
@@ -368,7 +405,7 @@ export default function LiveMatchPage() {
 
   return (
     <div className="space-y-2">
-      <LiveMatchHeader match={matchState.match} sets={matchState.sets} />
+      <LiveMatchHeader match={matchState.match} sets={matchState.sets} homeTeam={matchState.homeTeam} awayTeam={matchState.awayTeam} />
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-2">
           {matchState.set && (
@@ -376,9 +413,11 @@ export default function LiveMatchPage() {
               match={matchState.match}
               set={matchState.set}
               score={matchState.score}
+              managedTeam={managedTeam!}
               points={matchState.points}
               players={players}
               playerById={playerById}
+              onSubstitution={onSubstitutionRecorded}
             />
           )}
         </Card>
