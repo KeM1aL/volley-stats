@@ -192,8 +192,7 @@ export class SyncHandler {
   ) {
     const operation = changeEvent.operation;
     const doc = {
-      ...changeEvent.documentData,
-      updated_at: new Date().toISOString()
+      ...changeEvent.documentData
     };
     delete (doc as any)._rev;
     delete (doc as any)._attachments;

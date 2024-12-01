@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RotateCcw } from "lucide-react";
+import { useCommandHistory } from "@/hooks/use-command-history";
 
 type StatTrackerProps = {
   match: Match;
@@ -31,6 +32,7 @@ type StatTrackerProps = {
   points: ScorePoint[];
   onPoint: (point: ScorePoint) => Promise<void>;
   onStat: (stat: PlayerStat) => Promise<void>;
+  onUndo: () => Promise<void>;
 };
 
 export function StatTracker({
@@ -44,9 +46,11 @@ export function StatTracker({
   score,
   onPoint,
   onStat,
+  onUndo,
 }: StatTrackerProps) {
   const { db } = useDb();
   const { toast } = useToast();
+  const { canUndo, canRedo } = useCommandHistory();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -71,8 +75,6 @@ export function StatTracker({
     }
     loadData();
   }, [db, match.id, currentSet]);
-
-  const cancelLastAction = async () => {};
 
   const recordStat = async (type: StatType, result: StatResult) => {
     if (!selectedPlayer) {
@@ -248,7 +250,7 @@ export function StatTracker({
         <div className="grid grid-cols-1">
           <Button
             variant="outline"
-            onClick={() => cancelLastAction()}
+            onClick={() => onUndo()}
             disabled={isRecording || isLoading}
             className={cn(
               "h-12 text-lg font-semibold transition-transform active:scale-95"

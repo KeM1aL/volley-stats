@@ -21,7 +21,7 @@ type SetSetupProps = {
   homeTeam: Team;
   awayTeam: Team;
   setNumber: number;
-  onComplete: (set: Set) => void;
+  onComplete: (set: Set) => Promise<void>;
 };
 
 const NAMES = [
@@ -52,78 +52,71 @@ export function SetSetup({
 
   const handleComplete = async () => {
     setIsLoading(true);
-    try {
-      if (
-        !lineup[PlayerRole.SETTER] ||
-        !lineup[PlayerRole.OPPOSITE] ||
-        !lineup[PlayerRole.OUTSIDE_BACK] ||
-        !lineup[PlayerRole.OUTSIDE_FRONT] ||
-        !lineup[PlayerRole.MIDDLE_BACK] ||
-        !lineup[PlayerRole.MIDDLE_FRONT]
-      ) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "All roles (except Libero) must be filled",
-        });
-        setIsLoading(false);
-        return;
-      }
-      if (
-        !positions[PlayerPosition.P1] ||
-        !positions[PlayerPosition.P2] ||
-        !positions[PlayerPosition.P3] ||
-        !positions[PlayerPosition.P4] ||
-        !positions[PlayerPosition.P5] ||
-        !positions[PlayerPosition.P6]
-      ) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "All positions must be specified",
-        });
-        setIsLoading(false);
-        return;
-      }
-      // Save lineups and start the set
-      const setDoc = await db?.sets.insert({
-        id: crypto.randomUUID(),
-        match_id: match.id,
-        set_number: setNumber,
-        home_score: 0,
-        away_score: 0,
-        status: "live",
-        first_server: server!,
-        server: server!,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        first_lineup: {
-          p1: positions[PlayerPosition.P1],
-          p2: positions[PlayerPosition.P2],
-          p3: positions[PlayerPosition.P3],
-          p4: positions[PlayerPosition.P4],
-          p5: positions[PlayerPosition.P5],
-          p6: positions[PlayerPosition.P6],
-        },
-        current_lineup: {
-          p1: positions[PlayerPosition.P1],
-          p2: positions[PlayerPosition.P2],
-          p3: positions[PlayerPosition.P3],
-          p4: positions[PlayerPosition.P4],
-          p5: positions[PlayerPosition.P5],
-          p6: positions[PlayerPosition.P6],
-        },
-      });
-      if (setDoc) {
-        onComplete(setDoc.toJSON());
-      }
-    } catch (error) {
-      console.error("Failed to start set:", error);
+    if (
+      !lineup[PlayerRole.SETTER] ||
+      !lineup[PlayerRole.OPPOSITE] ||
+      !lineup[PlayerRole.OUTSIDE_BACK] ||
+      !lineup[PlayerRole.OUTSIDE_FRONT] ||
+      !lineup[PlayerRole.MIDDLE_BACK] ||
+      !lineup[PlayerRole.MIDDLE_FRONT]
+    ) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to start set",
+        description: "All roles (except Libero) must be filled",
       });
+      setIsLoading(false);
+      return;
+    }
+    if (
+      !positions[PlayerPosition.P1] ||
+      !positions[PlayerPosition.P2] ||
+      !positions[PlayerPosition.P3] ||
+      !positions[PlayerPosition.P4] ||
+      !positions[PlayerPosition.P5] ||
+      !positions[PlayerPosition.P6]
+    ) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "All positions must be specified",
+      });
+      setIsLoading(false);
+      return;
+    }
+    // Save lineups and start the set
+    const set = {
+      id: crypto.randomUUID(),
+      match_id: match.id,
+      set_number: setNumber,
+      home_score: 0,
+      away_score: 0,
+      status: "live",
+      first_server: server!,
+      server: server!,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      first_lineup: {
+        p1: positions[PlayerPosition.P1],
+        p2: positions[PlayerPosition.P2],
+        p3: positions[PlayerPosition.P3],
+        p4: positions[PlayerPosition.P4],
+        p5: positions[PlayerPosition.P5],
+        p6: positions[PlayerPosition.P6],
+      },
+      current_lineup: {
+        p1: positions[PlayerPosition.P1],
+        p2: positions[PlayerPosition.P2],
+        p3: positions[PlayerPosition.P3],
+        p4: positions[PlayerPosition.P4],
+        p5: positions[PlayerPosition.P5],
+        p6: positions[PlayerPosition.P6],
+      },
+    } as Set;
+    try {
+      await onComplete(set);
+    } catch (error) {
+      console.error("Failed to start set:", error);
     } finally {
       setIsLoading(false);
     }

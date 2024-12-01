@@ -20,22 +20,17 @@ import type {
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
 import { PointType, Score, StatResult } from "@/lib/types";
-
-interface MatchState {
-  match: Match | null;
-  homeTeam: Team | null;
-  awayTeam: Team | null;
-  set: Set | null;
-  points: ScorePoint[];
-  sets: Set[];
-  stats: PlayerStat[];
-  score: Score;
-}
+import { useCommandHistory } from "@/hooks/use-command-history";
+import { MatchState } from "@/lib/commands/command";
+import {
+  PlayerStatCommand,
+  ScorePointCommand,
+  SetSetupCommand,
+  SubstitutionCommand,
+} from "@/lib/commands/match-commands";
 
 const initialMatchState: MatchState = {
   match: null,
-  homeTeam: null,
-  awayTeam: null,
   set: null,
   points: [],
   sets: [],
@@ -51,9 +46,12 @@ export default function LiveMatchPage() {
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerById, setPlayerById] = useState<Map<string, Player>>(new Map());
+  const [homeTeam, setHomeTeam] = useState<Team>();
+  const [awayTeam, setAwayTeam] = useState<Team>();
   const [managedTeam, setManagedTeam] = useState<Team>();
   const [opponentTeam, setOpponentTeam] = useState<Team>();
   const [isLoading, setIsLoading] = useState(true);
+  const { history, canUndo, canRedo } = useCommandHistory();
 
   useEffect(() => {
     const loadData = async () => {
@@ -110,8 +108,11 @@ export default function LiveMatchPage() {
       if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
         throw new Error("Managed Team not found");
       }
+      setHomeTeam(teams[0]);
+      setAwayTeam(teams[1]);
       setManagedTeam(teams.find((team) => team.id === teamId));
       setOpponentTeam(teams.find((team) => team.id !== teamId));
+
       const playerIds =
         teamId === match.home_team_id
           ? match.home_available_players
@@ -156,8 +157,6 @@ export default function LiveMatchPage() {
 
       setMatchState({
         match,
-        homeTeam: teams[0],
-        awayTeam: teams[1],
         set: currentSet || null,
         points,
         sets,
@@ -184,40 +183,43 @@ export default function LiveMatchPage() {
     loadMatchData();
   }, [loadMatchData]);
 
-  const onSetSetupComplete = useCallback(async (newSet: Set) => {
-    setMatchState((prev) => ({
-      ...prev,
-      set: newSet,
-      sets: [...prev.sets, newSet],
-      score: { home: 0, away: 0 },
-      points: [],
-      stats: [],
-    }));
-  }, []);
+  const onSetSetupComplete = useCallback(
+    async (newSet: Set) => {
+      if (!db) return;
+      const command = new SetSetupCommand(matchState, newSet, db);
+
+      try {
+        const newMatchState = await history.executeCommand(command);
+        setMatchState(newMatchState);
+      } catch (error) {
+        console.error("Failed to complete set setup:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to complete set setup",
+        });
+      }
+    },
+    [db, matchState]
+  );
 
   const onSubstitutionRecorded = useCallback(
     async (substitution: Substitution) => {
-      try {
-        await db?.substitutions.insert(substitution);
+      if (!db) return;
+      const command = new SubstitutionCommand(matchState, substitution, db);
 
-        const setUpdatedFields: Partial<Set> = {
-          updated_at: new Date().toISOString(),
-          current_lineup: {
-            ...matchState.set!.current_lineup,
-            [substitution.position]: substitution.player_in_id,
-          },
-        };
-        await db?.sets.findOne(matchState.set!.id).update({
-          $set: setUpdatedFields,
-        });
-        setMatchState((prev) => ({
-          ...prev,
-          set: { ...prev.set!, ...setUpdatedFields },
-        }));
+      try {
+        const newMatchState = await history.executeCommand(command);
+
+        setMatchState(newMatchState);
 
         toast({
           title: "Subscription recorded",
-          description: `Player #${playerById.get(substitution.player_out_id)!.number} substituted for ${playerById.get(substitution.player_in_id)!.number}`,
+          description: `Player #${
+            playerById.get(substitution.player_out_id)!.number
+          } substituted for ${
+            playerById.get(substitution.player_in_id)!.number
+          }`,
         });
       } catch (error) {
         console.error("Failed to record substitution:", error);
@@ -228,47 +230,17 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.set]
+    [db, matchState]
   );
 
   const onPlayerStatRecorded = useCallback(
     async (stat: PlayerStat) => {
+      if (!db) return;
+
+      const command = new PlayerStatCommand(matchState, stat, db);
       try {
-        await db?.player_stats.insert(stat);
-        setMatchState((prev) => ({
-          ...prev,
-          stats: [...prev.stats, stat],
-        }));
-
-        if (
-          stat.result === StatResult.ERROR ||
-          stat.result === StatResult.SUCCESS
-        ) {
-          const pointType = stat.stat_type as PointType;
-          if (Object.values(PointType).includes(pointType)) {
-            const isSuccess = stat.result === StatResult.SUCCESS;
-            const isError = stat.result === StatResult.ERROR;
-            const newHomeScore = matchState.score.home + (isSuccess ? 1 : 0);
-            const newAwayScore = matchState.score.away + (isError ? 1 : 0);
-
-            const point: ScorePoint = {
-              id: crypto.randomUUID(),
-              match_id: stat.match_id,
-              set_id: stat.set_id,
-              scoring_team: isSuccess ? "home" : "away",
-              point_type: pointType,
-              player_id: stat.player_id,
-              timestamp: new Date().toISOString(),
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              home_score: newHomeScore,
-              away_score: newAwayScore,
-              current_rotation: matchState.set!.current_lineup,
-            };
-
-            await onPointRecorded(point);
-          }
-        }
+        const newMatchState = await history.executeCommand(command);
+        setMatchState(newMatchState);
 
         toast({
           title: "Stat recorded",
@@ -288,100 +260,20 @@ export default function LiveMatchPage() {
 
   const onPointRecorded = useCallback(
     async (point: ScorePoint) => {
+      if (!db) return;
       if (!matchState.set || !matchState.match) return;
 
+      const myTeam =
+        (managedTeam!.id === matchState.match.home_team_id &&
+          point.scoring_team === "home") ||
+        (managedTeam!.id === matchState.match.away_team_id &&
+          point.scoring_team === "away");
+      const command = new ScorePointCommand(matchState, point, myTeam, db);
       try {
-        await db?.score_points.insert(point);
-        setMatchState((prev) => ({
-          ...prev,
-          points: [...prev.points, point],
-          score: { home: point.home_score, away: point.away_score },
-        }));
-
-        const setNumber = matchState.set.set_number;
-        const {
-          home_score: homeScore,
-          away_score: awayScore,
-          scoring_team: scoringTeam,
-        } = point;
-
-        const setUpdatedFields: Partial<Set> = {
-          updated_at: new Date().toISOString(),
-          home_score: homeScore,
-          away_score: awayScore,
-        };
-        if (matchState.set.server !== scoringTeam) {
-          setUpdatedFields.server = scoringTeam;
-          if (
-            (managedTeam!.id === matchState.match.home_team_id &&
-              scoringTeam === "home") ||
-            (managedTeam!.id === matchState.match.away_team_id &&
-              scoringTeam === "away")
-          ) {
-            let current_lineup = { ...matchState.set.current_lineup };
-            const p1Player = current_lineup.p1;
-            current_lineup.p1 = current_lineup.p2;
-            current_lineup.p2 = current_lineup.p3;
-            current_lineup.p3 = current_lineup.p4;
-            current_lineup.p4 = current_lineup.p5;
-            current_lineup.p5 = current_lineup.p6;
-            current_lineup.p6 = p1Player;
-            setUpdatedFields.current_lineup = current_lineup;
-          }
-        }
-
-        let setTerminated = false;
-        if (
-          (setNumber < 5 &&
-            (homeScore >= 25 || awayScore >= 25) &&
-            Math.abs(homeScore - awayScore) >= 2) ||
-          (setNumber === 5 &&
-            (homeScore >= 15 || awayScore >= 15) &&
-            Math.abs(homeScore - awayScore) >= 2)
-        ) {
-          setUpdatedFields.status = "completed";
-          setTerminated = true;
-        }
-
-        await db?.sets.findOne(matchState.set.id).update({
-          $set: setUpdatedFields,
-        });
-        setMatchState((prev) => ({
-          ...prev,
-          set: { ...prev.set!, ...setUpdatedFields },
-        }));
-
-        if (setTerminated) {
-          const matchUpdatedFields: Partial<Match> = {
-            updated_at: new Date().toISOString(),
-            home_score:
-              homeScore > awayScore
-                ? matchState.match.home_score + 1
-                : matchState.match.home_score,
-            away_score:
-              awayScore > homeScore
-                ? matchState.match.away_score + 1
-                : matchState.match.away_score,
-          };
-
-          let matchTerminated = false;
-          if (
-            matchUpdatedFields.home_score === 3 ||
-            matchUpdatedFields.away_score === 3
-          ) {
-            matchUpdatedFields.status = "completed";
-            matchTerminated = true;
-          }
-          await db?.matches.findOne(matchState.match.id).update({
-            $set: matchUpdatedFields,
-          });
-          setMatchState((prev) => ({
-            ...prev,
-            match: { ...prev.match!, ...matchUpdatedFields },
-          }));
-          if (matchTerminated) {
-            router.push(`/matches/${matchState.match.id}/stats`);
-          }
+        const newMatchState = await history.executeCommand(command);
+        setMatchState(newMatchState);
+        if (newMatchState.match!.status === "completed") {
+          router.push(`/matches/${matchState.match.id}/stats`);
         }
       } catch (error) {
         console.error("Failed to record point:", error);
@@ -392,20 +284,44 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.set, matchState.match, router]
+    [db, matchState, router]
   );
+
+  const handleUndo = async () => {
+    try {
+      const state = await history.undo();
+      setMatchState(state);
+
+      toast({
+        title: "Action undone",
+        description: "The last action has been undone",
+      });
+    } catch (error) {
+      console.error("Failed to undo action:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to undo action",
+      });
+    }
+  };
 
   if (isLoading) {
     return <Skeleton className="h-[600px] w-full" />;
   }
 
-  if (!matchState.match || !matchState.homeTeam || !matchState.awayTeam) {
+  if (!matchState.match || !homeTeam || !awayTeam) {
     return <div>Match not found</div>;
   }
 
   return (
     <div className="space-y-2">
-      <LiveMatchHeader match={matchState.match} sets={matchState.sets} homeTeam={matchState.homeTeam} awayTeam={matchState.awayTeam} />
+      <LiveMatchHeader
+        match={matchState.match}
+        sets={matchState.sets}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
+      />
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-2">
           {matchState.set && (
@@ -426,8 +342,8 @@ export default function LiveMatchPage() {
           {!matchState.set || matchState.set.status === "completed" ? (
             <SetSetup
               match={matchState.match}
-              homeTeam={matchState.homeTeam}
-              awayTeam={matchState.awayTeam}
+              homeTeam={homeTeam}
+              awayTeam={awayTeam}
               setNumber={matchState.set ? matchState.set.set_number + 1 : 1}
               players={players}
               onComplete={onSetSetupComplete}
@@ -436,6 +352,7 @@ export default function LiveMatchPage() {
             <StatTracker
               onStat={onPlayerStatRecorded}
               onPoint={onPointRecorded}
+              onUndo={handleUndo}
               opponentTeam={opponentTeam!}
               managedTeam={managedTeam!}
               match={matchState.match}

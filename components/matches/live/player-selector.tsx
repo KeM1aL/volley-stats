@@ -19,7 +19,7 @@ export function PlayerSelector({
 }: PlayerSelectorProps) {
   return (
     <div className={cn("grid grid-cols-3 gap-2", className)}>
-      {players.map((player) => (
+      {players.sort((a, b) => a.number - b.number).map((player) => (
         <button
           key={player.id}
           onClick={() => onPlayerSelect(player)}

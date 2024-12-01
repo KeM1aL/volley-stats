@@ -111,7 +111,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
         status: "live",
         updated_at: new Date().toISOString(),
       };
-      if(managedTeam.id !== match.home_team_id) {
+      if(managedTeam.id === match.home_team_id) {
         matchUpdatedFields.home_available_players = availablePlayers;
       } else {
         matchUpdatedFields.away_available_players = availablePlayers;
