@@ -269,7 +269,14 @@ export default function LiveMatchPage() {
         const newMatchState = await history.executeCommand(command);
         setMatchState(newMatchState);
         if (newMatchState.match!.status === "completed") {
-          router.push(`/matches/${matchState.match.id}/stats`);
+          if(navigator.onLine) {
+            router.push(`/matches/${matchState.match.id}/stats`);
+          } else {
+            toast({
+              title: "Match Finished",
+              description: "You must be online to view the stats",
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to record point:", error);

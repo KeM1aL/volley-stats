@@ -4,9 +4,9 @@ import { RxCollection, RxDocument, RxChangeEvent } from 'rxdb';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
 import { retryWithBackoff } from '@/lib/utils/retry';
-import { toast } from 'sonner';
 import { CollectionName } from '../schema';
 import { Subscription } from 'rxjs';
+import { toast } from '@/hooks/use-toast';
 
 interface SyncQueueItem<T = any> {
   collection: CollectionName;
@@ -36,8 +36,9 @@ export class SyncHandler {
 
   private setupOnlineListener() {
     if (typeof window !== 'undefined') {
-      window.addEventListener('online', this.handleOnline);
-      window.addEventListener('offline', this.handleOffline);
+      console.log('setting up online listener');
+      window.addEventListener('online', this.handleOnline.bind(this));
+      window.addEventListener('offline', this.handleOffline.bind(this));
       this.isOnline = navigator.onLine;
     }
   }
@@ -52,21 +53,34 @@ export class SyncHandler {
   }
 
   private handleOnline = async () => {
-    this.isOnline = true;
-    toast.success('Connection restored', {
-      description: 'Syncing pending changes...'
-    });
-    await this.processSyncQueue();
-    await this.resubscribeToChannels();
-    toast.success('Sync completed');
+    try {
+      this.isOnline = true;
+      toast({
+        title: 'Connection restored',
+        description: 'Syncing pending changes...',
+      });
+      await this.processSyncQueue();
+      await this.resubscribeToChannels();
+      toast({
+        title: 'Sync completed'
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   private handleOffline = () => {
-    this.isOnline = false;
-    this.channels.forEach(channel => channel.unsubscribe());
-    toast.error('Connection lost', {
-      description: 'Changes will be synced when connection is restored'
-    });
+    try {
+      this.isOnline = false;
+      this.channels.forEach(channel => channel.unsubscribe());
+      toast({
+        variant: "destructive",
+        title: 'Connection lost',
+        description: 'Changes will be synced when connection is restored',
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   async initializeSync(collections: Map<CollectionName, RxCollection>) {
@@ -116,10 +130,12 @@ export class SyncHandler {
             }
           })
         );
-        toast.info(`Initial sync of ${name} complete with ${data.length} records`);
+        console.log(`Initial sync of ${name} complete with ${data.length} records`);
       } catch (error) {
         console.error(`Error during initial sync of ${name}:`, error);
-        toast.error(`Failed to sync ${name}`, {
+        toast({
+          variant: "destructive",
+          title: `Failed to sync ${name}`,
           description: 'Please try refreshing the page'
         });
       }
@@ -137,7 +153,7 @@ export class SyncHandler {
     });
     this.rxSubscriptions.set(name, subscription);
 
-    if(!this.syncFromSupabase) return;
+    if (!this.syncFromSupabase) return;
     const channel = supabase
       .channel(`${name}_changes`)
       .on(
@@ -180,7 +196,9 @@ export class SyncHandler {
       }
     } catch (error) {
       console.error('Error handling Supabase change:', error);
-      toast.error('Sync error', {
+      toast({
+        variant: "destructive",
+        title: 'Sync error',
         description: 'Failed to apply remote changes'
       });
     }
@@ -228,7 +246,9 @@ export class SyncHandler {
     } catch (error) {
       console.error('Error syncing to Supabase:', error);
       this.queueChange(collectionName, changeEvent);
-      toast.error('Sync error', {
+      toast({
+        variant: "destructive",
+        title: 'Sync error',
         description: 'Changes will be retried automatically'
       });
     }
@@ -277,7 +297,9 @@ export class SyncHandler {
             timestamp: Date.now()
           });
         } else {
-          toast.error('Sync failed', {
+          toast({
+            variant: "destructive",
+            title: 'Sync failed',
             description: `Failed to sync changes to ${item.collection} after multiple attempts`
           });
         }
