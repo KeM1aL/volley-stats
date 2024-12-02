@@ -61,7 +61,6 @@ export function MatchAnalysis({
                     player={player}
                     stats={stats}
                     points={points}
-                    teamType="home"
                   />
                 ))}
               </div>

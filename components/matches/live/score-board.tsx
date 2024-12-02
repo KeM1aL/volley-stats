@@ -61,7 +61,7 @@ export function ScoreBoard({
               <div className="flex flex-col items-center space-y-2">
                 <h2 className="text-2xl font-bold">Home</h2>
                 <div className="text-4xl font-bold">{set.home_score}</div>
-                {set.server === "home" && (
+                {set.server_team_id === match.home_team_id && (
                   <Badge variant="secondary" className="mt-2">
                     Serving
                   </Badge>
@@ -71,7 +71,7 @@ export function ScoreBoard({
               <div className="flex flex-col items-center space-y-2">
                 <h2 className="text-2xl font-bold">Ext.</h2>
                 <div className="text-4xl font-bold">{set.away_score}</div>
-                {set.server === "away" && (
+                {set.server_team_id === match.away_team_id && (
                   <Badge variant="secondary" className="mt-2">
                     Serving
                   </Badge>
@@ -95,7 +95,7 @@ export function ScoreBoard({
           )}
         </div>
       </div>
-      <PointsHistory points={points} />
+      <PointsHistory match={match} points={points} />
 
       <CourtDiagram players={players} current_lineup={set.current_lineup} />
     </div>

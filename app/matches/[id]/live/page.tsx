@@ -263,11 +263,7 @@ export default function LiveMatchPage() {
       if (!db) return;
       if (!matchState.set || !matchState.match) return;
 
-      const myTeam =
-        (managedTeam!.id === matchState.match.home_team_id &&
-          point.scoring_team === "home") ||
-        (managedTeam!.id === matchState.match.away_team_id &&
-          point.scoring_team === "away");
+      const myTeam = (managedTeam!.id === point.scoring_team_id);
       const command = new ScorePointCommand(matchState, point, myTeam, db);
       try {
         const newMatchState = await history.executeCommand(command);

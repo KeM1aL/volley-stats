@@ -82,8 +82,8 @@ export const setSchema = toTypedRxJsonSchema({
     home_score: { type: 'number' },
     away_score: { type: 'number' },
     status: { type: 'string', enum: ['upcoming', 'live', 'completed'] },
-    first_server: { type: 'string', enum: ['home', 'away'] },
-    server: { type: 'string', enum: ['home', 'away'] },
+    first_server_team_id: { type: 'string', maxLength: 36 },
+    server_team_id: { type: 'string', maxLength: 36 },
     first_lineup: {
       type: 'object',
       properties: {
@@ -142,7 +142,7 @@ export const scorePointSchema = toTypedRxJsonSchema({
     id: { type: 'string', maxLength: 36 },
     match_id: { type: 'string', maxLength: 36 },
     set_id: { type: 'string', maxLength: 36 },
-    scoring_team: { type: 'string', enum: ['home', 'away'] },
+    scoring_team_id: { type: 'string', maxLength: 36 },
     point_type: { type: 'string', enum: ['serve', 'spike', 'block', 'reception', 'unknown'] },
     player_id: { type: ['string', 'null'], maxLength: 36 },
     timestamp: { type: 'string' },
@@ -161,7 +161,7 @@ export const scorePointSchema = toTypedRxJsonSchema({
     },
     ...timestampFields
   },
-  required: ['id', 'match_id', 'set_id', 'scoring_team', 'point_type', 'timestamp', 'home_score', 'away_score', 'current_rotation', 'created_at', 'updated_at'],
+  required: ['id', 'match_id', 'set_id', 'scoring_team_id', 'point_type', 'timestamp', 'home_score', 'away_score', 'current_rotation', 'created_at', 'updated_at'],
   indexes: ['match_id', 'set_id', 'created_at', 'updated_at']
 });
 
@@ -174,11 +174,13 @@ export const playerStatSchema = toTypedRxJsonSchema({
     id: { type: 'string', maxLength: 36 },
     match_id: { type: 'string', maxLength: 36 },
     set_id: { type: 'string', maxLength: 36 },
+    team_id: { type: 'string', maxLength: 36 },
     player_id: { type: 'string', maxLength: 36 },
+    position: { type: 'string', enum: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'] },
     stat_type: { type: 'string', enum: ['serve', 'spike', 'block', 'reception'] },
     result: { type: 'string', enum: ['success', 'error', 'attempt'] },
     ...timestampFields
   },
-  required: ['id', 'match_id', 'set_id', 'player_id', 'stat_type', 'result', 'created_at', 'updated_at'],
+  required: ['id', 'match_id', 'set_id', 'team_id', 'player_id', 'stat_type', 'position', 'result', 'created_at', 'updated_at'],
   indexes: ['match_id', 'set_id', 'player_id', 'created_at', 'updated_at']
 });

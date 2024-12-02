@@ -44,11 +44,11 @@ export function TeamPerformance({
 }: TeamPerformanceProps) {
   const calculateTeamStats = (teamId: string) => {
     const teamPoints = points.filter(p => 
-      p.scoring_team === (teamId === match.home_team_id ? 'home' : 'away')
+      p.scoring_team_id === teamId
     );
     const teamStats = stats.filter(s => {
       const pointScorer = points.find(p => p.set_id === s.set_id && p.player_id === s.player_id);
-      return pointScorer?.scoring_team === (teamId === match.home_team_id ? 'home' : 'away');
+      return pointScorer?.scoring_team_id === teamId;
     });
 
     return {
@@ -129,12 +129,12 @@ export function TeamPerformance({
       rotation: `R${i + 1}`,
       home: points
         .filter(p => 
-          p.scoring_team === 'home' && 
+          p.scoring_team_id === match.home_team_id &&
           Object.values(p.current_rotation)[0] === `position${i + 1}`
         ).length,
       away: points
         .filter(p => 
-          p.scoring_team === 'away' && 
+          p.scoring_team_id === match.away_team_id && 
           Object.values(p.current_rotation)[0] === `position${i + 1}`
         ).length,
     }));

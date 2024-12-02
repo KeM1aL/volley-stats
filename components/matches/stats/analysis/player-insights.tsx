@@ -8,7 +8,6 @@ interface PlayerInsightsProps {
   player: Player;
   stats: PlayerStat[];
   points: ScorePoint[];
-  teamType: "home" | "away";
 }
 
 interface PlayerMetric {
@@ -22,12 +21,11 @@ export function PlayerInsights({
   player,
   stats,
   points,
-  teamType,
 }: PlayerInsightsProps) {
   const calculatePlayerMetrics = (): PlayerMetric[] => {
     const playerStats = stats.filter((s) => s.player_id === player.id);
     const playerPoints = points.filter(
-      (p) => p.player_id === player.id && p.scoring_team === teamType
+      (p) => p.player_id === player.id && p.scoring_team_id === player.team_id
     );
 
     // Calculate performance metrics

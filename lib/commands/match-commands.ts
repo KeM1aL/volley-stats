@@ -117,14 +117,15 @@ export class PlayerStatCommand implements Command {
       if (Object.values(PointType).includes(pointType)) {
         const isSuccess = stat.result === StatResult.SUCCESS;
         const isError = stat.result === StatResult.ERROR;
-        const newHomeScore = previousState.score.home + (isSuccess ? 1 : 0);
-        const newAwayScore = previousState.score.away + (isError ? 1 : 0);
+        const scoringTeamId = isSuccess ? stat.team_id : (previousState.match!.home_team_id === stat.team_id ? previousState.match!.away_team_id : previousState.match!.home_team_id);
+        const newHomeScore = scoringTeamId === previousState.match!.home_team_id ? previousState.score.home + 1 : previousState.score.home;
+        const newAwayScore = scoringTeamId === previousState.match!.away_team_id ? previousState.score.away + 1 : previousState.score.away;
 
         const point: ScorePoint = {
           id: crypto.randomUUID(),
           match_id: stat.match_id,
           set_id: stat.set_id,
-          scoring_team: isSuccess ? "home" : "away",
+          scoring_team_id: scoringTeamId,
           point_type: pointType,
           player_id: stat.player_id,
           timestamp: new Date().toISOString(),
@@ -181,15 +182,15 @@ export class ScorePointCommand implements Command {
     const {
       home_score: homeScore,
       away_score: awayScore,
-      scoring_team: scoringTeam,
+      scoring_team_id: scoringTeamId,
     } = point;
 
     this.set = {
       home_score: homeScore,
       away_score: awayScore,
     };
-    if (previousState.set!.server !== scoringTeam) {
-      this.set.server = scoringTeam;
+    if (previousState.set!.server_team_id !== scoringTeamId) {
+      this.set.server_team_id = scoringTeamId;
       if (myTeam) {
         let current_lineup = { ...previousState.set!.current_lineup };
         const p1Player = current_lineup.p1;

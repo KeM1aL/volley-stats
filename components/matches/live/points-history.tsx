@@ -1,17 +1,18 @@
 "use client";
 
-import { ScorePoint } from "@/lib/supabase/types";
+import { Match, ScorePoint } from "@/lib/supabase/types";
 import { Button } from "../../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "../../ui/badge";
 
 interface PointsHistoryProps {
+  match: Match;
   points: ScorePoint[];
   className?: string;
 }
 
-export function PointsHistory({ points, className }: PointsHistoryProps) {
+export function PointsHistory({ match, points, className }: PointsHistoryProps) {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 0 })
   const historyContainerRef = useRef<HTMLDivElement>(null);
 
@@ -90,7 +91,7 @@ export function PointsHistory({ points, className }: PointsHistoryProps) {
                 <Badge
                   key={`teamA-${index + visibleRange.start}`}
                   variant={
-                    point.scoring_team === "home" ? "default" : "outline"
+                    point.scoring_team_id === match.home_team_id ? "default" : "outline"
                   }
                   className="w-8 h-8 flex items-center justify-center"
                 >
@@ -103,7 +104,7 @@ export function PointsHistory({ points, className }: PointsHistoryProps) {
                 <Badge
                   key={`teamB-${index + visibleRange.start}`}
                   variant={
-                    point.scoring_team === "away" ? "default" : "outline"
+                    point.scoring_team_id === match.away_team_id ? "default" : "outline"
                   }
                   className="w-8 h-8 flex items-center justify-center"
                 >

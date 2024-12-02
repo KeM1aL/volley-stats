@@ -24,8 +24,8 @@ export function TeamInsights({ match, sets, points, stats }: TeamInsightsProps) 
     const metrics: TeamMetric[] = [];
 
     // Point distribution analysis
-    const homePoints = points.filter((p) => p.scoring_team === "home");
-    const awayPoints = points.filter((p) => p.scoring_team === "away");
+    const homePoints = points.filter((p) => p.scoring_team_id === match.home_team_id);
+    const awayPoints = points.filter((p) => p.scoring_team_id === match.away_team_id);
 
     // Scoring efficiency
     const homeEfficiency = homePoints.length / points.length;
@@ -42,12 +42,12 @@ export function TeamInsights({ match, sets, points, stats }: TeamInsightsProps) 
     const homeServes = stats.filter(
       (s) =>
         s.stat_type === "serve" &&
-        points.find((p) => p.player_id === s.player_id)?.scoring_team === "home"
+        points.find((p) => p.player_id === s.player_id)?.scoring_team_id === match.home_team_id
     );
     const awayServes = stats.filter(
       (s) =>
         s.stat_type === "serve" &&
-        points.find((p) => p.player_id === s.player_id)?.scoring_team === "away"
+        points.find((p) => p.player_id === s.player_id)?.scoring_team_id === match.away_team_id
     );
 
     const homeServeEfficiency =
@@ -67,12 +67,12 @@ export function TeamInsights({ match, sets, points, stats }: TeamInsightsProps) 
     const homeAttacks = stats.filter(
       (s) =>
         s.stat_type === "spike" &&
-        points.find((p) => p.player_id === s.player_id)?.scoring_team === "home"
+        points.find((p) => p.player_id === s.player_id)?.scoring_team_id === match.home_team_id
     );
     const awayAttacks = stats.filter(
       (s) =>
         s.stat_type === "spike" &&
-        points.find((p) => p.player_id === s.player_id)?.scoring_team === "away"
+        points.find((p) => p.player_id === s.player_id)?.scoring_team_id === match.away_team_id
     );
 
     const homeAttackEfficiency =
@@ -94,12 +94,12 @@ export function TeamInsights({ match, sets, points, stats }: TeamInsightsProps) 
     const homeBlocks = stats.filter(
       (s) =>
         s.stat_type === "block" &&
-        points.find((p) => p.player_id === s.player_id)?.scoring_team === "home"
+        points.find((p) => p.player_id === s.player_id)?.scoring_team_id === match.home_team_id
     );
     const awayBlocks = stats.filter(
       (s) =>
         s.stat_type === "block" &&
-        points.find((p) => p.player_id === s.player_id)?.scoring_team === "away"
+        points.find((p) => p.player_id === s.player_id)?.scoring_team_id === match.away_team_id
     );
 
     const homeBlockEfficiency =

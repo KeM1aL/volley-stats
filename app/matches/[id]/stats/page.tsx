@@ -231,7 +231,7 @@ export default function MatchStatsPage() {
             </TabsContent>
 
             <TabsContent value="sets">
-              <SetBreakdown sets={sets} points={points} />
+              <SetBreakdown match={match} sets={sets} points={points} />
             </TabsContent>
 
             <TabsContent value="players">
@@ -243,7 +243,7 @@ export default function MatchStatsPage() {
             </TabsContent>
 
             <TabsContent value="progression">
-              <ScoreProgression points={points} />
+              <ScoreProgression match={match} points={points} />
             </TabsContent>
 
             <TabsContent value="team">

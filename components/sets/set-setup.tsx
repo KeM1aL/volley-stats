@@ -41,7 +41,7 @@ export function SetSetup({
   onComplete,
 }: SetSetupProps) {
   const { db } = useDb();
-  const [server, setServer] = useState<"home" | "away" | null>(null);
+  const [serverTeamId, setServerTeamId] = useState<string | null>(null);
   const [lineup, setLineup] = useState<Record<PlayerRole, string>>(
     {} as Record<PlayerRole, string>
   );
@@ -92,8 +92,8 @@ export function SetSetup({
       home_score: 0,
       away_score: 0,
       status: "live",
-      first_server: server!,
-      server: server!,
+      first_server_team_id: serverTeamId,
+      server_team_id: serverTeamId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       first_lineup: {
@@ -213,14 +213,14 @@ export function SetSetup({
           <div>
             <Label>Serving Team</Label>
             <Select
-              onValueChange={(value) => setServer(value as "home" | "away")}
+              onValueChange={(value) => setServerTeamId(value as string)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select serving team" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="home">{homeTeam.name}</SelectItem>
-                <SelectItem value="away">{awayTeam.name}</SelectItem>
+                <SelectItem value={homeTeam.id}>{homeTeam.name}</SelectItem>
+                <SelectItem value={awayTeam.id}>{awayTeam.name}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -232,7 +232,7 @@ export function SetSetup({
       <Button
         onClick={handleComplete}
         className="w-full"
-        disabled={isLoading || !server}
+        disabled={isLoading || !serverTeamId}
       >
         Start Set
       </Button>

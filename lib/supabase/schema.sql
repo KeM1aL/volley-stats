@@ -47,8 +47,8 @@ create table if not exists public.sets (
   home_score integer default 0 not null,
   away_score integer default 0 not null,
   status text default 'upcoming' not null,
-  first_server text default 'home' not null,
-  server text default 'home' not null,
+  first_server_team_id uuid references public.teams(id) not null,
+  server_team_id uuid references public.teams(id) not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   current_lineup jsonb not null default '{
@@ -68,8 +68,6 @@ create table if not exists public.sets (
     "p6": null
   }',
   constraint status_check check (status in ('upcoming', 'live', 'completed')),
-  constraint first_server check (first_server in ('home', 'away')),
-  constraint server check (server in ('home', 'away')),
 );
 
 alter publication supabase_realtime add table "public"."sets";
@@ -95,7 +93,7 @@ create table if not exists public.score_points (
   id uuid default gen_random_uuid() primary key,
   match_id uuid references public.matches(id) not null,
   set_id uuid references public.sets(id) not null,
-  scoring_team text not null check (scoring_team in ('home', 'away')),
+  scoring_team_id uuid references public.teams(id) not null,
   point_type text not null check (point_type in ('serve', 'spike', 'block', 'reception', 'unknown')),
   player_id uuid references public.players(id),
   timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
@@ -112,7 +110,9 @@ create table if not exists public.player_stats (
   id uuid default gen_random_uuid() primary key,
   match_id uuid references public.matches(id) not null,
   set_id uuid references public.sets(id) not null,
+  team_id uuid references public.teams(id) not null,
   player_id uuid references public.players(id) not null,
+  position text not null check (position in ('p1', 'p2', 'p3', 'p4', 'p5', 'p6')),
   stat_type text not null,
   result text not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,

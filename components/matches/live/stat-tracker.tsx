@@ -93,12 +93,17 @@ export function StatTracker({
         match_id: match.id,
         set_id: currentSet.id,
         player_id: selectedPlayer.id,
+        team_id: selectedPlayer.team_id,
+        position: Object.entries(currentSet.current_lineup).find(
+          ([_position, playerId]) => playerId === selectedPlayer.id
+        )![0],
         stat_type: type,
         result,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       } as PlayerStat;
       await onStat(playerStat);
+      setSelectedPlayer(null);
     } finally {
       setIsRecording(false);
     }
@@ -107,15 +112,17 @@ export function StatTracker({
   const recordPoint = async (type: PointType, result: StatResult) => {
     setIsRecording(true);
     try {
+      //TODO FIX as we are not always the home team
       const isSuccess = result === StatResult.SUCCESS;
       const isError = result === StatResult.ERROR;
-      const newHomeScore = score.home + (isSuccess ? 1 : 0);
-      const newAwayScore = score.away + (isError ? 1 : 0);
+      const scoringTeamId = isSuccess ? managedTeam.id : opponentTeam.id;
+      const newHomeScore = scoringTeamId === match.home_team_id ? score.home + 1 : score.home;
+      const newAwayScore = scoringTeamId === match.away_team_id ? score.away + 1 : score.away;
       const point = {
         id: crypto.randomUUID(),
         match_id: match.id,
         set_id: currentSet.id,
-        scoring_team: isSuccess ? "home" : "away",
+        scoring_team_id: scoringTeamId,
         point_type: type,
         player_id: null,
         timestamp: new Date().toISOString(),

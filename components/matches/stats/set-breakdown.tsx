@@ -21,18 +21,19 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { ScorePoint, Set } from "@/lib/supabase/types";
+import { Match, ScorePoint, Set } from "@/lib/supabase/types";
 
 interface SetBreakdownProps {
+  match: Match,
   sets: Set[];
   points: ScorePoint[];
 }
 
-export function SetBreakdown({ sets, points }: SetBreakdownProps) {
+export function SetBreakdown({ match, sets, points }: SetBreakdownProps) {
   const setData = sets.map((set) => {
     const setPoints = points.filter((p) => p.set_id === set.id);
-    const homePoints = setPoints.filter(p => p.scoring_team === 'home');
-    const awayPoints = setPoints.filter(p => p.scoring_team === 'away');
+    const homePoints = setPoints.filter(p => p.scoring_team_id === match.home_team_id);
+    const awayPoints = setPoints.filter(p => p.scoring_team_id === match.away_team_id);
 
     return {
       set: `Set ${set.set_number}`,
@@ -69,8 +70,8 @@ export function SetBreakdown({ sets, points }: SetBreakdownProps) {
   const calculateMomentum = (points: ScorePoint[]) => {
     // Calculate momentum based on the last 5 points
     const recentPoints = points.slice(-5);
-    const homePoints = recentPoints.filter(p => p.scoring_team === 'home').length;
-    const awayPoints = recentPoints.filter(p => p.scoring_team === 'away').length;
+    const homePoints = recentPoints.filter(p => p.scoring_team_id === match.home_team_id).length;
+    const awayPoints = recentPoints.filter(p => p.scoring_team_id === match.away_team_id).length;
     return ((homePoints - awayPoints) / 5) * 100; // Normalize to -100 to 100
   };
 

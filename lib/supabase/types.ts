@@ -43,8 +43,8 @@ export type Set = {
   home_score: number;
   away_score: number;
   status: 'upcoming' | 'live' | 'completed';
-  first_server: 'home' | 'away';
-  server: 'home' | 'away';
+  first_server_team_id: string;
+  server_team_id: string;
   first_lineup: { [key in PlayerPosition]: string };
   current_lineup: { [key in PlayerPosition]: string };
   created_at: string;
@@ -69,7 +69,7 @@ export type ScorePoint = {
   id: string;
   match_id: string;
   set_id: string;
-  scoring_team: 'home' | 'away';
+  scoring_team_id: string;
   point_type: 'serve' | 'spike' | 'block' | 'reception' | 'unknown';
   player_id: string | null;
   timestamp: string;
@@ -92,6 +92,8 @@ export type PlayerStat = {
   match_id: string;
   set_id: string;
   player_id: string;
+  team_id: string;
+  position: 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6';
   stat_type: 'serve' | 'spike' | 'block' | 'reception';
   result: 'success' | 'error' | 'attempt';
   created_at: string;

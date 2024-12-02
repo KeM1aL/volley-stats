@@ -19,9 +19,10 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { ScorePoint } from "@/lib/supabase/types";
+import { Match, ScorePoint } from "@/lib/supabase/types";
 
 interface ScoreProgressionProps {
+  match: Match;
   points: ScorePoint[];
 }
 
@@ -31,7 +32,7 @@ type Moment = {
   score: string;
 };
 
-export function ScoreProgression({ points }: ScoreProgressionProps) {
+export function ScoreProgression({ match, points }: ScoreProgressionProps) {
   const progressionData = points.map((point, index) => ({
     point: index + 1,
     home: point.home_score,
@@ -44,10 +45,10 @@ export function ScoreProgression({ points }: ScoreProgressionProps) {
     // Calculate momentum based on the last 5 points
     const recentPoints = points.slice(-5);
     const homePoints = recentPoints.filter(
-      (p) => p.scoring_team === "home"
+      (p) => p.scoring_team_id === match.home_team_id
     ).length;
     const awayPoints = recentPoints.filter(
-      (p) => p.scoring_team === "away"
+      (p) => p.scoring_team_id === match.away_team_id
     ).length;
     return ((homePoints - awayPoints) / 5) * 100; // Normalize to -100 to 100
   }
