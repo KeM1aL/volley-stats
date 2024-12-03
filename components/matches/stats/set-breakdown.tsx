@@ -21,15 +21,17 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { Match, ScorePoint, Set } from "@/lib/supabase/types";
+import { Match, ScorePoint, Set, Team } from "@/lib/supabase/types";
 
 interface SetBreakdownProps {
   match: Match,
+  managedTeam: Team,
+  opponentTeam: Team,
   sets: Set[];
   points: ScorePoint[];
 }
 
-export function SetBreakdown({ match, sets, points }: SetBreakdownProps) {
+export function SetBreakdown({ match, sets, points, managedTeam, opponentTeam }: SetBreakdownProps) {
   const setData = sets.map((set) => {
     const setPoints = points.filter((p) => p.set_id === set.id);
     const homePoints = setPoints.filter(p => p.scoring_team_id === match.home_team_id);
@@ -39,18 +41,10 @@ export function SetBreakdown({ match, sets, points }: SetBreakdownProps) {
       set: `Set ${set.set_number}`,
       homeScore: set.home_score,
       awayScore: set.away_score,
-      serves: setPoints.filter((p) => p.point_type === "serve").length,
-      spikes: setPoints.filter((p) => p.point_type === "spike").length,
-      blocks: setPoints.filter((p) => p.point_type === "block").length,
-      errors: setPoints.filter((p) => p.point_type === "unknown").length,
-      homeServes: homePoints.filter(p => p.point_type === "serve").length,
-      homeSpikes: homePoints.filter(p => p.point_type === "spike").length,
-      homeBlocks: homePoints.filter(p => p.point_type === "block").length,
-      homeErrors: homePoints.filter(p => p.point_type === "unknown").length,
-      awayServes: awayPoints.filter(p => p.point_type === "serve").length,
-      awaySpikes: awayPoints.filter(p => p.point_type === "spike").length,
-      awayBlocks: awayPoints.filter(p => p.point_type === "block").length,
-      awayErrors: awayPoints.filter(p => p.point_type === "unknown").length,
+      serves: setPoints.filter((p) => p.point_type === "serve" && p.scoring_team_id === managedTeam.id).length,
+      spikes: setPoints.filter((p) => p.point_type === "spike" && p.scoring_team_id === managedTeam.id).length,
+      blocks: setPoints.filter((p) => p.point_type === "block" && p.scoring_team_id === managedTeam.id).length,
+      errors: setPoints.filter((p) => p.point_type === "unknown" && p.scoring_team_id === managedTeam.id).length,
     };
   });
 
@@ -92,10 +86,10 @@ export function SetBreakdown({ match, sets, points }: SetBreakdownProps) {
                 <p>Points Played: {set.home_score + set.away_score}</p>
                 <p>Point Distribution:</p>
                 <div className="pl-4 space-y-1 text-sm">
-                  <p>Serves: {points.filter(p => p.set_id === set.id && p.point_type === 'serve').length}</p>
-                  <p>Spikes: {points.filter(p => p.set_id === set.id && p.point_type === 'spike').length}</p>
-                  <p>Blocks: {points.filter(p => p.set_id === set.id && p.point_type === 'block').length}</p>
-                  <p>Opponent Errors: {points.filter(p => p.set_id === set.id && p.point_type === 'unknown').length}</p>
+                  <p>Serves: {points.filter(p => p.set_id === set.id && p.point_type === 'serve' && p.scoring_team_id === managedTeam.id).length}</p>
+                  <p>Spikes: {points.filter(p => p.set_id === set.id && p.point_type === 'spike' && p.scoring_team_id === managedTeam.id).length}</p>
+                  <p>Blocks: {points.filter(p => p.set_id === set.id && p.point_type === 'block' && p.scoring_team_id === managedTeam.id).length}</p>
+                  <p>Opponent Errors: {points.filter(p => p.set_id === set.id && p.point_type === 'unknown' && p.scoring_team_id === managedTeam.id).length}</p>
                 </div>
               </div>
             </CardContent>
@@ -120,30 +114,6 @@ export function SetBreakdown({ match, sets, points }: SetBreakdownProps) {
               <Bar dataKey="spikes" stackId="home" fill="hsl(var(--chart-2))" name="Spikes" />
               <Bar dataKey="blocks" stackId="home" fill="hsl(var(--chart-3))" name="Blocks" />
               <Bar dataKey="errors" stackId="home" fill="hsl(var(--chart-4))" name="Opponent Errors" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Comparison by Set</CardTitle>
-          <CardDescription>Point distribution comparison between teams</CardDescription>
-        </CardHeader>
-        <CardContent className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={setData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="set" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="homeServes" stackId="home" fill="hsl(var(--chart-1))" name="Home Serves" />
-              <Bar dataKey="homeSpikes" stackId="home" fill="hsl(var(--chart-2))" name="Home Spikes" />
-              <Bar dataKey="homeBlocks" stackId="home" fill="hsl(var(--chart-3))" name="Home Blocks" />
-              <Bar dataKey="awayServes" stackId="away" fill="hsl(var(--chart-1))" name="Away Serves" opacity={0.5} />
-              <Bar dataKey="awaySpikes" stackId="away" fill="hsl(var(--chart-2))" name="Away Spikes" opacity={0.5} />
-              <Bar dataKey="awayBlocks" stackId="away" fill="hsl(var(--chart-3))" name="Away Blocks" opacity={0.5} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

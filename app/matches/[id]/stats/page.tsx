@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useDb } from "@/components/providers/database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +27,7 @@ import type {
   PlayerStat,
   ScorePoint,
   Set,
+  Team,
 } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import { SetBreakdown } from "@/components/matches/stats/set-breakdown";
@@ -37,8 +38,11 @@ import { MatchAnalysis } from "@/components/matches/stats/match-analysis";
 
 export default function MatchStatsPage() {
   const { id: matchId } = useParams();
+  const searchParams = useSearchParams();
   const { db } = useDb();
   const [match, setMatch] = useState<Match | null>(null);
+  const [managedTeam, setManagedTeam] = useState<Team>();
+  const [opponentTeam, setOpponentTeam] = useState<Team>();
   const [points, setPoints] = useState<ScorePoint[]>([]);
   const [stats, setStats] = useState<PlayerStat[]>([]);
   const [sets, setSets] = useState<Set[]>([]);
@@ -50,48 +54,74 @@ export default function MatchStatsPage() {
       if (!db) return;
 
       try {
-        const [matchDoc, pointDocs, statDocs, setDocs, playerDocs] = await Promise.all([
-          db.matches.findOne(matchId as string).exec(),
-          db.score_points
-            .find({
-              selector: {
-                match_id: matchId as string,
-              },
-              sort: [{ updated_at: "asc" }],
-            })
-            .exec(),
-          db.player_stats
-            .find({
-              selector: {
-                match_id: matchId as string,
-              },
-              sort: [{ updated_at: "asc" }],
-            })
-            .exec(),
-          db.sets
-            .find({
-              selector: {
-                match_id: matchId as string,
-              },
-              sort: [{ updated_at: "asc" }],
-            })
-            .exec(),
-          db.players
-            .find()
-            .exec(),
-        ]);
+        const [matchDoc, pointDocs, statDocs, setDocs, playerDocs] =
+          await Promise.all([
+            db.matches.findOne(matchId as string).exec(),
+            db.score_points
+              .find({
+                selector: {
+                  match_id: matchId as string,
+                },
+                sort: [{ created_at: "asc" }],
+              })
+              .exec(),
+            db.player_stats
+              .find({
+                selector: {
+                  match_id: matchId as string,
+                },
+                sort: [{ created_at: "asc" }],
+              })
+              .exec(),
+            db.sets
+              .find({
+                selector: {
+                  match_id: matchId as string,
+                },
+                sort: [{ created_at: "asc" }],
+              })
+              .exec(),
+            db.players.find().exec(),
+          ]);
 
         if (matchDoc) {
-          setMatch(matchDoc.toMutableJSON());
-          const teamPlayers = playerDocs.filter(doc => 
-            doc.team_id === matchDoc.home_team_id || 
-            doc.team_id === matchDoc.away_team_id
+          const match = matchDoc.toMutableJSON() as Match;
+          setMatch(match);
+          const teamPlayers = playerDocs.filter(
+            (doc) =>
+              doc.team_id === matchDoc.home_team_id ||
+              doc.team_id === matchDoc.away_team_id
           );
-          setPlayers(teamPlayers.map(doc => doc.toJSON()));
+          setPlayers(teamPlayers.map((doc) => doc.toJSON()));
+
+          const teamDocs = await db.teams
+            .findByIds([match.home_team_id, match.away_team_id])
+            .exec();
+
+          if (!teamDocs || teamDocs.size !== 2) {
+            throw new Error("Teams not found");
+          }
+
+          const teams = Array.from(teamDocs.values()).map((doc) =>
+            doc.toJSON()
+          );
+
+          const managedTeamParam = searchParams.get("team");
+          if (!managedTeamParam) {
+            throw new Error("Please select your managed team");
+          }
+
+          const teamId = searchParams.get("team");
+          if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
+            throw new Error("Managed Team not found");
+          }
+
+          setManagedTeam(teams.find((team) => team.id === teamId));
+          setOpponentTeam(teams.find((team) => team.id !== teamId));
         }
-        setPoints(pointDocs.map(doc => doc.toJSON()));
-        setStats(statDocs.map(doc => doc.toJSON()));
-        setSets(setDocs.map(doc => doc.toJSON()));
+        setPoints(pointDocs.map((doc) => doc.toJSON()));
+        setStats(statDocs.map((doc) => doc.toJSON()));
+        setSets(setDocs.map((doc) => doc.toJSON()));
       } catch (error) {
         console.error("Failed to load match data:", error);
         toast({
@@ -109,28 +139,29 @@ export default function MatchStatsPage() {
 
   const exportToPDF = async () => {
     const doc = new jsPDF();
-    
+
     // Add match details
     doc.setFontSize(20);
     doc.text("Match Report", 20, 20);
-    
+
     if (match) {
       doc.setFontSize(12);
       doc.text(`Date: ${new Date(match.date).toLocaleDateString()}`, 20, 40);
       doc.text(`Score: ${match.home_score} - ${match.away_score}`, 20, 50);
     }
-    
+
     // Add more sections...
-    
+
     doc.save("match-report.pdf");
   };
 
   const exportToCSV = () => {
     // Convert match data to CSV format
-    const csvContent = "data:text/csv;charset=utf-8," + 
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
       // Add CSV data here
       "Match Statistics";
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -231,14 +262,22 @@ export default function MatchStatsPage() {
             </TabsContent>
 
             <TabsContent value="sets">
-              <SetBreakdown match={match} sets={sets} points={points} />
+              <SetBreakdown
+                match={match}
+                sets={sets}
+                points={points}
+                managedTeam={managedTeam!}
+                opponentTeam={opponentTeam!}
+              />
             </TabsContent>
 
             <TabsContent value="players">
-              <PlayerPerformance 
+              <PlayerPerformance
+                managedTeam={managedTeam!}
+                opponentTeam={opponentTeam!}
                 players={players}
                 stats={stats}
-                points={points}
+                sets={sets}
               />
             </TabsContent>
 
