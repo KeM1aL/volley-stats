@@ -1,7 +1,12 @@
 import { PlayerStat, Player, Set } from "@/lib/supabase/types";
 import { PlayerPosition, PlayerRole, StatResult, StatType } from "@/lib/types";
+interface MVPStat {
+  setNumber?: number;
+  player: Player;
+  score: number;
+}
 
-export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: Set[]) {
+export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: Set[]): { matchMVP: MVPStat, setMVPs: MVPStat[] } {
   const weights = {
     [StatType.SERVE]: 1,
     [StatType.SPIKE]: 1.2,
@@ -10,7 +15,7 @@ export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: 
   };
 
   const playerScores = new Map();
-  const setMVPs: any[] = [];
+  const setMVPs: MVPStat[] = [];
 
   // Calculate scores per set
   sets.forEach((set) => {
@@ -37,11 +42,10 @@ export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: 
     if (mvpId) {
       const mvpPlayer = players.find((p) => p.id === mvpId);
       setMVPs.push({
-        setId: set.id,
         setNumber: set.set_number,
         player: mvpPlayer!,
         score: maxScore,
-      });
+      } as MVPStat);
     }
 
     // Add to overall scores
@@ -65,7 +69,7 @@ export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: 
   const matchMVP = {
     player: players.find((p) => p.id === matchMVPId)!,
     score: maxScore,
-  };
+  } as MVPStat;
 
   return {
     matchMVP,

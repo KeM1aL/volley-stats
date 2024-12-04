@@ -43,7 +43,7 @@ export function MVPAnalysis({ stats, players, sets }: MVPCalculatorProps) {
           <div className="space-y-4">
             <h3 className="font-semibold">Set MVPs</h3>
             {mvpScores.setMVPs.map((mvp) => (
-              <div key={mvp.setId} className="flex items-center justify-between p-4 border rounded-lg">
+              <div key={mvp.setNumber} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-4">
                   <Avatar>
                     <AvatarImage src={mvp.player.avatar_url || undefined} />
