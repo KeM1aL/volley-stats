@@ -34,8 +34,6 @@ interface SetBreakdownProps {
 export function SetBreakdown({ match, sets, points, managedTeam, opponentTeam }: SetBreakdownProps) {
   const setData = sets.map((set) => {
     const setPoints = points.filter((p) => p.set_id === set.id);
-    const homePoints = setPoints.filter(p => p.scoring_team_id === match.home_team_id);
-    const awayPoints = setPoints.filter(p => p.scoring_team_id === match.away_team_id);
 
     return {
       set: `Set ${set.set_number}`,
@@ -48,19 +46,6 @@ export function SetBreakdown({ match, sets, points, managedTeam, opponentTeam }:
     };
   });
 
-  const getMomentumData = (set: Set) => {
-    const setPoints = points
-      .filter((p) => p.set_id === set.id)
-      .map((point, index) => ({
-        point: index + 1,
-        momentum: calculateMomentum(points.slice(0, index + 1).filter(p => p.set_id === set.id)),
-        homeScore: point.home_score,
-        awayScore: point.away_score,
-      }));
-
-    return setPoints;
-  };
-
   const calculateMomentum = (points: ScorePoint[]) => {
     // Calculate momentum based on the last 5 points
     const recentPoints = points.slice(-5);
@@ -71,9 +56,9 @@ export function SetBreakdown({ match, sets, points, managedTeam, opponentTeam }:
 
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="flex flex-row items-center justify-between gap-6">
         {sets.map((set) => (
-          <Card key={set.id}>
+          <Card key={set.id} className="basis-1/3">
             <CardHeader>
               <CardTitle>Set {set.set_number}</CardTitle>
               <CardDescription>

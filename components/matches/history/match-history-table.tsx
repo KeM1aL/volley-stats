@@ -24,6 +24,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import MatchStartDialog from "../match-start-dialog";
 import MatchEditDialog from "../match-edit-dialog";
 import { useRouter } from "next/navigation";
+import MatchStatsDialog from "../match-stats-dialog";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
@@ -42,10 +43,6 @@ export function MatchHistoryTable({
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-
-  const onHandleViewStats = (match: Match) => {
-    router.push(`/matches/${match.id}/stats`);
-  };
 
   const sortMatches = (a: Match, b: Match) => {
     switch (sortField) {
@@ -155,16 +152,7 @@ export function MatchHistoryTable({
                   case MatchStatus.UPCOMING:
                     return <MatchStartDialog match={match} />;
                   case MatchStatus.COMPLETED:
-                    return (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onHandleViewStats(match)}
-                      >
-                        <BarChart2 className="h-4 w-4 mr-2" />
-                        Stats
-                      </Button>
-                    );
+                    return <MatchStatsDialog match={match} />;
                   case MatchStatus.LIVE:
                     return <MatchEditDialog match={match} />;
                   default:

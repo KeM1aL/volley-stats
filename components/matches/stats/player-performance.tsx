@@ -1,20 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { PlayerStat, Team, Player, Set } from "@/lib/supabase/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { StatResult, StatType, PlayerPosition } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import {
   BarChart,
   Bar,
@@ -29,461 +29,262 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  LineChart,
-  Line,
 } from "recharts";
-import { Player, PlayerStat, Team, Set } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
-import { GitCompareArrows } from "lucide-react";
 
 interface PlayerPerformanceProps {
+  managedTeam: Team;
+  opponentTeam: Team;
   players: Player[];
   stats: PlayerStat[];
   sets: Set[];
-  managedTeam: Team;
-  opponentTeam: Team;
 }
 
+interface PlayerSetStats extends Record<StatType, Record<StatResult | "all", number>> {}
+
 export function PlayerPerformance({
+  managedTeam,
+  opponentTeam,
   players,
   stats,
   sets,
-  managedTeam,
-  opponentTeam,
 }: PlayerPerformanceProps) {
-  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [comparePlayer, setComparePlayer] = useState<string | null>(null);
-  const [showComparison, setShowComparison] = useState(false);
+  const [selectedSet, setSelectedSet] = useState<string>("all");
+  const [selectedTab, setSelectedTab] = useState("overview");
 
-  const calculatePlayerStats = (playerId: string) => {
-    const playerStatRecords = stats.filter((s) => s.player_id === playerId);
-
-    const serveStats = playerStatRecords.filter((s) => s.stat_type === "serve");
-    const spikeStats = playerStatRecords.filter((s) => s.stat_type === "spike");
-    const blockStats = playerStatRecords.filter((s) => s.stat_type === "block");
-    const receptionStats = playerStatRecords.filter(
-      (s) => s.stat_type === "reception"
+  const getPlayerSetStats = (
+    playerId: string,
+    setId?: string
+  ): PlayerSetStats => {
+    const filteredStats = stats.filter(
+      (stat) =>
+        stat.player_id === playerId && (setId ? stat.set_id === setId : true)
     );
+    const playerStats: PlayerSetStats = {} as PlayerSetStats;
+    Object.values(StatType).forEach((type) => {
+      const statResult: Record<StatResult | "all", number> = {} as Record<
+        StatResult | "all",
+        number
+      >;
+      Object.values(StatResult).forEach((result) => {
+        statResult[result] = filteredStats.filter(
+          (s) => s.stat_type === type && s.result === result
+        ).length;
+      });
 
-    return {
-      serves: {
-        total: serveStats.length,
-        aces: serveStats.filter((s) => s.result === "success").length,
-        errors: serveStats.filter((s) => s.result === "error").length,
-        successRate:
-          (serveStats.filter((s) => s.result === "success").length /
-            serveStats.length) *
-            100 || 0,
-      },
-      spikes: {
-        total: spikeStats.length,
-        kills: spikeStats.filter((p) => p.result === "success").length,
-        errors: spikeStats.filter((s) => s.result === "error").length,
-        successRate:
-          (spikeStats.filter((s) => s.result === "success").length /
-            spikeStats.length) *
-            100 || 0,
-      },
-      blocks: {
-        total: blockStats.length,
-        points: blockStats.filter((p) => p.result === "success").length,
-        errors: blockStats.filter((s) => s.result === "error").length,
-        successRate:
-          (blockStats.filter((s) => s.result === "success").length /
-            blockStats.length) *
-            100 || 0,
-      },
-      reception: {
-        total: receptionStats.length,
-        perfect: receptionStats.filter((s) => s.result === "success").length,
-        errors: receptionStats.filter((s) => s.result === "error").length,
-        successRate:
-          (receptionStats.filter((s) => s.result === "success").length /
-            receptionStats.length) *
-            100 || 0,
-      },
-    };
+      statResult["all"] = filteredStats.filter(
+        (s) => s.stat_type === type
+      ).length;
+
+      playerStats[type] = statResult;
+    });
+    return playerStats;
   };
 
-  const selectedPlayerStats = selectedPlayer
-    ? calculatePlayerStats(selectedPlayer)
-    : null;
-  const comparePlayerStats = comparePlayer
-    ? calculatePlayerStats(comparePlayer)
-    : null;
+  const getPlayerPerformanceData = () => {
+    return players.map((player) => {
+      const playerStats = getPlayerSetStats(
+        player.id,
+        selectedSet === "all" ? undefined : selectedSet
+      );
+      return {
+        name: player.name,
+        attacks: playerStats[StatType.SPIKE][StatResult.SUCCESS],
+        serves: playerStats[StatType.SERVE][StatResult.SUCCESS],
+        blocks: playerStats[StatType.BLOCK][StatResult.SUCCESS],
+        receptions: playerStats[StatType.RECEPTION][StatResult.SUCCESS],
+      };
+    });
+  };
 
-  const getRadarData = (
-    playerStats: ReturnType<typeof calculatePlayerStats>
-  ) => [
-    { subject: "Serve Success", value: playerStats.serves.successRate },
-    { subject: "Spike Success", value: playerStats.spikes.successRate },
-    { subject: "Block Success", value: playerStats.blocks.successRate },
-    { subject: "Reception Success", value: playerStats.reception.successRate },
-  ];
-
-  const getPerformanceTrend = (playerId: string) => {
-    return stats
-      .filter((p) => p.player_id === playerId)
-      .map((_, index) => ({
-        point: index + 1,
-        value:
-          (stats
-            .filter((s) => s.player_id === playerId)
-            .slice(0, index + 1)
-            .filter((s) => s.result === "success").length /
-            (index + 1)) *
+  const getPlayerRadarData = (playerId: string) => {
+    const stats = getPlayerSetStats(playerId);
+    return [
+      {
+        subject: "Attacks",
+        A:
+          (stats[StatType.SPIKE][StatResult.SUCCESS] /
+            (stats[StatType.SPIKE]["all"] || 1)) *
           100,
-      }));
+        fullMark: 100,
+      },
+      {
+        subject: "Serves",
+        A:
+          (stats[StatType.SERVE][StatResult.SUCCESS] /
+            (stats[StatType.SERVE]["all"] || 1)) *
+          100,
+        fullMark: 100,
+      },
+      {
+        subject: "Blocks",
+        A:
+          (stats[StatType.BLOCK][StatResult.SUCCESS] /
+            (stats[StatType.BLOCK]["all"] || 1)) *
+          100,
+        fullMark: 10,
+      },
+      {
+        subject: "Reception",
+        A:
+          (stats[StatType.RECEPTION][StatResult.SUCCESS] /
+            (stats[StatType.RECEPTION]["all"] || 1)) *
+          100,
+        fullMark: 100,
+      },
+    ];
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex gap-4 items-center">
-          <Select
-            value={selectedPlayer || undefined}
-            onValueChange={setSelectedPlayer}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select player" />
-            </SelectTrigger>
-            <SelectContent>
-              {players.map((player) => (
-                <SelectItem key={player.id} value={player.id}>
-                  #{player.number} {player.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <Card>
+      <CardHeader>
+        <CardTitle>Player Performance Analysis</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs
+          value={selectedTab}
+          onValueChange={setSelectedTab}
+          className="space-y-4"
+        >
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="details">Detailed Stats</TabsTrigger>
+          </TabsList>
 
-          {selectedPlayer && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowComparison(!showComparison)}
-              >
-                <GitCompareArrows className="h-4 w-4 mr-2" />
-                {showComparison ? "Hide Comparison" : "Compare Players"}
-              </Button>
-
-              {showComparison && (
-                <Select
-                  value={comparePlayer || undefined}
-                  onValueChange={setComparePlayer}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select player to compare" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {players
-                      .filter((p) => p.id !== selectedPlayer)
-                      .map((player) => (
-                        <SelectItem key={player.id} value={player.id}>
-                          #{player.number} {player.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {selectedPlayerStats && selectedPlayer && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance Radar</CardTitle>
-              <CardDescription>
-                Overall success rates across skills
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={getRadarData(selectedPlayerStats)}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="subject" />
-                  <PolarRadiusAxis domain={[0, 100]} />
-                  <Radar
-                    name={players.find((p) => p.id === selectedPlayer)?.name}
-                    dataKey="value"
-                    stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.6}
-                  />
-                  {comparePlayerStats && (
-                    <Radar
-                      name={players.find((p) => p.id === comparePlayer)?.name}
-                      dataKey="value"
-                      stroke="hsl(var(--chart-1))"
-                      fill="hsl(var(--chart-1))"
-                      fillOpacity={0.6}
-                    />
-                  )}
-                  <Legend />
-                </RadarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance Trend</CardTitle>
-              <CardDescription>
-                Success rate evolution during the match
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="point" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    data={getPerformanceTrend(selectedPlayer)}
-                    type="monotone"
-                    dataKey="value"
-                    name={players.find((p) => p.id === selectedPlayer)?.name}
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                  />
-                  {comparePlayer && (
-                    <Line
-                      data={getPerformanceTrend(comparePlayer)}
-                      type="monotone"
-                      dataKey="value"
-                      name={players.find((p) => p.id === comparePlayer)?.name}
-                      stroke="hsl(var(--chart-1))"
-                      strokeWidth={2}
-                    />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Statistics</CardTitle>
-              <CardDescription>Breakdown by skill type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-semibold mb-2">Serves</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Total: {selectedPlayerStats.serves.total}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Aces: {selectedPlayerStats.serves.aces}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Errors: {selectedPlayerStats.serves.errors}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Success Rate:{" "}
-                        {selectedPlayerStats.serves.successRate.toFixed(1)}%
-                      </p>
-                    </div>
+          <TabsContent value="overview">
+            <div className="grid gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Overall Performance</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getPlayerPerformanceData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="attacks"
+                          fill="hsl(var(--chart-1))"
+                          name="Attacks"
+                        />
+                        <Bar
+                          dataKey="serves"
+                          fill="hsl(var(--chart-2))"
+                          name="Serves"
+                        />
+                        <Bar
+                          dataKey="blocks"
+                          fill="hsl(var(--chart-3))"
+                          name="Blocks"
+                        />
+                        <Bar
+                          dataKey="receptions"
+                          fill="hsl(var(--chart-5))"
+                          name="Receptions"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                <div>
-                  <h4 className="font-semibold mb-2">Spikes</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Total: {selectedPlayerStats.spikes.total}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Kills: {selectedPlayerStats.spikes.kills}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Errors: {selectedPlayerStats.spikes.errors}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Success Rate:{" "}
-                        {selectedPlayerStats.spikes.successRate.toFixed(1)}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">Blocks</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Total: {selectedPlayerStats.blocks.total}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Points: {selectedPlayerStats.blocks.points}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Errors: {selectedPlayerStats.blocks.errors}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Success Rate:{" "}
-                        {selectedPlayerStats.blocks.successRate.toFixed(1)}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">Reception</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Total: {selectedPlayerStats.reception.total}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Perfect: {selectedPlayerStats.reception.perfect}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Errors: {selectedPlayerStats.reception.errors}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Success Rate:{" "}
-                        {selectedPlayerStats.reception.successRate.toFixed(1)}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <div className="grid md:grid-cols-3 gap-4">
+                {players.map((player) => (
+                  <Card key={player.id}>
+                    <CardHeader>
+                      <CardTitle>{player.name} Performance Radar</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={getPlayerRadarData(player.id)}>
+                            <PolarGrid />
+                            <PolarAngleAxis dataKey="subject" />
+                            <PolarRadiusAxis />
+                            <Radar
+                              name={player.name}
+                              dataKey="A"
+                              stroke="hsl(var(--chart-1))"
+                              fill="hsl(var(--chart-1))"
+                              fillOpacity={0.6}
+                            />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </TabsContent>
 
-          {comparePlayerStats && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Comparison</CardTitle>
-                <CardDescription>Head-to-head statistics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-semibold mb-2">Serves</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">
-                          {players.find((p) => p.id === selectedPlayer)?.name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Aces: {selectedPlayerStats.serves.aces}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Success:{" "}
-                          {selectedPlayerStats.serves.successRate.toFixed(1)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {players.find((p) => p.id === comparePlayer)?.name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Aces: {comparePlayerStats.serves.aces}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Success:{" "}
-                          {comparePlayerStats.serves.successRate.toFixed(1)}%
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+          <TabsContent value="details">
+            <div className="space-y-4">
+              <div className="inline-flex">
+                  <Button
+                    variant={selectedSet === "all" ? "default" : "outline"}
+                    onClick={() => setSelectedSet("all")}
+                    className="rounded-r-none"
+                  >
+                    All Sets
+                  </Button>
+                  {sets.map((set, index) => (
+                    <Button
+                      variant={selectedSet === set.id ? "default" : "outline"}
+                      key={set.id}
+                      onClick={() => setSelectedSet(set.id)}
+                      className={`
+                        ${index === sets.length - 1 ? 'rounded-l-none' : ''},
+                        ${index >= 0 && index < sets.length - 1 ? 'rounded-none border-x-0' : ''}
+                      `}
+                    >
+                      Set {set.set_number}
+                    </Button>
+                  ))}
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Player</TableHead>
+                    {Object.values(StatType).map((type) => (
+                      <TableHead key={type}>
+                        {type.substring(0, 1).toUpperCase() + type.slice(1)}{" "}
+                        (P/A/E)
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {players.map((player) => {
+                    const stats = getPlayerSetStats(
+                      player.id,
+                      selectedSet === "all" ? undefined : selectedSet
+                    );
 
-                  <div>
-                    <h4 className="font-semibold mb-2">Spikes</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Kills: {selectedPlayerStats.spikes.kills}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Success:{" "}
-                          {selectedPlayerStats.spikes.successRate.toFixed(1)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Kills: {comparePlayerStats.spikes.kills}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Success:{" "}
-                          {comparePlayerStats.spikes.successRate.toFixed(1)}%
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Blocks</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Points: {selectedPlayerStats.blocks.points}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Success:{" "}
-                          {selectedPlayerStats.blocks.successRate.toFixed(1)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Points: {comparePlayerStats.blocks.points}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Success:{" "}
-                          {comparePlayerStats.blocks.successRate.toFixed(1)}%
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Reception</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Perfect: {selectedPlayerStats.reception.perfect}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Success:{" "}
-                          {selectedPlayerStats.reception.successRate.toFixed(1)}
-                          %
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Perfect: {comparePlayerStats.reception.perfect}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Success:{" "}
-                          {comparePlayerStats.reception.successRate.toFixed(1)}%
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-    </div>
+                    return (
+                      <TableRow key={player.id}>
+                        <TableCell className="font-medium">
+                          {player.name}
+                        </TableCell>
+                        {Object.values(StatType).map((type) => (
+                          <TableCell key={type}>
+                            {stats[type][StatResult.SUCCESS]}/
+                            {stats[type]["all"]}/{stats[type][StatResult.ERROR]}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 }

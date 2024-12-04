@@ -34,7 +34,8 @@ import { SetBreakdown } from "@/components/matches/stats/set-breakdown";
 import { PlayerPerformance } from "@/components/matches/stats/player-performance";
 import { ScoreProgression } from "@/components/matches/stats/score-progression";
 import { TeamPerformance } from "@/components/matches/stats/team-performance";
-import { MatchAnalysis } from "@/components/matches/stats/match-analysis";
+import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
+import { MatchScoreDetails } from "@/components/matches/match-score-details";
 
 export default function MatchStatsPage() {
   const { id: matchId } = useParams();
@@ -54,45 +55,61 @@ export default function MatchStatsPage() {
       if (!db) return;
 
       try {
-        const [matchDoc, pointDocs, statDocs, setDocs, playerDocs] =
-          await Promise.all([
-            db.matches.findOne(matchId as string).exec(),
-            db.score_points
-              .find({
-                selector: {
-                  match_id: matchId as string,
-                },
-                sort: [{ created_at: "asc" }],
-              })
-              .exec(),
-            db.player_stats
-              .find({
-                selector: {
-                  match_id: matchId as string,
-                },
-                sort: [{ created_at: "asc" }],
-              })
-              .exec(),
-            db.sets
-              .find({
-                selector: {
-                  match_id: matchId as string,
-                },
-                sort: [{ created_at: "asc" }],
-              })
-              .exec(),
-            db.players.find().exec(),
-          ]);
+        const [matchDoc, pointDocs, statDocs, setDocs] = await Promise.all([
+          db.matches.findOne(matchId as string).exec(),
+          db.score_points
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+              sort: [{ created_at: "asc" }],
+            })
+            .exec(),
+          db.player_stats
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+              sort: [{ created_at: "asc" }],
+            })
+            .exec(),
+          db.sets
+            .find({
+              selector: {
+                match_id: matchId as string,
+              },
+              sort: [{ created_at: "asc" }],
+            })
+            .exec(),
+        ]);
+        const managedTeamParam = searchParams.get("team");
+        if (!managedTeamParam) {
+          throw new Error("Please select your managed team");
+        }
 
+        const teamId = searchParams.get("team");
         if (matchDoc) {
           const match = matchDoc.toMutableJSON() as Match;
           setMatch(match);
-          const teamPlayers = playerDocs.filter(
-            (doc) =>
-              doc.team_id === matchDoc.home_team_id ||
-              doc.team_id === matchDoc.away_team_id
-          );
-          setPlayers(teamPlayers.map((doc) => doc.toJSON()));
+
+          if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
+            throw new Error("Managed Team not found");
+          }
+
+          const playerIds =
+            teamId === match.home_team_id
+              ? match.home_available_players
+              : match.away_available_players;
+          const availablePlayerDocs = await db.players
+            .findByIds(playerIds)
+            .exec();
+          if (availablePlayerDocs) {
+            setPlayers(
+              Array.from(availablePlayerDocs.values())
+                .map((doc) => doc.toJSON())
+                .sort((a, b) => a.number - b.number)
+            );
+          }
 
           const teamDocs = await db.teams
             .findByIds([match.home_team_id, match.away_team_id])
@@ -105,16 +122,6 @@ export default function MatchStatsPage() {
           const teams = Array.from(teamDocs.values()).map((doc) =>
             doc.toJSON()
           );
-
-          const managedTeamParam = searchParams.get("team");
-          if (!managedTeamParam) {
-            throw new Error("Please select your managed team");
-          }
-
-          const teamId = searchParams.get("team");
-          if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
-            throw new Error("Managed Team not found");
-          }
 
           setManagedTeam(teams.find((team) => team.id === teamId));
           setOpponentTeam(teams.find((team) => team.id !== teamId));
@@ -228,9 +235,9 @@ export default function MatchStatsPage() {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="sets">Sets</TabsTrigger>
               <TabsTrigger value="players">Players</TabsTrigger>
-              <TabsTrigger value="progression">Progression</TabsTrigger>
+              <TabsTrigger value="scores">Scores</TabsTrigger>
               <TabsTrigger value="team">Team</TabsTrigger>
-              <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
+              <TabsTrigger value="mvp">MVP Analysis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
@@ -240,8 +247,21 @@ export default function MatchStatsPage() {
                     <CardTitle>Final Score</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-4xl font-bold text-center">
-                      {match.home_score} - {match.away_score}
+                    <div className="w-full">
+                      <MatchScoreDetails
+                        match={match}
+                        sets={sets}
+                        homeTeam={
+                          match.home_team_id === managedTeam?.id
+                            ? managedTeam!
+                            : opponentTeam!
+                        }
+                        awayTeam={
+                          match.away_team_id === managedTeam?.id
+                            ? managedTeam!
+                            : opponentTeam!
+                        }
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -281,8 +301,8 @@ export default function MatchStatsPage() {
               />
             </TabsContent>
 
-            <TabsContent value="progression">
-              <ScoreProgression match={match} points={points} />
+            <TabsContent value="scores">
+              <ScoreProgression match={match} points={points} sets={sets} />
             </TabsContent>
 
             <TabsContent value="team">
@@ -294,14 +314,8 @@ export default function MatchStatsPage() {
               />
             </TabsContent>
 
-            <TabsContent value="analysis">
-              <MatchAnalysis
-                match={match}
-                sets={sets}
-                points={points}
-                stats={stats}
-                players={players}
-              />
+            <TabsContent value="mvp">
+              <MVPAnalysis sets={sets} stats={stats} players={players} />
             </TabsContent>
           </Tabs>
         </CardContent>
