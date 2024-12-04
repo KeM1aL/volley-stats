@@ -178,7 +178,7 @@ export const playerStatSchema = toTypedRxJsonSchema({
     player_id: { type: 'string', maxLength: 36 },
     position: { type: 'string', enum: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'] },
     stat_type: { type: 'string', enum: ['serve', 'spike', 'block', 'reception'] },
-    result: { type: 'string', enum: ['success', 'error', 'attempt'] },
+    result: { type: 'string', enum: ['success', 'error', 'good', 'bad'] },
     ...timestampFields
   },
   required: ['id', 'match_id', 'set_id', 'team_id', 'player_id', 'stat_type', 'position', 'result', 'created_at', 'updated_at'],

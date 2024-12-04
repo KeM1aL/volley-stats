@@ -118,7 +118,7 @@ create table if not exists public.player_stats (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   constraint stat_type_check check (stat_type in ('serve', 'spike', 'block', 'reception')),
-  constraint result_check check (result in ('success', 'error', 'attempt'))
+  constraint result_check check (result in ('success', 'error', 'good', 'bad'))
 );
 
 alter publication supabase_realtime add table "public"."player_stats";

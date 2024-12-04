@@ -22,7 +22,7 @@ export function PlayerSelector({
       {players.sort((a, b) => a.number - b.number).map((player) => (
         <button
           key={player.id}
-          onClick={() => onPlayerSelect(player)}
+          onClick={(e) => {onPlayerSelect(player); e.stopPropagation()}}
           className={cn(
             "flex items-center gap-2 p-2 rounded-lg transition-colors",
             selectedPlayer?.id === player.id

@@ -20,17 +20,21 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
       match.home_team_id === teamId || match.away_team_id === teamId
   );
 
-  const wins = teamMatches.filter((match) => {
+  const teamTerminatedMatches = teamMatches.filter(
+    (match) => match.status === "completed"
+  );
+
+  const wins = teamTerminatedMatches.filter((match) => {
     const isHome = match.home_team_id === teamId;
     return isHome
       ? match.home_score > match.away_score
       : match.away_score > match.home_score;
   }).length;
 
-  const totalMatches = teamMatches.length;
+  const totalMatches = teamTerminatedMatches.length;
   const winRate = totalMatches > 0 ? (wins / totalMatches) * 100 : 0;
 
-  const totalPoints = teamMatches.reduce((sum, match) => {
+  const totalPoints = teamTerminatedMatches.reduce((sum, match) => {
 
     if(match.status !== 'completed') {
       return sum;
@@ -96,7 +100,7 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="flex gap-1">
-            {teamMatches.slice(-5).map((match, index) => {
+            {teamTerminatedMatches.slice(-5).map((match, index) => {
               const isWin =
                 (match.home_team_id === teamId &&
                   match.home_score > match.away_score) ||

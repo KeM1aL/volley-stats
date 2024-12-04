@@ -42,7 +42,7 @@ export function ScoreBoard({
   const { toast } = useToast();
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <div className="flex flex-row justify-center gap-2">
         <div className="basis-1/3 flex flex-col items-center space-y-2">
           {managedTeam && managedTeam.id === match.home_team_id && (
@@ -97,7 +97,9 @@ export function ScoreBoard({
       </div>
       <PointsHistory match={match} points={points} />
 
-      <CourtDiagram players={players} current_lineup={set.current_lineup} />
+      <div className="mt-auto">
+        <CourtDiagram players={players} current_lineup={set.current_lineup} />
+      </div>
     </div>
   );
 }

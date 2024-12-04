@@ -3,6 +3,10 @@ import { Match, Set, PlayerStat, Substitution, ScorePoint } from "@/lib/supabase
 import { VolleyballDatabase } from "../rxdb/database";
 import { PointType, StatResult } from "../types";
 
+const NORMAL_SET_SCORE = 25;
+const TIE_BREAK_SET_SCORE = 15;
+const TIE_BREAK_SET_NUMBER = 5;
+
 export class SetSetupCommand implements Command {
   private previousState: MatchState;
   private newState: MatchState;
@@ -206,11 +210,11 @@ export class ScorePointCommand implements Command {
 
     let setTerminated = false;
     if (
-      (setNumber < 5 &&
-        (homeScore >= 25 || awayScore >= 25) &&
+      (setNumber < TIE_BREAK_SET_NUMBER &&
+        (homeScore >= NORMAL_SET_SCORE || awayScore >= NORMAL_SET_SCORE) &&
         Math.abs(homeScore - awayScore) >= 2) ||
-      (setNumber === 5 &&
-        (homeScore >= 15 || awayScore >= 15) &&
+      (setNumber === TIE_BREAK_SET_NUMBER &&
+        (homeScore >= TIE_BREAK_SET_SCORE || awayScore >= TIE_BREAK_SET_SCORE) &&
         Math.abs(homeScore - awayScore) >= 2)
     ) {
       this.set.status = "completed";

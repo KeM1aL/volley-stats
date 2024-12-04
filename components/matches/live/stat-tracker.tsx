@@ -172,7 +172,7 @@ export function StatTracker({
               </div>
               <div className="flex-1">
                 <CardContent className="p-1">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-4 gap-2">
                     {Object.values(StatResult).map((result) => (
                       <StatButton
                         key={result}

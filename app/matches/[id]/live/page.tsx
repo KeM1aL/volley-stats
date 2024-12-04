@@ -325,7 +325,7 @@ export default function LiveMatchPage() {
         homeTeam={homeTeam}
         awayTeam={awayTeam}
       />
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-3 gap-4">
         <Card className="p-2">
           {matchState.set && (
             <ScoreBoard
@@ -341,7 +341,7 @@ export default function LiveMatchPage() {
           )}
         </Card>
 
-        <Card className="p-2">
+        <Card className="p-2 col-span-2">
           {!matchState.set || matchState.set.status === "completed" ? (
             <SetSetup
               match={matchState.match}

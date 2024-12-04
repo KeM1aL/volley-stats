@@ -59,7 +59,7 @@ export function CourtDiagram({
   return (
     <div className={cn("relative aspect-[3/2] bg-muted rounded-lg", className)}>
       {/* Court outline */}
-      <div className="absolute inset-4 border-2 border-primary rounded">
+      <div className="absolute inset-4 border-2 border-primary">
         {/* 3-meter line */}
         {netPosition === 'right' && <div className="absolute top-0 right-1/3 bottom-0 border-r-2 border-dashed border-primary opacity-50" />}
         {netPosition === 'left' && <div className="absolute top-0 right-2/3 bottom-0 border-r-2 border-dashed border-primary opacity-50" />}
@@ -68,7 +68,7 @@ export function CourtDiagram({
         {Object.values(PlayerPosition).map((pos) => (
           <div
             key={pos}
-            className="absolute w-16 h-16 -translate-x-1/2 -translate-y-1/2"
+            className="absolute w-10 h-10 -translate-x-1/2 -translate-y-1/2"
             style={{
               left: coordByPosition[netPosition][pos].x,
               top: coordByPosition[netPosition][pos].y,
@@ -85,7 +85,7 @@ export function CourtDiagram({
       <Button
         size="sm"
         variant="outline"
-        className="absolute bottom-6 right-6"
+        className="absolute bottom-2 right-6"
         onClick={() => setNetPosition(netPosition === "right" ? "left" : "right")}
       >
         <RotateCcw className="h-4 w-4 mr-2" />

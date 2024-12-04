@@ -34,7 +34,8 @@ export enum StatType {
 
 export enum StatResult {
   ERROR = "error",
-  ATTEMPT = "attempt",
+  BAD = "bad",
+  GOOD = "good",
   SUCCESS = "success",
 }
 
