@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlayerStat, Team, Player, Set } from "@/lib/supabase/types";
+import { PlayerStat, Team, Player, Set, Match } from "@/lib/supabase/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -33,6 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface PlayerPerformanceProps {
+  match: Match;
   managedTeam: Team;
   opponentTeam: Team;
   players: Player[];
@@ -40,9 +41,14 @@ interface PlayerPerformanceProps {
   sets: Set[];
 }
 
-interface PlayerSetStats extends Record<StatType, Record<StatResult | "all", number>> {}
+interface PlayerSetStats
+  extends Record<StatType, Record<StatResult | "all", number>> {
+  positiveImpact: number;
+  negativeImpact: number;
+}
 
 export function PlayerPerformance({
+  match,
   managedTeam,
   opponentTeam,
   players,
@@ -56,6 +62,9 @@ export function PlayerPerformance({
     playerId: string,
     setId?: string
   ): PlayerSetStats => {
+    const filteredSets = sets.filter((set) =>
+      setId ? set.id === setId : true
+    );
     const filteredStats = stats.filter(
       (stat) =>
         stat.player_id === playerId && (setId ? stat.set_id === setId : true)
@@ -78,6 +87,33 @@ export function PlayerPerformance({
 
       playerStats[type] = statResult;
     });
+
+    const teamPoints = filteredSets.reduce(
+      (acc, set) =>
+        acc +
+        (match.home_team_id === managedTeam.id
+          ? set.home_score
+          : set.away_score),
+      0
+    );
+    const totalPoints: number = filteredStats.filter(
+      (s) => s.result === StatResult.SUCCESS
+    ).length;
+
+    playerStats.positiveImpact = (totalPoints / teamPoints) * 100;
+
+    const opponentPoints = filteredSets.reduce(
+      (acc, set) =>
+        acc +
+        (match.home_team_id === opponentTeam.id
+          ? set.home_score
+          : set.away_score),
+      0
+    );
+    const totalErrors: number = filteredStats.filter(
+      (s) => s.result === StatResult.ERROR
+    ).length;
+    playerStats.negativeImpact = (totalErrors / opponentPoints) * 100;
     return playerStats;
   };
 
@@ -225,26 +261,30 @@ export function PlayerPerformance({
           <TabsContent value="details">
             <div className="space-y-4">
               <div className="inline-flex">
+                <Button
+                  variant={selectedSet === "all" ? "default" : "outline"}
+                  onClick={() => setSelectedSet("all")}
+                  className="rounded-r-none"
+                >
+                  All Sets
+                </Button>
+                {sets.map((set, index) => (
                   <Button
-                    variant={selectedSet === "all" ? "default" : "outline"}
-                    onClick={() => setSelectedSet("all")}
-                    className="rounded-r-none"
-                  >
-                    All Sets
-                  </Button>
-                  {sets.map((set, index) => (
-                    <Button
-                      variant={selectedSet === set.id ? "default" : "outline"}
-                      key={set.id}
-                      onClick={() => setSelectedSet(set.id)}
-                      className={`
-                        ${index === sets.length - 1 ? 'rounded-l-none' : ''},
-                        ${index >= 0 && index < sets.length - 1 ? 'rounded-none border-x-0' : ''}
+                    variant={selectedSet === set.id ? "default" : "outline"}
+                    key={set.id}
+                    onClick={() => setSelectedSet(set.id)}
+                    className={`
+                        ${index === sets.length - 1 ? "rounded-l-none" : ""},
+                        ${
+                          index >= 0 && index < sets.length - 1
+                            ? "rounded-none border-x-0"
+                            : ""
+                        }
                       `}
-                    >
-                      Set {set.set_number}
-                    </Button>
-                  ))}
+                  >
+                    Set {set.set_number}
+                  </Button>
+                ))}
               </div>
               <Table>
                 <TableHeader>
@@ -256,6 +296,8 @@ export function PlayerPerformance({
                         (P/A/E)
                       </TableHead>
                     ))}
+                    <TableHead>Point Participation</TableHead>
+                    <TableHead>Error Participation</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -276,6 +318,12 @@ export function PlayerPerformance({
                             {stats[type]["all"]}/{stats[type][StatResult.ERROR]}
                           </TableCell>
                         ))}
+                        <TableCell>
+                          <Badge variant={stats.positiveImpact > 10 ? "default" : "secondary"}>{stats.positiveImpact.toFixed(2)}%</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={stats.negativeImpact > 10 ? "destructive" : "secondary"}>{stats.negativeImpact.toFixed(2)}%</Badge>
+                        </TableCell>
                       </TableRow>
                     );
                   })}

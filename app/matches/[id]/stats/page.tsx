@@ -293,6 +293,7 @@ export default function MatchStatsPage() {
 
             <TabsContent value="players">
               <PlayerPerformance
+                match={match}
                 managedTeam={managedTeam!}
                 opponentTeam={opponentTeam!}
                 players={players}
