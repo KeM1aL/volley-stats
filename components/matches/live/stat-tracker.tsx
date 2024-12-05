@@ -160,9 +160,9 @@ export function StatTracker({
         selectedPlayer={selectedPlayer}
         onPlayerSelect={setSelectedPlayer}
       />
-      <div className="space-y-1">
+      <div className="space-y-0">
         {Object.values(StatType).map((type) => (
-          <Card key={type} className="w-full max-w-3xl mx-auto overflow-hidden">
+          <Card key={type} className="w-full mx-auto overflow-hidden">
             <div className="flex">
               {/* Vertical text on the left side */}
               <div className="bg-primary text-primary-foreground p-4 flex items-center justify-center relative">

@@ -11,7 +11,8 @@ export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: 
     [StatType.SERVE]: 1,
     [StatType.SPIKE]: 1.2,
     [StatType.BLOCK]: 1.5,
-    [StatType.RECEPTION]: 0.8,
+    [StatType.RECEPTION]: 1,
+    [StatType.DEFENSE]: 0.8,
   };
 
   const playerScores = new Map();

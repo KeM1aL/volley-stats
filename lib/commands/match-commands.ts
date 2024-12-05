@@ -140,7 +140,7 @@ export class PlayerStatCommand implements Command {
           current_rotation: previousState.set!.current_lineup,
         };
 
-        this.pointCommand = new ScorePointCommand(this.newState, point, true, db);
+        this.pointCommand = new ScorePointCommand(this.newState, point, isSuccess, db);
       }
     }
     this.db = db;

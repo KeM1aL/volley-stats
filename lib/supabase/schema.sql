@@ -94,7 +94,7 @@ create table if not exists public.score_points (
   match_id uuid references public.matches(id) not null,
   set_id uuid references public.sets(id) not null,
   scoring_team_id uuid references public.teams(id) not null,
-  point_type text not null check (point_type in ('serve', 'spike', 'block', 'reception', 'unknown')),
+  point_type text not null check (point_type in ('serve', 'spike', 'block', 'reception', 'defense', 'unknown')),
   player_id uuid references public.players(id),
   timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
@@ -117,7 +117,7 @@ create table if not exists public.player_stats (
   result text not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  constraint stat_type_check check (stat_type in ('serve', 'spike', 'block', 'reception')),
+  constraint stat_type_check check (stat_type in ('serve', 'spike', 'block', 'reception', 'defense')),
   constraint result_check check (result in ('success', 'error', 'good', 'bad'))
 );
 

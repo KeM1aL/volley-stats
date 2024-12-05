@@ -40,12 +40,12 @@ export function MatchScoreDetails({ match, sets, homeTeam, awayTeam }: LiveMatch
             {/* Set Labels */}
             <div className="grid grid-cols-8 gap-4">
               <div className="col-span-2"></div>
-              <div className="col-span-1 text-center text-primary/70">SET 1</div>
-              <div className="col-span-1 text-center text-primary/70">SET 2</div>
-              <div className="col-span-1 text-center text-primary/70">SET 3</div>
-              <div className="col-span-1 text-center text-primary/70">SET 4</div>
-              <div className="col-span-1 text-center text-primary/70">SET 5</div>
-              <div className="col-span-1 text-center text-primary/70 font-bold">FINAL</div>
+              <div className="col-span-1 text-center text-xs text-primary/70">SET 1</div>
+              <div className="col-span-1 text-center text-xs text-primary/70">SET 2</div>
+              <div className="col-span-1 text-center text-xs text-primary/70">SET 3</div>
+              <div className="col-span-1 text-center text-xs text-primary/70">SET 4</div>
+              <div className="col-span-1 text-center text-xs text-primary/70">SET 5</div>
+              <div className="col-span-1 text-center text-xs text-primary/70 font-bold">FINAL</div>
             </div>
 
             {/* Team 2 Row */}

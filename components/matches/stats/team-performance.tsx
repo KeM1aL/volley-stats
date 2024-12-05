@@ -80,6 +80,11 @@ export function TeamPerformance({
           success: teamStats.filter(s => s.stat_type === 'reception' && s.result === 'success').length,
           errors: teamStats.filter(s => s.stat_type === 'reception' && s.result === 'error').length,
         },
+        defense: {
+          total: teamStats.filter(s => s.stat_type === 'defense').length,
+          success: teamStats.filter(s => s.stat_type === 'defense' && s.result === 'success').length,
+          errors: teamStats.filter(s => s.stat_type === 'defense' && s.result === 'error').length,
+        },
       },
     };
   };
@@ -107,6 +112,11 @@ export function TeamPerformance({
       name: 'Reception',
       home: (homeStats.stats.reception.success / homeStats.stats.reception.total * 100) || 0,
       away: (awayStats.stats.reception.success / awayStats.stats.reception.total * 100) || 0,
+    },
+    {
+      name: 'Defense',
+      home: (homeStats.stats.defense.success / homeStats.stats.defense.total * 100) || 0,
+      away: (awayStats.stats.defense.success / awayStats.stats.defense.total * 100) || 0,
     },
   ];
 
@@ -312,6 +322,15 @@ export function TeamPerformance({
                       Errors: {homeStats.stats.reception.errors}
                     </p>
                   </div>
+                  <div>
+                    <p className="text-sm font-medium">Defenses</p>
+                    <p className="text-sm text-muted-foreground">
+                      Success: {((homeStats.stats.defense.success / homeStats.stats.defense.total) * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Errors: {homeStats.stats.defense.errors}
+                    </p>
+                  </div>
                 </div>
               </div>
               <div>
@@ -351,6 +370,15 @@ export function TeamPerformance({
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Errors: {awayStats.stats.reception.errors}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Defense</p>
+                    <p className="text-sm text-muted-foreground">
+                      Success: {((awayStats.stats.defense.success / awayStats.stats.defense.total) * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Errors: {awayStats.stats.defense.errors}
                     </p>
                   </div>
                 </div>

@@ -57,7 +57,7 @@ export function ScoreProgression({ match, sets, points }: ScoreProgressionProps)
             key={set.id}
             onClick={() => setSelectedSet(set.id)}
             className={`
-                        ${index === sets.length - 1 ? "rounded-l-none" : ""},
+                        ${index === sets.length - 1 ? "rounded-l-none" : ""}
                         ${
                           index >= 0 && index < sets.length - 1
                             ? "rounded-none border-x-0"

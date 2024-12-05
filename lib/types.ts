@@ -22,6 +22,7 @@ export enum PointType {
   SPIKE = "spike",
   BLOCK = "block",
   RECEPTION = "reception",
+  DEFENSE = "defense",
   UNKNOWN = "unknown",
 }
 
@@ -30,6 +31,7 @@ export enum StatType {
   SPIKE = "spike",
   BLOCK = "block",
   RECEPTION = "reception",
+  DEFENSE = "defense",
 }
 
 export enum StatResult {

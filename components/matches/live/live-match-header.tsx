@@ -15,7 +15,7 @@ export function LiveMatchHeader({ match, sets, homeTeam, awayTeam }: LiveMatchHe
   
   return (
     <Card>
-      <CardContent className="flex items-center justify-between p-2">
+      <CardContent className="flex items-center justify-between p-1">
         <div>
           <h1 className="text-2xl font-bold">Live Match</h1>
           <p className="text-muted-foreground">

@@ -70,7 +70,7 @@ export type ScorePoint = {
   match_id: string;
   set_id: string;
   scoring_team_id: string;
-  point_type: 'serve' | 'spike' | 'block' | 'reception' | 'unknown';
+  point_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense' | 'unknown';
   player_id: string | null;
   timestamp: string;
   home_score: number;
@@ -94,7 +94,7 @@ export type PlayerStat = {
   player_id: string;
   team_id: string;
   position: 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6';
-  stat_type: 'serve' | 'spike' | 'block' | 'reception';
+  stat_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense';
   result: 'success' | 'error' | 'good' | 'bad';
   created_at: string;
   updated_at: string;
