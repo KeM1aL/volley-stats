@@ -69,8 +69,11 @@ export type ScorePoint = {
   id: string;
   match_id: string;
   set_id: string;
+  player_stat_id: string | null;
   scoring_team_id: string;
   point_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense' | 'unknown';
+  action_team_id: string;
+  result: 'success' | 'error';
   player_id: string | null;
   timestamp: string;
   home_score: number;

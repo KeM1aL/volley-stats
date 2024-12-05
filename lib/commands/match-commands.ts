@@ -138,6 +138,9 @@ export class PlayerStatCommand implements Command {
           home_score: newHomeScore,
           away_score: newAwayScore,
           current_rotation: previousState.set!.current_lineup,
+          player_stat_id: stat.id,
+          action_team_id: stat.team_id,
+          result: stat.result
         };
 
         this.pointCommand = new ScorePointCommand(this.newState, point, isSuccess, db);

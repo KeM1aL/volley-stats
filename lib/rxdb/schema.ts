@@ -142,7 +142,10 @@ export const scorePointSchema = toTypedRxJsonSchema({
     id: { type: 'string', maxLength: 36 },
     match_id: { type: 'string', maxLength: 36 },
     set_id: { type: 'string', maxLength: 36 },
+    player_stat_id: { type: 'string', maxLength: 36 },
     scoring_team_id: { type: 'string', maxLength: 36 },
+    action_team_id: { type: 'string', maxLength: 36 },
+    result: { type: 'string', enum: ['success', 'error'] },
     point_type: { type: 'string', enum: ['serve', 'spike', 'block', 'reception', 'defense', 'unknown'] },
     player_id: { type: ['string', 'null'], maxLength: 36 },
     timestamp: { type: 'string' },
@@ -161,7 +164,7 @@ export const scorePointSchema = toTypedRxJsonSchema({
     },
     ...timestampFields
   },
-  required: ['id', 'match_id', 'set_id', 'scoring_team_id', 'point_type', 'timestamp', 'home_score', 'away_score', 'current_rotation', 'created_at', 'updated_at'],
+  required: ['id', 'match_id', 'set_id', 'scoring_team_id', 'action_team_id', 'result', 'point_type', 'timestamp', 'home_score', 'away_score', 'current_rotation', 'created_at', 'updated_at'],
   indexes: ['match_id', 'set_id', 'created_at', 'updated_at']
 });
 

@@ -109,16 +109,15 @@ export function StatTracker({
     }
   };
 
-  const recordPoint = async (type: PointType, result: StatResult) => {
+  const recordPoint = async (actionTeamId: string, type: PointType, result: StatResult) => {
     setIsRecording(true);
     try {
-      //TODO FIX as we are not always the home team
       const isSuccess = result === StatResult.SUCCESS;
       const isError = result === StatResult.ERROR;
       const scoringTeamId = isSuccess ? managedTeam.id : opponentTeam.id;
       const newHomeScore = scoringTeamId === match.home_team_id ? score.home + 1 : score.home;
       const newAwayScore = scoringTeamId === match.away_team_id ? score.away + 1 : score.away;
-      const point = {
+      const point: ScorePoint = {
         id: crypto.randomUUID(),
         match_id: match.id,
         set_id: currentSet.id,
@@ -131,7 +130,10 @@ export function StatTracker({
         home_score: newHomeScore,
         away_score: newAwayScore,
         current_rotation: currentSet!.current_lineup,
-      } as ScorePoint;
+        player_stat_id: null,
+        action_team_id: actionTeamId,
+        result: isSuccess ? StatResult.SUCCESS : StatResult.ERROR
+      };
       await onPoint(point);
     } finally {
       setIsRecording(false);
@@ -192,7 +194,7 @@ export function StatTracker({
       <div className="space-y-1">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           <Button
-            onClick={() => recordPoint(PointType.UNKNOWN, StatResult.ERROR)}
+            onClick={() => recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.ERROR)}
             disabled={isRecording || isLoading}
             className={cn(
               "h-14 text-lg font-semibold transition-transform active:scale-95",
@@ -207,7 +209,7 @@ export function StatTracker({
             </div>
           </Button>
           <Button
-            onClick={() => recordPoint(PointType.UNKNOWN, StatResult.SUCCESS)}
+            onClick={() => recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.SUCCESS)}
             disabled={isRecording || isLoading}
             className={cn(
               "h-14 text-lg font-semibold transition-transform active:scale-95",
@@ -222,7 +224,7 @@ export function StatTracker({
             </div>
           </Button>
           <Button
-            onClick={() => recordPoint(PointType.UNKNOWN, StatResult.ERROR)}
+            onClick={() => recordPoint(opponentTeam.id, PointType.UNKNOWN, StatResult.ERROR)}
             disabled={isRecording || isLoading}
             className={cn(
               "h-14 text-lg font-semibold transition-transform active:scale-95",
@@ -237,7 +239,7 @@ export function StatTracker({
             </div>
           </Button>
           <Button
-            onClick={() => recordPoint(PointType.UNKNOWN, StatResult.SUCCESS)}
+            onClick={() => recordPoint(opponentTeam.id, PointType.UNKNOWN, StatResult.SUCCESS)}
             disabled={isRecording || isLoading}
             className={cn(
               "h-14 text-lg font-semibold transition-transform active:scale-95",

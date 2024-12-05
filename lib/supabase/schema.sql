@@ -93,7 +93,10 @@ create table if not exists public.score_points (
   id uuid default gen_random_uuid() primary key,
   match_id uuid references public.matches(id) not null,
   set_id uuid references public.sets(id) not null,
+  player_stat_id uuid references public.player_stats(id),
   scoring_team_id uuid references public.teams(id) not null,
+  action_team_id uuid references public.teams(id) not null,
+  result text not null check (result in ('success', 'error')),
   point_type text not null check (point_type in ('serve', 'spike', 'block', 'reception', 'defense', 'unknown')),
   player_id uuid references public.players(id),
   timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
@@ -101,7 +104,7 @@ create table if not exists public.score_points (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   home_score integer not null,
   away_score integer not null,
-  current_rotation jsonb not null
+  current_rotation jsonb not null,
 );
 
 alter publication supabase_realtime add table "public"."score_points";
