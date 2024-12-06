@@ -311,8 +311,9 @@ export default function MatchStatsPage() {
                 match={match}
                 sets={sets}
                 points={points}
-                stats={stats}
-              />
+                stats={stats} 
+                players={players}
+                />
             </TabsContent>
 
             <TabsContent value="mvp">

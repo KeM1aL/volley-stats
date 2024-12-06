@@ -19,21 +19,32 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
 } from "recharts";
-import { Match, PlayerStat, ScorePoint, Set } from "@/lib/supabase/types";
+import { Match, PlayerStat, ScorePoint, Set, Player } from "@/lib/supabase/types";
+import { Badge } from "@/components/ui/badge";
+import { PlayerPosition } from "@/lib/types";
+import {
+  calculatePositionStats,
+  analyzeScoringPatterns,
+  analyzeDefensiveVulnerabilities,
+  analyzePlayerExploitation,
+  generateTacticalInsights,
+  type TacticalInsights
+} from "@/lib/stats/calculations";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TeamPerformanceProps {
   match: Match;
   sets: Set[];
   points: ScorePoint[];
   stats: PlayerStat[];
+  players: Player[];
 }
 
 export function TeamPerformance({
@@ -41,352 +52,263 @@ export function TeamPerformance({
   sets,
   points,
   stats,
+  players,
 }: TeamPerformanceProps) {
-  const calculateTeamStats = (teamId: string) => {
-    const teamPoints = points.filter(p => 
-      p.scoring_team_id === teamId
-    );
-    const teamStats = stats.filter(s => {
-      const pointScorer = points.find(p => p.set_id === s.set_id && p.player_id === s.player_id);
-      return pointScorer?.scoring_team_id === teamId;
-    });
+  const [selectedTab, setSelectedTab] = useState("positions");
+  const teamId = match.home_team_id; // For demo, assuming we're analyzing home team
 
-    return {
-      points: {
-        total: teamPoints.length,
-        serves: teamPoints.filter(p => p.point_type === 'serve').length,
-        spikes: teamPoints.filter(p => p.point_type === 'spike').length,
-        blocks: teamPoints.filter(p => p.point_type === 'block').length,
-        opponentErrors: teamPoints.filter(p => p.point_type === 'unknown').length,
-      },
-      stats: {
-        serves: {
-          total: teamStats.filter(s => s.stat_type === 'serve').length,
-          success: teamStats.filter(s => s.stat_type === 'serve' && s.result === 'success').length,
-          errors: teamStats.filter(s => s.stat_type === 'serve' && s.result === 'error').length,
-        },
-        spikes: {
-          total: teamStats.filter(s => s.stat_type === 'spike').length,
-          success: teamStats.filter(s => s.stat_type === 'spike' && s.result === 'success').length,
-          errors: teamStats.filter(s => s.stat_type === 'spike' && s.result === 'error').length,
-        },
-        blocks: {
-          total: teamStats.filter(s => s.stat_type === 'block').length,
-          success: teamStats.filter(s => s.stat_type === 'block' && s.result === 'success').length,
-          errors: teamStats.filter(s => s.stat_type === 'block' && s.result === 'error').length,
-        },
-        reception: {
-          total: teamStats.filter(s => s.stat_type === 'reception').length,
-          success: teamStats.filter(s => s.stat_type === 'reception' && s.result === 'success').length,
-          errors: teamStats.filter(s => s.stat_type === 'reception' && s.result === 'error').length,
-        },
-        defense: {
-          total: teamStats.filter(s => s.stat_type === 'defense').length,
-          success: teamStats.filter(s => s.stat_type === 'defense' && s.result === 'success').length,
-          errors: teamStats.filter(s => s.stat_type === 'defense' && s.result === 'error').length,
-        },
-      },
-    };
-  };
+  // Calculate all statistics
+  const positionStats = calculatePositionStats(stats, points, teamId);
+  const { patterns, rotationStats } = analyzeScoringPatterns(points, sets, teamId);
+  const defensiveStats = analyzeDefensiveVulnerabilities(points, teamId);
+  const playerExploitation = analyzePlayerExploitation(stats, points, players);
+  const tacticalInsights = generateTacticalInsights(positionStats, defensiveStats, rotationStats);
 
-  const homeStats = calculateTeamStats(match.home_team_id);
-  const awayStats = calculateTeamStats(match.away_team_id);
+  // Transform data for charts
+  const positionPerformanceData = Object.entries(positionStats).map(([position, stats]) => ({
+    position,
+    scored: stats.pointsScored,
+    conceded: stats.pointsConceded,
+    attackEfficiency: (stats.attackSuccess / stats.attackAttempts) * 100 || 0,
+    receptionRate: (stats.receptionSuccess / stats.receptionAttempts) * 100 || 0,
+  }));
 
-  const getEfficiencyData = () => [
-    {
-      name: 'Serves',
-      home: (homeStats.stats.serves.success / homeStats.stats.serves.total * 100) || 0,
-      away: (awayStats.stats.serves.success / awayStats.stats.serves.total * 100) || 0,
-    },
-    {
-      name: 'Spikes',
-      home: (homeStats.stats.spikes.success / homeStats.stats.spikes.total * 100) || 0,
-      away: (awayStats.stats.spikes.success / awayStats.stats.spikes.total * 100) || 0,
-    },
-    {
-      name: 'Blocks',
-      home: (homeStats.stats.blocks.success / homeStats.stats.blocks.total * 100) || 0,
-      away: (awayStats.stats.blocks.success / awayStats.stats.blocks.total * 100) || 0,
-    },
-    {
-      name: 'Reception',
-      home: (homeStats.stats.reception.success / homeStats.stats.reception.total * 100) || 0,
-      away: (awayStats.stats.reception.success / awayStats.stats.reception.total * 100) || 0,
-    },
-    {
-      name: 'Defense',
-      home: (homeStats.stats.defense.success / homeStats.stats.defense.total * 100) || 0,
-      away: (awayStats.stats.defense.success / awayStats.stats.defense.total * 100) || 0,
-    },
-  ];
+  const scoringPatternsData = Object.entries(rotationStats).map(([position, stats]) => ({
+    position,
+    points: stats.points,
+    sequences: stats.sequences,
+  }));
 
-  const getPointDistribution = (teamStats: ReturnType<typeof calculateTeamStats>) => [
-    { name: 'Serves', value: teamStats.points.serves },
-    { name: 'Spikes', value: teamStats.points.spikes },
-    { name: 'Blocks', value: teamStats.points.blocks },
-    { name:'Opponent Errors', value: teamStats.points.opponentErrors },
-  ];
+  const defensiveData = Object.entries(defensiveStats).map(([position, stats]) => ({
+    position,
+    conceded: stats.pointsConceded,
+    maxStreak: stats.maxConsecutiveLosses,
+  }));
 
   const COLORS = [
     "hsl(var(--chart-1))",
     "hsl(var(--chart-2))",
     "hsl(var(--chart-3))",
     "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
   ];
-
-  const getRotationEfficiency = () => {
-    const rotationData = Array.from({ length: 6 }, (_, i) => ({
-      rotation: `R${i + 1}`,
-      home: points
-        .filter(p => 
-          p.scoring_team_id === match.home_team_id &&
-          Object.values(p.current_rotation)[0] === `position${i + 1}`
-        ).length,
-      away: points
-        .filter(p => 
-          p.scoring_team_id === match.away_team_id && 
-          Object.values(p.current_rotation)[0] === `position${i + 1}`
-        ).length,
-    }));
-
-    return rotationData;
-  };
 
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Efficiency Comparison</CardTitle>
-            <CardDescription>Success rates across different skills</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={getEfficiencyData()}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="name" />
-                <PolarRadiusAxis domain={[0, 100]} />
-                <Radar
-                  name="Home Team"
-                  dataKey="home"
-                  stroke="hsl(var(--chart-1))"
-                  fill="hsl(var(--chart-1))"
-                  fillOpacity={0.6}
-                />
-                <Radar
-                  name="Away Team"
-                  dataKey="away"
-                  stroke="hsl(var(--chart-2))"
-                  fill="hsl(var(--chart-2))"
-                  fillOpacity={0.6}
-                />
-                <Legend />
-              </RadarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <TabsList>
+          <TabsTrigger value="positions">Position Analysis</TabsTrigger>
+          <TabsTrigger value="patterns">Scoring Patterns</TabsTrigger>
+          <TabsTrigger value="defense">Defensive Analysis</TabsTrigger>
+          <TabsTrigger value="insights">Tactical Insights</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Rotation Efficiency</CardTitle>
-            <CardDescription>Points scored in each rotation</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={getRotationEfficiency()}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="rotation" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar
-                  dataKey="home"
-                  fill="hsl(var(--chart-1))"
-                  name="Home Team"
-                />
-                <Bar
-                  dataKey="away"
-                  fill="hsl(var(--chart-2))"
-                  name="Away Team"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <TabsContent value="positions">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Position Performance Overview</CardTitle>
+                <CardDescription>Points scored and conceded by position</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={positionPerformanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="position" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="scored" fill={COLORS[0]} name="Points Scored" />
+                    <Bar dataKey="conceded" fill={COLORS[1]} name="Points Conceded" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Home Team Point Distribution</CardTitle>
-            <CardDescription>Breakdown of scoring methods</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={getPointDistribution(homeStats)}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label
-                >
-                  {getPointDistribution(homeStats).map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+            <Card>
+              <CardHeader>
+                <CardTitle>Attack & Reception Efficiency</CardTitle>
+                <CardDescription>Success rates by position</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={positionPerformanceData}>
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="position" />
+                    <PolarRadiusAxis domain={[0, 100]} />
+                    <Radar
+                      name="Attack Efficiency"
+                      dataKey="attackEfficiency"
+                      stroke={COLORS[0]}
+                      fill={COLORS[0]}
+                      fillOpacity={0.6}
                     />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Away Team Point Distribution</CardTitle>
-            <CardDescription>Breakdown of scoring methods</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={getPointDistribution(awayStats)}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label
-                >
-                  {getPointDistribution(awayStats).map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+                    <Radar
+                      name="Reception Rate"
+                      dataKey="receptionRate"
+                      stroke={COLORS[1]}
+                      fill={COLORS[1]}
+                      fillOpacity={0.6}
                     />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+                    <Legend />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Detailed Team Statistics</CardTitle>
-            <CardDescription>Comprehensive breakdown of team performance</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <h4 className="font-semibold mb-4">Home Team</h4>
+        <TabsContent value="patterns">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Scoring Sequences</CardTitle>
+                <CardDescription>Points and successful sequences by rotation</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={scoringPatternsData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="position" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="points" fill={COLORS[0]} name="Total Points" />
+                    <Bar dataKey="sequences" fill={COLORS[1]} name="Scoring Sequences" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Notable Scoring Runs</CardTitle>
+                <CardDescription>Sequences of 3+ consecutive points</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium">Serves</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((homeStats.stats.serves.success / homeStats.stats.serves.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {homeStats.stats.serves.errors}
-                    </p>
+                  {patterns.map((pattern, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium">Position {pattern.position}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Set {pattern.setNumber}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">
+                        {pattern.length} consecutive points
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="defense">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Defensive Vulnerabilities</CardTitle>
+                <CardDescription>Points conceded and longest losing streaks by position</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={defensiveData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="position" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="conceded" fill={COLORS[0]} name="Points Conceded" />
+                    <Bar dataKey="maxStreak" fill={COLORS[1]} name="Max Consecutive Losses" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Attack Pattern Analysis</CardTitle>
+                <CardDescription>Opponent's successful attack distributions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(defensiveStats).map(([position, stats]) => (
+                    <div key={position} className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Position {position}</h4>
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          Points Conceded: {stats.pointsConceded}
+                        </p>
+                        <p className="text-sm">
+                          Max Consecutive Losses: {stats.maxConsecutiveLosses}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="insights">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Key Findings</CardTitle>
+                <CardDescription>Strategic analysis and recommendations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Strongest Rotation</h4>
+                      <Badge variant="default">
+                        Position {tacticalInsights.strongestRotation}
+                      </Badge>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Weakest Rotation</h4>
+                      <Badge variant="destructive">
+                        Position {tacticalInsights.weakestRotation}
+                      </Badge>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Best Attack Position</h4>
+                      <Badge variant="default">
+                        Position {tacticalInsights.bestAttackPosition}
+                      </Badge>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Most Vulnerable Position</h4>
+                      <Badge variant="destructive">
+                        Position {tacticalInsights.mostVulnerablePosition}
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">Spikes</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((homeStats.stats.spikes.success / homeStats.stats.spikes.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {homeStats.stats.spikes.errors}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Blocks</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((homeStats.stats.blocks.success / homeStats.stats.blocks.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {homeStats.stats.blocks.errors}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Reception</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((homeStats.stats.reception.success / homeStats.stats.reception.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {homeStats.stats.reception.errors}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Defenses</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((homeStats.stats.defense.success / homeStats.stats.defense.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {homeStats.stats.defense.errors}
-                    </p>
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Tactical Recommendations</h4>
+                    <ul className="space-y-2">
+                      {tacticalInsights.recommendations.map((recommendation, index) => (
+                        <li key={index} className="text-sm">
+                          • {recommendation}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Away Team</h4>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium">Serves</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((awayStats.stats.serves.success / awayStats.stats.serves.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {awayStats.stats.serves.errors}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Spikes</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((awayStats.stats.spikes.success / awayStats.stats.spikes.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {awayStats.stats.spikes.errors}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Blocks</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((awayStats.stats.blocks.success / awayStats.stats.blocks.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {awayStats.stats.blocks.errors}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Reception</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((awayStats.stats.reception.success / awayStats.stats.reception.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {awayStats.stats.reception.errors}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Defense</p>
-                    <p className="text-sm text-muted-foreground">
-                      Success: {((awayStats.stats.defense.success / awayStats.stats.defense.total) * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Errors: {awayStats.stats.defense.errors}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
