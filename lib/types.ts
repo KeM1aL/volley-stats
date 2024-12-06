@@ -1,11 +1,11 @@
 export enum PlayerRole {
-  SETTER = "Setter",
-  OPPOSITE = "Opposite",
-  OUTSIDE_FRONT = "Outside Hitter (Front)",
-  OUTSIDE_BACK = "Outside Hitter (Back)",
-  MIDDLE_FRONT = "Middle Blocker (Front)",
-  MIDDLE_BACK = "Middle Blocker (Back)",
-  LIBERO = "Libero",
+  SETTER = "setter",
+  OPPOSITE = "opposite",
+  OUTSIDE_FRONT = "outside_front",
+  OUTSIDE_BACK = "outside_back",
+  MIDDLE_FRONT = "middle_front",
+  MIDDLE_BACK = "middle_back",
+  LIBERO = "libero",
 }
 
 export enum PlayerPosition {

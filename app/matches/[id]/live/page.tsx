@@ -345,6 +345,7 @@ export default function LiveMatchPage() {
           {!matchState.set || matchState.set.status === "completed" ? (
             <SetSetup
               match={matchState.match}
+              sets={matchState.sets}
               homeTeam={homeTeam}
               awayTeam={awayTeam}
               setNumber={matchState.set ? matchState.set.set_number + 1 : 1}

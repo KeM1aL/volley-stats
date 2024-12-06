@@ -1,4 +1,4 @@
-import { PlayerPosition } from "../types";
+import { PlayerPosition, PlayerRole } from "../types";
 
 export type Team = {
   id: string;
@@ -47,6 +47,7 @@ export type Set = {
   server_team_id: string;
   first_lineup: { [key in PlayerPosition]: string };
   current_lineup: { [key in PlayerPosition]: string };
+  player_roles: { [key: string]: PlayerRole };
   created_at: string;
   updated_at: string;
 };

@@ -67,6 +67,7 @@ create table if not exists public.sets (
     "p5": null,
     "p6": null
   }',
+  player_roles jsonb not null default '{}'::jsonb,
   constraint status_check check (status in ('upcoming', 'live', 'completed')),
 );
 

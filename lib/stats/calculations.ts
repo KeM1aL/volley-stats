@@ -1,5 +1,5 @@
 import { PlayerStat, Player, Set } from "@/lib/supabase/types";
-import { PlayerPosition, PlayerRole, StatResult, StatType } from "@/lib/types";
+import { StatResult, StatType } from "@/lib/types";
 interface MVPStat {
   setNumber?: number;
   player: Player;

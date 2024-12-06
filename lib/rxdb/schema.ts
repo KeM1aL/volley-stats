@@ -106,6 +106,9 @@ export const setSchema = toTypedRxJsonSchema({
         p6: { type: 'string', maxLength: 36 },
       },
     },
+    player_roles: {
+      type: 'object'
+    },
     ...timestampFields
   },
   required: ['id', 'match_id', 'set_number', 'status', 'created_at', 'updated_at'],
@@ -142,7 +145,7 @@ export const scorePointSchema = toTypedRxJsonSchema({
     id: { type: 'string', maxLength: 36 },
     match_id: { type: 'string', maxLength: 36 },
     set_id: { type: 'string', maxLength: 36 },
-    player_stat_id: { type: 'string', maxLength: 36 },
+    player_stat_id: { type: ['string', 'null'], maxLength: 36 },
     scoring_team_id: { type: 'string', maxLength: 36 },
     action_team_id: { type: 'string', maxLength: 36 },
     result: { type: 'string', enum: ['success', 'error'] },

@@ -14,9 +14,11 @@ import {
 import { PlayerPosition, PlayerRole } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { Match, Player, Set, Team } from "@/lib/supabase/types";
+import { string } from "zod";
 
 type SetSetupProps = {
   match: Match;
+  sets: Set[];
   players: Player[];
   homeTeam: Team;
   awayTeam: Team;
@@ -34,13 +36,12 @@ const NAMES = [
 
 export function SetSetup({
   match,
+  sets,
   players,
   homeTeam,
   awayTeam,
-  setNumber,
   onComplete,
 }: SetSetupProps) {
-  const { db } = useDb();
   const [serverTeamId, setServerTeamId] = useState<string | null>(null);
   const [lineup, setLineup] = useState<Record<PlayerRole, string>>(
     {} as Record<PlayerRole, string>
@@ -84,16 +85,41 @@ export function SetSetup({
       setIsLoading(false);
       return;
     }
+    if ((sets.length === 0 || sets.length === 4) && !serverTeamId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Serving team must be specified",
+      });
+      setIsLoading(false);
+      return;
+    }
+    let setServerTeamId = serverTeamId;
+    if (!setServerTeamId) {
+      if (sets[sets.length - 1].first_server_team_id === homeTeam.id) {
+        setServerTeamId = awayTeam.id;
+      } else {
+        setServerTeamId = homeTeam.id;
+      }
+    }
+    let playerRoles: Record<string, PlayerRole> = {};
+    Object.values(PlayerRole).forEach((role) => {
+      const player = lineup[role];
+      if (player) {
+        playerRoles[player] = role;
+      }
+    });
+
     // Save lineups and start the set
-    const set = {
+    const set: Set = {
       id: crypto.randomUUID(),
       match_id: match.id,
-      set_number: setNumber,
+      set_number: sets.length + 1,
       home_score: 0,
       away_score: 0,
       status: "live",
-      first_server_team_id: serverTeamId,
-      server_team_id: serverTeamId,
+      first_server_team_id: setServerTeamId,
+      server_team_id: setServerTeamId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       first_lineup: {
@@ -112,7 +138,8 @@ export function SetSetup({
         p5: positions[PlayerPosition.P5],
         p6: positions[PlayerPosition.P6],
       },
-    } as Set;
+      player_roles: playerRoles,
+    };
     try {
       await onComplete(set);
     } catch (error) {
@@ -126,7 +153,7 @@ export function SetSetup({
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-4">{`${
-          NAMES[setNumber - 1]
+          NAMES[sets.length]
         } Setup`}</h2>
         <div className="grid grid-cols-4 gap-6">
           {Object.values(PlayerRole).map((role) => (
@@ -136,7 +163,26 @@ export function SetSetup({
                 role === PlayerRole.LIBERO ? "col-start-2" : ""
               }`}
             >
-              <Label>{role}</Label>
+              <Label>
+                {(() => {
+                  switch (role) {
+                    case PlayerRole.SETTER:
+                      return "Setter";
+                    case PlayerRole.OPPOSITE:
+                      return "Opposite";
+                    case PlayerRole.OUTSIDE_BACK:
+                      return "Outside Hitter (Back)";
+                    case PlayerRole.OUTSIDE_FRONT:
+                      return "Outside Hitter (Front)";
+                    case PlayerRole.MIDDLE_BACK:
+                      return "Middle Hitter (Back)";
+                    case PlayerRole.MIDDLE_FRONT:
+                      return "Middle Hitter (Front)";
+                    case PlayerRole.LIBERO:
+                      return "Libero";
+                  }
+                })()}
+              </Label>
               <div className="flex flex-row items-center space-x-1">
                 <Select
                   onValueChange={(value) =>
@@ -146,7 +192,7 @@ export function SetSetup({
                   <SelectTrigger
                     className={role === PlayerRole.LIBERO ? "" : "basis-2/3"}
                   >
-                    <SelectValue placeholder={`Select ${role}`} />
+                    <SelectValue placeholder={`Select player`} />
                   </SelectTrigger>
                   <SelectContent>
                     {players
@@ -209,22 +255,24 @@ export function SetSetup({
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <Label>Serving Team</Label>
-            <Select
-              onValueChange={(value) => setServerTeamId(value as string)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select serving team" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={homeTeam.id}>{homeTeam.name}</SelectItem>
-                <SelectItem value={awayTeam.id}>{awayTeam.name}</SelectItem>
-              </SelectContent>
-            </Select>
+        {(sets.length === 0 || sets.length === 4) && (
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <Label>Serving Team</Label>
+              <Select
+                onValueChange={(value) => setServerTeamId(value as string)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select serving team" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={homeTeam.id}>{homeTeam.name}</SelectItem>
+                  <SelectItem value={awayTeam.id}>{awayTeam.name}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* <Separator /> */}

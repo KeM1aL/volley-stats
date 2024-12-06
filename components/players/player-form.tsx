@@ -26,7 +26,10 @@ import { AvatarUpload } from "./avatar-upload";
 
 const formSchema = z.object({
   name: z.string().min(1, "Player name is required"),
-  number: z.coerce.number().min(0, "Number must be positive").max(99, "Number must be less than 100"),
+  number: z.coerce
+    .number()
+    .min(0, "Number must be positive")
+    .max(99, "Number must be less than 100"),
   position: z.string().min(1, "Position is required"),
   avatar_url: z.string().nullable(),
 });
@@ -120,7 +123,24 @@ export function PlayerForm({
                 <SelectContent>
                   {Object.values(PlayerRole).map((position) => (
                     <SelectItem key={position} value={position}>
-                      {position}
+                      {(() => {
+                        switch (position) {
+                          case PlayerRole.SETTER:
+                            return "Setter";
+                          case PlayerRole.OPPOSITE:
+                            return "Opposite";
+                          case PlayerRole.OUTSIDE_BACK:
+                            return "Outside Hitter (Back)";
+                          case PlayerRole.OUTSIDE_FRONT:
+                            return "Outside Hitter (Front)";
+                          case PlayerRole.MIDDLE_BACK:
+                            return "Middle Hitter (Back)";
+                          case PlayerRole.MIDDLE_FRONT:
+                            return "Middle Hitter (Front)";
+                          case PlayerRole.LIBERO:
+                            return "Libero";
+                        }
+                      })()}
                     </SelectItem>
                   ))}
                 </SelectContent>
