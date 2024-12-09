@@ -1,22 +1,114 @@
 import { PlayerStat, Player, Set, ScorePoint } from "@/lib/supabase/types";
 import { StatResult, StatType, PlayerPosition } from "@/lib/types";
 
+interface MVPStat {
+  setNumber?: number;
+  player: Player;
+  score: number;
+}
+
+export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: Set[]): { matchMVP: MVPStat, setMVPs: MVPStat[] } {
+  const weights = {
+    [StatType.SERVE]: 1,
+    [StatType.SPIKE]: 1.2,
+    [StatType.BLOCK]: 1.5,
+    [StatType.RECEPTION]: 1,
+    [StatType.DEFENSE]: 0.8,
+  };
+
+  const playerScores = new Map();
+  const setMVPs: MVPStat[] = [];
+
+  // Calculate scores per set
+  sets.forEach((set) => {
+    const setStats = stats.filter((stat) => stat.set_id === set.id);
+    const setScores = new Map();
+
+    setStats.forEach((stat) => {
+      const score = calculateStatScore(stat, weights);
+      const currentScore = setScores.get(stat.player_id) || 0;
+      setScores.set(stat.player_id, currentScore + score);
+    });
+
+    // Find MVP for this set
+    let maxScore = 0;
+    let mvpId: string | null = null;
+
+    setScores.forEach((score, playerId) => {
+      if (score > maxScore) {
+        maxScore = score;
+        mvpId = playerId;
+      }
+    });
+
+    if (mvpId) {
+      const mvpPlayer = players.find((p) => p.id === mvpId);
+      setMVPs.push({
+        setNumber: set.set_number,
+        player: mvpPlayer!,
+        score: maxScore,
+      } as MVPStat);
+    }
+
+    // Add to overall scores
+    setScores.forEach((score, playerId) => {
+      const currentScore = playerScores.get(playerId) || 0;
+      playerScores.set(playerId, currentScore + score);
+    });
+  });
+
+  // Find match MVP
+  let maxScore = 0;
+  let matchMVPId: string | null = null;
+
+  playerScores.forEach((score, playerId) => {
+    if (score > maxScore) {
+      maxScore = score;
+      matchMVPId = playerId;
+    }
+  });
+
+  const matchMVP = {
+    player: players.find((p) => p.id === matchMVPId)!,
+    score: maxScore,
+  } as MVPStat;
+
+  return {
+    matchMVP,
+    setMVPs,
+  };
+}
+
+function calculateStatScore(stat: PlayerStat, weights: Record<string, number>): number {
+  const baseScore = stat.result === StatResult.SUCCESS ? 1 :
+                   stat.result === StatResult.ERROR ? -1 :
+                   0.5;
+  
+  return baseScore * (weights[stat.stat_type] || 1);
+}
+
 // Position-based Performance
 interface PositionStats {
   pointsScored: number;
   pointsConceded: number;
   attackAttempts: number;
   attackSuccess: number;
-  receptionAttempts: number;
-  receptionSuccess: number;
+  attackDistribution: Record<PlayerPosition, number>;
 }
 
 export function calculatePositionStats(
   stats: PlayerStat[],
   points: ScorePoint[],
-  teamId: string
+  teamId: string,
+  playerId: string,
+  setId?: string
 ): Record<PlayerPosition, PositionStats> {
   const positionStats: Record<PlayerPosition, PositionStats> = {} as Record<PlayerPosition, PositionStats>;
+
+  const playerStatsById: Record<string, PlayerStat> = {} as Record<string, PlayerStat>;
+  stats.forEach(stat => {
+    playerStatsById[stat.id] = stat;
+  });
 
   // Initialize stats for each position
   Object.values(PlayerPosition).forEach(position => {
@@ -25,40 +117,38 @@ export function calculatePositionStats(
       pointsConceded: 0,
       attackAttempts: 0,
       attackSuccess: 0,
-      receptionAttempts: 0,
-      receptionSuccess: 0
+      attackDistribution: Object.values(PlayerPosition).reduce((acc, pos) => ({
+        ...acc,
+        [pos]: 0
+      }), {} as Record<PlayerPosition, number>)
     };
   });
 
   // Calculate points scored and conceded per position
   points.forEach(point => {
+    if (setId && setId !== point.set_id) {
+      return;
+    }
     const position = Object.entries(point.current_rotation)
-      .find(([_, playerId]) => playerId === point.player_id)?.[0] as PlayerPosition;
+      .find(([_, positionPlayerId]) => positionPlayerId === playerId)?.[0] as PlayerPosition;
     
     if (position) {
+      if (point.point_type === StatType.SPIKE) {
+        positionStats[position].attackAttempts++;
+      }
       if (point.scoring_team_id === teamId) {
         positionStats[position].pointsScored++;
+
+        if ((point.point_type === StatType.SPIKE) && (point.result === StatResult.SUCCESS)) {
+            positionStats[position].attackSuccess++;
+            if(point.player_stat_id && playerStatsById[point.player_stat_id]) {
+              const stat = playerStatsById[point.player_stat_id];
+              positionStats[position].attackDistribution[stat.position]++;
+            }
+        }
+        
       } else {
         positionStats[position].pointsConceded++;
-      }
-    }
-  });
-
-  // Calculate attack and reception stats
-  stats.forEach(stat => {
-    const position = stat.position as PlayerPosition;
-    
-    if (stat.stat_type === StatType.SPIKE) {
-      positionStats[position].attackAttempts++;
-      if (stat.result === StatResult.SUCCESS) {
-        positionStats[position].attackSuccess++;
-      }
-    }
-    
-    if (stat.stat_type === StatType.RECEPTION) {
-      positionStats[position].receptionAttempts++;
-      if (stat.result === StatResult.SUCCESS || stat.result === StatResult.GOOD) {
-        positionStats[position].receptionSuccess++;
       }
     }
   });
@@ -77,7 +167,9 @@ interface ScoringPattern {
 export function analyzeScoringPatterns(
   points: ScorePoint[],
   sets: Set[],
-  teamId: string
+  teamId: string,
+  playerId: string,
+  setId?: string
 ): {
   patterns: ScoringPattern[];
   rotationStats: Record<PlayerPosition, { points: number; sequences: number }>;
@@ -94,8 +186,11 @@ export function analyzeScoringPatterns(
   let lastServer: PlayerPosition | null = null;
 
   points.forEach((point, index) => {
+    if (setId && setId !== point.set_id) {
+      return;
+    }
     const serverPosition = Object.entries(point.current_rotation)
-      .find(([_, playerId]) => playerId === point.player_id)?.[0] as PlayerPosition;
+      .find(([_, positionPlayerId]) => playerId === positionPlayerId)?.[0] as PlayerPosition;
     
     if (point.scoring_team_id === teamId) {
       if (!lastServer || lastServer === serverPosition) {
@@ -150,7 +245,9 @@ interface DefensiveStats {
 
 export function analyzeDefensiveVulnerabilities(
   points: ScorePoint[],
-  teamId: string
+  teamId: string,
+  playerId: string,
+  setId?: string
 ): Record<PlayerPosition, DefensiveStats> {
   const defensiveStats: Record<PlayerPosition, DefensiveStats> = {} as Record<PlayerPosition, DefensiveStats>;
 
@@ -171,10 +268,13 @@ export function analyzeDefensiveVulnerabilities(
   let lastPosition: PlayerPosition | null = null;
 
   points.forEach(point => {
+    if (setId && setId !== point.set_id) {
+      return;
+    }
     if (point.scoring_team_id !== teamId) {
       currentLossStreak++;
       const defendingPosition = Object.entries(point.current_rotation)
-        .find(([_, playerId]) => playerId === point.player_id)?.[0] as PlayerPosition;
+        .find(([_, positionPlayerId]) => playerId === positionPlayerId)?.[0] as PlayerPosition;
       
       if (defendingPosition) {
         defensiveStats[defendingPosition].pointsConceded++;
@@ -209,7 +309,8 @@ interface PlayerExploitationStats {
 export function analyzePlayerExploitation(
   stats: PlayerStat[],
   points: ScorePoint[],
-  players: Player[]
+  players: Player[],
+  playerId: string
 ): Record<string, PlayerExploitationStats> {
   const exploitationStats: Record<string, PlayerExploitationStats> = {};
 

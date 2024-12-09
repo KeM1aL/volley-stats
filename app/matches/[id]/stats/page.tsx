@@ -233,14 +233,13 @@ export default function MatchStatsPage() {
           <Tabs defaultValue="overview" className="space-y-4">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="scores">Scores</TabsTrigger>
               <TabsTrigger value="sets">Sets</TabsTrigger>
               <TabsTrigger value="players">Players</TabsTrigger>
-              <TabsTrigger value="scores">Scores</TabsTrigger>
               <TabsTrigger value="team">Team</TabsTrigger>
-              <TabsTrigger value="mvp">MVP Analysis</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview">
+            <TabsContent value="overview" className="space-y-4">
               <div className="grid md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
@@ -279,6 +278,7 @@ export default function MatchStatsPage() {
                   </CardContent>
                 </Card>
               </div>
+              <MVPAnalysis sets={sets} stats={stats} players={players} />
             </TabsContent>
 
             <TabsContent value="sets">
@@ -309,6 +309,7 @@ export default function MatchStatsPage() {
             <TabsContent value="team">
               <TeamPerformance
                 match={match}
+                managedTeam={managedTeam!}
                 sets={sets}
                 points={points}
                 stats={stats} 
@@ -316,9 +317,6 @@ export default function MatchStatsPage() {
                 />
             </TabsContent>
 
-            <TabsContent value="mvp">
-              <MVPAnalysis sets={sets} stats={stats} players={players} />
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>

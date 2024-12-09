@@ -135,7 +135,7 @@ export function PlayerPerformance({
     let favPosition: PlayerPosition | null = null;
     let worstPosition: PlayerPosition | null = null;
     Object.entries(playerStats[StatType.SPIKE]).forEach(([position, stats]) => {
-      if(stats["all"] === 0) return;
+      if (stats["all"] === 0) return;
       let spikeRate = stats[StatResult.SUCCESS] / stats["all"];
       if (spikeRate > spikeBestRate) {
         spikeBestRate = spikeRate;
@@ -154,7 +154,7 @@ export function PlayerPerformance({
     let worstPositionReception: PlayerPosition | null = null;
     Object.entries(playerStats[StatType.RECEPTION]).forEach(
       ([position, stats]) => {
-        if(stats["all"] === 0) return;
+        if (stats["all"] === 0) return;
         let receptionRate = stats[StatResult.SUCCESS] / stats["all"];
         if (receptionRate > receptionBestRate) {
           receptionBestRate = receptionRate;
@@ -335,7 +335,6 @@ export function PlayerPerformance({
                 </Button>
               ))}
             </div>
-
             <TabsContent value="overview">
               <div className="grid gap-4">
                 <Card>
@@ -429,14 +428,19 @@ export function PlayerPerformance({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {players.map((player) => {
+                    {players.map((player, index) => {
                       const stats = getPlayerSetStats(
                         player.id,
                         selectedSet === "all" ? undefined : selectedSet
                       );
 
                       return (
-                        <TableRow key={player.id}>
+                        <TableRow
+                          key={player.id}
+                          className={
+                            index % 2 === 0 ? "bg-background" : "bg-muted/50"
+                          }
+                        >
                           <TableCell className="font-medium">
                             {player.name}
                           </TableCell>
@@ -511,14 +515,19 @@ export function PlayerPerformance({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {players.map((player) => {
+                    {players.map((player, index) => {
                       const stats = getPlayerSetPositionStats(
                         player.id,
                         selectedSet === "all" ? undefined : selectedSet
                       );
 
                       return (
-                        <TableRow key={player.id}>
+                        <TableRow
+                          key={player.id}
+                          className={
+                            index % 2 === 0 ? "bg-background" : "bg-muted/50"
+                          }
+                        >
                           <TableCell className="font-medium">
                             {player.name}
                           </TableCell>
