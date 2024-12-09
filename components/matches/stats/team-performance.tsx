@@ -47,6 +47,13 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Ratio } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TeamPerformanceProps {
   match: Match;
@@ -65,30 +72,30 @@ export function TeamPerformance({
   stats,
   players,
 }: TeamPerformanceProps) {
+  const [selectedPlayer, setSelectedPlayer] = useState<string>(players[0].id);
   const [selectedSet, setSelectedSet] = useState<string>("all");
   const [selectedTab, setSelectedTab] = useState("positions");
   const teamId = managedTeam.id;
-  const playerId = "34c9c570-0b11-41a2-bd03-e6624e74b7c8";
 
   // Calculate all statistics
   const positionStats = calculatePositionStats(
     stats,
     points,
     teamId,
-    playerId,
+    selectedPlayer ? selectedPlayer : players[0].id,
     selectedSet === "all" ? undefined : selectedSet
   );
   const { patterns, rotationStats } = analyzeScoringPatterns(
     points,
     sets,
     teamId,
-    playerId,
+    selectedPlayer ? selectedPlayer : players[0].id,
     selectedSet === "all" ? undefined : selectedSet
   );
   const defensiveStats = analyzeDefensiveVulnerabilities(
     points,
     teamId,
-    playerId,
+    selectedPlayer ? selectedPlayer : players[0].id,
     selectedSet === "all" ? undefined : selectedSet
   );
   const tacticalInsights = generateTacticalInsights(
@@ -154,20 +161,37 @@ export function TeamPerformance({
             <TabsTrigger value="insights">Tactical Insights</TabsTrigger>
           </TabsList>
           <div className="space-y-4">
-            <div className="inline-flex">
-              <Button
-                variant={selectedSet === "all" ? "default" : "outline"}
-                onClick={() => setSelectedSet("all")}
-                className="rounded-r-none"
+            <div className="inline-flex space-x-2">
+              <Select
+                value={selectedPlayer || undefined}
+                onValueChange={setSelectedPlayer}
               >
-                All Sets
-              </Button>
-              {sets.map((set, index) => (
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select player" />
+                </SelectTrigger>
+                <SelectContent defaultValue={players[0].id}>
+                  {players.map((player) => (
+                    <SelectItem key={player.id} value={player.id}>
+                      #{player.number} {player.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="inline-flex">
                 <Button
-                  variant={selectedSet === set.id ? "default" : "outline"}
-                  key={set.id}
-                  onClick={() => setSelectedSet(set.id)}
-                  className={`
+                  variant={selectedSet === "all" ? "default" : "outline"}
+                  onClick={() => setSelectedSet("all")}
+                  className="rounded-r-none"
+                >
+                  All Sets
+                </Button>
+                {sets.map((set, index) => (
+                  <Button
+                    variant={selectedSet === set.id ? "default" : "outline"}
+                    key={set.id}
+                    onClick={() => setSelectedSet(set.id)}
+                    className={`
                         ${index === sets.length - 1 ? "rounded-l-none" : ""} 
                         ${
                           index >= 0 && index < sets.length - 1
@@ -175,10 +199,11 @@ export function TeamPerformance({
                             : ""
                         }
                       `}
-                >
-                  Set {set.set_number}
-                </Button>
-              ))}
+                  >
+                    Set {set.set_number}
+                  </Button>
+                ))}
+              </div>
             </div>
             <TabsContent value="positions">
               <div className="grid gap-6">
@@ -216,7 +241,7 @@ export function TeamPerformance({
                   <CardHeader>
                     <CardTitle>Attack distribution</CardTitle>
                     <CardDescription>
-                      Success spiked by setter position
+                      Success spiked by player position
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="h-[800px] grid grid-cols-3 gap-4">
@@ -227,7 +252,7 @@ export function TeamPerformance({
                           <PolarAngleAxis dataKey="spikePosition" />
                           <PolarRadiusAxis domain={[0, 100]} />
                           <Radar
-                            name={`Setter ${data.position.toUpperCase()}`}
+                            name={`Player ${data.position.toUpperCase()}`}
                             dataKey="ratio"
                             stroke={COLORS[0]}
                             fill={COLORS[0]}
