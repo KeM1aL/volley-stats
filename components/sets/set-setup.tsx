@@ -280,7 +280,7 @@ export function SetSetup({
       <Button
         onClick={handleComplete}
         className="w-full"
-        disabled={isLoading || !serverTeamId}
+        disabled={isLoading}
       >
         Start Set
       </Button>
