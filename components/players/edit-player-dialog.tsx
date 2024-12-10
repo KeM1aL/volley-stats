@@ -51,7 +51,7 @@ export function EditPlayerDialog({
         $set: {
           name: values.name,
           number: values.number,
-          position: values.position,
+          role: values.position,
           updated_at: new Date().toISOString(),
         },
       });
