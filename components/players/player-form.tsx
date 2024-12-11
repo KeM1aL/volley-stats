@@ -129,14 +129,10 @@ export function PlayerForm({
                             return "Setter";
                           case PlayerRole.OPPOSITE:
                             return "Opposite";
-                          case PlayerRole.OUTSIDE_BACK:
-                            return "Outside Hitter (Back)";
-                          case PlayerRole.OUTSIDE_FRONT:
-                            return "Outside Hitter (Front)";
-                          case PlayerRole.MIDDLE_BACK:
-                            return "Middle Hitter (Back)";
-                          case PlayerRole.MIDDLE_FRONT:
-                            return "Middle Hitter (Front)";
+                          case PlayerRole.OUTSIDE_HITTER:
+                            return "Outside Hitter";
+                          case PlayerRole.MIDDLE_HITTER:
+                            return "Middle Hitter";
                           case PlayerRole.LIBERO:
                             return "Libero";
                         }

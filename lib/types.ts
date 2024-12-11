@@ -1,10 +1,8 @@
 export enum PlayerRole {
   SETTER = "setter",
   OPPOSITE = "opposite",
-  OUTSIDE_FRONT = "outside_front",
-  OUTSIDE_BACK = "outside_back",
-  MIDDLE_FRONT = "middle_front",
-  MIDDLE_BACK = "middle_back",
+  OUTSIDE_HITTER = "outside_hitter",
+  MIDDLE_HITTER = "middle_hitter",
   LIBERO = "libero",
 }
 

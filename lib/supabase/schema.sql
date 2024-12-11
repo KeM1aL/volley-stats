@@ -51,22 +51,8 @@ create table if not exists public.sets (
   server_team_id uuid references public.teams(id) not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  current_lineup jsonb not null default '{
-    "p1": null,
-    "p2": null,
-    "p3": null,
-    "p4": null,
-    "p5": null,
-    "p6": null
-  }',
-  first_lineup jsonb not null default '{
-    "p1": null,
-    "p2": null,
-    "p3": null,
-    "p4": null,
-    "p5": null,
-    "p6": null
-  }',
+  current_lineup jsonb not null default '{}'::jsonb,
+  first_lineup jsonb not null default '{}'::jsonb,
   player_roles jsonb not null default '{}'::jsonb,
   constraint status_check check (status in ('upcoming', 'live', 'completed')),
 );

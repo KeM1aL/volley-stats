@@ -85,26 +85,10 @@ export const setSchema = toTypedRxJsonSchema({
     first_server_team_id: { type: 'string', maxLength: 36 },
     server_team_id: { type: 'string', maxLength: 36 },
     first_lineup: {
-      type: 'object',
-      properties: {
-        p1: { type: 'string', maxLength: 36 },
-        p2: { type: 'string', maxLength: 36 },
-        p3: { type: 'string', maxLength: 36 },
-        p4: { type: 'string', maxLength: 36 },
-        p5: { type: 'string', maxLength: 36 },
-        p6: { type: 'string', maxLength: 36 },
-      },
+      type: 'object'
     },
     current_lineup: {
-      type: 'object',
-      properties: {
-        p1: { type: 'string', maxLength: 36 },
-        p2: { type: 'string', maxLength: 36 },
-        p3: { type: 'string', maxLength: 36 },
-        p4: { type: 'string', maxLength: 36 },
-        p5: { type: 'string', maxLength: 36 },
-        p6: { type: 'string', maxLength: 36 },
-      },
+      type: 'object'
     },
     player_roles: {
       type: 'object'
@@ -155,15 +139,7 @@ export const scorePointSchema = toTypedRxJsonSchema({
     home_score: { type: 'number' },
     away_score: { type: 'number' },
     current_rotation: {
-      type: 'object',
-      properties: {
-        p1: { type: 'string', maxLength: 36 },
-        p2: { type: 'string', maxLength: 36 },
-        p3: { type: 'string', maxLength: 36 },
-        p4: { type: 'string', maxLength: 36 },
-        p5: { type: 'string', maxLength: 36 },
-        p6: { type: 'string', maxLength: 36 },
-      },
+      type: 'object'
     },
     ...timestampFields
   },

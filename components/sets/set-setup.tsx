@@ -62,6 +62,20 @@ export function SetSetup({
 
   useEffect(() => {
     if (selectedRole && selectedPlayer && selectedPosition) {
+      setLineup((prev) => {
+        const filteredLineup = {} as Record<PlayerRole, string[]>;
+        Object.entries(prev).forEach(([role, players]) => {
+          filteredLineup[role as PlayerRole] = players.filter(
+            (playerId) => playerId !== selectedPlayer.id
+          );
+        });
+        if(filteredLineup[selectedRole]) {
+          filteredLineup[selectedRole].push(selectedPlayer.id);
+        } else {
+          filteredLineup[selectedRole] = [selectedPlayer.id];
+        }
+        return filteredLineup;
+      });
       setLineup((prev) => ({
         ...prev,
         [selectedRole]: [...prev[selectedRole], selectedPlayer.id],
@@ -217,14 +231,10 @@ export function SetSetup({
                                     return "Setter";
                                   case PlayerRole.OPPOSITE:
                                     return "Opposite";
-                                  case PlayerRole.OUTSIDE_BACK:
-                                    return "Outside Hitter (Back)";
-                                  case PlayerRole.OUTSIDE_FRONT:
-                                    return "Outside Hitter (Front)";
-                                  case PlayerRole.MIDDLE_BACK:
-                                    return "Middle Hitter (Back)";
-                                  case PlayerRole.MIDDLE_FRONT:
-                                    return "Middle Hitter (Front)";
+                                  case PlayerRole.OUTSIDE_HITTER:
+                                    return "Outside Hitter";
+                                  case PlayerRole.MIDDLE_HITTER:
+                                    return "Middle Hitter";
                                 }
                               })()}
                             </SelectItem>
