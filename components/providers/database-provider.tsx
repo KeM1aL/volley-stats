@@ -31,7 +31,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
         ['player_stats', database.db.player_stats],
       ]);
 
-      syncHandler.initializeSync(collections);
+      // syncHandler.initializeSync(collections);
 
       return () => {
         syncHandler.cleanup();
