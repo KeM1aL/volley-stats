@@ -1,5 +1,6 @@
 import { PlayerStat, Player, Set, ScorePoint, Team, Match } from "@/lib/supabase/types";
 import { StatResult, StatType, PlayerPosition } from "@/lib/types";
+import { string } from 'zod';
 
 interface MVPStat {
   setNumber?: number;
@@ -81,9 +82,9 @@ export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: 
 
 function calculateStatScore(stat: PlayerStat, weights: Record<string, number>): number {
   const baseScore = stat.result === StatResult.SUCCESS ? 1 :
-                   stat.result === StatResult.ERROR ? -1 :
-                   0.5;
-  
+    stat.result === StatResult.ERROR ? -1 :
+      0.5;
+
   return baseScore * (weights[stat.stat_type] || 1);
 }
 
@@ -131,7 +132,7 @@ export function calculatePositionStats(
     }
     const position = Object.entries(point.current_rotation)
       .find(([_, positionPlayerId]) => positionPlayerId === playerId)?.[0] as PlayerPosition;
-    
+
     if (position) {
       if (point.point_type === StatType.SPIKE) {
         positionStats[position].attackAttempts++;
@@ -140,13 +141,13 @@ export function calculatePositionStats(
         positionStats[position].pointsScored++;
 
         if ((point.point_type === StatType.SPIKE) && (point.result === StatResult.SUCCESS)) {
-            positionStats[position].attackSuccess++;
-            if(point.player_stat_id && playerStatsById[point.player_stat_id]) {
-              const stat = playerStatsById[point.player_stat_id];
-              positionStats[position].attackDistribution[stat.position]++;
-            }
+          positionStats[position].attackSuccess++;
+          if (point.player_stat_id && playerStatsById[point.player_stat_id]) {
+            const stat = playerStatsById[point.player_stat_id];
+            positionStats[position].attackDistribution[stat.position]++;
+          }
         }
-        
+
       } else {
         positionStats[position].pointsConceded++;
       }
@@ -175,7 +176,7 @@ export function analyzeScoringPatterns(
   rotationStats: Record<PlayerPosition, { points: number; sequences: number }>;
 } {
   const patterns: ScoringPattern[] = [];
-  const rotationStats: Record<PlayerPosition, { points: number; sequences: number }> = 
+  const rotationStats: Record<PlayerPosition, { points: number; sequences: number }> =
     Object.values(PlayerPosition).reduce((acc, pos) => ({
       ...acc,
       [pos]: { points: 0, sequences: 0 }
@@ -191,7 +192,7 @@ export function analyzeScoringPatterns(
     }
     const serverPosition = Object.entries(point.current_rotation)
       .find(([_, positionPlayerId]) => playerId === positionPlayerId)?.[0] as PlayerPosition;
-    
+
     if (point.scoring_team_id === teamId) {
       if (!lastServer || lastServer === serverPosition) {
         currentSequence++;
@@ -275,7 +276,7 @@ export function analyzeDefensiveVulnerabilities(
       currentLossStreak++;
       const defendingPosition = Object.entries(point.current_rotation)
         .find(([_, positionPlayerId]) => playerId === positionPlayerId)?.[0] as PlayerPosition;
-      
+
       if (defendingPosition) {
         defensiveStats[defendingPosition].pointsConceded++;
         defensiveStats[defendingPosition].consecutiveLosses = currentLossStreak;
@@ -367,29 +368,29 @@ export function generateTacticalInsights(
 ): TacticalInsights {
   // Find strongest and weakest rotations
   const strongestRotation = Object.entries(rotationStats)
-    .reduce((prev, [pos, stats]) => 
+    .reduce((prev, [pos, stats]) =>
       stats.points > rotationStats[prev].points ? pos as PlayerPosition : prev
-    , PlayerPosition.P1);
+      , PlayerPosition.P1);
 
   const weakestRotation = Object.entries(rotationStats)
-    .reduce((prev, [pos, stats]) => 
+    .reduce((prev, [pos, stats]) =>
       stats.points < rotationStats[prev].points ? pos as PlayerPosition : prev
-    , PlayerPosition.P1);
+      , PlayerPosition.P1);
 
   // Find best attack position
   const bestAttackPosition = Object.entries(positionStats)
-    .reduce((prev, [pos, stats]) => 
-      (stats.attackSuccess / stats.attackAttempts) > 
-      (positionStats[prev].attackSuccess / positionStats[prev].attackAttempts) 
+    .reduce((prev, [pos, stats]) =>
+      (stats.attackSuccess / stats.attackAttempts) >
+        (positionStats[prev].attackSuccess / positionStats[prev].attackAttempts)
         ? pos as PlayerPosition : prev
-    , PlayerPosition.P1);
+      , PlayerPosition.P1);
 
   // Find most vulnerable position
   const mostVulnerablePosition = Object.entries(defensiveStats)
-    .reduce((prev, [pos, stats]) => 
-      stats.pointsConceded > defensiveStats[prev].pointsConceded 
+    .reduce((prev, [pos, stats]) =>
+      stats.pointsConceded > defensiveStats[prev].pointsConceded
         ? pos as PlayerPosition : prev
-    , PlayerPosition.P1);
+      , PlayerPosition.P1);
 
   // Generate recommendations
   const recommendations: string[] = [
@@ -408,7 +409,7 @@ export function generateTacticalInsights(
   };
 }
 
-interface PlayerSetStats
+export interface PlayerSetStats
   extends Record<StatType, Record<StatResult | "all", number>> {
   positiveImpact: number;
   negativeImpact: number;
@@ -477,3 +478,78 @@ export const getPlayerSetStats = (
   playerStats.negativeImpact = (totalErrors / opponentPoints) * 100;
   return playerStats;
 };
+
+export interface Streak {
+  position: PlayerPosition;
+  length: number;
+  setNumber: number;
+  startPoint: number;
+  type: 'winning' | 'losing';
+}
+
+interface StreakMetrics {
+  streaks: Streak[];
+  averageLength: number;
+  distribution: Record<PlayerPosition, number>;
+}
+
+export function analyzeStreaks(
+  points: ScorePoint[],
+  sets: Set[],
+  teamId: string,
+  playerId: string,
+  setId?: string
+): { winning: StreakMetrics; losing: StreakMetrics } {
+  const analyzeStreakType = (isWinning: boolean): StreakMetrics => {
+    const streaks: StreakMetrics['streaks'] = [];
+    let currentStreak = 0;
+    let startPoint = 0;
+    let totalLength = 0;
+    const distribution: Record<PlayerPosition, number> = Object.values(PlayerPosition)
+      .reduce((acc, pos) => ({ ...acc, [pos]: 0 }), {} as Record<PlayerPosition, number>);
+
+    points.forEach((point, index) => {
+      if (setId && setId !== point.set_id) {
+        return;
+      }
+      const isTeamPoint = (point.scoring_team_id === teamId) === isWinning;
+      if (isTeamPoint) {
+        if (currentStreak === 0) startPoint = index;
+        currentStreak++;
+
+        const position = Object.entries(point.current_rotation)
+          .find(([_, id]) => id === playerId)?.[0] as PlayerPosition;
+        if (position) distribution[position]++;
+      } else if (currentStreak >= 3) {
+        const set = sets.find(s => s.id === points[startPoint].set_id);
+        const position = Object.entries(points[startPoint].current_rotation)
+          .find(([_, id]) => id === playerId)?.[0] as PlayerPosition;
+
+        if (position) {
+          streaks.push({
+            position,
+            length: currentStreak,
+            setNumber: set?.set_number || 0,
+            startPoint,
+            type: isWinning ? 'winning' : 'losing'
+          });
+          totalLength += currentStreak;
+        }
+        currentStreak = 0;
+      } else {
+        currentStreak = 0;
+      }
+    });
+
+    return {
+      streaks,
+      averageLength: streaks.length > 0 ? totalLength / streaks.length : 0,
+      distribution
+    };
+  };
+
+  return {
+    winning: analyzeStreakType(true),
+    losing: analyzeStreakType(false)
+  };
+}

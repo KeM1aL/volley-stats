@@ -42,6 +42,7 @@ import {
   analyzePlayerExploitation,
   generateTacticalInsights,
   type TacticalInsights,
+  analyzeStreaks,
 } from "@/lib/stats/calculations";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -104,6 +105,23 @@ export function TeamPerformance({
     rotationStats
   );
 
+  // Analyze streaks
+  const streakAnalysis = analyzeStreaks(
+    points,
+    sets,
+    teamId,
+    selectedPlayer ? selectedPlayer : players[0].id,
+    selectedSet === "all" ? undefined : selectedSet
+  );
+
+  const streakDistributionData = Object.entries(
+    streakAnalysis.winning.distribution
+  ).map(([position, count]) => ({
+    position,
+    winning: count,
+    losing: streakAnalysis.losing.distribution[position as PlayerPosition],
+  }));
+
   // Transform data for charts
   const positionPerformanceData = Object.entries(positionStats).map(
     ([position, stats]) => ({
@@ -156,6 +174,7 @@ export function TeamPerformance({
         >
           <TabsList>
             <TabsTrigger value="positions">Position Analysis</TabsTrigger>
+            <TabsTrigger value="streaks">Streak Analysis</TabsTrigger>
             <TabsTrigger value="patterns">Scoring Patterns</TabsTrigger>
             <TabsTrigger value="defense">Defensive Analysis</TabsTrigger>
             <TabsTrigger value="insights">Tactical Insights</TabsTrigger>
@@ -264,6 +283,110 @@ export function TeamPerformance({
                     ))}
                   </CardContent>
                 </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="streaks">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Streak Distribution</CardTitle>
+                    <CardDescription>
+                      Winning and losing streaks by position
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={streakDistributionData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="position" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="winning"
+                          fill={COLORS[0]}
+                          name="Winning Streaks"
+                        />
+                        <Bar
+                          dataKey="losing"
+                          fill={COLORS[1]}
+                          name="Losing Streaks"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Winning Streak Analysis</CardTitle>
+                      <CardDescription>
+                        Average Length:{" "}
+                        {streakAnalysis.winning.averageLength.toFixed(1)} points
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {streakAnalysis.winning.streaks
+                          .slice(0, 5)
+                          .map((streak, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-4 border rounded-lg"
+                            >
+                              <div>
+                                <p className="font-medium">
+                                  Position {streak.position}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Set {streak.setNumber}
+                                </p>
+                              </div>
+                              <Badge variant="default">
+                                {streak.length} points
+                              </Badge>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Losing Streak Analysis</CardTitle>
+                      <CardDescription>
+                        Average Length:{" "}
+                        {streakAnalysis.losing.averageLength.toFixed(1)} points
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {streakAnalysis.losing.streaks
+                          .slice(0, 5)
+                          .map((streak, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-4 border rounded-lg"
+                            >
+                              <div>
+                                <p className="font-medium">
+                                  Position {streak.position}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Set {streak.setNumber}
+                                </p>
+                              </div>
+                              <Badge variant="destructive">
+                                {streak.length} points
+                              </Badge>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
 
