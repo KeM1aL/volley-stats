@@ -1,4 +1,4 @@
-import { PlayerStat, Player, Set, ScorePoint } from "@/lib/supabase/types";
+import { PlayerStat, Player, Set, ScorePoint, Team, Match } from "@/lib/supabase/types";
 import { StatResult, StatType, PlayerPosition } from "@/lib/types";
 
 interface MVPStat {
@@ -407,3 +407,73 @@ export function generateTacticalInsights(
     recommendations
   };
 }
+
+interface PlayerSetStats
+  extends Record<StatType, Record<StatResult | "all", number>> {
+  positiveImpact: number;
+  negativeImpact: number;
+}
+
+export const getPlayerSetStats = (
+  match: Match,
+  stats: PlayerStat[],
+  sets: Set[],
+  managedTeam: Team,
+  opponentTeam: Team,
+  playerId: string,
+  setId?: string
+): PlayerSetStats => {
+  const filteredSets = sets.filter((set) =>
+    setId ? set.id === setId : true
+  );
+  const filteredStats = stats.filter(
+    (stat) =>
+      stat.player_id === playerId && (setId ? stat.set_id === setId : true)
+  );
+  const playerStats: PlayerSetStats = {} as PlayerSetStats;
+  Object.values(StatType).forEach((type) => {
+    const statResult: Record<StatResult | "all", number> = {} as Record<
+      StatResult | "all",
+      number
+    >;
+    Object.values(StatResult).forEach((result) => {
+      statResult[result] = filteredStats.filter(
+        (s) => s.stat_type === type && s.result === result
+      ).length;
+    });
+
+    statResult["all"] = filteredStats.filter(
+      (s) => s.stat_type === type
+    ).length;
+
+    playerStats[type] = statResult;
+  });
+
+  const teamPoints = filteredSets.reduce(
+    (acc, set) =>
+      acc +
+      (match.home_team_id === managedTeam.id
+        ? set.home_score
+        : set.away_score),
+    0
+  );
+  const totalPoints: number = filteredStats.filter(
+    (s) => s.result === StatResult.SUCCESS
+  ).length;
+
+  playerStats.positiveImpact = (totalPoints / teamPoints) * 100;
+
+  const opponentPoints = filteredSets.reduce(
+    (acc, set) =>
+      acc +
+      (match.home_team_id === opponentTeam.id
+        ? set.home_score
+        : set.away_score),
+    0
+  );
+  const totalErrors: number = filteredStats.filter(
+    (s) => s.result === StatResult.ERROR
+  ).length;
+  playerStats.negativeImpact = (totalErrors / opponentPoints) * 100;
+  return playerStats;
+};

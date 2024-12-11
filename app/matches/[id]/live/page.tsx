@@ -28,6 +28,7 @@ import {
   SetSetupCommand,
   SubstitutionCommand,
 } from "@/lib/commands/match-commands";
+import { PlayerPerformance } from "@/components/matches/stats/player-performance";
 
 const initialMatchState: MatchState = {
   match: null,
@@ -263,20 +264,21 @@ export default function LiveMatchPage() {
       if (!db) return;
       if (!matchState.set || !matchState.match) return;
 
-      const myTeam = (managedTeam!.id === point.scoring_team_id);
+      const myTeam = managedTeam!.id === point.scoring_team_id;
       const command = new ScorePointCommand(matchState, point, myTeam, db);
       try {
         const newMatchState = await history.executeCommand(command);
         setMatchState(newMatchState);
         if (newMatchState.match!.status === "completed") {
-          if(navigator.onLine) {
-            router.push(`/matches/${matchState.match.id}/stats`);
-          } else {
-            toast({
-              title: "Match Finished",
-              description: "You must be online to view the stats",
-            });
-          }
+          toast({
+            title: "Match Finished",
+            description: "Let's go to the stats !",
+          });
+          const searchParams = new URLSearchParams();
+          searchParams.set("team", managedTeam!.id);
+          router.push(
+            `/matches/${matchState.match.id}/stats?${searchParams.toString()}`
+          );
         }
       } catch (error) {
         console.error("Failed to record point:", error);
@@ -326,8 +328,8 @@ export default function LiveMatchPage() {
         awayTeam={awayTeam}
       />
       <div className="grid md:grid-cols-3 gap-2">
-        <Card className="p-1">
-          {matchState.set && (
+        {matchState.set && matchState.set.status !== "completed" && (
+          <Card className="p-1">
             <ScoreBoard
               match={matchState.match}
               set={matchState.set}
@@ -338,11 +340,23 @@ export default function LiveMatchPage() {
               playerById={playerById}
               onSubstitution={onSubstitutionRecorded}
             />
-          )}
-        </Card>
+          </Card>
+        )}
+        {matchState.set && matchState.set.status === "completed" && (
+          <Card className="p-1 col-span-2">
+            <PlayerPerformance
+              match={matchState.match}
+              managedTeam={managedTeam!}
+              opponentTeam={opponentTeam!}
+              players={players}
+              stats={matchState.stats}
+              sets={matchState.sets}
+            />
+          </Card>
+        )}
 
-        <Card className="p-1 col-span-2">
-          {!matchState.set || matchState.set.status === "completed" ? (
+        {!matchState.set || matchState.set.status === "completed" ? (
+          <Card className={`p-1 ${!matchState.set ? "col-start-2" : ""}`}>
             <SetSetup
               match={matchState.match}
               sets={matchState.sets}
@@ -350,9 +364,12 @@ export default function LiveMatchPage() {
               awayTeam={awayTeam}
               setNumber={matchState.set ? matchState.set.set_number + 1 : 1}
               players={players}
+              playerById={playerById}
               onComplete={onSetSetupComplete}
             />
-          ) : (
+          </Card>
+        ) : (
+          <Card className="p-1 col-span-2">
             <StatTracker
               onStat={onPlayerStatRecorded}
               onPoint={onPointRecorded}
@@ -366,8 +383,8 @@ export default function LiveMatchPage() {
               points={matchState.points}
               score={matchState.score}
             />
-          )}
-        </Card>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -35,6 +35,21 @@ type StatTrackerProps = {
   onUndo: () => Promise<void>;
 };
 
+const colorData = [
+  { color: "bg-red-500", border: "border-red-300" },
+  { color: "bg-blue-500", border: "border-blue-300" },
+  { color: "bg-green-500", border: "border-green-300" },
+  { color: "bg-yellow-500", border: "border-yellow-300" },
+  { color: "bg-purple-500", border: "border-purple-300" },
+  { color: "bg-pink-500", border: "border-pink-300" },
+  { color: "bg-indigo-500", border: "border-indigo-300" },
+  { color: "bg-teal-500", border: "border-teal-300" },
+  { color: "bg-orange-500", border: "border-orange-300" },
+  { color: "bg-cyan-500", border: "border-cyan-300" },
+  { color: "bg-lime-500", border: "border-lime-300" },
+  { color: "bg-fuchsia-500", border: "border-fuchsia-300" },
+]
+
 export function StatTracker({
   match,
   currentSet,
@@ -163,11 +178,11 @@ export function StatTracker({
         onPlayerSelect={setSelectedPlayer}
       />
       <div className="space-y-0">
-        {Object.values(StatType).map((type) => (
-          <Card key={type} className="w-full mx-auto overflow-hidden">
+        {Object.values(StatType).map((type, index) => (
+          <Card key={type} className={`w-full mx-auto overflow-hidden ${colorData[index].border} border-2`}>
             <div className="flex">
               {/* Vertical text on the left side */}
-              <div className="bg-primary text-primary-foreground p-4 flex items-center justify-center relative">
+              <div className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}>
                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
                   {type.replace("_", " ").substring(0, 5)}
                 </span>

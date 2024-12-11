@@ -15,11 +15,15 @@ import { PlayerPosition, PlayerRole } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { Match, Player, Set, Team } from "@/lib/supabase/types";
 import { string } from "zod";
+import { CourtDiagram } from "../matches/live/court-diagram";
+import { PlayerSelector } from "../matches/live/player-selector";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 type SetSetupProps = {
   match: Match;
   sets: Set[];
   players: Player[];
+  playerById: Map<string, Player>;
   homeTeam: Team;
   awayTeam: Team;
   setNumber: number;
@@ -38,37 +42,42 @@ export function SetSetup({
   match,
   sets,
   players,
+  playerById,
   homeTeam,
   awayTeam,
   onComplete,
 }: SetSetupProps) {
+  const [selectedPosition, setSelectedPosition] =
+    useState<PlayerPosition | null>(null);
+  const [selectedRole, setSelectedRole] = useState<PlayerRole | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [serverTeamId, setServerTeamId] = useState<string | null>(null);
-  const [lineup, setLineup] = useState<Record<PlayerRole, string>>(
-    {} as Record<PlayerRole, string>
+  const [lineup, setLineup] = useState<Record<PlayerRole, string[]>>(
+    {} as Record<PlayerRole, string[]>
   );
   const [positions, setPosition] = useState<Record<PlayerPosition, string>>(
     {} as Record<PlayerPosition, string>
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleComplete = async () => {
-    setIsLoading(true);
-    if (
-      !lineup[PlayerRole.SETTER] ||
-      !lineup[PlayerRole.OPPOSITE] ||
-      !lineup[PlayerRole.OUTSIDE_BACK] ||
-      !lineup[PlayerRole.OUTSIDE_FRONT] ||
-      !lineup[PlayerRole.MIDDLE_BACK] ||
-      !lineup[PlayerRole.MIDDLE_FRONT]
-    ) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "All roles (except Libero) must be filled",
-      });
-      setIsLoading(false);
-      return;
+  useEffect(() => {
+    if (selectedRole && selectedPlayer && selectedPosition) {
+      setLineup((prev) => ({
+        ...prev,
+        [selectedRole]: [...prev[selectedRole], selectedPlayer.id],
+      }));
+      setPosition((prev) => ({
+        ...prev,
+        [selectedPosition]: selectedPlayer.id,
+      }));
+      setSelectedPosition(null);
+      setSelectedRole(null);
+      setSelectedPlayer(null);
     }
+  }, [selectedRole, selectedPlayer, selectedPosition]);
+
+  const handleComplete = async () => {
+    // setIsLoading(true);
     if (
       !positions[PlayerPosition.P1] ||
       !positions[PlayerPosition.P2] ||
@@ -104,9 +113,11 @@ export function SetSetup({
     }
     let playerRoles: Record<string, PlayerRole> = {};
     Object.values(PlayerRole).forEach((role) => {
-      const player = lineup[role];
-      if (player) {
-        playerRoles[player] = role;
+      const players = lineup[role];
+      if (players && players.length > 0) {
+        players.forEach((player) => {
+          playerRoles[player] = role;
+        });
       }
     });
 
@@ -155,133 +166,129 @@ export function SetSetup({
         <h2 className="text-lg font-semibold mb-4">{`${
           NAMES[sets.length]
         } Setup`}</h2>
-        <div className="grid grid-cols-4 gap-6">
-          {Object.values(PlayerRole).map((role) => (
-            <div
-              key={role}
-              className={`col-span-2 ${
-                role === PlayerRole.LIBERO ? "col-start-2" : ""
-              }`}
-            >
-              <Label>
-                {(() => {
-                  switch (role) {
-                    case PlayerRole.SETTER:
-                      return "Setter";
-                    case PlayerRole.OPPOSITE:
-                      return "Opposite";
-                    case PlayerRole.OUTSIDE_BACK:
-                      return "Outside Hitter (Back)";
-                    case PlayerRole.OUTSIDE_FRONT:
-                      return "Outside Hitter (Front)";
-                    case PlayerRole.MIDDLE_BACK:
-                      return "Middle Hitter (Back)";
-                    case PlayerRole.MIDDLE_FRONT:
-                      return "Middle Hitter (Front)";
-                    case PlayerRole.LIBERO:
-                      return "Libero";
-                  }
-                })()}
-              </Label>
-              <div className="flex flex-row items-center space-x-1">
+        <div className="space-y-2">
+          {(sets.length === 0 || sets.length === 4) && (
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <Label>Serving Team</Label>
                 <Select
-                  onValueChange={(value) =>
-                    setLineup((prev) => ({ ...prev, [role]: value }))
-                  }
+                  onValueChange={(value) => setServerTeamId(value as string)}
                 >
-                  <SelectTrigger
-                    className={role === PlayerRole.LIBERO ? "" : "basis-2/3"}
-                  >
-                    <SelectValue placeholder={`Select player`} />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select serving team" />
                   </SelectTrigger>
                   <SelectContent>
-                    {players
-                      .filter((player) =>
-                        Object.entries(lineup).every(
-                          ([key, value]) => key === role || value !== player.id
-                        )
-                      )
-                      .map((player) => (
-                        <SelectItem key={player.id} value={player.id}>
-                          {player.number} - {player.name}
-                        </SelectItem>
-                      ))}
+                    <SelectItem value={homeTeam.id}>{homeTeam.name}</SelectItem>
+                    <SelectItem value={awayTeam.id}>{awayTeam.name}</SelectItem>
                   </SelectContent>
                 </Select>
-                {role !== PlayerRole.LIBERO && (
-                  <Select
-                    onValueChange={(value: PlayerPosition) =>
-                      setPosition((prev) => {
-                        const filteredPositions: Record<
-                          PlayerPosition,
-                          string
-                        > = {} as Record<PlayerPosition, string>;
-                        Object.keys(prev).forEach((key) => {
-                          const playerId = prev[key as PlayerPosition];
-                          if (playerId !== lineup[role]) {
-                            filteredPositions[key as PlayerPosition] = playerId;
-                          }
-                        });
-                        if (value) {
-                          filteredPositions[value] = lineup[role];
-                        }
-                        return filteredPositions;
-                      })
-                    }
-                    disabled={!lineup[role]}
-                  >
-                    <SelectTrigger className="basis-1/3">
-                      <SelectValue placeholder="Position" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={null as unknown as string}>
-                        None
-                      </SelectItem>
-                      {Object.values(PlayerPosition)
-                        .filter(
-                          (position) =>
-                            !positions[position] ||
-                            positions[position] === lineup[role]
-                        )
-                        .map((position) => (
-                          <SelectItem key={position} value={position as string}>
-                            {position}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                )}
               </div>
             </div>
-          ))}
+          )}
+          <CourtDiagram
+            players={players}
+            playerById={playerById}
+            lineup={positions}
+            onSelect={setSelectedPosition}
+          />
+
+          {selectedPosition && (
+            <Card className="p-1 space-y-2 border-indigo-500/100">
+              <div className="grid grid-cols-4 gap-6">
+                <div className="col-span-2 col-start-2">
+                  <Label>Role</Label>
+                  <div className="flex flex-row items-center space-x-1">
+                    <Select
+                      onValueChange={(value: PlayerRole) => {
+                        setSelectedRole(value);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={`Select role`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(PlayerRole)
+                          .filter((role) => role !== PlayerRole.LIBERO)
+                          .map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {(() => {
+                                switch (role) {
+                                  case PlayerRole.SETTER:
+                                    return "Setter";
+                                  case PlayerRole.OPPOSITE:
+                                    return "Opposite";
+                                  case PlayerRole.OUTSIDE_BACK:
+                                    return "Outside Hitter (Back)";
+                                  case PlayerRole.OUTSIDE_FRONT:
+                                    return "Outside Hitter (Front)";
+                                  case PlayerRole.MIDDLE_BACK:
+                                    return "Middle Hitter (Back)";
+                                  case PlayerRole.MIDDLE_FRONT:
+                                    return "Middle Hitter (Front)";
+                                }
+                              })()}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              <PlayerSelector
+                players={players.filter((player) =>
+                  Object.entries(positions).every(
+                    ([key, value]) =>
+                      key === selectedPosition || value !== player.id
+                  )
+                )}
+                selectedPlayer={selectedPlayer}
+                onPlayerSelect={setSelectedPlayer}
+              />
+            </Card>
+          )}
         </div>
-        {(sets.length === 0 || sets.length === 4) && (
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <Label>Serving Team</Label>
+        <div className="grid grid-cols-4 gap-6">
+          <div className="col-span-2 col-start-2">
+            <Label>Libero</Label>
+            <div className="flex flex-row items-center space-x-1">
               <Select
-                onValueChange={(value) => setServerTeamId(value as string)}
+                onValueChange={(value) =>
+                  setLineup((prev) => ({
+                    ...prev,
+                    [PlayerRole.LIBERO]: [value],
+                  }))
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select serving team" />
+                  <SelectValue placeholder={`Select player`} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={homeTeam.id}>{homeTeam.name}</SelectItem>
-                  <SelectItem value={awayTeam.id}>{awayTeam.name}</SelectItem>
+                  <SelectItem value={null as unknown as string}>
+                    None
+                  </SelectItem>
+                  {players
+                    .filter((player) =>
+                      Object.entries(lineup).every(
+                        ([key, values]) =>
+                          key === PlayerRole.LIBERO ||
+                          !values.includes(player.id)
+                      )
+                    )
+                    .map((player) => (
+                      <SelectItem key={player.id} value={player.id}>
+                        {player.number} - {player.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* <Separator /> */}
 
-      <Button
-        onClick={handleComplete}
-        className="w-full"
-        disabled={isLoading}
-      >
+      <Button onClick={handleComplete} className="w-full" disabled={isLoading}>
         Start Set
       </Button>
     </div>

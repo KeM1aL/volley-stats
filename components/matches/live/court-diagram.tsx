@@ -9,29 +9,22 @@ import { PlayerPosition } from "@/lib/types";
 
 interface CourtDiagramProps {
   players: Player[];
-  current_lineup: { [key in PlayerPosition]: string };
+  playerById: Map<string, Player>;
+  lineup: { [key in PlayerPosition]: string };
   className?: string;
+  onSelect?: (position: PlayerPosition | null) => void;
 }
 
 export function CourtDiagram({
   players,
-  current_lineup,
+  playerById,
+  lineup,
   className,
+  onSelect,
 }: CourtDiagramProps) {
+  const [selectedPosition, setSelectedPosition] =
+    useState<PlayerPosition | null>(null);
   const [netPosition, setNetPosition] = useState<"right" | "left">("right");
-  const [playerById, setPlayerById] = useState<Map<string, Player>>(new Map());
-
-  useEffect(() => {
-    const loadData = async () => {
-      const playerById: Map<string, Player> = new Map();
-      players.forEach((player) => {
-        playerById.set(player.id, player);
-      });
-      setPlayerById(playerById);
-    };
-
-    loadData();
-  }, [players]);
 
   const coordByPosition: {
     [key in "right" | "left"]: {
@@ -61,22 +54,46 @@ export function CourtDiagram({
       {/* Court outline */}
       <div className="absolute inset-4 border-2 border-primary">
         {/* 3-meter line */}
-        {netPosition === 'right' && <div className="absolute top-0 right-1/3 bottom-0 border-r-2 border-dashed border-primary opacity-50" />}
-        {netPosition === 'left' && <div className="absolute top-0 right-2/3 bottom-0 border-r-2 border-dashed border-primary opacity-50" />}
+        {netPosition === "right" && (
+          <div className="absolute top-0 right-1/3 bottom-0 border-r-2 border-dashed border-primary opacity-50" />
+        )}
+        {netPosition === "left" && (
+          <div className="absolute top-0 right-2/3 bottom-0 border-r-2 border-dashed border-primary opacity-50" />
+        )}
 
         {/* Player positions */}
         {Object.values(PlayerPosition).map((pos) => (
           <div
             key={pos}
-            className="absolute w-10 h-10 -translate-x-1/2 -translate-y-1/2"
+            className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 cursor-pointer"
             style={{
               left: coordByPosition[netPosition][pos].x,
               top: coordByPosition[netPosition][pos].y,
             }}
           >
-            <div className="flex items-center justify-center w-full h-full rounded-full bg-background border-2 border-primary">
-              <span className="text-sm font-medium">#{playerById.get(current_lineup[pos])?.number}</span>
-            </div>
+            <Button
+              variant="ghost"
+              className={`flex items-center justify-center w-full h-full rounded-full bg-background ${
+                selectedPosition === pos
+                  ? "border-4 border-indigo-500/100"
+                  : "border-2 border-primary"
+              }`}
+              onClick={() => {
+                if (selectedPosition === pos) {
+                  setSelectedPosition(null);
+                  onSelect?.(null);
+                } else {
+                  setSelectedPosition(pos);
+                  onSelect?.(pos);
+                }
+              }}
+            >
+              <span className="text-sm font-medium">
+                {lineup[pos]
+                  ? `#${playerById.get(lineup[pos])?.number}`
+                  : pos.toUpperCase()}
+              </span>
+            </Button>
           </div>
         ))}
       </div>
@@ -86,7 +103,9 @@ export function CourtDiagram({
         size="sm"
         variant="outline"
         className="absolute bottom-2 right-6"
-        onClick={() => setNetPosition(netPosition === "right" ? "left" : "right")}
+        onClick={() =>
+          setNetPosition(netPosition === "right" ? "left" : "right")
+        }
       >
         <RotateCcw className="h-4 w-4 mr-2" />
         Rotate Court

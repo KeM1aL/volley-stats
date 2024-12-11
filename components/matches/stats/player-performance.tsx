@@ -31,6 +31,7 @@ import {
   Radar,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { getPlayerSetStats } from "@/lib/stats/calculations";
 
 interface PlayerPerformanceProps {
   match: Match;
@@ -39,12 +40,6 @@ interface PlayerPerformanceProps {
   players: Player[];
   stats: PlayerStat[];
   sets: Set[];
-}
-
-interface PlayerSetStats
-  extends Record<StatType, Record<StatResult | "all", number>> {
-  positiveImpact: number;
-  negativeImpact: number;
 }
 
 interface PlayerPositionStats
@@ -57,6 +52,13 @@ interface PlayerPositionStats
   favReceptionPosition: PlayerPosition | null;
   worstReceptionPosition: PlayerPosition | null;
 }
+
+export const variants = {
+  [StatResult.SUCCESS]: "text-green-700",
+  [StatResult.ERROR]: "text-red-700",
+  [StatResult.BAD]: "text-yellow-600",
+  [StatResult.GOOD]: "text-blue-700",
+};
 
 export function PlayerPerformance({
   match,
@@ -170,68 +172,14 @@ export function PlayerPerformance({
     return playerStats;
   };
 
-  const getPlayerSetStats = (
-    playerId: string,
-    setId?: string
-  ): PlayerSetStats => {
-    const filteredSets = sets.filter((set) =>
-      setId ? set.id === setId : true
-    );
-    const filteredStats = stats.filter(
-      (stat) =>
-        stat.player_id === playerId && (setId ? stat.set_id === setId : true)
-    );
-    const playerStats: PlayerSetStats = {} as PlayerSetStats;
-    Object.values(StatType).forEach((type) => {
-      const statResult: Record<StatResult | "all", number> = {} as Record<
-        StatResult | "all",
-        number
-      >;
-      Object.values(StatResult).forEach((result) => {
-        statResult[result] = filteredStats.filter(
-          (s) => s.stat_type === type && s.result === result
-        ).length;
-      });
-
-      statResult["all"] = filteredStats.filter(
-        (s) => s.stat_type === type
-      ).length;
-
-      playerStats[type] = statResult;
-    });
-
-    const teamPoints = filteredSets.reduce(
-      (acc, set) =>
-        acc +
-        (match.home_team_id === managedTeam.id
-          ? set.home_score
-          : set.away_score),
-      0
-    );
-    const totalPoints: number = filteredStats.filter(
-      (s) => s.result === StatResult.SUCCESS
-    ).length;
-
-    playerStats.positiveImpact = (totalPoints / teamPoints) * 100;
-
-    const opponentPoints = filteredSets.reduce(
-      (acc, set) =>
-        acc +
-        (match.home_team_id === opponentTeam.id
-          ? set.home_score
-          : set.away_score),
-      0
-    );
-    const totalErrors: number = filteredStats.filter(
-      (s) => s.result === StatResult.ERROR
-    ).length;
-    playerStats.negativeImpact = (totalErrors / opponentPoints) * 100;
-    return playerStats;
-  };
-
   const getPlayerPerformanceData = () => {
     return players.map((player) => {
       const playerStats = getPlayerSetStats(
+        match,
+        stats,
+        sets,
+        managedTeam!,
+        opponentTeam!,
         player.id,
         selectedSet === "all" ? undefined : selectedSet
       );
@@ -247,45 +195,52 @@ export function PlayerPerformance({
   };
 
   const getPlayerRadarData = (playerId: string) => {
-    const stats = getPlayerSetStats(playerId);
+    const playerStats = getPlayerSetStats(
+      match,
+      stats,
+      sets,
+      managedTeam!,
+      opponentTeam!,
+      playerId
+    );
     return [
       {
         subject: "Attacks",
         A:
-          (stats[StatType.SPIKE][StatResult.SUCCESS] /
-            (stats[StatType.SPIKE]["all"] || 1)) *
+          (playerStats[StatType.SPIKE][StatResult.SUCCESS] /
+            (playerStats[StatType.SPIKE]["all"] || 1)) *
           100,
         fullMark: 100,
       },
       {
         subject: "Serves",
         A:
-          (stats[StatType.SERVE][StatResult.SUCCESS] /
-            (stats[StatType.SERVE]["all"] || 1)) *
+          (playerStats[StatType.SERVE][StatResult.SUCCESS] /
+            (playerStats[StatType.SERVE]["all"] || 1)) *
           100,
         fullMark: 100,
       },
       {
         subject: "Blocks",
         A:
-          (stats[StatType.BLOCK][StatResult.SUCCESS] /
-            (stats[StatType.BLOCK]["all"] || 1)) *
+          (playerStats[StatType.BLOCK][StatResult.SUCCESS] /
+            (playerStats[StatType.BLOCK]["all"] || 1)) *
           100,
         fullMark: 10,
       },
       {
         subject: "Reception",
         A:
-          (stats[StatType.RECEPTION][StatResult.SUCCESS] /
-            (stats[StatType.RECEPTION]["all"] || 1)) *
+          (playerStats[StatType.RECEPTION][StatResult.SUCCESS] /
+            (playerStats[StatType.RECEPTION]["all"] || 1)) *
           100,
         fullMark: 100,
       },
       {
         subject: "Defense",
         A:
-          (stats[StatType.DEFENSE][StatResult.SUCCESS] /
-            (stats[StatType.DEFENSE]["all"] || 1)) *
+          (playerStats[StatType.DEFENSE][StatResult.SUCCESS] /
+            (playerStats[StatType.DEFENSE]["all"] || 1)) *
           100,
         fullMark: 100,
       },
@@ -419,8 +374,13 @@ export function PlayerPerformance({
                       <TableHead>Player</TableHead>
                       {Object.values(StatType).map((type) => (
                         <TableHead key={type}>
-                          {type.substring(0, 1).toUpperCase() + type.slice(1)}{" "}
-                          (P/A/E)
+                          {type.substring(0, 1).toUpperCase() + type.slice(1)} (
+                          <span className={variants[StatResult.SUCCESS]}>
+                            P
+                          </span>
+                          /<span className={variants[StatResult.GOOD]}>G</span>/
+                          <span className={variants[StatResult.BAD]}>B</span>/
+                          <span className={variants[StatResult.ERROR]}>E</span>)
                         </TableHead>
                       ))}
                       <TableHead>Point Participation</TableHead>
@@ -429,7 +389,12 @@ export function PlayerPerformance({
                   </TableHeader>
                   <TableBody>
                     {players.map((player, index) => {
-                      const stats = getPlayerSetStats(
+                      const playerStats = getPlayerSetStats(
+                        match,
+                        stats,
+                        sets,
+                        managedTeam!,
+                        opponentTeam!,
                         player.id,
                         selectedSet === "all" ? undefined : selectedSet
                       );
@@ -446,31 +411,43 @@ export function PlayerPerformance({
                           </TableCell>
                           {Object.values(StatType).map((type) => (
                             <TableCell key={type}>
-                              {stats[type][StatResult.SUCCESS]}/
-                              {stats[type]["all"]}/
-                              {stats[type][StatResult.ERROR]}
+                              <span className={variants[StatResult.SUCCESS]}>
+                                {playerStats[type][StatResult.SUCCESS]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.GOOD]}>
+                                {playerStats[type][StatResult.GOOD]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.BAD]}>
+                                {playerStats[type][StatResult.BAD]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.ERROR]}>
+                                {playerStats[type][StatResult.ERROR]}
+                              </span>
                             </TableCell>
                           ))}
                           <TableCell>
                             <Badge
                               variant={
-                                stats.positiveImpact > 10
+                                playerStats.positiveImpact > 10
                                   ? "default"
                                   : "secondary"
                               }
                             >
-                              {stats.positiveImpact.toFixed(2)}%
+                              {playerStats.positiveImpact.toFixed(2)}%
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
                               variant={
-                                stats.negativeImpact > 10
+                                playerStats.negativeImpact > 10
                                   ? "destructive"
                                   : "secondary"
                               }
                             >
-                              {stats.negativeImpact.toFixed(2)}%
+                              {playerStats.negativeImpact.toFixed(2)}%
                             </Badge>
                           </TableCell>
                         </TableRow>
