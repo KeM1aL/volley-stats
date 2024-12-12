@@ -8,7 +8,6 @@ import { Loader2 } from 'lucide-react';
 import { SyncIndicator } from '@/components/sync-indicator';
 import { CollectionName } from '@/lib/rxdb/schema';
 import { RxCollection } from 'rxdb';
-import { syncData } from '@/lib/rxdb/sync/sync';
 
 const DatabaseContext = createContext<ReturnType<typeof useDatabase> | null>(null);
 

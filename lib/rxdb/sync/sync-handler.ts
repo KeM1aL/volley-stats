@@ -7,6 +7,8 @@ import { retryWithBackoff } from '@/lib/utils/retry';
 import { CollectionName } from '../schema';
 import { Subscription } from 'rxjs';
 import { toast } from '@/hooks/use-toast';
+import { CollectionConfig, SyncFilter } from './types';
+import { update } from 'rxdb/plugins/update';
 
 interface SyncQueueItem<T = any> {
   collection: CollectionName;
@@ -23,6 +25,7 @@ export class SyncHandler {
   private syncQueue: SyncQueueItem[] = [];
   private isOnline: boolean = true;
   private collections: Map<CollectionName, RxCollection> = new Map();
+  private configs: Map<CollectionName, CollectionConfig> = new Map();
   private syncInProgress: boolean = false;
   private syncFromSupabase: boolean;
   private maxRetries: number = 3;
@@ -83,9 +86,12 @@ export class SyncHandler {
     }
   };
 
-  async initializeSync(collections: Map<CollectionName, RxCollection>) {
+  async initializeSync(collections: Map<CollectionName, RxCollection>, configs?: Map<CollectionName, CollectionConfig>) {
     this.cleanup();
     this.collections = collections;
+    if (configs) {
+      this.configs = configs;
+    }
 
     if (this.isOnline) {
       await this.performInitialSync();
@@ -101,18 +107,26 @@ export class SyncHandler {
     const entries = Array.from(this.collections.entries());
     for (const [name, collection] of entries) {
       try {
-        // const latestRecord = await collection.findOne({
-        //   selector: {},
-        //   sort: [
-        //     {updated_at: 'asc'}
-        //   ]
-        // }).exec();
-
-        const { data, error } = await supabase
+        const latestRecordDoc = await collection.findOne({
+          selector: {},
+          sort: [
+            {updated_at: 'asc'}
+          ]
+        }).exec();
+        const latestRecord = latestRecordDoc?.toJSON();
+        console.log('latest', latestRecord);
+        const updatedAt = latestRecord?.updated_at || new Date(2024, 1, 1).toISOString();
+        let query = supabase
           .from(name)
           .select('*')
-          // .gte('updated_at', latestRecord?.updated_at ?? new Date(2024, 1, 1).toISOString())
+          .gte('updated_at', updatedAt)
           .order('updated_at', { ascending: false });
+        const config = this.configs.get(name);
+        if (config && config.filters) {
+          query = this.applyFilters(query, config.filters);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -122,7 +136,8 @@ export class SyncHandler {
             try {
               await collection.upsert({
                 ...record,
-                updated_at: record.updated_at || new Date().toISOString()
+                updated_at: record.updated_at || new Date().toISOString(),
+                origin: 'supabase'
               });
             } catch (err) {
               console.error(`Error upserting record in ${name}:`, err);
@@ -142,8 +157,9 @@ export class SyncHandler {
     }
   }
 
-  private async setupCollectionSync<T extends { id: string }>(name: CollectionName, collection: RxCollection<T>) {
+  private async setupCollectionSync<T extends { id: string, origin: string }>(name: CollectionName, collection: RxCollection<T>) {
     const subscription = collection.$.subscribe(async (changeEvent: RxChangeEvent<T>) => {
+      if(changeEvent.documentData.origin === 'supabase') return;
       if (!this.isOnline) {
         this.queueChange(name, changeEvent);
         return;
@@ -164,6 +180,10 @@ export class SyncHandler {
           table: name,
         },
         async (payload: RealtimePostgresChangesPayload<any>) => {
+          const config = this.configs.get(name);
+          if (config && config.filters && !this.matchesFilters(payload.new, config.filters)) {
+            return;
+          }
           await this.handleSupabaseChange(collection, payload);
         }
       )
@@ -184,7 +204,8 @@ export class SyncHandler {
         case 'UPDATE':
           await collection.upsert({
             ...newRecord,
-            updated_at: newRecord.updated_at || new Date().toISOString()
+            updated_at: newRecord.updated_at || new Date().toISOString(),
+            origin: 'supabase'
           });
           break;
         case 'DELETE':
@@ -204,18 +225,23 @@ export class SyncHandler {
     }
   }
 
+  private sanitizeData(data: any) {
+    const clean = { ...data };
+    delete clean._rev;
+    delete clean._attachments;
+    delete clean._deleted;
+    delete clean._meta;
+    delete clean.origin;
+    return clean;
+  }
+
   private async syncToSupabase<T extends { id: string }>(
     collectionName: CollectionName,
     changeEvent: RxChangeEvent<T>
   ) {
+    console.log('syncToSupabase', changeEvent);
     const operation = changeEvent.operation;
-    const doc = {
-      ...changeEvent.documentData
-    };
-    delete (doc as any)._rev;
-    delete (doc as any)._attachments;
-    delete (doc as any)._deleted;
-    delete (doc as any)._meta;
+    const doc = this.sanitizeData(changeEvent.documentData);
     try {
       await retryWithBackoff(async () => {
         switch (operation) {
@@ -252,6 +278,37 @@ export class SyncHandler {
         description: 'Changes will be retried automatically'
       });
     }
+  }
+
+  private matchesFilters(record: any, filters: SyncFilter[]): boolean {
+    return filters.every(filter => {
+      const value = record[filter.field];
+      switch (filter.operator) {
+        case 'eq': return value === filter.value;
+        case 'gt': return value > filter.value;
+        case 'lt': return value < filter.value;
+        case 'gte': return value >= filter.value;
+        case 'lte': return value <= filter.value;
+        case 'in': return filter.value.includes(value);
+        case 'contains': return value?.includes(filter.value);
+        default: return true;
+      }
+    });
+  }
+
+  private applyFilters(query: any, filters: SyncFilter[]): any {
+    filters.forEach(filter => {
+      switch (filter.operator) {
+        case 'eq': query = query.eq(filter.field, filter.value); break;
+        case 'gt': query = query.gt(filter.field, filter.value); break;
+        case 'lt': query = query.lt(filter.field, filter.value); break;
+        case 'gte': query = query.gte(filter.field, filter.value); break;
+        case 'lte': query = query.lte(filter.field, filter.value); break;
+        case 'in': query = query.in(filter.field, filter.value); break;
+        case 'contains': query = query.ilike(filter.field, `%${filter.value}%`); break;
+      }
+    });
+    return query;
   }
 
   private queueChange<T>(collectionName: CollectionName, changeEvent: RxChangeEvent<T>) {
@@ -322,10 +379,15 @@ export class SyncHandler {
             event: '*',
             schema: 'public',
             table: name,
+            // filter: ''
           },
           async (payload) => {
             const collection = this.collections.get(name);
             if (collection) {
+              const config = this.configs.get(name);
+              if (config && config.filters && !this.matchesFilters(payload.new, config.filters)) {
+                return;
+              }
               await this.handleSupabaseChange(collection, payload);
             }
           }
