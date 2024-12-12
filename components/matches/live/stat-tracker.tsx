@@ -171,7 +171,7 @@ export function StatTracker({
   }
 
   return (
-    <CardContent className="space-y-2 p-0">
+    <CardContent className="space-y-1 p-0">
       <PlayerSelector
         players={players}
         selectedPlayer={selectedPlayer}

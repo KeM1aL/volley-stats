@@ -467,6 +467,85 @@ export function PlayerPerformance({
                       <TableHead colSpan={8} className="text-center border-r-2">
                         Spikes
                       </TableHead>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Player</TableHead>
+                      {Object.values(PlayerPosition).map((position) => (
+                        <TableHead key={`${position}-spike`}>
+                          {position.toUpperCase()}
+                          (<span className={variants[StatResult.SUCCESS]}>
+                            P
+                          </span>
+                          /<span className={variants[StatResult.GOOD]}>G</span>/
+                          <span className={variants[StatResult.BAD]}>B</span>/
+                          <span className={variants[StatResult.ERROR]}>E</span>)
+                        </TableHead>
+                      ))}
+                      <TableHead>Fav.Position</TableHead>
+                      <TableHead className="border-r-2">
+                        Worst Position
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {players.map((player, index) => {
+                      const stats = getPlayerSetPositionStats(
+                        player.id,
+                        selectedSet === "all" ? undefined : selectedSet
+                      );
+
+                      return (
+                        <TableRow
+                          key={player.id}
+                          className={
+                            index % 2 === 0 ? "bg-background" : "bg-muted/50"
+                          }
+                        >
+                          <TableCell className="font-medium">
+                            {player.name}
+                          </TableCell>
+                          {Object.values(PlayerPosition).map((position) => (
+                            <TableCell key={`${position}-spike`}>
+                              <span className={variants[StatResult.SUCCESS]}>
+                                {stats[StatType.SPIKE][position][StatResult.SUCCESS]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.GOOD]}>
+                                {stats[StatType.SPIKE][position][StatResult.GOOD]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.BAD]}>
+                                {stats[StatType.SPIKE][position][StatResult.BAD]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.ERROR]}>
+                                {stats[StatType.SPIKE][position][StatResult.ERROR]}
+                              </span>
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-center">
+                            {stats.favSpikePosition && (
+                              <Badge variant="default">
+                                {stats.favSpikePosition.toUpperCase()}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="border-r-2 text-center">
+                            {stats.worstSpikePosition && (
+                              <Badge variant="destructive">
+                                {stats.worstSpikePosition.toUpperCase()}
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead></TableHead>
                       <TableHead colSpan={8} className="text-center">
                         Receptions
                       </TableHead>
@@ -474,17 +553,14 @@ export function PlayerPerformance({
                     <TableRow>
                       <TableHead>Player</TableHead>
                       {Object.values(PlayerPosition).map((position) => (
-                        <TableHead key={`${position}-spike`}>
-                          {position.toUpperCase()}
-                        </TableHead>
-                      ))}
-                      <TableHead>Fav.Position</TableHead>
-                      <TableHead className="border-r-2">
-                        Worst Position
-                      </TableHead>
-                      {Object.values(PlayerPosition).map((position) => (
                         <TableHead key={`${position}-reception`}>
                           {position.toUpperCase()}
+                          (<span className={variants[StatResult.SUCCESS]}>
+                            P
+                          </span>
+                          /<span className={variants[StatResult.GOOD]}>G</span>/
+                          <span className={variants[StatResult.BAD]}>B</span>/
+                          <span className={variants[StatResult.ERROR]}>E</span>)
                         </TableHead>
                       ))}
                       <TableHead>Fav.Position</TableHead>
@@ -509,47 +585,22 @@ export function PlayerPerformance({
                             {player.name}
                           </TableCell>
                           {Object.values(PlayerPosition).map((position) => (
-                            <TableCell key={`${position}-spike`}>
-                              {
-                                stats[StatType.SPIKE][position][
-                                  StatResult.SUCCESS
-                                ]
-                              }
-                              /{stats[StatType.SPIKE][position]["all"]}/
-                              {
-                                stats[StatType.SPIKE][position][
-                                  StatResult.ERROR
-                                ]
-                              }
-                            </TableCell>
-                          ))}
-                          <TableCell className="text-center">
-                            {stats.favSpikePosition && (
-                              <Badge variant="default">
-                                {stats.favSpikePosition.toUpperCase()}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="border-r-2 text-center">
-                            {stats.worstSpikePosition && (
-                              <Badge variant="destructive">
-                                {stats.worstSpikePosition.toUpperCase()}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          {Object.values(PlayerPosition).map((position) => (
                             <TableCell key={`${position}-reception`}>
-                              {
-                                stats[StatType.RECEPTION][position][
-                                  StatResult.SUCCESS
-                                ]
-                              }
-                              /{stats[StatType.RECEPTION][position]["all"]}/
-                              {
-                                stats[StatType.RECEPTION][position][
-                                  StatResult.ERROR
-                                ]
-                              }
+                              <span className={variants[StatResult.SUCCESS]}>
+                                {stats[StatType.RECEPTION][position][StatResult.SUCCESS]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.GOOD]}>
+                                {stats[StatType.RECEPTION][position][StatResult.GOOD]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.BAD]}>
+                                {stats[StatType.RECEPTION][position][StatResult.BAD]}
+                              </span>
+                              /
+                              <span className={variants[StatResult.ERROR]}>
+                                {stats[StatType.RECEPTION][position][StatResult.ERROR]}
+                              </span>
                             </TableCell>
                           ))}
                           <TableCell className="text-center">
