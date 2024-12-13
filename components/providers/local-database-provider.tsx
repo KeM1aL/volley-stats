@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect } from 'react';
-import { useDatabase } from '@/hooks/use-database';
+import { useLocalDatabase } from '@/hooks/use-local-database';
 import { SyncHandler } from '@/lib/rxdb/sync/sync-handler';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2 } from 'lucide-react';
@@ -10,10 +10,10 @@ import { CollectionName } from '@/lib/rxdb/schema';
 import { RxCollection } from 'rxdb';
 import { syncData } from '@/lib/rxdb/sync/sync';
 
-const DatabaseContext = createContext<ReturnType<typeof useDatabase> | null>(null);
+const LocalDatabaseContext = createContext<ReturnType<typeof useLocalDatabase> | null>(null);
 
-export function DatabaseProvider({ children }: { children: React.ReactNode }) {
-  const database = useDatabase();
+export function LocalDatabaseProvider({ children }: { children: React.ReactNode }) {
+  const database = useLocalDatabase();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -56,17 +56,17 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <DatabaseContext.Provider value={database}>
+    <LocalDatabaseContext.Provider value={database}>
       {children}
       {/* <SyncIndicator /> */}
-    </DatabaseContext.Provider>
+    </LocalDatabaseContext.Provider>
   );
 }
 
-export function useDb() {
-  const context = useContext(DatabaseContext);
+export function useLocalDb() {
+  const context = useContext(LocalDatabaseContext);
   if (!context) {
-    throw new Error('useDb must be used within a DatabaseProvider');
+    throw new Error('useLocalDb must be used within a DatabaseProvider');
   }
   return context;
 }

@@ -12,14 +12,14 @@ import { MatchFilters } from "@/components/matches/history/match-filters";
 import { TeamStats } from "@/components/matches/history/team-stats";
 import { StatisticsDialog } from "@/components/matches/history/statistics-dialog";
 import { CompareDialog } from "@/components/matches/history/compare-dialog";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Match, Team } from "@/lib/supabase/types";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MatchHistoryPage() {
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);

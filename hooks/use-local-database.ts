@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getDatabase, type VolleyballDatabase } from '@/lib/rxdb/database';
 
-export function useDatabase() {
+export function useLocalDatabase() {
   const [db, setDb] = useState<VolleyballDatabase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

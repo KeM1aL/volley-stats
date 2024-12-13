@@ -16,7 +16,7 @@ import { BarChart2, Pencil, Volleyball } from "lucide-react";
 import { MatchManagedTeamSetup } from "./match-managed-setup";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useDb } from "../providers/database-provider";
+import { useLocalDb } from "../providers/local-database-provider";
 import { toast } from "@/hooks/use-toast";
 
 type MatchStatsDialogProps = {
@@ -24,7 +24,7 @@ type MatchStatsDialogProps = {
 };
 
 export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const router = useRouter();
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);
   const [awayTeam, setAwayTeam] = useState<Team | null>(null);

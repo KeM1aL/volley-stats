@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Volleyball } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useDb } from "../providers/database-provider";
+import { useLocalDb } from "../providers/local-database-provider";
 import { toast } from "@/hooks/use-toast";
 import { MatchManagedTeamSetup } from "./match-managed-setup";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,7 @@ type MatchStartDialogProps = {
 };
 
 export default function MatchStartDialog({ match }: MatchStartDialogProps) {
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const router = useRouter();
   const [managedTeam, setManagedTeam] = useState<Team | null>(null);
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);

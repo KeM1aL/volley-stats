@@ -26,7 +26,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Player } from "@/lib/supabase/types";
 import { supabase } from "@/lib/supabase/client";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { deleteAvatar } from "@/lib/supabase/storage";
 
 type PlayerTableProps = {
@@ -36,7 +36,7 @@ type PlayerTableProps = {
 };
 
 export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTableProps) {
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const { toast } = useToast();
   const [deletePlayer, setDeletePlayer] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);

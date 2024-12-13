@@ -2,25 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Share2 } from "lucide-react";
 import { jsPDF } from "jspdf";
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 import type {
   Match,
   Player,
@@ -40,7 +28,7 @@ import { MatchScoreDetails } from "@/components/matches/match-score-details";
 export default function MatchStatsPage() {
   const { id: matchId } = useParams();
   const searchParams = useSearchParams();
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const [match, setMatch] = useState<Match | null>(null);
   const [managedTeam, setManagedTeam] = useState<Team>();
   const [opponentTeam, setOpponentTeam] = useState<Team>();

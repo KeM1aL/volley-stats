@@ -1,7 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Match, Player, Team } from "@/lib/supabase/types";
@@ -18,7 +18,7 @@ type MatchSetupProps = {
 };
 
 export function MatchLineupSetup({ match, players, availablePlayers, setAvailablePlayers }: MatchSetupProps) {
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const [isLoading, setIsLoading] = useState(false);
 
   const sortPlayers = (a: Player, b: Player) => {

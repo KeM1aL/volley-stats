@@ -9,7 +9,7 @@ import {
   Substitution,
   Team,
 } from "@/lib/supabase/types";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourtDiagram } from "./court-diagram";
 import { useToast } from "@/hooks/use-toast";

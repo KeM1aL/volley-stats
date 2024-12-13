@@ -10,7 +10,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Player } from "@/lib/supabase/types";
 import { supabase } from "@/lib/supabase/client";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";
 import { update } from "rxdb/plugins/update";
 
@@ -25,7 +25,7 @@ export function EditPlayerDialog({
   onClose,
   onPlayerUpdated,
 }: EditPlayerDialogProps) {
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

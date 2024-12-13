@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
-import { DatabaseProvider } from '@/components/providers/database-provider';
+import { LocalDatabaseProvider } from '@/components/providers/local-database-provider';
 import { AuthProvider } from '@/contexts/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
@@ -61,7 +61,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <DatabaseProvider>
+            <LocalDatabaseProvider>
               <LoadingBar />
               <div className="min-h-screen bg-background">
                 <Navigation />
@@ -70,7 +70,7 @@ export default function RootLayout({
                 </main>
               </div>
               <Toaster />
-            </DatabaseProvider>
+            </LocalDatabaseProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

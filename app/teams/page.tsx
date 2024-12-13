@@ -6,14 +6,14 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamTable } from "@/components/teams/team-table";
 import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Team } from "@/lib/supabase/types";
 
 export default function TeamsPage() {
   const router = useRouter();
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const [teams, setTeams] = useState<Team[]>([]);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);

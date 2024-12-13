@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -37,7 +37,7 @@ type NewMatchFormProps = {
 };
 
 export function NewMatchForm({ onMatchCreated }: NewMatchFormProps) {
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const { toast } = useToast();
   const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);

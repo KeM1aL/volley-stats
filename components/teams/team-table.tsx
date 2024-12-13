@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Team } from "@/lib/supabase/types";
 import { supabase } from "@/lib/supabase/client";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 
 type TeamTableProps = {
   teams: Team[];
@@ -34,7 +34,7 @@ type TeamTableProps = {
 
 export function TeamTable({ teams, onEdit }: TeamTableProps) {
   const router = useRouter();
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const { toast } = useToast();
   const [deleteTeam, setDeleteTeam] = useState<Team | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);

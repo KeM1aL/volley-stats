@@ -9,7 +9,7 @@ import {
   Set,
   Team,
 } from "@/lib/supabase/types";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatType, StatResult, Score, PointType } from "@/lib/types";
 import { StatButton, variants } from "./stat-button";
@@ -63,7 +63,7 @@ export function StatTracker({
   onStat,
   onUndo,
 }: StatTrackerProps) {
-  const { db } = useDb();
+  const { db } = useLocalDb();
   const { toast } = useToast();
   const { canUndo, canRedo } = useCommandHistory();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -201,6 +201,11 @@ export function StatTracker({
                     ))}
                   </div>
                 </CardContent>
+              </div>
+              <div className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}>
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
+                  {type.replace("_", " ").substring(0, 5)}
+                </span>
               </div>
             </div>
           </Card>
