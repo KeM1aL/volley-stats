@@ -63,7 +63,7 @@ export function StatTracker({
   onStat,
   onUndo,
 }: StatTrackerProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const { canUndo, canRedo } = useCommandHistory();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);

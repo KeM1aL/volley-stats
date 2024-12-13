@@ -17,18 +17,18 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
   const { user } = useAuth();
 
   useEffect(() => {
-    if (database.db && user) {
+    if (database.localDb && user) {
       // syncData().catch(console.error);
 
       const syncHandler = new SyncHandler();
       const collections = new Map<CollectionName, RxCollection>([
-        ['teams', database.db.teams],
-        ['players', database.db.players],
-        ['matches', database.db.matches],
-        ['sets', database.db.sets],
-        ['substitutions', database.db.substitutions],
-        ['score_points', database.db.score_points],
-        ['player_stats', database.db.player_stats],
+        ['teams', database.localDb.teams],
+        ['players', database.localDb.players],
+        ['matches', database.localDb.matches],
+        ['sets', database.localDb.sets],
+        ['substitutions', database.localDb.substitutions],
+        ['score_points', database.localDb.score_points],
+        ['player_stats', database.localDb.player_stats],
       ]);
 
       syncHandler.initializeSync(collections);
@@ -37,7 +37,7 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
         syncHandler.cleanup();
       };
     }
-  }, [database.db, user]);
+  }, [database.localDb, user]);
 
   if (database.isLoading) {
     return (
@@ -50,7 +50,7 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
   if (database.error) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-destructive">Failed to initialize database</p>
+        <p className="text-destructive">Failed to initialize local database</p>
       </div>
     );
   }

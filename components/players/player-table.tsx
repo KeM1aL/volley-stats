@@ -36,7 +36,7 @@ type PlayerTableProps = {
 };
 
 export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTableProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [deletePlayer, setDeletePlayer] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);

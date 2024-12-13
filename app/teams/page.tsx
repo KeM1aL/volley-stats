@@ -13,7 +13,7 @@ import { Team } from "@/lib/supabase/types";
 
 export default function TeamsPage() {
   const router = useRouter();
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const [teams, setTeams] = useState<Team[]>([]);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);

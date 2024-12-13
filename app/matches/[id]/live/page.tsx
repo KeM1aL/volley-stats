@@ -42,7 +42,7 @@ const initialMatchState: MatchState = {
 export default function LiveMatchPage() {
   const { id: matchId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
   const [players, setPlayers] = useState<Player[]>([]);

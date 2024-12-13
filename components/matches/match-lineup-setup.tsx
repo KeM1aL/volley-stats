@@ -18,7 +18,7 @@ type MatchSetupProps = {
 };
 
 export function MatchLineupSetup({ match, players, availablePlayers, setAvailablePlayers }: MatchSetupProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const [isLoading, setIsLoading] = useState(false);
 
   const sortPlayers = (a: Player, b: Player) => {

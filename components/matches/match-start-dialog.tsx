@@ -24,7 +24,7 @@ type MatchStartDialogProps = {
 };
 
 export default function MatchStartDialog({ match }: MatchStartDialogProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const router = useRouter();
   const [managedTeam, setManagedTeam] = useState<Team | null>(null);
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);

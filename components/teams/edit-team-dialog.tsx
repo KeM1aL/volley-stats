@@ -37,7 +37,7 @@ type EditTeamDialogProps = {
 
 export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
   const router = useRouter();
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 

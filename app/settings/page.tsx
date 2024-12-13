@@ -44,7 +44,7 @@ const languages = [
 ];
 
 export default function SettingsPage() {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

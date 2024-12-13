@@ -15,7 +15,7 @@ import { Player, Team } from "@/lib/supabase/types";
 export default function PlayersPage() {
   const params = useParams();
   const router = useRouter();
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const [team, setTeam] = useState<Team | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);

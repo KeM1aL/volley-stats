@@ -26,7 +26,7 @@ export function NewPlayerDialog({
   onClose,
   onPlayerCreated,
 }: NewPlayerDialogProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

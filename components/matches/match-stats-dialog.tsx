@@ -24,7 +24,7 @@ type MatchStatsDialogProps = {
 };
 
 export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const router = useRouter();
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);
   const [awayTeam, setAwayTeam] = useState<Team | null>(null);

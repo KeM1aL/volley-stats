@@ -37,7 +37,7 @@ type NewMatchFormProps = {
 };
 
 export function NewMatchForm({ onMatchCreated }: NewMatchFormProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);

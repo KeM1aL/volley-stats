@@ -28,7 +28,7 @@ import { MatchScoreDetails } from "@/components/matches/match-score-details";
 export default function MatchStatsPage() {
   const { id: matchId } = useParams();
   const searchParams = useSearchParams();
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const [match, setMatch] = useState<Match | null>(null);
   const [managedTeam, setManagedTeam] = useState<Team>();
   const [opponentTeam, setOpponentTeam] = useState<Team>();

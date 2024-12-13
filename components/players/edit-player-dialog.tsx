@@ -25,7 +25,7 @@ export function EditPlayerDialog({
   onClose,
   onPlayerUpdated,
 }: EditPlayerDialogProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

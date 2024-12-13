@@ -34,7 +34,7 @@ type TeamTableProps = {
 
 export function TeamTable({ teams, onEdit }: TeamTableProps) {
   const router = useRouter();
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [deleteTeam, setDeleteTeam] = useState<Team | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);

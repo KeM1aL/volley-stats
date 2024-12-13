@@ -29,7 +29,7 @@ type NewTeamFormProps = {
 };
 
 export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
-  const { db } = useLocalDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
