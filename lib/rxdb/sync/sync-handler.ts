@@ -53,19 +53,39 @@ export class SyncHandler {
   }
 
   private handleOnline = async () => {
+    const { id: toastId, update } = toast({
+      title: 'Connection restored',
+      description: 'Syncing pending changes...',
+      duration: Infinity
+    });
     try {
       this.isOnline = true;
-      toast({
-        title: 'Connection restored',
-        description: 'Syncing pending changes...',
+      update({
+        id: toastId,
+        title: 'Syncing',
+        description: 'Processing pending changes...'
       });
       await this.processSyncQueue();
+      update({
+        id: toastId,
+        title: 'Syncing',
+        description: 'Reconnecting to real-time updates...'
+      });
       await this.resubscribeToChannels();
-      toast({
-        title: 'Sync completed'
+      update({
+        id: toastId,
+        title: 'Sync completed',
+        description: 'All changes have been synchronized',
+        duration: 5000
       });
     } catch (e) {
       console.error(e);
+      update({
+        id: toastId,
+        title: 'Sync failed',
+        description: 'Failed to synchronize changes. Will retry automatically.',
+        duration: 5000
+      });
     }
   };
 

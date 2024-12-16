@@ -242,6 +242,9 @@ export default function LiveMatchPage() {
       try {
         const newMatchState = await history.executeCommand(command);
         setMatchState(newMatchState);
+        if (newMatchState.match!.status === "completed") {
+          onMatchCompleted();
+        }
 
         toast({
           title: "Stat recorded",
@@ -270,15 +273,7 @@ export default function LiveMatchPage() {
         const newMatchState = await history.executeCommand(command);
         setMatchState(newMatchState);
         if (newMatchState.match!.status === "completed") {
-          toast({
-            title: "Match Finished",
-            description: "Let's go to the stats !",
-          });
-          const searchParams = new URLSearchParams();
-          searchParams.set("team", managedTeam!.id);
-          router.push(
-            `/matches/${matchState.match.id}/stats?${searchParams.toString()}`
-          );
+          onMatchCompleted();
         }
       } catch (error) {
         console.error("Failed to record point:", error);
@@ -291,6 +286,18 @@ export default function LiveMatchPage() {
     },
     [db, matchState, router]
   );
+
+  const onMatchCompleted = () => {
+    toast({
+      title: "Match Finished",
+      description: "Let's go to the stats !",
+    });
+    const searchParams = new URLSearchParams();
+    searchParams.set("team", managedTeam!.id);
+    router.push(
+      `/matches/${matchState.match!.id}/stats?${searchParams.toString()}`
+    );
+  }
 
   const handleUndo = async () => {
     try {
