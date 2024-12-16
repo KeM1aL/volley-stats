@@ -38,6 +38,7 @@ export function NewPlayerDialog({
         team_id: teamId,
         name: values.name,
         number: values.number,
+        avatar_url: values.avatar_url,
         role: values.position,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

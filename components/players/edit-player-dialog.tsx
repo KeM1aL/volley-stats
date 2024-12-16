@@ -52,6 +52,7 @@ export function EditPlayerDialog({
           name: values.name,
           number: values.number,
           role: values.position,
+          avatar_url: values.avatar_url,
           updated_at: new Date().toISOString(),
         },
       });

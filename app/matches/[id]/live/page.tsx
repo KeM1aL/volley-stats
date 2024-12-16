@@ -246,10 +246,6 @@ export default function LiveMatchPage() {
           onMatchCompleted();
         }
 
-        toast({
-          title: "Stat recorded",
-          description: `${stat.stat_type} ${stat.result} recorded`,
-        });
       } catch (error) {
         console.error("Failed to record stat:", error);
         toast({
