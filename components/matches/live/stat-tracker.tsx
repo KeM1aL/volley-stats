@@ -150,6 +150,7 @@ export function StatTracker({
         result: isSuccess ? StatResult.SUCCESS : StatResult.ERROR
       };
       await onPoint(point);
+      setSelectedPlayer(null);
     } finally {
       setIsRecording(false);
     }
