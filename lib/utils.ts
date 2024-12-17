@@ -18,3 +18,7 @@ export function chunk<T>(array: T[], chunkSize:number) {
       return array.slice(start, end);
   })
 }
+
+export async function delay(ms: number) {
+  return new Promise( resolve => setTimeout(resolve, ms) );
+}

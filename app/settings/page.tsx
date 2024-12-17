@@ -38,7 +38,7 @@ import { Label } from "@/components/ui/label";
 import { CollectionName } from "@/lib/rxdb/schema";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
-import { chunk } from "@/lib/utils";
+import { chunk, delay } from "@/lib/utils";
 
 const languages = [
   { value: "en", label: "English" },
@@ -136,7 +136,9 @@ export default function SettingsPage() {
 
           const chunks = chunk(data, 20);
           const chunkSize = chunks.length;
-          for (const [chunk, index] of chunks) {
+          for(let index = 0; index < chunkSize; index++) {
+            const chunk = chunks[index];
+
             const { error: updateError } = await supabase
               .from(name)
               .upsert(chunk)
@@ -146,6 +148,7 @@ export default function SettingsPage() {
               title: "Match synchronization",
               description: `${name} ${index}/${chunkSize} data has been synchronized`,
             });
+            await delay(500);
           }
         }
         toast({
