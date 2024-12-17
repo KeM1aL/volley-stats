@@ -39,20 +39,20 @@ export function SetBreakdown({ match, sets, points, managedTeam, opponentTeam }:
       set: `Set ${set.set_number}`,
       homeScore: set.home_score,
       awayScore: set.away_score,
-      serves: setPoints.filter((p) => p.point_type === "serve" && p.scoring_team_id === managedTeam.id).length,
-      spikes: setPoints.filter((p) => p.point_type === "spike" && p.scoring_team_id === managedTeam.id).length,
-      blocks: setPoints.filter((p) => p.point_type === "block" && p.scoring_team_id === managedTeam.id).length,
-      errors: setPoints.filter((p) => p.point_type === "unknown" && p.scoring_team_id === managedTeam.id).length,
+      points: {
+        serves: setPoints.filter((p) => p.point_type === "serve" && p.scoring_team_id === managedTeam.id).length,
+        spikes: setPoints.filter((p) => p.point_type === "spike" && p.scoring_team_id === managedTeam.id).length,
+        blocks: setPoints.filter((p) => p.point_type === "block" && p.scoring_team_id === managedTeam.id).length,
+        errors: setPoints.filter((p) => p.point_type === "unknown" && p.scoring_team_id === managedTeam.id).length,
+      },
+      errors: {
+        serves: setPoints.filter((p) => p.point_type === "serve" && p.scoring_team_id !== managedTeam.id).length,
+        spikes: setPoints.filter((p) => p.point_type === "spike" && p.scoring_team_id !== managedTeam.id).length,
+        blocks: setPoints.filter((p) => p.point_type === "block" && p.scoring_team_id !== managedTeam.id).length,
+        points: setPoints.filter((p) => p.point_type === "unknown" && p.scoring_team_id !== managedTeam.id).length,
+      }
     };
   });
-
-  const calculateMomentum = (points: ScorePoint[]) => {
-    // Calculate momentum based on the last 5 points
-    const recentPoints = points.slice(-5);
-    const homePoints = recentPoints.filter(p => p.scoring_team_id === match.home_team_id).length;
-    const awayPoints = recentPoints.filter(p => p.scoring_team_id === match.away_team_id).length;
-    return ((homePoints - awayPoints) / 5) * 100; // Normalize to -100 to 100
-  };
 
   return (
     <div className="space-y-6">
@@ -76,6 +76,13 @@ export function SetBreakdown({ match, sets, points, managedTeam, opponentTeam }:
                   <p>Blocks: {points.filter(p => p.set_id === set.id && p.point_type === 'block' && p.scoring_team_id === managedTeam.id).length}</p>
                   <p>Opponent Errors: {points.filter(p => p.set_id === set.id && p.point_type === 'unknown' && p.scoring_team_id === managedTeam.id).length}</p>
                 </div>
+                <p>Error Distribution:</p>
+                <div className="pl-4 space-y-1 text-sm">
+                  <p>Serves: {points.filter(p => p.set_id === set.id && p.point_type === 'serve' && p.scoring_team_id !== managedTeam.id).length}</p>
+                  <p>Spikes: {points.filter(p => p.set_id === set.id && p.point_type === 'spike' && p.scoring_team_id !== managedTeam.id).length}</p>
+                  <p>Blocks: {points.filter(p => p.set_id === set.id && p.point_type === 'block' && p.scoring_team_id !== managedTeam.id).length}</p>
+                  <p>Opponent Point: {points.filter(p => p.set_id === set.id && p.point_type === 'unknown' && p.scoring_team_id !== managedTeam.id).length}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -95,10 +102,31 @@ export function SetBreakdown({ match, sets, points, managedTeam, opponentTeam }:
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="serves" stackId="home" fill="hsl(var(--chart-1))" name="Serves" />
-              <Bar dataKey="spikes" stackId="home" fill="hsl(var(--chart-2))" name="Spikes" />
-              <Bar dataKey="blocks" stackId="home" fill="hsl(var(--chart-3))" name="Blocks" />
-              <Bar dataKey="errors" stackId="home" fill="hsl(var(--chart-4))" name="Opponent Errors" />
+              <Bar dataKey="points.serves" stackId="home" fill="hsl(var(--chart-1))" name="Serves" />
+              <Bar dataKey="points.spikes" stackId="home" fill="hsl(var(--chart-2))" name="Spikes" />
+              <Bar dataKey="points.blocks" stackId="home" fill="hsl(var(--chart-3))" name="Blocks" />
+              <Bar dataKey="points.errors" stackId="home" fill="hsl(var(--chart-4))" name="Opponent Errors" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Error Distribution by Set</CardTitle>
+          <CardDescription>Breakdown of scoring methods in each set</CardDescription>
+        </CardHeader>
+        <CardContent className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={setData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="set" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="errors.serves" stackId="home" fill="hsl(var(--chart-1))" name="Serves" />
+              <Bar dataKey="errors.spikes" stackId="home" fill="hsl(var(--chart-2))" name="Spikes" />
+              <Bar dataKey="errors.blocks" stackId="home" fill="hsl(var(--chart-3))" name="Blocks" />
+              <Bar dataKey="errors.points" stackId="home" fill="hsl(var(--chart-4))" name="Opponent Points" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

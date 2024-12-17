@@ -29,6 +29,9 @@ import {
   SubstitutionCommand,
 } from "@/lib/commands/match-commands";
 import { PlayerPerformance } from "@/components/matches/stats/player-performance";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { match } from "assert";
+import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
 
 const initialMatchState: MatchState = {
   match: null,
@@ -42,6 +45,7 @@ const initialMatchState: MatchState = {
 export default function LiveMatchPage() {
   const { id: matchId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
+  const { isOnline, wasOffline } = useOnlineStatus();
   const { localDb: db } = useLocalDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
@@ -245,7 +249,6 @@ export default function LiveMatchPage() {
         if (newMatchState.match!.status === "completed") {
           onMatchCompleted();
         }
-
       } catch (error) {
         console.error("Failed to record stat:", error);
         toast({
@@ -284,16 +287,23 @@ export default function LiveMatchPage() {
   );
 
   const onMatchCompleted = () => {
-    toast({
-      title: "Match Finished",
-      description: "Let's go to the stats !",
-    });
-    const searchParams = new URLSearchParams();
-    searchParams.set("team", managedTeam!.id);
-    router.push(
-      `/matches/${matchState.match!.id}/stats?${searchParams.toString()}`
-    );
-  }
+    if (isOnline) {
+      toast({
+        title: "Match Finished",
+        description: "Let's go to the stats !",
+      });
+      const searchParams = new URLSearchParams();
+      searchParams.set("team", managedTeam!.id);
+      router.push(
+        `/matches/${matchState.match!.id}/stats?${searchParams.toString()}`
+      );
+    } else {
+      toast({
+        title: "Match Finished",
+        description: "You must be online to view the stats",
+      });
+    }
+  };
 
   const handleUndo = async () => {
     try {
@@ -322,6 +332,19 @@ export default function LiveMatchPage() {
     return <div>Match not found</div>;
   }
 
+  if (matchState.match.status === "completed") {
+    return (
+      <div className="space-y-1">
+        <LiveMatchHeader
+          match={matchState.match}
+          sets={matchState.sets}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+        />
+        <MVPAnalysis sets={matchState.sets} stats={matchState.stats} players={players} />
+      </div>
+    );
+  }
   return (
     <div className="space-y-1">
       <LiveMatchHeader

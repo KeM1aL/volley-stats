@@ -71,7 +71,7 @@ export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
     const params = new URLSearchParams();
     params.set("team", selectedTeamId);
 
-    router.push(`/matches/${match.id}/stats?${params.toString()}`);
+    router.push(`/stats/${match.id}?${params.toString()}`);
   }
 
   return (

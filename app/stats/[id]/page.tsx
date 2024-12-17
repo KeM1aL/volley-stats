@@ -24,9 +24,12 @@ import { ScoreProgression } from "@/components/matches/stats/score-progression";
 import { TeamPerformance } from "@/components/matches/stats/team-performance";
 import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { supabase } from "@/lib/supabase/client";
 
 export default function MatchStatsPage() {
   const { id: matchId } = useParams();
+  const { isOnline, wasOffline } = useOnlineStatus();
   const searchParams = useSearchParams();
   const { localDb: db } = useLocalDb();
   const [match, setMatch] = useState<Match | null>(null);
@@ -36,13 +39,95 @@ export default function MatchStatsPage() {
   const [stats, setStats] = useState<PlayerStat[]>([]);
   const [sets, setSets] = useState<Set[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
+      try {
+        setIsLoading(true);
+
+        const { data: matchData, error: matchError } = await supabase
+          .from("matches")
+          .select("*")
+          .eq("id", matchId as string)
+          .single();
+
+        if (matchError) throw matchError;
+        setMatch(matchData);
+
+        const { data: setsData, error: setsError } = await supabase
+          .from("sets")
+          .select("*")
+          .eq("match_id", matchId as string)
+          .order("set_number", { ascending: true });
+        if (setsError) throw setsError;
+        setSets(setsData);
+
+        const { data: playerStatsData, error: playerStatsError } =
+          await supabase
+            .from("player_stats")
+            .select("*")
+            .eq("match_id", matchId as string)
+            .order("created_at", { ascending: true });
+        if (playerStatsError) throw playerStatsError;
+        setStats(playerStatsData);
+
+        const { data: scorePointsData, error: scorePointsError } =
+          await supabase
+            .from("score_points")
+            .select("*")
+            .eq("match_id", matchId as string)
+            .order("created_at", { ascending: true });
+        if (scorePointsError) throw scorePointsError;
+        setPoints(scorePointsData);
+
+        const managedTeamParam = searchParams.get("team");
+        if (!managedTeamParam) {
+          throw new Error("Please select your managed team");
+        }
+
+        const teamId = searchParams.get("team");
+
+        if (
+          teamId !== matchData.home_team_id &&
+          teamId !== matchData.away_team_id
+        ) {
+          throw new Error("Managed Team not found");
+        }
+
+        const playerIds =
+          teamId === matchData.home_team_id
+            ? matchData.home_available_players
+            : matchData.away_available_players;
+        const { data: availablePlayersData, error: availablePlayersError } =
+          await supabase.from("players").select("*").in("id", playerIds);
+        if (availablePlayersError) throw availablePlayersError;
+        setPlayers(availablePlayersData);
+
+        const { data: teamsData, error: teamsError } = await supabase
+          .from("teams")
+          .select("*")
+          .in("id", [matchData.home_team_id, matchData.away_team_id]);
+        if (teamsError) throw teamsError;
+        setManagedTeam(teamsData.find((team) => team.id === teamId));
+        setOpponentTeam(teamsData.find((team) => team.id !== teamId));
+      } catch (error) {
+        console.error("Failed to load match data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load match data",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const loadLocalData = async () => {
       if (!db) return;
 
       try {
+        setIsLoading(true);
         const [matchDoc, pointDocs, statDocs, setDocs] = await Promise.all([
           db.matches.findOne(matchId as string).exec(),
           db.score_points
@@ -70,101 +155,75 @@ export default function MatchStatsPage() {
             })
             .exec(),
         ]);
+        if (!matchDoc) {
+          throw new Error("Match not found");
+        }
+        const match = matchDoc.toMutableJSON() as Match;
+        const points = pointDocs.map((doc) => doc.toJSON()) as ScorePoint[];
+        const stats = statDocs.map((doc) => doc.toJSON()) as PlayerStat[];
+        const sets = setDocs.map((doc) => doc.toJSON()) as Set[];
+
+        setMatch(match);
+        setPoints(points);
+        setStats(stats);
+        setSets(sets);
+
         const managedTeamParam = searchParams.get("team");
         if (!managedTeamParam) {
           throw new Error("Please select your managed team");
         }
 
         const teamId = searchParams.get("team");
-        if (matchDoc) {
-          const match = matchDoc.toMutableJSON() as Match;
-          setMatch(match);
 
-          if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
-            throw new Error("Managed Team not found");
-          }
-
-          const playerIds =
-            teamId === match.home_team_id
-              ? match.home_available_players
-              : match.away_available_players;
-          const availablePlayerDocs = await db.players
-            .findByIds(playerIds)
-            .exec();
-          if (availablePlayerDocs) {
-            setPlayers(
-              Array.from(availablePlayerDocs.values())
-                .map((doc) => doc.toJSON())
-                .sort((a, b) => a.number - b.number)
-            );
-          }
-
-          const teamDocs = await db.teams
-            .findByIds([match.home_team_id, match.away_team_id])
-            .exec();
-
-          if (!teamDocs || teamDocs.size !== 2) {
-            throw new Error("Teams not found");
-          }
-
-          const teams = Array.from(teamDocs.values()).map((doc) =>
-            doc.toJSON()
-          );
-
-          setManagedTeam(teams.find((team) => team.id === teamId));
-          setOpponentTeam(teams.find((team) => team.id !== teamId));
+        if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
+          throw new Error("Managed Team not found");
         }
-        setPoints(pointDocs.map((doc) => doc.toJSON()));
-        setStats(statDocs.map((doc) => doc.toJSON()));
-        setSets(setDocs.map((doc) => doc.toJSON()));
+
+        const playerIds =
+          teamId === match.home_team_id
+            ? match.home_available_players
+            : match.away_available_players;
+        const availablePlayerDocs = await db.players
+          .findByIds(playerIds)
+          .exec();
+        if (availablePlayerDocs) {
+          setPlayers(
+            Array.from(availablePlayerDocs.values())
+              .map((doc) => doc.toJSON())
+              .sort((a, b) => a.number - b.number)
+          );
+        }
+
+        const teamDocs = await db.teams
+          .findByIds([match.home_team_id, match.away_team_id])
+          .exec();
+
+        if (!teamDocs || teamDocs.size !== 2) {
+          throw new Error("Teams not found");
+        }
+
+        const teams = Array.from(teamDocs.values()).map((doc) => doc.toJSON());
+
+        setManagedTeam(teams.find((team) => team.id === teamId));
+        setOpponentTeam(teams.find((team) => team.id !== teamId));
       } catch (error) {
-        console.error("Failed to load match data:", error);
+        console.error("Failed to load local match data:", error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load match data",
+          description: "Failed to load local match data",
         });
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
-  }, [db, matchId]);
-
-  const exportToPDF = async () => {
-    const doc = new jsPDF();
-
-    // Add match details
-    doc.setFontSize(20);
-    doc.text("Match Report", 20, 20);
-
-    if (match) {
-      doc.setFontSize(12);
-      doc.text(`Date: ${new Date(match.date).toLocaleDateString()}`, 20, 40);
-      doc.text(`Score: ${match.home_score} - ${match.away_score}`, 20, 50);
+    if (isOnline) {
+      loadData();
+    } else {
+      loadLocalData();
     }
-
-    // Add more sections...
-
-    doc.save("match-report.pdf");
-  };
-
-  const exportToCSV = () => {
-    // Convert match data to CSV format
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      // Add CSV data here
-      "Match Statistics";
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "match-stats.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  }, [db, matchId, isOnline]);
 
   const shareStats = async () => {
     try {
@@ -201,14 +260,14 @@ export default function MatchStatsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToCSV}>
+          {/* <Button variant="outline" onClick={exportToCSV}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
           <Button variant="outline" onClick={exportToPDF}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
-          </Button>
+          </Button> */}
           <Button variant="outline" onClick={shareStats}>
             <Share2 className="h-4 w-4 mr-2" />
             Share
@@ -300,11 +359,10 @@ export default function MatchStatsPage() {
                 managedTeam={managedTeam!}
                 sets={sets}
                 points={points}
-                stats={stats} 
+                stats={stats}
                 players={players}
-                />
+              />
             </TabsContent>
-
           </Tabs>
         </CardContent>
       </Card>
