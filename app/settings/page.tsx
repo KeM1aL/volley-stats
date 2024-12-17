@@ -110,10 +110,10 @@ export default function SettingsPage() {
         if (updateError) throw updateError;
       }
       const collections = new Map<CollectionName, RxCollection>([
+        ["sets", db.sets],
         ["player_stats", db.player_stats],
         ["score_points", db.score_points],
         ["substitutions", db.substitutions],
-        ["sets", db.sets],
       ]);
       const entries = Array.from(collections.entries());
       for (const [name, collection] of entries) {
