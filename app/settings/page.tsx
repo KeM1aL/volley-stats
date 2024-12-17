@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { CollectionName } from "@/lib/rxdb/schema";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
+import { chunk } from "@/lib/utils";
 
 const languages = [
   { value: "en", label: "English" },
@@ -53,6 +54,7 @@ export default function SettingsPage() {
   const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const {
     settings,
@@ -98,7 +100,7 @@ export default function SettingsPage() {
     if (!db) return;
     if(!matchId) return;
 
-    setIsLoading(true);
+    setIsSyncing(true);
     try {
       const supabase = createClient();
       const doc = await db.matches.findOne(matchId).exec();
@@ -132,15 +134,19 @@ export default function SettingsPage() {
         if (docs) {
           const data = Array.from(docs.values()).map((doc) => doc.toJSON());
 
-          const { error: updateError } = await supabase
-            .from(name)
-            .upsert(data)
-            .select();
-          if (updateError) throw updateError;
-          toast({
-            title: "Match synchronization",
-            description: name + " data has been synchronized",
-          });
+          const chunks = chunk(data, 20);
+          const chunkSize = chunks.length;
+          for (const [chunk, index] of chunks) {
+            const { error: updateError } = await supabase
+              .from(name)
+              .upsert(chunk)
+              .select();
+            if (updateError) throw updateError;
+            toast({
+              title: "Match synchronization",
+              description: `${name} ${index}/${chunkSize} data has been synchronized`,
+            });
+          }
         }
         toast({
           title: "Match synchronization",
@@ -156,7 +162,7 @@ export default function SettingsPage() {
       });
     } finally {
       setMatchId(null);
-      setIsLoading(false);
+      setIsSyncing(false);
     }
   };
 
@@ -398,7 +404,7 @@ export default function SettingsPage() {
                       <Button
                         type="button"
                         size="sm"
-                        disabled={isLoading && !matchId}
+                        disabled={isSyncing && !matchId}
                         onClick={() => matchId && performMatchSync()}
                       >
                         Synchronize
