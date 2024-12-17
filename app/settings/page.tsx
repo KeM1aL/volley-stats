@@ -108,6 +108,10 @@ export default function SettingsPage() {
           .update(doc.toMutableJSON())
           .eq("id", doc.id);
         if (updateError) throw updateError;
+        toast({
+          title: "Match synchronization",
+          description: "Matches data has been synchronized",
+        });
       }
       const collections = new Map<CollectionName, RxCollection>([
         ["sets", db.sets],
@@ -133,7 +137,15 @@ export default function SettingsPage() {
             .upsert(data)
             .select();
           if (updateError) throw updateError;
+          toast({
+            title: "Match synchronization",
+            description: name + " data has been synchronized",
+          });
         }
+        toast({
+          title: "Match synchronization",
+          description: "All data has been synchronized",
+        });
       }
     } catch (error) {
       console.error("Error loading data:", error);
