@@ -25,10 +25,10 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
         ['teams', database.localDb.teams],
         ['players', database.localDb.players],
         ['matches', database.localDb.matches],
-        ['sets', database.localDb.sets],
-        ['substitutions', database.localDb.substitutions],
-        ['score_points', database.localDb.score_points],
-        ['player_stats', database.localDb.player_stats],
+        // ['sets', database.localDb.sets],
+        // ['substitutions', database.localDb.substitutions],
+        // ['score_points', database.localDb.score_points],
+        // ['player_stats', database.localDb.player_stats],
       ]);
 
       syncHandler.initializeSync(collections);
