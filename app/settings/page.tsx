@@ -32,9 +32,12 @@ import {
   settingsSchema,
   type Settings,
 } from "@/hooks/use-settings";
-import { removeRxDatabase } from "rxdb";
+import { removeRxDatabase, RxCollection } from "rxdb";
 import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
 import { Label } from "@/components/ui/label";
+import { CollectionName } from "@/lib/rxdb/schema";
+import { createClient } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
 
 const languages = [
   { value: "en", label: "English" },
@@ -47,6 +50,7 @@ export default function SettingsPage() {
   const { localDb: db } = useLocalDb();
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
 
@@ -89,6 +93,60 @@ export default function SettingsPage() {
       form.reset(settings);
     }
   }, [settings, isLoadingSettings, form]);
+
+  const performMatchSync = async () => {
+    if (!db) return;
+    if(!matchId) return;
+
+    setIsLoading(true);
+    try {
+      const supabase = createClient();
+      const doc = await db.matches.findOne(matchId).exec();
+      if (doc) {
+        const { error: updateError } = await supabase
+          .from("matches")
+          .update(doc.toMutableJSON())
+          .eq("id", doc.id);
+        if (updateError) throw updateError;
+      }
+      const collections = new Map<CollectionName, RxCollection>([
+        ["player_stats", db.player_stats],
+        ["score_points", db.score_points],
+        ["substitutions", db.substitutions],
+        ["sets", db.sets],
+      ]);
+      const entries = Array.from(collections.entries());
+      for (const [name, collection] of entries) {
+        const docs = await collection
+          .find({
+            selector: {
+              match_id: matchId,
+            },
+            sort: [{ created_at: "asc" }],
+          })
+          .exec();
+        if (docs) {
+          const data = Array.from(docs.values()).map((doc) => doc.toJSON());
+
+          const { error: updateError } = await supabase
+            .from(name)
+            .upsert(data)
+            .select();
+          if (updateError) throw updateError;
+        }
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load matches. Please try refreshing the page.",
+      });
+    } finally {
+      setMatchId(null);
+      setIsLoading(false);
+    }
+  };
 
   const onSubmit = async (values: Settings) => {
     setIsSaving(true);
@@ -318,6 +376,22 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <Label>Local data</Label>
                   <div className="grid grid-cols-1 gap-4">
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">
+                          Synchronize Match
+                        </Label>
+                        <Input type="text" onChange={e => setMatchId(e.target.value)} placeholder="Match ID" />
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={isLoading && !matchId}
+                        onClick={() => matchId && performMatchSync()}
+                      >
+                        Synchronize
+                      </Button>
+                    </div>
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium">
