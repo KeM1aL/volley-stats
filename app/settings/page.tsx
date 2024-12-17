@@ -140,7 +140,7 @@ export default function SettingsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load matches. Please try refreshing the page.",
+        description: "Failed to sync match. Please try again." + error,
       });
     } finally {
       setMatchId(null);
