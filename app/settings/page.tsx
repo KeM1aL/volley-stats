@@ -140,7 +140,7 @@ export default function SettingsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to sync match. Please try again." + error,
+        description: "Failed to sync match. Please try again." + JSON.stringify(error),
       });
     } finally {
       setMatchId(null);
