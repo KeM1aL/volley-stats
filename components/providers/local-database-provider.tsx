@@ -51,6 +51,7 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
     return (
       <div className="flex h-screen items-center justify-center">
         <p className="text-destructive">Failed to initialize local database</p>
+        <pre>{JSON.stringify(database.error, null, 2)}</pre>
       </div>
     );
   }
