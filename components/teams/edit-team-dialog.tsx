@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Team } from "@/lib/supabase/types";
+import { Team } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 

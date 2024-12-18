@@ -1,8 +1,8 @@
 "use client";
 
 import { RxCollection, RxDocument, RxChangeEvent } from 'rxdb';
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
+import { RealtimeChannel, RealtimePostgresChangesPayload, SupabaseClient } from '@supabase/supabase-js';
+import { createJsClient } from '@/lib/supabase/client';
 import { retryWithBackoff } from '@/lib/utils/retry';
 import { CollectionName } from '../schema';
 import { Subscription } from 'rxjs';
@@ -18,6 +18,7 @@ interface SyncQueueItem<T = any> {
 }
 
 export class SyncHandler {
+  private supabase: SupabaseClient;
   private channels: Map<CollectionName, RealtimeChannel> = new Map();
   private rxSubscriptions: Map<CollectionName, Subscription> = new Map();
   private syncQueue: SyncQueueItem[] = [];
@@ -29,6 +30,7 @@ export class SyncHandler {
   private queueProcessInterval: NodeJS.Timeout | null = null;
 
   constructor(syncFromSupabase = false) {
+    this.supabase = createJsClient();
     this.syncFromSupabase = syncFromSupabase;
     this.setupOnlineListener();
     this.startQueueProcessor();
@@ -128,7 +130,7 @@ export class SyncHandler {
         //   ]
         // }).exec();
 
-        const { data, error } = await supabase
+        const { data, error } = await this.supabase
           .from(name)
           .select('*')
           // .gte('updated_at', latestRecord?.updated_at ?? new Date(2024, 1, 1).toISOString())
@@ -174,7 +176,7 @@ export class SyncHandler {
     this.rxSubscriptions.set(name, subscription);
 
     if (!this.syncFromSupabase) return;
-    const channel = supabase
+    const channel = this.supabase
       .channel(`${name}_changes`)
       .on(
         'postgres_changes',
@@ -240,14 +242,14 @@ export class SyncHandler {
       await retryWithBackoff(async () => {
         switch (operation) {
           case 'INSERT':
-            const { error: insertError } = await supabase
+            const { error: insertError } = await this.supabase
               .from(collectionName)
               .insert(doc);
             if (insertError) throw insertError;
             break;
 
           case 'UPDATE':
-            const { error: updateError } = await supabase
+            const { error: updateError } = await this.supabase
               .from(collectionName)
               .update(doc)
               .eq('id', doc.id);
@@ -255,7 +257,7 @@ export class SyncHandler {
             break;
 
           case 'DELETE':
-            const { error: deleteError } = await supabase
+            const { error: deleteError } = await this.supabase
               .from(collectionName)
               .delete()
               .eq('id', doc.id);
@@ -334,7 +336,7 @@ export class SyncHandler {
     for (const [name, oldChannel] of channels) {
       oldChannel.unsubscribe();
 
-      const newChannel = supabase
+      const newChannel = this.supabase
         .channel(`${name}_changes`)
         .on(
           'postgres_changes',

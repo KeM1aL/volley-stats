@@ -14,7 +14,7 @@ import { StatisticsDialog } from "@/components/matches/history/statistics-dialog
 import { CompareDialog } from "@/components/matches/history/compare-dialog";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { createClient } from "@/lib/supabase/client";
-import { Match, Team } from "@/lib/supabase/types";
+import { Match, Team } from "@/lib/types";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 

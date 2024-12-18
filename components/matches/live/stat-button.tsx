@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { StatResult } from "@/lib/types";
+import { StatResult } from "@/lib/enums";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "../../ui/loading-spinner";
 

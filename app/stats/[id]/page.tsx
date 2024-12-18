@@ -16,7 +16,7 @@ import type {
   ScorePoint,
   Set,
   Team,
-} from "@/lib/supabase/types";
+} from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { SetBreakdown } from "@/components/matches/stats/set-breakdown";
 import { PlayerPerformance } from "@/components/matches/stats/player-performance";
@@ -100,7 +100,7 @@ export default function MatchStatsPage() {
             ? matchData.home_available_players
             : matchData.away_available_players;
         const { data: availablePlayersData, error: availablePlayersError } =
-          await supabase.from("players").select("*").in("id", playerIds);
+          await supabase.from("players").select("*").in("id", playerIds as string[]);
         if (availablePlayersError) throw availablePlayersError;
         setPlayers(availablePlayersData);
 
@@ -184,7 +184,7 @@ export default function MatchStatsPage() {
             ? match.home_available_players
             : match.away_available_players;
         const availablePlayerDocs = await db.players
-          .findByIds(playerIds)
+          .findByIds(playerIds as string[])
           .exec();
         if (availablePlayerDocs) {
           setPlayers(

@@ -8,3 +8,5 @@ Bolt.new exclusion helpers
 find -depth -type d -not -path "./node_modules/*" -not -path "./.*" |awk -F/ 'NF>=prev {print} {prev=NF}'
 
 npx shadcn@latest add -a -y -o
+
+npx supabase gen types typescript --project-id gvtjccisbwrwpjtabnyd > lib/supabase/database.types.ts

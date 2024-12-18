@@ -1,5 +1,5 @@
-import { Match, Set, PlayerStat, Substitution, ScorePoint } from "@/lib/supabase/types";
-import { Score } from "../types";
+import { Match, Set, PlayerStat, Substitution, ScorePoint } from "@/lib/types";
+import { Score } from "../enums";
 
 export interface Command {
   execute(): Promise<MatchState>;

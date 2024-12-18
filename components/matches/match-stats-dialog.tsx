@@ -1,6 +1,6 @@
 "use client";
 
-import type { Match, Team } from "@/lib/supabase/types";
+import type { Match, Team } from "@/lib/types";
 import { MatchLineupSetup } from "@/components/matches/match-lineup-setup";
 import {
   Dialog,

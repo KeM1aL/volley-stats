@@ -25,7 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { Team } from "@/lib/supabase/types";
+import { Team } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   useSettings,

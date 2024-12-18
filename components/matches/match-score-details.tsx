@@ -1,6 +1,6 @@
 "use client";
 
-import { Match, Set, Team } from "@/lib/supabase/types";
+import { Match, Set, Team } from "@/lib/types";
 
 type LiveMatchHeaderProps = {
   match: Match;

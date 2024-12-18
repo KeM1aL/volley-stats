@@ -16,10 +16,10 @@ import type {
   Set,
   Substitution,
   Team,
-} from "@/lib/supabase/types";
+} from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
-import { PointType, Score, StatResult } from "@/lib/types";
+import { PointType, Score, StatResult } from "@/lib/enums";
 import { useCommandHistory } from "@/hooks/use-command-history";
 import { MatchState } from "@/lib/commands/command";
 import {
@@ -122,7 +122,7 @@ export default function LiveMatchPage() {
         teamId === match.home_team_id
           ? match.home_available_players
           : match.away_available_players;
-      const availablePlayerDocs = await db.players.findByIds(playerIds).exec();
+      const availablePlayerDocs = await db.players.findByIds(playerIds as string[]).exec();
       if (availablePlayerDocs) {
         setPlayers(
           Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())

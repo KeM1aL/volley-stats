@@ -1,6 +1,6 @@
 "use client";
 
-import { PlayerStat, Player, Set } from "@/lib/supabase/types";
+import { PlayerStat, Player, Set } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateMVPScore } from "@/lib/stats/calculations";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Player } from "@/lib/supabase/types";
+import { Player } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";

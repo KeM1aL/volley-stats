@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { createClient, supabase } from "@/lib/supabase/client";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Skeleton } from "../ui/skeleton";
-import { Match } from "@/lib/supabase/types";
+import { Match } from "@/lib/types";
 
 const formSchema = z.object({
   homeTeamId: z.string().min(1, "Home team is required"),

@@ -8,12 +8,12 @@ import {
   Player,
   Substitution,
   Team,
-} from "@/lib/supabase/types";
+} from "@/lib/types";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourtDiagram } from "./court-diagram";
 import { useToast } from "@/hooks/use-toast";
-import { Score } from "@/lib/types";
+import { Score } from "@/lib/enums";
 import { PointsHistory } from "./points-history";
 import { Badge } from "@/components/ui/badge";
 import PlayerReplacementDialog from "./player-replacement-dialog";

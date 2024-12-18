@@ -21,7 +21,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { Match, ScorePoint, Set, Team } from "@/lib/supabase/types";
+import { Match, ScorePoint, Set, Team } from "@/lib/types";
 
 interface SetBreakdownProps {
   match: Match,

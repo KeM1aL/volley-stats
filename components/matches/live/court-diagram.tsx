@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Player } from "@/lib/supabase/types";
-import { PlayerPosition } from "@/lib/types";
+import { Player } from "@/lib/types";
+import { PlayerPosition } from "@/lib/enums";
 
 interface CourtDiagramProps {
   players: Player[];

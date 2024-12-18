@@ -1,51 +1,98 @@
-export enum PlayerRole {
-  SETTER = "setter",
-  OPPOSITE = "opposite",
-  OUTSIDE_HITTER = "outside_hitter",
-  MIDDLE_HITTER = "middle_hitter",
-  LIBERO = "libero",
-}
+import { PlayerPosition, PlayerRole } from "./enums";
 
-export enum PlayerPosition {
-  P1 = "p1",
-  P2 = "p2",
-  P3 = "p3",
-  P4 = "p4",
-  P5 = "p5",
-  P6 = "p6",
-}
+export type Team = {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+};
 
-export enum PointType {
-  SERVE = "serve",
-  SPIKE = "spike",
-  BLOCK = "block",
-  RECEPTION = "reception",
-  DEFENSE = "defense",
-  UNKNOWN = "unknown",
-}
+export type Player = {
+  id: string;
+  team_id: string;
+  name: string;
+  number: number;
+  role: string;
+  avatar_url?: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
-export enum StatType {
-  SERVE = "serve",
-  SPIKE = "spike",
-  BLOCK = "block",
-  RECEPTION = "reception",
-  DEFENSE = "defense",
-}
+export type Match = {
+  away_team?: Team | null;
+  home_team?: Team | null;
+  id: string;
+  date: string;
+  location: string | null;
+  home_team_id: string;
+  away_team_id: string;
+  home_score: number;
+  away_score: number;
+  status: 'upcoming' | 'live' | 'completed';
+  home_available_players: string[] | null;
+  away_available_players: string[] | null;
+  created_at: string;
+  updated_at: string;
+};
 
-export enum StatResult {
-  ERROR = "error",
-  BAD = "bad",
-  GOOD = "good",
-  SUCCESS = "success",
-}
+export type Set = {
+  id: string;
+  match_id: string;
+  set_number: number;
+  home_score: number;
+  away_score: number;
+  status: 'upcoming' | 'live' | 'completed';
+  first_server_team_id: string;
+  server_team_id: string;
+  first_lineup: { [key in PlayerPosition]: string };
+  current_lineup: { [key in PlayerPosition]: string };
+  player_roles: { [key: string]: PlayerRole };
+  created_at: string;
+  updated_at: string;
+};
 
-export enum MatchStatus {
-  UPCOMING = "upcoming",
-  LIVE = "live",
-  COMPLETED = "completed",
-}
+export type Substitution = {
+  id: string;
+  match_id: string;
+  team_id: string;
+  set_id: string;
+  player_out_id: string;
+  player_in_id: string;
+  position: string;
+  comments: string;
+  timestamp: string;
+  created_at: string;
+  updated_at: string;
+};
 
-export type Score = {
-  home: number,
-  away: number,
-}
+export type ScorePoint = {
+  id: string;
+  match_id: string;
+  set_id: string;
+  player_stat_id: string | null;
+  scoring_team_id: string;
+  point_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense' | 'unknown';
+  action_team_id: string;
+  result: 'success' | 'error';
+  player_id: string | null;
+  timestamp: string;
+  home_score: number;
+  away_score: number;
+  current_rotation: { [key in PlayerPosition]: string };
+  created_at: string;
+  updated_at: string;
+};
+
+export type PlayerStat = {
+  id: string;
+  match_id: string;
+  set_id: string;
+  player_id: string;
+  team_id: string;
+  position: 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6';
+  stat_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense';
+  result: 'success' | 'error' | 'good' | 'bad';
+  created_at: string;
+  updated_at: string;
+};

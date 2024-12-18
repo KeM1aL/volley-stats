@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Match } from "@/lib/supabase/types";
+import { Match } from "@/lib/types";
 
 type TeamStatsProps = {
   teamId: string;

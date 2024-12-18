@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Team } from "@/lib/supabase/types";
+import { Team } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 

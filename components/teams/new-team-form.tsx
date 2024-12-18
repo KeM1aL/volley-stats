@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/lib/supabase/client";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { Team } from "@/lib/supabase/types";
+import { Team } from "@/lib/types";
 
 const formSchema = z.object({
   teamName: z.string().min(1, "Team name is required"),

@@ -8,10 +8,10 @@ import {
   ScorePoint,
   Set,
   Team,
-} from "@/lib/supabase/types";
+} from "@/lib/types";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatType, StatResult, Score, PointType } from "@/lib/types";
+import { StatType, StatResult, Score, PointType } from "@/lib/enums";
 import { StatButton, variants } from "./stat-button";
 import { useToast } from "@/hooks/use-toast";
 import { PlayerSelector } from "./player-selector";

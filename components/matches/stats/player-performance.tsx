@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlayerStat, Team, Player, Set, Match } from "@/lib/supabase/types";
+import { PlayerStat, Team, Player, Set, Match } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { StatResult, StatType, PlayerPosition } from "@/lib/types";
+import { StatResult, StatType, PlayerPosition } from "@/lib/enums";
 import { cn } from "@/lib/utils";
 import {
   BarChart,

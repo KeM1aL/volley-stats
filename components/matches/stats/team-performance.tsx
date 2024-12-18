@@ -32,9 +32,9 @@ import {
   Set,
   Player,
   Team,
-} from "@/lib/supabase/types";
+} from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { PlayerPosition } from "@/lib/types";
+import { PlayerPosition } from "@/lib/enums";
 import {
   calculatePositionStats,
   analyzeScoringPatterns,

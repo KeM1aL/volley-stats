@@ -17,7 +17,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Match } from "@/lib/supabase/types";
+import { Match } from "@/lib/types";
 
 type CompareDialogProps = {
   matches: Match[];

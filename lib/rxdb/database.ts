@@ -24,7 +24,7 @@ import type {
   PlayerStat,
   Substitution,
   ScorePoint
-} from '@/lib/supabase/types';
+} from '@/lib/types';
 const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 // Add plugins
 if (inDevEnvironment) {

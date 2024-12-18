@@ -1,6 +1,6 @@
 "use client";
 
-import { Match, ScorePoint } from "@/lib/supabase/types";
+import { Match, ScorePoint } from "@/lib/types";
 import { Button } from "../../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";

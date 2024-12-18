@@ -10,7 +10,7 @@ import { NewPlayerDialog } from "@/components/players/new-player-dialog";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Player, Team } from "@/lib/supabase/types";
+import { Player, Team } from "@/lib/types";
 
 export default function PlayersPage() {
   const params = useParams();

@@ -9,7 +9,7 @@ import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Team } from "@/lib/supabase/types";
+import { Team } from "@/lib/types";
 
 export default function TeamsPage() {
   const router = useRouter();

@@ -20,8 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlayerRole } from "@/lib/types";
-import { Player } from "@/lib/supabase/types";
+import { PlayerRole } from "@/lib/enums";
+import { Player } from "@/lib/types";
 import { AvatarUpload } from "./avatar-upload";
 
 const formSchema = z.object({

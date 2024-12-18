@@ -19,7 +19,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { Match, ScorePoint, Set } from "@/lib/supabase/types";
+import { Match, ScorePoint, Set } from "@/lib/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 

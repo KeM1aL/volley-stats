@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { createClient } from "@/lib/supabase/client";
-import { Match, Set, ScorePoint, Player } from "@/lib/supabase/types";
+import { Match, Set, ScorePoint, Player } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type StatisticsDialogProps = {
