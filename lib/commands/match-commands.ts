@@ -1,7 +1,7 @@
 import { Command, MatchState } from "./command";
-import { Match, Set, PlayerStat, Substitution, ScorePoint } from "@/lib/supabase/types";
+import { Match, Set, PlayerStat, Substitution, ScorePoint } from "@/lib/types";
 import { VolleyballDatabase } from "../rxdb/database";
-import { PointType, StatResult } from "../types";
+import { PointType, StatResult } from "../enums";
 
 const NORMAL_SET_SCORE = 25;
 const TIE_BREAK_SET_SCORE = 15;

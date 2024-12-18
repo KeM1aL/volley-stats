@@ -24,10 +24,12 @@ import type {
   PlayerStat,
   Substitution,
   ScorePoint
-} from '@/lib/supabase/types';
-
+} from '@/lib/types';
+const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 // Add plugins
-addRxPlugin(RxDBDevModePlugin);
+if (inDevEnvironment) {
+  addRxPlugin(RxDBDevModePlugin);
+}
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 
@@ -125,7 +127,12 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
       });
     } catch (error) {
       if (error instanceof RxError) {
-        removeRxDatabase(getDatabaseName(), getRxStorageDexie());
+        const url_string = window.location.href;
+        const url = new URL(url_string);
+        const removeDbFlag = url.searchParams.get('remove-database');
+        if (inDevEnvironment || removeDbFlag === 'true') {
+          // removeRxDatabase(getDatabaseName(), getRxStorageDexie());
+        }
       }
       throw error;
     }

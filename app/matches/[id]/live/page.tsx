@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { ScoreBoard } from "@/components/matches/live/score-board";
 import { StatTracker } from "@/components/matches/live/stat-tracker";
@@ -16,10 +16,10 @@ import type {
   Set,
   Substitution,
   Team,
-} from "@/lib/supabase/types";
+} from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
-import { PointType, Score, StatResult } from "@/lib/types";
+import { PointType, Score, StatResult } from "@/lib/enums";
 import { useCommandHistory } from "@/hooks/use-command-history";
 import { MatchState } from "@/lib/commands/command";
 import {
@@ -29,6 +29,9 @@ import {
   SubstitutionCommand,
 } from "@/lib/commands/match-commands";
 import { PlayerPerformance } from "@/components/matches/stats/player-performance";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { match } from "assert";
+import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
 
 const initialMatchState: MatchState = {
   match: null,
@@ -42,7 +45,8 @@ const initialMatchState: MatchState = {
 export default function LiveMatchPage() {
   const { id: matchId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
-  const { db } = useDb();
+  const { isOnline, wasOffline } = useOnlineStatus();
+  const { localDb: db } = useLocalDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -118,7 +122,7 @@ export default function LiveMatchPage() {
         teamId === match.home_team_id
           ? match.home_available_players
           : match.away_available_players;
-      const availablePlayerDocs = await db.players.findByIds(playerIds).exec();
+      const availablePlayerDocs = await db.players.findByIds(playerIds as string[]).exec();
       if (availablePlayerDocs) {
         setPlayers(
           Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())
@@ -242,11 +246,9 @@ export default function LiveMatchPage() {
       try {
         const newMatchState = await history.executeCommand(command);
         setMatchState(newMatchState);
-
-        toast({
-          title: "Stat recorded",
-          description: `${stat.stat_type} ${stat.result} recorded`,
-        });
+        if (newMatchState.match!.status === "completed") {
+          onMatchCompleted();
+        }
       } catch (error) {
         console.error("Failed to record stat:", error);
         toast({
@@ -270,15 +272,7 @@ export default function LiveMatchPage() {
         const newMatchState = await history.executeCommand(command);
         setMatchState(newMatchState);
         if (newMatchState.match!.status === "completed") {
-          toast({
-            title: "Match Finished",
-            description: "Let's go to the stats !",
-          });
-          const searchParams = new URLSearchParams();
-          searchParams.set("team", managedTeam!.id);
-          router.push(
-            `/matches/${matchState.match.id}/stats?${searchParams.toString()}`
-          );
+          onMatchCompleted();
         }
       } catch (error) {
         console.error("Failed to record point:", error);
@@ -291,6 +285,25 @@ export default function LiveMatchPage() {
     },
     [db, matchState, router]
   );
+
+  const onMatchCompleted = () => {
+    if (isOnline) {
+      toast({
+        title: "Match Finished",
+        description: "Let's go to the stats !",
+      });
+      const searchParams = new URLSearchParams();
+      searchParams.set("team", managedTeam!.id);
+      router.push(
+        `/matches/${matchState.match!.id}/stats?${searchParams.toString()}`
+      );
+    } else {
+      toast({
+        title: "Match Finished",
+        description: "You must be online to view the stats",
+      });
+    }
+  };
 
   const handleUndo = async () => {
     try {
@@ -319,6 +332,19 @@ export default function LiveMatchPage() {
     return <div>Match not found</div>;
   }
 
+  if (matchState.match.status === "completed") {
+    return (
+      <div className="space-y-1">
+        <LiveMatchHeader
+          match={matchState.match}
+          sets={matchState.sets}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+        />
+        <MVPAnalysis sets={matchState.sets} stats={matchState.stats} players={players} />
+      </div>
+    );
+  }
   return (
     <div className="space-y-1">
       <LiveMatchHeader

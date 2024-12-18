@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlayerPosition, PlayerRole } from "@/lib/types";
+import { PlayerPosition, PlayerRole } from "@/lib/enums";
 import { toast } from "@/hooks/use-toast";
-import { Match, Player, Set, Team } from "@/lib/supabase/types";
+import { Match, Player, Set, Team } from "@/lib/types";
 import { string } from "zod";
 import { CourtDiagram } from "../matches/live/court-diagram";
 import { PlayerSelector } from "../matches/live/player-selector";

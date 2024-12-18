@@ -8,9 +8,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Player } from "@/lib/supabase/types";
+import { Player } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";
 
 type NewPlayerDialogProps = {
@@ -26,7 +26,7 @@ export function NewPlayerDialog({
   onClose,
   onPlayerCreated,
 }: NewPlayerDialogProps) {
-  const { db } = useDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,6 +38,7 @@ export function NewPlayerDialog({
         team_id: teamId,
         name: values.name,
         number: values.number,
+        avatar_url: values.avatar_url,
         role: values.position,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

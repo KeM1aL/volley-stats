@@ -18,8 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Match, Team } from "@/lib/supabase/types";
-import { MatchStatus } from "@/lib/types";
+import { Match, Team } from "@/lib/types";
+import { MatchStatus } from "@/lib/enums";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MatchStartDialog from "../match-start-dialog";
 import MatchEditDialog from "../match-edit-dialog";

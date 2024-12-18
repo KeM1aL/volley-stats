@@ -4,7 +4,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/lib/supabase/client";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { Team } from "@/lib/supabase/types";
+import { Team } from "@/lib/types";
 
 const formSchema = z.object({
   teamName: z.string().min(1, "Team name is required"),
@@ -29,7 +29,7 @@ type NewTeamFormProps = {
 };
 
 export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
-  const { db } = useDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 

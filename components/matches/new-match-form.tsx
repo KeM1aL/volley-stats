@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { createClient, supabase } from "@/lib/supabase/client";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Skeleton } from "../ui/skeleton";
-import { Match } from "@/lib/supabase/types";
+import { Match } from "@/lib/types";
 
 const formSchema = z.object({
   homeTeamId: z.string().min(1, "Home team is required"),
@@ -37,7 +37,7 @@ type NewMatchFormProps = {
 };
 
 export function NewMatchForm({ onMatchCreated }: NewMatchFormProps) {
-  const { db } = useDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);

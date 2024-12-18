@@ -1,6 +1,6 @@
 "use client";
 
-import type { Match, Team } from "@/lib/supabase/types";
+import type { Match, Team } from "@/lib/types";
 import { MatchLineupSetup } from "@/components/matches/match-lineup-setup";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import { Pencil, Volleyball } from "lucide-react";
 import { MatchManagedTeamSetup } from "./match-managed-setup";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useDb } from "../providers/database-provider";
+import { useLocalDb } from "../providers/local-database-provider";
 import { toast } from "@/hooks/use-toast";
 
 type MatchStartDialogProps = {
@@ -24,7 +24,7 @@ type MatchStartDialogProps = {
 };
 
 export default function MatchEditDialog({ match }: MatchStartDialogProps) {
-  const { db } = useDb();
+  const { localDb: db } = useLocalDb();
   const router = useRouter();
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);
   const [awayTeam, setAwayTeam] = useState<Team | null>(null);

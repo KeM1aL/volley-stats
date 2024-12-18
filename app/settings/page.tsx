@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,16 +25,20 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { Team } from "@/lib/supabase/types";
+import { Team } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   useSettings,
   settingsSchema,
   type Settings,
 } from "@/hooks/use-settings";
-import { removeRxDatabase } from "rxdb";
+import { removeRxDatabase, RxCollection } from "rxdb";
 import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
 import { Label } from "@/components/ui/label";
+import { CollectionName } from "@/lib/rxdb/schema";
+import { createClient } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
+import { chunk, delay } from "@/lib/utils";
 
 const languages = [
   { value: "en", label: "English" },
@@ -44,11 +48,13 @@ const languages = [
 ];
 
 export default function SettingsPage() {
-  const { db } = useDb();
+  const { localDb: db } = useLocalDb();
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const {
     settings,
@@ -89,6 +95,79 @@ export default function SettingsPage() {
       form.reset(settings);
     }
   }, [settings, isLoadingSettings, form]);
+
+  const performMatchSync = async () => {
+    if (!db) return;
+    if(!matchId) return;
+
+    setIsSyncing(true);
+    try {
+      const supabase = createClient();
+      const doc = await db.matches.findOne(matchId).exec();
+      if (doc) {
+        const { error: updateError } = await supabase
+          .from("matches")
+          .update(doc.toMutableJSON())
+          .eq("id", doc.id);
+        if (updateError) throw updateError;
+        toast({
+          title: "Match synchronization",
+          description: "Matches data has been synchronized",
+        });
+      }
+      const collections = new Map<CollectionName, RxCollection>([
+        ["sets", db.sets],
+        ["player_stats", db.player_stats],
+        ["score_points", db.score_points],
+        ["substitutions", db.substitutions],
+      ]);
+      const entries = Array.from(collections.entries());
+      for (const [name, collection] of entries) {
+        const docs = await collection
+          .find({
+            selector: {
+              match_id: matchId,
+            },
+            sort: [{ created_at: "asc" }],
+          })
+          .exec();
+        if (docs) {
+          const data = Array.from(docs.values()).map((doc) => doc.toJSON());
+
+          const chunks = chunk(data, 20);
+          const chunkSize = chunks.length;
+          for(let index = 0; index < chunkSize; index++) {
+            const chunk = chunks[index];
+
+            const { error: updateError } = await supabase
+              .from(name)
+              .upsert(chunk)
+              .select();
+            if (updateError) throw updateError;
+            toast({
+              title: "Match synchronization",
+              description: `${name} ${index}/${chunkSize} data has been synchronized`,
+            });
+            await delay(500);
+          }
+        }
+        toast({
+          title: "Match synchronization",
+          description: "All data has been synchronized",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sync match. Please try again." + JSON.stringify(error),
+      });
+    } finally {
+      setMatchId(null);
+      setIsSyncing(false);
+    }
+  };
 
   const onSubmit = async (values: Settings) => {
     setIsSaving(true);
@@ -318,6 +397,22 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <Label>Local data</Label>
                   <div className="grid grid-cols-1 gap-4">
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">
+                          Synchronize Match
+                        </Label>
+                        <Input type="text" onChange={e => setMatchId(e.target.value)} placeholder="Match ID" />
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={isSyncing && !matchId}
+                        onClick={() => matchId && performMatchSync()}
+                      >
+                        Synchronize
+                      </Button>
+                    </div>
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium">

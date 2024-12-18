@@ -1,5 +1,5 @@
-import { PlayerStat, Player, Set, ScorePoint, Team, Match } from "@/lib/supabase/types";
-import { StatResult, StatType, PlayerPosition } from "@/lib/types";
+import { PlayerStat, Player, Set, ScorePoint, Team, Match } from "@/lib/types";
+import { StatResult, StatType, PlayerPosition } from "@/lib/enums";
 import { string } from 'zod';
 
 interface MVPStat {

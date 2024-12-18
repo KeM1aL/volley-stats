@@ -6,7 +6,7 @@ import type {
   Team,
   Set,
   Substitution,
-} from "@/lib/supabase/types";
+} from "@/lib/types";
 import {
   Dialog,
   DialogContent,

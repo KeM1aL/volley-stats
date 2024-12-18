@@ -1,8 +1,8 @@
 "use client";
 
 import { RxCollection, RxDocument, RxChangeEvent } from 'rxdb';
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
+import { RealtimeChannel, RealtimePostgresChangesPayload, SupabaseClient } from '@supabase/supabase-js';
+import { createJsClient } from '@/lib/supabase/client';
 import { retryWithBackoff } from '@/lib/utils/retry';
 import { CollectionName } from '../schema';
 import { Subscription } from 'rxjs';
@@ -20,6 +20,7 @@ interface SyncQueueItem<T = any> {
 }
 
 export class SyncHandler {
+  private supabase: SupabaseClient;
   private channels: Map<CollectionName, RealtimeChannel> = new Map();
   private rxSubscriptions: Map<CollectionName, Subscription> = new Map();
   private syncQueue: SyncQueueItem[] = [];
@@ -32,6 +33,7 @@ export class SyncHandler {
   private queueProcessInterval: NodeJS.Timeout | null = null;
 
   constructor(syncFromSupabase = false) {
+    this.supabase = createJsClient();
     this.syncFromSupabase = syncFromSupabase;
     this.setupOnlineListener();
     this.startQueueProcessor();
@@ -56,19 +58,39 @@ export class SyncHandler {
   }
 
   private handleOnline = async () => {
+    const { id: toastId, update } = toast({
+      title: 'Connection restored',
+      description: 'Syncing pending changes...',
+      duration: Infinity
+    });
     try {
       this.isOnline = true;
-      toast({
-        title: 'Connection restored',
-        description: 'Syncing pending changes...',
+      update({
+        id: toastId,
+        title: 'Syncing',
+        description: 'Processing pending changes...'
       });
       await this.processSyncQueue();
+      update({
+        id: toastId,
+        title: 'Syncing',
+        description: 'Reconnecting to real-time updates...'
+      });
       await this.resubscribeToChannels();
-      toast({
-        title: 'Sync completed'
+      update({
+        id: toastId,
+        title: 'Sync completed',
+        description: 'All changes have been synchronized',
+        duration: 5000
       });
     } catch (e) {
       console.error(e);
+      update({
+        id: toastId,
+        title: 'Sync failed',
+        description: 'Failed to synchronize changes. Will retry automatically.',
+        duration: 5000
+      });
     }
   };
 
@@ -116,7 +138,7 @@ export class SyncHandler {
         const latestRecord = latestRecordDoc?.toJSON();
         console.log('latest', latestRecord);
         const updatedAt = latestRecord?.updated_at || new Date(2024, 1, 1).toISOString();
-        let query = supabase
+        let query = this.supabase
           .from(name)
           .select('*')
           .gte('updated_at', updatedAt)
@@ -170,7 +192,7 @@ export class SyncHandler {
     this.rxSubscriptions.set(name, subscription);
 
     if (!this.syncFromSupabase) return;
-    const channel = supabase
+    const channel = this.supabase
       .channel(`${name}_changes`)
       .on(
         'postgres_changes',
@@ -246,14 +268,14 @@ export class SyncHandler {
       await retryWithBackoff(async () => {
         switch (operation) {
           case 'INSERT':
-            const { error: insertError } = await supabase
+            const { error: insertError } = await this.supabase
               .from(collectionName)
               .insert(doc);
             if (insertError) throw insertError;
             break;
 
           case 'UPDATE':
-            const { error: updateError } = await supabase
+            const { error: updateError } = await this.supabase
               .from(collectionName)
               .update(doc)
               .eq('id', doc.id);
@@ -261,7 +283,7 @@ export class SyncHandler {
             break;
 
           case 'DELETE':
-            const { error: deleteError } = await supabase
+            const { error: deleteError } = await this.supabase
               .from(collectionName)
               .delete()
               .eq('id', doc.id);
@@ -371,7 +393,7 @@ export class SyncHandler {
     for (const [name, oldChannel] of channels) {
       oldChannel.unsubscribe();
 
-      const newChannel = supabase
+      const newChannel = this.supabase
         .channel(`${name}_changes`)
         .on(
           'postgres_changes',

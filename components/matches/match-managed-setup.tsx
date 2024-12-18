@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useDb } from "@/components/providers/database-provider";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Match, Player, Team } from "@/lib/supabase/types";
+import { Match, Player, Team } from "@/lib/types";
 import { Check } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";

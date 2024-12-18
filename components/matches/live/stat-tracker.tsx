@@ -8,10 +8,10 @@ import {
   ScorePoint,
   Set,
   Team,
-} from "@/lib/supabase/types";
-import { useDb } from "@/components/providers/database-provider";
+} from "@/lib/types";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatType, StatResult, Score, PointType } from "@/lib/types";
+import { StatType, StatResult, Score, PointType } from "@/lib/enums";
 import { StatButton, variants } from "./stat-button";
 import { useToast } from "@/hooks/use-toast";
 import { PlayerSelector } from "./player-selector";
@@ -63,7 +63,7 @@ export function StatTracker({
   onStat,
   onUndo,
 }: StatTrackerProps) {
-  const { db } = useDb();
+  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const { canUndo, canRedo } = useCommandHistory();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -150,6 +150,7 @@ export function StatTracker({
         result: isSuccess ? StatResult.SUCCESS : StatResult.ERROR
       };
       await onPoint(point);
+      setSelectedPlayer(null);
     } finally {
       setIsRecording(false);
     }
@@ -171,7 +172,7 @@ export function StatTracker({
   }
 
   return (
-    <CardContent className="space-y-2 p-0">
+    <CardContent className="space-y-1 p-0">
       <PlayerSelector
         players={players}
         selectedPlayer={selectedPlayer}
@@ -201,6 +202,11 @@ export function StatTracker({
                     ))}
                   </div>
                 </CardContent>
+              </div>
+              <div className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}>
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
+                  {type.replace("_", " ").substring(0, 5)}
+                </span>
               </div>
             </div>
           </Card>

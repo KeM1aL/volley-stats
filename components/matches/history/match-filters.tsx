@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Team } from "@/lib/supabase/types";
+import { Team } from "@/lib/types";
 import { DateRange } from "react-day-picker";
 
 type MatchFiltersProps = {
