@@ -4,8 +4,7 @@ export type CollectionName = 'teams' | 'players' | 'matches' | 'sets' | 'substit
 
 const timestampFields = {
   created_at: { type: 'string', "format": "date-time", maxLength: 32 },
-  updated_at: { type: 'string', "format": "date-time", maxLength: 32 },
-  origin: { type: 'string', maxLength: 32 },
+  updated_at: { type: 'string', "format": "date-time", maxLength: 32 }
 };
 
 // Team Schema

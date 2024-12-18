@@ -13,7 +13,6 @@ export interface CollectionConfig {
   name: CollectionName;
   filters?: SyncFilter[];
   batchSize?: number;
-  syncInterval?: number;
 }
 
 export interface CollectionEntry {
@@ -27,4 +26,14 @@ export interface SyncState {
   isOnline: boolean;
   syncInProgress: boolean;
   collections: Map<CollectionName, CollectionEntry>;
+  syncQueue: SyncQueueItem[];
+}
+
+export interface SyncQueueItem<T = any> {
+  collection: CollectionName;
+  operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  documentId: string;
+  data?: T;
+  timestamp: number;
+  retryCount: number;
 }

@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { SyncIndicator } from '@/components/sync-indicator';
 import { CollectionName } from '@/lib/rxdb/schema';
 import { RxCollection } from 'rxdb';
+import { SyncManager } from '@/lib/rxdb/sync/sync-manager';
 
 const LocalDatabaseContext = createContext<ReturnType<typeof useLocalDatabase> | null>(null);
 
@@ -17,24 +18,8 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (database.localDb && user) {
-      // syncData().catch(console.error);
 
-      const syncHandler = new SyncHandler();
-      const collections = new Map<CollectionName, RxCollection>([
-        ['teams', database.localDb.teams],
-        ['players', database.localDb.players],
-        ['matches', database.localDb.matches],
-        ['sets', database.localDb.sets],
-        ['substitutions', database.localDb.substitutions],
-        ['score_points', database.localDb.score_points],
-        ['player_stats', database.localDb.player_stats],
-      ]);
-
-      syncHandler.initializeSync(collections);
-
-      return () => {
-        syncHandler.cleanup();
-      };
+      // We can add here initial loading data for the database
     }
   }, [database.localDb, user]);
 

@@ -2,7 +2,7 @@
 
 import { RxCollection, RxDocument, RxChangeEvent } from 'rxdb';
 import { RealtimeChannel, RealtimePostgresChangesPayload, SupabaseClient } from '@supabase/supabase-js';
-import { createJsClient } from '@/lib/supabase/client';
+import { createClient, createJsClient } from '@/lib/supabase/client';
 import { retryWithBackoff } from '@/lib/utils/retry';
 import { CollectionName } from '../schema';
 import { Subscription } from 'rxjs';
@@ -33,7 +33,7 @@ export class SyncHandler {
   private queueProcessInterval: NodeJS.Timeout | null = null;
 
   constructor(syncFromSupabase = false) {
-    this.supabase = createJsClient();
+    this.supabase = createClient();
     this.syncFromSupabase = syncFromSupabase;
     this.setupOnlineListener();
     this.startQueueProcessor();
@@ -132,7 +132,7 @@ export class SyncHandler {
         const latestRecordDoc = await collection.findOne({
           selector: {},
           sort: [
-            {updated_at: 'asc'}
+            {updated_at: 'desc'}
           ]
         }).exec();
         const latestRecord = latestRecordDoc?.toJSON();
@@ -158,8 +158,7 @@ export class SyncHandler {
             try {
               await collection.upsert({
                 ...record,
-                updated_at: record.updated_at || new Date().toISOString(),
-                origin: 'supabase'
+                updated_at: record.updated_at || new Date().toISOString()
               });
             } catch (err) {
               console.error(`Error upserting record in ${name}:`, err);
@@ -179,9 +178,8 @@ export class SyncHandler {
     }
   }
 
-  private async setupCollectionSync<T extends { id: string, origin: string }>(name: CollectionName, collection: RxCollection<T>) {
+  private async setupCollectionSync<T extends { id: string }>(name: CollectionName, collection: RxCollection<T>) {
     const subscription = collection.$.subscribe(async (changeEvent: RxChangeEvent<T>) => {
-      if(changeEvent.documentData.origin === 'supabase') return;
       if (!this.isOnline) {
         this.queueChange(name, changeEvent);
         return;
@@ -226,8 +224,7 @@ export class SyncHandler {
         case 'UPDATE':
           await collection.upsert({
             ...newRecord,
-            updated_at: newRecord.updated_at || new Date().toISOString(),
-            origin: 'supabase'
+            updated_at: newRecord.updated_at || new Date().toISOString()
           });
           break;
         case 'DELETE':
@@ -253,7 +250,6 @@ export class SyncHandler {
     delete clean._attachments;
     delete clean._deleted;
     delete clean._meta;
-    delete clean.origin;
     return clean;
   }
 
