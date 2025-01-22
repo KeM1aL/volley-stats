@@ -144,7 +144,9 @@ export function calculatePositionStats(
           positionStats[position].attackSuccess++;
           if (point.player_stat_id && playerStatsById[point.player_stat_id]) {
             const stat = playerStatsById[point.player_stat_id];
-            positionStats[position].attackDistribution[stat.position]++;
+            if(stat.position) {
+              positionStats[position].attackDistribution[stat.position]++;
+            }
           }
         }
 

@@ -4,16 +4,20 @@ import { createContext, useContext, useEffect } from 'react';
 import { useLocalDatabase } from '@/hooks/use-local-database';
 import { SyncHandler } from '@/lib/rxdb/sync/sync-handler';
 import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from "next/navigation";
 import { Loader2 } from 'lucide-react';
 import { SyncIndicator } from '@/components/sync-indicator';
 import { CollectionName } from '@/lib/rxdb/schema';
 import { RxCollection } from 'rxdb';
+import { Button } from '../ui/button';
 
 const LocalDatabaseContext = createContext<ReturnType<typeof useLocalDatabase> | null>(null);
+const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 
 export function LocalDatabaseProvider({ children }: { children: React.ReactNode }) {
   const database = useLocalDatabase();
   const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (database.localDb && user) {
@@ -38,6 +42,13 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
     }
   }, [database.localDb, user]);
 
+  const clearLocalDatabase = () => {
+    const params = new URLSearchParams();
+    params.set("remove-database", 'true');
+
+    router.push(`/?${params.toString()}`);
+  };
+
   if (database.isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -50,7 +61,8 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
     return (
       <div className="flex h-screen items-center justify-center">
         <p className="text-destructive">Failed to initialize local database</p>
-        <pre>{JSON.stringify(database.error, null, 2)}</pre>
+        {inDevEnvironment && <pre>{JSON.stringify(database.error, null, 2)}</pre>}
+        <Button onClick={clearLocalDatabase}>Clear Local Database</Button>
       </div>
     );
   }

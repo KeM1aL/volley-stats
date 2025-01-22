@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 interface PlayerSelectorProps {
   players: Player[];
-  liberoPlayer: Player | null;
+  liberoPlayer?: Player | null;
   selectedPlayer: Player | null;
   onPlayerSelect: (player: Player) => void;
   className?: string;
