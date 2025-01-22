@@ -1,26 +1,47 @@
 "use client";
 
-import { createContext, useContext, useEffect } from 'react';
-import { useLocalDatabase } from '@/hooks/use-local-database';
-import { SyncHandler } from '@/lib/rxdb/sync/sync-handler';
-import { useAuth } from '@/contexts/auth-context';
-import { Loader2 } from 'lucide-react';
-import { SyncIndicator } from '@/components/sync-indicator';
-import { CollectionName } from '@/lib/rxdb/schema';
-import { RxCollection } from 'rxdb';
-import { SyncManager } from '@/lib/rxdb/sync/sync-manager';
+import { createContext, useContext, useEffect } from "react";
+import { useLocalDatabase } from "@/hooks/use-local-database";
+import { SyncHandler } from "@/lib/rxdb/sync/sync-handler";
+import { useAuth } from "@/contexts/auth-context";
+import { Loader2 } from "lucide-react";
+import { SyncIndicator } from "@/components/sync-indicator";
+import { CollectionName } from "@/lib/rxdb/schema";
+import { RxCollection } from "rxdb";
+import { SyncManager } from "@/lib/rxdb/sync/sync-manager";
 
-const LocalDatabaseContext = createContext<ReturnType<typeof useLocalDatabase> | null>(null);
+const LocalDatabaseContext = createContext<ReturnType<
+  typeof useLocalDatabase
+> | null>(null);
 
-export function LocalDatabaseProvider({ children }: { children: React.ReactNode }) {
+export function LocalDatabaseProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const database = useLocalDatabase();
   const { user } = useAuth();
 
   useEffect(() => {
-    if (database.localDb && user) {
+    const syncDb = async () => {
+      if (database.localDb && user) {
+        // We can add here initial loading data for the database
+        if (database.syncManager) {
+          const collections = new Map<CollectionName, RxCollection>([
+            ['teams', database.localDb.teams],
+            ['players', database.localDb.players],
+            ['matches', database.localDb.matches],
+            ['sets', database.localDb.sets],
+            ['substitutions', database.localDb.substitutions],
+            ['score_points', database.localDb.score_points],
+            ['player_stats', database.localDb.player_stats],
+          ]);
+          await database.syncManager.pushSyncFromCheckpoint(collections);
+        }
+      }
+    };
 
-      // We can add here initial loading data for the database
-    }
+    syncDb();
   }, [database.localDb, user]);
 
   if (database.isLoading) {
@@ -51,7 +72,7 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
 export function useLocalDb() {
   const context = useContext(LocalDatabaseContext);
   if (!context) {
-    throw new Error('useLocalDb must be used within a DatabaseProvider');
+    throw new Error("useLocalDb must be used within a DatabaseProvider");
   }
   return context;
 }

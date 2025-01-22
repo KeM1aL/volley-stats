@@ -46,7 +46,7 @@ export default function LiveMatchPage() {
   const { id: matchId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const { isOnline, wasOffline } = useOnlineStatus();
-  const { localDb: db } = useLocalDb();
+  const { localDb: db, syncManager } = useLocalDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -55,8 +55,84 @@ export default function LiveMatchPage() {
   const [awayTeam, setAwayTeam] = useState<Team>();
   const [managedTeam, setManagedTeam] = useState<Team>();
   const [opponentTeam, setOpponentTeam] = useState<Team>();
+  const [isPreLoading, setIsPreLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const { history, canUndo, canRedo } = useCommandHistory();
+
+  useEffect(() => {
+    const syncMatchData = async (matchId: string) => {
+      if (!db) return;
+      if (!syncManager) return;
+
+      syncManager.addCollection(
+        {
+          name: 'matches',
+          filters: [
+            {
+              field: 'id',
+              operator: 'eq',
+              value: matchId,
+            },
+          ],
+        },
+        db.matches,
+      );
+      syncManager.addCollection(
+        {
+          name: 'sets',
+          filters: [
+            {
+              field: 'match_id',
+              operator: 'eq',
+              value: matchId,
+            },
+          ],
+        },
+        db.sets,
+      );
+      syncManager.addCollection(
+        {
+          name: 'player_stats',
+          filters: [
+            {
+              field: 'match_id',
+              operator: 'eq',
+              value: matchId,
+            },
+          ],
+        },
+        db.player_stats,
+      );
+      syncManager.addCollection(
+        {
+          name: 'score_points',
+          filters: [
+            {
+              field: 'match_id',
+              operator: 'eq',
+              value: matchId,
+            },
+          ],
+        },
+        db.score_points,
+      );
+      syncManager.addCollection(
+        {
+          name: 'substitutions',
+          filters: [
+            {
+              field: 'match_id',
+              operator: 'eq',
+              value: matchId,
+            },
+          ],
+        },
+        db.substitutions,
+      );
+    }
+
+    syncMatchData(matchId);
+  }, [db, syncManager, matchId]);
 
   useEffect(() => {
     const loadData = async () => {

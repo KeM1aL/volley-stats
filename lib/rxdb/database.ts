@@ -14,7 +14,8 @@ import {
   setSchema,
   playerStatSchema,
   substitutionSchema,
-  scorePointSchema
+  scorePointSchema,
+  checkpointSchema
 } from './schema';
 import type {
   Team,
@@ -25,6 +26,7 @@ import type {
   Substitution,
   ScorePoint
 } from '@/lib/types';
+import { Checkpoint } from './types';
 const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 // Add plugins
 if (inDevEnvironment) {
@@ -34,6 +36,7 @@ addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 
 type DatabaseCollections = {
+  checkpoints: RxCollection<Checkpoint>;
   teams: RxCollection<Team>;
   players: RxCollection<Player>;
   matches: RxCollection<Match>;
@@ -103,6 +106,9 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
     // Create collections
     try {
       await db.addCollections({
+        checkpoints: {
+          schema: checkpointSchema,
+        },
         teams: {
           schema: teamSchema,
         },

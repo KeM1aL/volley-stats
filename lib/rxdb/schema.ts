@@ -7,6 +7,18 @@ const timestampFields = {
   updated_at: { type: 'string', "format": "date-time", maxLength: 32 }
 };
 
+export const checkpointSchema = toTypedRxJsonSchema({
+  version: 0,
+  primaryKey: 'collection_name',
+  type: 'object',
+  properties: {
+    collection_name: { type: 'string', maxLength: 20 },
+    updated_at: { type: 'string', "format": "date-time", maxLength: 32 }
+  },
+  required: ['collection_name', 'updated_at'],
+  indexes: ['updated_at']
+});
+
 // Team Schema
 export const teamSchema = toTypedRxJsonSchema({
   version: 0,

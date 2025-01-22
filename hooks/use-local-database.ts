@@ -18,6 +18,7 @@ export function useLocalDatabase() {
 
         const syncManager = SyncManager.getInstance();
         setSyncManager(syncManager);
+
         return () => {
           syncManager.cleanup();
         };
@@ -36,5 +37,5 @@ export function useLocalDatabase() {
     initDb();
   }, []);
 
-  return { localDb, isLoading, error };
+  return { localDb, syncManager, isLoading, error };
 }

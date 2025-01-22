@@ -1,17 +1,24 @@
-import { RxCollection, RxChangeEvent } from 'rxdb';
-import { CollectionName } from '../schema';
-import { CollectionConfig, CollectionEntry, SyncQueueItem, SyncState } from './types';
-import { ConnectionHandler } from './connection-handler';
-import { setupCollectionSync, syncToSupabase } from './collection-sync';
-import { toast } from '@/hooks/use-toast';
+import { RxChangeEvent, RxCollection } from "rxdb";
+import { CollectionName } from "../schema";
+import {
+  CollectionConfig,
+  CollectionEntry,
+  SyncQueueItem,
+  SyncState,
+} from "./types";
+import { ConnectionHandler } from "./connection-handler";
+import { setupCollectionSync, syncToSupabase } from "./collection-sync";
+import { toast } from "@/hooks/use-toast";
+import { getDatabase } from "../database";
+import { chunk, delay } from "@/lib/utils";
+import { supabase } from "@/lib/supabase/client";
 
 export class SyncManager {
-
   private state: SyncState = {
     isOnline: true,
     syncInProgress: false,
-    collections: new Map(),
-    syncQueue: []
+    collections: new Map<CollectionName, CollectionEntry>(),
+    syncQueue: [],
   };
 
   private connectionHandler: ConnectionHandler;
@@ -21,7 +28,7 @@ export class SyncManager {
   private constructor() {
     this.connectionHandler = new ConnectionHandler(
       this.handleOnline.bind(this),
-      this.handleOffline.bind(this)
+      this.handleOffline.bind(this),
     );
   }
 
@@ -45,36 +52,36 @@ export class SyncManager {
     this.state.isOnline = true;
 
     const { id: toastId, update } = toast({
-      title: 'Connection restored',
-      description: 'Syncing pending changes...',
-      duration: Infinity
+      title: "Connection restored",
+      description: "Syncing pending changes...",
+      duration: Infinity,
     });
     try {
       update({
         id: toastId,
-        title: 'Syncing',
-        description: 'Processing pending changes...'
+        title: "Syncing",
+        description: "Processing pending changes...",
       });
       await this.processSyncQueue();
       update({
         id: toastId,
-        title: 'Syncing',
-        description: 'Reconnecting to real-time updates...'
+        title: "Syncing",
+        description: "Reconnecting to real-time updates...",
       });
       await this.reconnectCollections();
       update({
         id: toastId,
-        title: 'Sync completed',
-        description: 'All changes have been synchronized',
-        duration: 5000
+        title: "Sync completed",
+        description: "All changes have been synchronized",
+        duration: 5000,
       });
     } catch (e) {
       console.error(e);
       update({
         id: toastId,
-        title: 'Sync failed',
-        description: 'Failed to synchronize changes. Will retry automatically.',
-        duration: 5000
+        title: "Sync failed",
+        description: "Failed to synchronize changes. Will retry automatically.",
+        duration: 5000,
       });
     }
   }
@@ -84,12 +91,15 @@ export class SyncManager {
     this.cleanupChannels();
     toast({
       variant: "destructive",
-      title: 'Connection lost',
-      description: 'Changes will be synced when connection is restored',
+      title: "Connection lost",
+      description: "Changes will be synced when connection is restored",
     });
   }
 
-  async addCollection(config: CollectionConfig, collection: RxCollection): Promise<void> {
+  async addCollection(
+    config: CollectionConfig,
+    collection: RxCollection,
+  ): Promise<void> {
     try {
       // Validate collection schema
       if (!collection.schema) {
@@ -102,7 +112,7 @@ export class SyncManager {
       // Setup collection sync if online
       let entry: CollectionEntry = {
         collection,
-        config
+        config,
       };
 
       if (this.state.isOnline) {
@@ -111,7 +121,7 @@ export class SyncManager {
           collection,
           config,
           this.state.isOnline,
-          this.queueChange.bind(this)
+          this.queueChange.bind(this),
         );
       }
 
@@ -140,7 +150,7 @@ export class SyncManager {
           entry.collection,
           entry.config,
           this.state.isOnline,
-          this.queueChange.bind(this)
+          this.queueChange.bind(this),
         );
         this.state.collections.set(name, updatedEntry);
       } catch (error) {
@@ -150,21 +160,93 @@ export class SyncManager {
     }
   }
 
-  private queueChange<T>(collectionName: CollectionName, changeEvent: RxChangeEvent<T>) {
+  public async pushSyncFromCheckpoint(
+    collections: Map<CollectionName, RxCollection>,
+  ) {
+    const entries = Array.from(collections.entries());
+    for (const [name, collection] of entries) {
+      try {
+        const db = await getDatabase();
+        const checkpointDoc = await db.checkpoints.findOne({
+          selector: {
+            collection_name: name,
+          },
+          sort: [
+            { updated_at: "desc" },
+          ],
+        }).exec();
+
+        const checkpoint = checkpointDoc?.toJSON();
+        const checkpointAt = checkpoint?.updated_at ||
+          new Date(2024, 1, 1).toISOString();
+
+        const latestRecordDoc = await collection.findOne({
+          selector: {},
+          sort: [
+            { updated_at: "desc" },
+          ],
+        }).exec();
+        const latestRecord = latestRecordDoc?.toJSON();
+        const updatedAt = latestRecord?.updated_at ||
+          new Date(2024, 1, 1).toISOString();
+        if (checkpointAt < updatedAt) {
+          // New data has been added since the last sync
+          const records = await collection.find({
+            selector: {
+              updated_at: {
+                $gte: checkpointAt,
+              },
+            },
+            sort: [
+              { updated_at: "asc" },
+            ],
+          }).exec();
+          if (records) {
+            const data = Array.from(records.values()).map((doc) =>
+              doc.toJSON()
+            );
+            const chunks = chunk(data, 20);
+            const chunkSize = chunks.length;
+            for (let index = 0; index < chunkSize; index++) {
+              const chunk = chunks[index];
+
+              // const { error: updateError } = await supabase
+              //   .from(name)
+              //   .upsert(chunk)
+              //   .select();
+                console.log(chunk.length);
+              // if (updateError) throw updateError;
+              await delay(200);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(
+          `Error pushing sync from checkpoint for ${name}:`,
+          error,
+        );
+      }
+    }
+  }
+
+  private queueChange<T>(
+    collectionName: CollectionName,
+    changeEvent: RxChangeEvent<T>,
+  ) {
     const queueItem: SyncQueueItem = {
       collection: collectionName,
       operation: changeEvent.operation,
       documentId: changeEvent.documentId,
       data: {
         ...changeEvent.documentData,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       },
       timestamp: Date.now(),
-      retryCount: 0
+      retryCount: 0,
     };
 
     this.state.syncQueue.push(queueItem);
-    if(!this.queueProcessInterval) {
+    if (!this.queueProcessInterval) {
       this.startQueueProcessor();
     }
   }
@@ -185,23 +267,22 @@ export class SyncManager {
           operation: item.operation,
           documentData: item.data,
           documentId: item.documentId,
-        } as RxChangeEvent<any>,
-        this.queueChange.bind(this)
-      );
+        } as RxChangeEvent<any>, this.queueChange.bind(this));
       } catch (error) {
-        console.error('Error processing sync queue:', error);
+        console.error("Error processing sync queue:", error);
 
         if (item.retryCount < 3) {
           this.state.syncQueue.push({
             ...item,
             retryCount: item.retryCount + 1,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         } else {
           toast({
             variant: "destructive",
-            title: 'Sync failed',
-            description: `Failed to sync changes to ${item.collection} after multiple attempts`
+            title: "Sync failed",
+            description:
+              `Failed to sync changes to ${item.collection} after multiple attempts`,
           });
         }
       }
@@ -219,7 +300,7 @@ export class SyncManager {
   cleanup(): void {
     this.connectionHandler.cleanup();
     this.cleanupChannels();
-    
+
     for (const entry of this.state.collections.values()) {
       entry.subscription?.unsubscribe();
     }
