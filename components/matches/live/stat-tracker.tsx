@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Match,
-  Player,
-  PlayerStat,
-  ScorePoint,
-  Set,
-  Team,
-} from "@/lib/types";
+import { Match, Player, PlayerStat, ScorePoint, Set, Team } from "@/lib/types";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatType, StatResult, Score, PointType } from "@/lib/enums";
+import {
+  StatType,
+  StatResult,
+  Score,
+  PointType,
+  PlayerRole,
+  PlayerPosition,
+} from "@/lib/enums";
 import { StatButton, variants } from "./stat-button";
 import { useToast } from "@/hooks/use-toast";
 import { PlayerSelector } from "./player-selector";
@@ -30,10 +30,13 @@ type StatTrackerProps = {
   stats: PlayerStat[];
   score: Score;
   points: ScorePoint[];
+  playerById: Map<string, Player>;
   onPoint: (point: ScorePoint) => Promise<void>;
   onStat: (stat: PlayerStat) => Promise<void>;
   onUndo: () => Promise<void>;
 };
+
+const inGameStatTypes = [StatType.SPIKE, StatType.BLOCK, StatType.DEFENSE];
 
 const colorData = [
   { color: "bg-red-500", border: "border-red-300" },
@@ -48,13 +51,14 @@ const colorData = [
   { color: "bg-cyan-500", border: "border-cyan-300" },
   { color: "bg-lime-500", border: "border-lime-300" },
   { color: "bg-fuchsia-500", border: "border-fuchsia-300" },
-]
+];
 
 export function StatTracker({
   match,
   currentSet,
   opponentTeam,
   managedTeam,
+  playerById,
   sets,
   stats,
   points,
@@ -67,21 +71,32 @@ export function StatTracker({
   const { toast } = useToast();
   const { canUndo, canRedo } = useCommandHistory();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [availableStatTypes, setAvailableStatTypes] =  useState<StatType[]>(Object.values(StatType));
   const [players, setPlayers] = useState<Player[]>([]);
+  const [liberoPlayer, setLiberoPlayer] = useState<Player | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
-      if (!db) return;
-
       const setPlayerIds = Object.values(currentSet.current_lineup);
-      const setPlayerDocs = await db.players.findByIds(setPlayerIds).exec();
-      if (setPlayerDocs) {
-        setPlayers(
-          Array.from(setPlayerDocs.values()).map((doc) => doc.toJSON())
-        );
+      const players: Player[] = [];
+      for (const playerId of setPlayerIds) {
+        const player = playerById.get(playerId);
+        if (player) {
+          players.push(player);
+        }
       }
+      setPlayers(players);
+      const liberoPlayerId = Object.keys(currentSet.player_roles).find(
+        (key) => currentSet.player_roles[key] === PlayerRole.LIBERO
+      );
+      if (liberoPlayerId) {
+        setLiberoPlayer(playerById.get(liberoPlayerId)!);
+      } else {
+        setLiberoPlayer(null);
+      }
+
       setIsLoading(false);
     };
 
@@ -89,7 +104,24 @@ export function StatTracker({
       setIsLoading(true);
     }
     loadData();
-  }, [db, match.id, currentSet]);
+  }, [match.id, currentSet]);
+
+  useEffect(() => {
+    const updateData = async () => {
+      if(currentSet.server_team_id === managedTeam.id) {
+        let servingPlayer = playerById.get(currentSet.current_lineup.p1);
+        if(servingPlayer) {
+          setSelectedPlayer(servingPlayer);
+        }
+        setAvailableStatTypes([StatType.SERVE,...inGameStatTypes])
+      } else {
+        setAvailableStatTypes([StatType.RECEPTION,...inGameStatTypes])
+      }
+
+     
+    };
+    updateData();
+  }, [match.id, currentSet.server_team_id]);
 
   const recordStat = async (type: StatType, result: StatResult) => {
     if (!selectedPlayer) {
@@ -103,15 +135,22 @@ export function StatTracker({
 
     setIsRecording(true);
     try {
+      let position: PlayerPosition | null = null;
+      if(liberoPlayer && liberoPlayer.id === selectedPlayer.id) {
+        position = null;
+      } else {
+      position = Object.entries(currentSet.current_lineup).find(
+          ([_position, playerId]) => playerId === selectedPlayer.id
+        )![0] as PlayerPosition;
+      }
+
       const playerStat = {
         id: crypto.randomUUID(),
         match_id: match.id,
         set_id: currentSet.id,
         player_id: selectedPlayer.id,
         team_id: selectedPlayer.team_id,
-        position: Object.entries(currentSet.current_lineup).find(
-          ([_position, playerId]) => playerId === selectedPlayer.id
-        )![0],
+        position: position,
         stat_type: type,
         result,
         created_at: new Date().toISOString(),
@@ -119,19 +158,26 @@ export function StatTracker({
       } as PlayerStat;
       await onStat(playerStat);
       setSelectedPlayer(null);
+      
     } finally {
       setIsRecording(false);
     }
   };
 
-  const recordPoint = async (actionTeamId: string, type: PointType, result: StatResult) => {
+  const recordPoint = async (
+    actionTeamId: string,
+    type: PointType,
+    result: StatResult
+  ) => {
     setIsRecording(true);
     try {
       const isSuccess = result === StatResult.SUCCESS;
       const isError = result === StatResult.ERROR;
       const scoringTeamId = isSuccess ? managedTeam.id : opponentTeam.id;
-      const newHomeScore = scoringTeamId === match.home_team_id ? score.home + 1 : score.home;
-      const newAwayScore = scoringTeamId === match.away_team_id ? score.away + 1 : score.away;
+      const newHomeScore =
+        scoringTeamId === match.home_team_id ? score.home + 1 : score.home;
+      const newAwayScore =
+        scoringTeamId === match.away_team_id ? score.away + 1 : score.away;
       const point: ScorePoint = {
         id: crypto.randomUUID(),
         match_id: match.id,
@@ -147,7 +193,7 @@ export function StatTracker({
         current_rotation: currentSet!.current_lineup,
         player_stat_id: null,
         action_team_id: actionTeamId,
-        result: isSuccess ? StatResult.SUCCESS : StatResult.ERROR
+        result: isSuccess ? StatResult.SUCCESS : StatResult.ERROR,
       };
       await onPoint(point);
       setSelectedPlayer(null);
@@ -175,15 +221,22 @@ export function StatTracker({
     <CardContent className="space-y-1 p-0">
       <PlayerSelector
         players={players}
+        liberoPlayer={liberoPlayer}
         selectedPlayer={selectedPlayer}
         onPlayerSelect={setSelectedPlayer}
       />
       <div className="space-y-0">
-        {Object.values(StatType).map((type, index) => (
-          <Card key={type} className={`w-full mx-auto overflow-hidden ${colorData[index].border} border-2`}>
+        {availableStatTypes.map((type, index) => (
+          <Card
+            key={type}
+            className={`w-full mx-auto overflow-hidden ${colorData[index].border} border-2`}
+            
+          >
             <div className="flex">
               {/* Vertical text on the left side */}
-              <div className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}>
+              <div
+                className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}
+              >
                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
                   {type.replace("_", " ").substring(0, 5)}
                 </span>
@@ -203,7 +256,9 @@ export function StatTracker({
                   </div>
                 </CardContent>
               </div>
-              <div className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}>
+              <div
+                className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}
+              >
                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
                   {type.replace("_", " ").substring(0, 5)}
                 </span>
@@ -215,7 +270,9 @@ export function StatTracker({
       <div className="space-y-1">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           <Button
-            onClick={() => recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.ERROR)}
+            onClick={() =>
+              recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.ERROR)
+            }
             disabled={isRecording || isLoading}
             className={cn(
               "h-14 text-lg font-semibold transition-transform active:scale-95",
@@ -230,7 +287,9 @@ export function StatTracker({
             </div>
           </Button>
           <Button
-            onClick={() => recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.SUCCESS)}
+            onClick={() =>
+              recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.SUCCESS)
+            }
             disabled={isRecording || isLoading}
             className={cn(
               "h-14 text-lg font-semibold transition-transform active:scale-95",
@@ -245,7 +304,9 @@ export function StatTracker({
             </div>
           </Button>
           <Button
-            onClick={() => recordPoint(opponentTeam.id, PointType.UNKNOWN, StatResult.ERROR)}
+            onClick={() =>
+              recordPoint(opponentTeam.id, PointType.UNKNOWN, StatResult.ERROR)
+            }
             disabled={isRecording || isLoading}
             className={cn(
               "h-14 text-lg font-semibold transition-transform active:scale-95",
@@ -260,7 +321,13 @@ export function StatTracker({
             </div>
           </Button>
           <Button
-            onClick={() => recordPoint(opponentTeam.id, PointType.UNKNOWN, StatResult.SUCCESS)}
+            onClick={() =>
+              recordPoint(
+                opponentTeam.id,
+                PointType.UNKNOWN,
+                StatResult.SUCCESS
+              )
+            }
             disabled={isRecording || isLoading}
             className={cn(
               "h-14 text-lg font-semibold transition-transform active:scale-95",

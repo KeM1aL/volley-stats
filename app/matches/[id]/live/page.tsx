@@ -49,8 +49,8 @@ export default function LiveMatchPage() {
   const { localDb: db } = useLocalDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [playerById, setPlayerById] = useState<Map<string, Player>>(new Map());
+  const [teamPlayers, setTeamPlayers] = useState<Player[]>([]);
+  const [teamPlayerById, setTeamPlayerById] = useState<Map<string, Player>>(new Map());
   const [homeTeam, setHomeTeam] = useState<Team>();
   const [awayTeam, setAwayTeam] = useState<Team>();
   const [managedTeam, setManagedTeam] = useState<Team>();
@@ -61,14 +61,14 @@ export default function LiveMatchPage() {
   useEffect(() => {
     const loadData = async () => {
       const playerById: Map<string, Player> = new Map();
-      players.forEach((player) => {
+      teamPlayers.forEach((player) => {
         playerById.set(player.id, player);
       });
-      setPlayerById(playerById);
+      setTeamPlayerById(playerById);
     };
 
     loadData();
-  }, [players]);
+  }, [teamPlayers]);
 
   // Memoized data loading function
   const loadMatchData = useCallback(async () => {
@@ -124,7 +124,7 @@ export default function LiveMatchPage() {
           : match.away_available_players;
       const availablePlayerDocs = await db.players.findByIds(playerIds as string[]).exec();
       if (availablePlayerDocs) {
-        setPlayers(
+        setTeamPlayers(
           Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())
         );
       }
@@ -221,9 +221,9 @@ export default function LiveMatchPage() {
         toast({
           title: "Subscription recorded",
           description: `Player #${
-            playerById.get(substitution.player_out_id)!.number
+            teamPlayerById.get(substitution.player_out_id)!.number
           } substituted for ${
-            playerById.get(substitution.player_in_id)!.number
+            teamPlayerById.get(substitution.player_in_id)!.number
           }`,
         });
       } catch (error) {
@@ -341,7 +341,7 @@ export default function LiveMatchPage() {
           homeTeam={homeTeam}
           awayTeam={awayTeam}
         />
-        <MVPAnalysis sets={matchState.sets} stats={matchState.stats} players={players} />
+        <MVPAnalysis sets={matchState.sets} stats={matchState.stats} players={teamPlayers} />
       </div>
     );
   }
@@ -362,8 +362,8 @@ export default function LiveMatchPage() {
               score={matchState.score}
               managedTeam={managedTeam!}
               points={matchState.points}
-              players={players}
-              playerById={playerById}
+              players={teamPlayers}
+              playerById={teamPlayerById}
               onSubstitution={onSubstitutionRecorded}
             />
           </Card>
@@ -374,7 +374,7 @@ export default function LiveMatchPage() {
               match={matchState.match}
               managedTeam={managedTeam!}
               opponentTeam={opponentTeam!}
-              players={players}
+              players={teamPlayers}
               stats={matchState.stats}
               sets={matchState.sets}
             />
@@ -389,8 +389,8 @@ export default function LiveMatchPage() {
               homeTeam={homeTeam}
               awayTeam={awayTeam}
               setNumber={matchState.set ? matchState.set.set_number + 1 : 1}
-              players={players}
-              playerById={playerById}
+              players={teamPlayers}
+              playerById={teamPlayerById}
               onComplete={onSetSetupComplete}
             />
           </Card>
@@ -400,6 +400,7 @@ export default function LiveMatchPage() {
               onStat={onPlayerStatRecorded}
               onPoint={onPointRecorded}
               onUndo={handleUndo}
+              playerById={teamPlayerById}
               opponentTeam={opponentTeam!}
               managedTeam={managedTeam!}
               match={matchState.match}

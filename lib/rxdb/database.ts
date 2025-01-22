@@ -131,7 +131,7 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
         const url = new URL(url_string);
         const removeDbFlag = url.searchParams.get('remove-database');
         if (inDevEnvironment || removeDbFlag === 'true') {
-          // removeRxDatabase(getDatabaseName(), getRxStorageDexie());
+          removeRxDatabase(getDatabaseName(), getRxStorageDexie());
         }
       }
       throw error;

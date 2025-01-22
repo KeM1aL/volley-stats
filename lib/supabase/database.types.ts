@@ -75,7 +75,7 @@ export type Database = {
           id: string
           match_id: string
           player_id: string
-          position: string
+          position: string | null
           result: string
           set_id: string
           stat_type: string
@@ -87,7 +87,7 @@ export type Database = {
           id?: string
           match_id: string
           player_id: string
-          position: string
+          position: string | null
           result: string
           set_id: string
           stat_type: string

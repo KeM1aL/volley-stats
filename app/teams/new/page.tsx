@@ -6,11 +6,12 @@ import { NewTeamForm } from "@/components/teams/new-team-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function NewTeamPage() {
-  const [matchId, setTeamId] = useState<string | null>(null);
+  const [teamId, setTeamId] = useState<string | null>(null);
   const router = useRouter();
 
   const onTeamCreated = (id: string) => {
     setTeamId(id);
+    router.push("/teams");
   };
 
   return (

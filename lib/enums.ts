@@ -26,9 +26,9 @@ export enum PointType {
 
 export enum StatType {
   SERVE = "serve",
+  RECEPTION = "reception",
   SPIKE = "spike",
   BLOCK = "block",
-  RECEPTION = "reception",
   DEFENSE = "defense",
 }
 

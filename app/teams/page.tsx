@@ -21,7 +21,7 @@ export default function TeamsPage() {
   useEffect(() => {
     const loadTeams = async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("teams").select("*");
+      const { data, error } = await supabase.from("teams").select("*").order("name", { ascending: true });;
       if (error) throw error;
       setTeams(data);
       setIsLoading(false);

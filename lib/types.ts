@@ -90,7 +90,7 @@ export type PlayerStat = {
   set_id: string;
   player_id: string;
   team_id: string;
-  position: 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6';
+  position: 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6' | null;
   stat_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense';
   result: 'success' | 'error' | 'good' | 'bad';
   created_at: string;

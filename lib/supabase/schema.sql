@@ -102,7 +102,7 @@ create table if not exists public.player_stats (
   set_id uuid references public.sets(id) not null,
   team_id uuid references public.teams(id) not null,
   player_id uuid references public.players(id) not null,
-  position text not null check (position in ('p1', 'p2', 'p3', 'p4', 'p5', 'p6')),
+  position text check (position in ('p1', 'p2', 'p3', 'p4', 'p5', 'p6')),
   stat_type text not null,
   result text not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
