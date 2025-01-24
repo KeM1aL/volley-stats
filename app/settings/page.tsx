@@ -98,7 +98,7 @@ export default function SettingsPage() {
 
   const performMatchSync = async () => {
     if (!db) return;
-    if(!matchId) return;
+    if (!matchId) return;
 
     setIsSyncing(true);
     try {
@@ -131,12 +131,16 @@ export default function SettingsPage() {
             sort: [{ created_at: "asc" }],
           })
           .exec();
+        toast({
+          title: "Match synchronization",
+          description: `${name} ${docs.length} data to be synchronized`,
+        });
         if (docs) {
           const data = Array.from(docs.values()).map((doc) => doc.toJSON());
 
           const chunks = chunk(data, 20);
           const chunkSize = chunks.length;
-          for(let index = 0; index < chunkSize; index++) {
+          for (let index = 0; index < chunkSize; index++) {
             const chunk = chunks[index];
 
             const { error: updateError } = await supabase
@@ -148,7 +152,7 @@ export default function SettingsPage() {
               title: "Match synchronization",
               description: `${name} ${index}/${chunkSize} data has been synchronized`,
             });
-            await delay(500);
+            await delay(1000);
           }
         }
         toast({
@@ -161,7 +165,8 @@ export default function SettingsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to sync match. Please try again." + JSON.stringify(error),
+        description:
+          "Failed to sync match. Please try again." + JSON.stringify(error),
       });
     } finally {
       setMatchId(null);
@@ -397,12 +402,16 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <Label>Local data</Label>
                   <div className="grid grid-cols-1 gap-4">
-                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium">
                           Synchronize Match
                         </Label>
-                        <Input type="text" onChange={e => setMatchId(e.target.value)} placeholder="Match ID" />
+                        <Input
+                          type="text"
+                          onChange={(e) => setMatchId(e.target.value)}
+                          placeholder="Match ID"
+                        />
                       </div>
                       <Button
                         type="button"
