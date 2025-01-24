@@ -154,6 +154,7 @@ export default function SettingsPage() {
             });
             await delay(1000);
           }
+          await delay(1000);
         }
         toast({
           title: "Match synchronization",
