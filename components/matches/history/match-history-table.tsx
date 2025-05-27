@@ -25,6 +25,7 @@ import MatchStartDialog from "../match-start-dialog";
 import MatchEditDialog from "../match-edit-dialog";
 import { useRouter } from "next/navigation";
 import MatchStatsDialog from "../match-stats-dialog";
+import MatchScoreDialog from "../match-score-dialog";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
@@ -159,6 +160,7 @@ export function MatchHistoryTable({
                     return null;
                 }
               })()}
+              <MatchScoreDialog match={match} />
             </TableCell>
           </TableRow>
         ))}
