@@ -140,19 +140,72 @@ export class SyncHandler {
 
         let failRecords = 0;
         await Promise.all(
-          data.map(async (record) => {
+          data.map(async (remoteRecord) => {
             try {
+              const remoteId = remoteRecord.id;
+              const remoteUpdatedAtString = remoteRecord.updated_at;
+
+              if (!remoteId) {
+                console.warn(`Skipping record in initial sync for ${name} due to missing ID.`, remoteRecord);
+                failRecords++;
+                return;
+              }
+
+              const localDoc = await collection.findOne(remoteId).exec();
+
+              if (localDoc && remoteUpdatedAtString && localDoc.updated_at) {
+                const remoteUpdatedAt = new Date(remoteUpdatedAtString);
+                const localDocUpdatedAt = new Date(localDoc.updated_at);
+
+                if (localDocUpdatedAt >= remoteUpdatedAt) {
+                  console.log(`Skipping initial sync for record ${remoteId} in ${name} as local version is newer or same.`);
+                  // If local is newer, queue it for update to Supabase
+                  if (localDocUpdatedAt > remoteUpdatedAt) {
+                    console.log(`Queueing local document ${localDoc.id} from ${name} for UPDATE to Supabase as it's newer than server version.`);
+                    this.queueChange(name, {
+                      operation: 'UPDATE',
+                      documentId: localDoc.id,
+                      documentData: localDoc.toJSON() as any, // RxDB types might need 'as any' here
+                    } as RxChangeEvent<any>); // Cast to RxChangeEvent, ensure required fields are present
+                  }
+                  return; // Skip upserting this record from server
+                }
+              }
+
+              // If local doc doesn't exist, or remote is newer.
+              // Upsert server record into local DB.
               await collection.upsert({
-                ...record,
-                updated_at: record.updated_at || new Date().toISOString()
+                ...remoteRecord,
+                updated_at: remoteUpdatedAtString || new Date().toISOString()
               });
             } catch (err) {
-              console.error(`Error upserting record in ${name}:`, err);
+              console.error(`Error processing record ${remoteRecord.id} in ${name} during initial sync:`, err);
               failRecords++;
             }
           })
         );
-        console.log(`Initial sync of ${name} complete with ${data.length} records`);
+        console.log(`Initial sync phase 1 for ${name} complete: ${data.length - failRecords} server records processed, ${failRecords} failures/server records skipped.`);
+
+        // Phase 2: Handle purely local documents
+        const allLocalDocs = await collection.find().exec();
+        const serverDocIds = new Set(data.map(d => d.id));
+        let localDocsQueued = 0;
+
+        for (const localDocInDb of allLocalDocs) {
+          if (!serverDocIds.has(localDocInDb.id)) {
+            console.log(`Queueing purely local document ${localDocInDb.id} from ${name} for INSERT to Supabase.`);
+            this.queueChange(name, {
+              operation: 'INSERT',
+              documentId: localDocInDb.id,
+              documentData: localDocInDb.toJSON() as any,
+            } as RxChangeEvent<any>);
+            localDocsQueued++;
+          }
+        }
+        if (localDocsQueued > 0) {
+          console.log(`Queued ${localDocsQueued} purely local documents from ${name} for sync to Supabase.`);
+        }
+
       } catch (error) {
         console.error(`Error during initial sync of ${name}:`, error);
         toast({
@@ -200,21 +253,71 @@ export class SyncHandler {
   ) {
     try {
       const { eventType, new: newRecord, old: oldRecord } = payload;
+      const remoteId = eventType === 'DELETE' ? oldRecord.id : newRecord.id;
+      const remoteUpdatedAtString = eventType === 'DELETE' ? oldRecord.updated_at : newRecord.updated_at;
 
-      switch (eventType) {
-        case 'INSERT':
-        case 'UPDATE':
-          await collection.upsert({
-            ...newRecord,
-            updated_at: newRecord.updated_at || new Date().toISOString()
-          });
-          break;
-        case 'DELETE':
-          const doc = await collection.findOne(oldRecord.id).exec();
-          if (doc) {
-            await doc.remove();
+      if (!remoteId) {
+        console.warn('Supabase change came with no ID, skipping:', payload);
+        return;
+      }
+
+      // LWW for INSERT and UPDATE
+      if (eventType === 'INSERT' || eventType === 'UPDATE') {
+        if (!remoteUpdatedAtString) {
+          console.warn(`Skipping incoming Supabase ${eventType} for ${remoteId} in ${collection.name} due to missing updated_at.`, newRecord);
+          // Optionally, could upsert if this is acceptable non-LWW behavior for such cases
+          return;
+        }
+        const remoteUpdatedAt = new Date(remoteUpdatedAtString);
+
+        // Check against syncQueue
+        const queuedItem = this.syncQueue.find(
+          (item) => item.collection === collection.name && item.documentId === remoteId
+        );
+
+        if (queuedItem?.data?.updated_at) {
+          const queuedLocalUpdatedAt = new Date(queuedItem.data.updated_at as string);
+          if (queuedLocalUpdatedAt > remoteUpdatedAt) {
+            console.log(`Skipping incoming Supabase ${eventType} for ${remoteId} in ${collection.name} as a newer local change is already queued.`);
+            return;
           }
-          break;
+        }
+
+        // Check against existing local RxDB document
+        const localDoc = await collection.findOne(remoteId).exec();
+        if (localDoc && localDoc.updated_at) {
+          const localDocUpdatedAt = new Date(localDoc.updated_at);
+          if (localDocUpdatedAt >= remoteUpdatedAt) {
+            console.log(`Skipping incoming Supabase ${eventType} for ${remoteId} in ${collection.name} as local version is newer or same.`);
+            return;
+          }
+        }
+
+        console.log(`Applying incoming Supabase ${eventType} for ${remoteId} in ${collection.name}`);
+        await collection.upsert({
+          ...newRecord,
+          updated_at: remoteUpdatedAtString // Ensure we use the server's timestamp
+        });
+      } else if (eventType === 'DELETE') {
+        // Handle DELETE
+        const queuedItem = this.syncQueue.find(
+          (item) => item.collection === collection.name && item.documentId === remoteId
+        );
+        if (queuedItem) {
+          console.warn(`Warning: Deleting ${remoteId} locally in ${collection.name} due to Supabase change, but a pending local change for this document exists in the queue.`, queuedItem);
+          // Optional: More advanced handling could remove/modify the queued item.
+          // For example, if the queued item is an update for a now-deleted record,
+          // it might be safe to remove it from the queue.
+          // this.syncQueue = this.syncQueue.filter(item => item !== queuedItem);
+        }
+
+        console.log(`Applying incoming Supabase DELETE for ${remoteId} in ${collection.name}`);
+        const doc = await collection.findOne(remoteId).exec();
+        if (doc) {
+          await doc.remove();
+        } else {
+          console.log(`Document ${remoteId} not found locally, Supabase DELETE change for ${collection.name} might be for a record not yet synced or already deleted locally.`);
+        }
       }
     } catch (error) {
       console.error('Error handling Supabase change:', error);
@@ -245,10 +348,75 @@ export class SyncHandler {
             const { error: insertError } = await this.supabase
               .from(collectionName)
               .insert(doc);
-            if (insertError) throw insertError;
+            if (insertError) {
+              // Check for primary key violation (Supabase error code 23505)
+              if (insertError.code === '23505') {
+                console.log(`Insert conflict for ${doc.id} in ${collectionName}. Checking timestamps.`);
+                const { data: existingDoc, error: fetchError } = await this.supabase
+                  .from(collectionName)
+                  .select('id, updated_at')
+                  .eq('id', doc.id)
+                  .maybeSingle();
+
+                if (fetchError) {
+                  console.error(`Error fetching existing document during insert conflict: ${fetchError.message}`);
+                  throw insertError; // Re-throw original insert error
+                }
+
+                if (existingDoc && doc.updated_at && existingDoc.updated_at) {
+                  if (new Date(doc.updated_at as string) > new Date(existingDoc.updated_at)) {
+                    console.log(`Local insert for ${doc.id} is newer. Attempting update.`);
+                    const { error: conflictUpdateError } = await this.supabase
+                      .from(collectionName)
+                      .update(doc)
+                      .eq('id', doc.id);
+                    if (conflictUpdateError) {
+                      console.error(`Error updating document during insert conflict resolution: ${conflictUpdateError.message}`);
+                      throw conflictUpdateError;
+                    }
+                    console.log(`Successfully updated ${doc.id} after insert conflict.`);
+                  } else {
+                    console.log(`Skipping insert for document ${doc.id} in ${collectionName} as server version is newer or same during conflict.`);
+                    // Do nothing, effectively discarding the local insert as it's stale
+                  }
+                } else {
+                  // Should not happen if PK conflict occurred, but handle defensively
+                  console.warn(`Insert conflict for ${doc.id} but existing document not found or timestamps missing.`);
+                  throw insertError;
+                }
+              } else {
+                throw insertError; // Re-throw other insert errors
+              }
+            }
             break;
 
           case 'UPDATE':
+            // LWW: Fetch existing doc from Supabase to compare updated_at
+            const { data: existingDoc, error: fetchError } = await this.supabase
+              .from(collectionName)
+              .select('id, updated_at')
+              .eq('id', doc.id)
+              .maybeSingle();
+
+            if (fetchError) {
+              console.error(`Error fetching document ${doc.id} for LWW check: ${fetchError.message}`);
+              throw fetchError; // Throw error to be caught by retryWithBackoff
+            }
+
+            if (existingDoc && doc.updated_at && existingDoc.updated_at) {
+              if (new Date(doc.updated_at as string) <= new Date(existingDoc.updated_at)) {
+                console.log(`Skipping update for document ${doc.id} in ${collectionName} as server version is newer or same.`);
+                return; // Local change is older or same, so skip update
+              }
+            } else if (existingDoc && !doc.updated_at) {
+                // if local doesn't have updated_at, it's an old record or error, server version wins
+                console.log(`Skipping update for document ${doc.id} in ${collectionName} as local version has no updated_at.`);
+                return;
+            }
+            // If existingDoc is null, it means the doc was deleted on the server.
+            // Proceed with the update, which might fail or effectively be an insert if RLS allows.
+            // Or, if local doc.updated_at is missing, but server one is not (should not happen with existingDoc check)
+
             const { error: updateError } = await this.supabase
               .from(collectionName)
               .update(doc)
@@ -282,8 +450,7 @@ export class SyncHandler {
       operation: changeEvent.operation,
       documentId: changeEvent.documentId,
       data: {
-        ...changeEvent.documentData,
-        updated_at: new Date().toISOString()
+        ...changeEvent.documentData
       },
       timestamp: Date.now(),
       retryCount: 0
