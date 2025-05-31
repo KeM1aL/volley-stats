@@ -7,6 +7,7 @@ import { retryWithBackoff } from '@/lib/utils/retry';
 import { CollectionName } from '../schema';
 import { Subscription } from 'rxjs';
 import { toast } from '@/hooks/use-toast';
+import { update } from 'rxdb/plugins/update';
 
 interface SyncQueueItem<T = any> {
   collection: CollectionName;
@@ -217,7 +218,7 @@ export class SyncHandler {
     }
   }
 
-  private async setupCollectionSync<T extends { id: string }>(name: CollectionName, collection: RxCollection<T>) {
+  private async setupCollectionSync<T extends { id: string, updated_at: string }>(name: CollectionName, collection: RxCollection<T>) {
     const subscription = collection.$.subscribe(async (changeEvent: RxChangeEvent<T>) => {
       if (!this.isOnline) {
         this.queueChange(name, changeEvent);
@@ -329,7 +330,7 @@ export class SyncHandler {
     }
   }
 
-  private async syncToSupabase<T extends { id: string }>(
+  private async syncToSupabase<T extends { id: string, updated_at: string }>(
     collectionName: CollectionName,
     changeEvent: RxChangeEvent<T>
   ) {
