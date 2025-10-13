@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Volleyball, Trophy, BarChart3, Users } from "lucide-react";
+import { MoveRight } from "lucide-react";
+import { FeaturesSection } from "@/components/landing/features-section";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,67 +21,21 @@ export default async function Home() {
           Track, analyze, and improve your team's performance with simple analytics
         </p>
         {!user && <div className="flex flex-wrap justify-center gap-4">
-          <Button asChild size="lg">
+          <Button asChild size="lg" className="group">
             <Link href="/auth">
               Get Started
+              <MoveRight className="inline-block w-5 h-5 ml-2 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="#features">
+              Learn More
             </Link>
           </Button>
         </div>}
       </section>
 
-      <section className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader>
-            <Volleyball className="h-8 w-8 mb-2 text-primary" />
-            <CardTitle>Match Tracking</CardTitle>
-            <CardDescription>
-              Real-time statistics and scoring
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            Track serves, attacks, blocks, and more during live matches with our intuitive interface.
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <Trophy className="h-8 w-8 mb-2 text-primary" />
-            <CardTitle>Team Management</CardTitle>
-            <CardDescription>
-              Organize players and teams
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            Manage multiple teams, player rosters, and track individual performance metrics.
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <BarChart3 className="h-8 w-8 mb-2 text-primary" />
-            <CardTitle>Advanced Analytics</CardTitle>
-            <CardDescription>
-              Detailed performance insights
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            Analyze team and player statistics with comprehensive charts and reports.
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <Users className="h-8 w-8 mb-2 text-primary" />
-            <CardTitle>Collaboration</CardTitle>
-            <CardDescription>
-              Share and export data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            Export statistics to CSV/PDF and share match results with team members.
-          </CardContent>
-        </Card>
-      </section>
+      <FeaturesSection />
     </div>
   );
 }

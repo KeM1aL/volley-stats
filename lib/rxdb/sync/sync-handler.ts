@@ -159,7 +159,7 @@ export class SyncHandler {
                 const localDocUpdatedAt = new Date(localDoc.updated_at);
 
                 if (localDocUpdatedAt >= remoteUpdatedAt) {
-                  console.log(`Skipping initial sync for record ${remoteId} in ${name} as local version is newer or same.`);
+                  console.debug(`Skipping initial sync for record ${remoteId} in ${name} as local version is newer or same.`);
                   // If local is newer, queue it for update to Supabase
                   if (localDocUpdatedAt > remoteUpdatedAt) {
                     console.log(`Queueing local document ${localDoc.id} from ${name} for UPDATE to Supabase as it's newer than server version.`);

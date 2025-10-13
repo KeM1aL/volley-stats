@@ -79,6 +79,7 @@ export function StatTracker({
 
   useEffect(() => {
     const loadData = async () => {
+      console.log('Loaded data')
       const setPlayerIds = Object.values(currentSet.current_lineup);
       const players: Player[] = [];
       for (const playerId of setPlayerIds) {
@@ -104,7 +105,7 @@ export function StatTracker({
       setIsLoading(true);
     }
     loadData();
-  }, [match.id, currentSet]);
+  }, [match.id, currentSet.id]);
 
   useEffect(() => {
     const updateData = async () => {
@@ -121,7 +122,7 @@ export function StatTracker({
      
     };
     updateData();
-  }, [match.id, currentSet.server_team_id]);
+  }, [match.id, currentSet]);
 
   const recordStat = async (type: StatType, result: StatResult) => {
     if (!selectedPlayer) {

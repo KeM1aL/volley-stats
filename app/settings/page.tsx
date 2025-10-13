@@ -120,6 +120,7 @@ export default function SettingsPage() {
         ["player_stats", db.player_stats],
         ["score_points", db.score_points],
         ["substitutions", db.substitutions],
+        ["events", db.events],
       ]);
       const entries = Array.from(collections.entries());
       for (const [name, collection] of entries) {

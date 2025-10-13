@@ -1,18 +1,114 @@
 import { toTypedRxJsonSchema } from "rxdb";
 
 export type CollectionName =
+  | "championships"
+  | "match_formats"
+  | "seasons"
   | "teams"
   | "players"
   | "matches"
   | "sets"
   | "substitutions"
   | "score_points"
-  | "player_stats";
+  | "player_stats"
+  | "events";
 
 const timestampFields = {
   created_at: { type: "string", "format": "date-time", maxLength: 32 },
   updated_at: { type: "string", "format": "date-time", maxLength: 32 },
 };
+
+// Championship Schema
+export const championshipSchema = toTypedRxJsonSchema({
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+    id: { type: "string", maxLength: 8 },
+    name: { type: "string" },
+    type: { type: "string" },
+    metadata: { type: "string" },
+    default_match_format: { type: "number" },
+    format: {
+      type: "string",
+      enum: ["4x4", "6x6"],
+      maxLength: 6,
+    },
+    age_category: {
+      type: "string",
+      enum: ["U10", "U12", "U14", "U16", "U18", "U21", "senior"],
+      maxLength: 6,
+    },
+    gender: {
+      type: "string",
+      enum: ["female", "male"],
+      maxLength: 6,
+    },
+    ...timestampFields,
+  },
+  required: [
+    "id",
+    "name",
+    "created_at",
+    "updated_at",
+  ],
+  indexes: [
+    "created_at",
+    "updated_at",
+  ],
+});
+
+// Season Schema
+export const seasonSchema = toTypedRxJsonSchema({
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+      id: { type: "string", maxLength: 8 },
+    name: { type: "string" },
+    start_date: { type: "string" },
+    end_date: { type: "string" },
+    ...timestampFields,
+  },
+  required: [
+    "id",
+    "name",
+    "created_at",
+    "updated_at",
+  ],
+  indexes: [
+    "created_at",
+    "updated_at",
+  ],
+});
+
+// Match Format Schema
+export const matchFormatSchema = toTypedRxJsonSchema({
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+    id: { type: "string", maxLength: 8 },
+    description: { type: "string" },
+    sets_to_win: { type: "number" },
+    rotation: { type: "boolean" },
+    point_by_set: { type: "number" },
+    point_final_set: { type: "number" },
+    decisive_point: { type: "boolean" },
+    ...timestampFields,
+  },
+  required: [
+    "id",
+    "sets_to_win",
+    "rotation",
+    "point_by_set",
+    "point_final_set",
+    "decisive_point", "created_at", "updated_at"
+  ],
+  indexes: [
+    "created_at", "updated_at"
+  ],
+});
 
 // Team Schema
 export const teamSchema = toTypedRxJsonSchema({
@@ -23,6 +119,7 @@ export const teamSchema = toTypedRxJsonSchema({
     id: { type: "string", maxLength: 36 },
     name: { type: "string" },
     user_id: { type: "string", maxLength: 36 },
+    championship_id: { type: ["number", "null"] },
     ...timestampFields,
   },
   required: ["id", "name", "user_id", "created_at", "updated_at"],
@@ -68,6 +165,8 @@ export const matchSchema = toTypedRxJsonSchema({
     away_team_id: { type: "string", maxLength: 36 },
     home_score: { type: "number" },
     away_score: { type: "number" },
+    match_format: { type: "number" },
+    season_id: { type: "number" },
     status: {
       type: "string",
       enum: ["upcoming", "live", "completed"],
@@ -249,4 +348,38 @@ export const playerStatSchema = toTypedRxJsonSchema({
     "updated_at",
   ],
   indexes: ["match_id", "set_id", "player_id", "created_at", "updated_at"],
+});
+
+// Event Schema
+export const eventSchema = toTypedRxJsonSchema({
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+    id: { type: "string", maxLength: 36 },
+    team_id: { type: "string", maxLength: 36 },
+    match_id: { type: "string", maxLength: 36 },
+    set_id: { type: "string", maxLength: 36 },
+    home_score: { type: "number" },
+    away_score: { type: "number" },
+    type: { type: "string" },
+    comment: { type: "string" },
+    ...timestampFields,
+  },
+  required: [
+    "id",
+    "team_id",
+    "match_id",
+    "set_id",
+    "type",
+    "created_at",
+    "updated_at"
+  ],
+  indexes: [
+    "team_id",
+    "match_id",
+    "set_id",
+    "created_at",
+    "updated_at",
+  ],
 });

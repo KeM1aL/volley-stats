@@ -1,8 +1,44 @@
 import { PlayerPosition, PlayerRole } from "./enums";
 
+export type Championship = {
+  id: number;
+  name: string;
+  type: string;
+  metadata: string;
+  default_match_format: number;
+  format: '4x4' | '6x6';
+  age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior';
+  gender: 'female' | 'male';
+  created_at: string;
+  updated_at: string;
+};
+
+export type Season = {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MatchFormat = {
+  id: number;
+  description: string;
+  sets_to_win: number;
+  rotation: boolean;
+  point_by_set: number;
+  point_final_set: number;
+  decisive_point: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Team = {
   id: string;
   name: string;
+  championship_id: number | null;
+  championship?: Championship;
   created_at: string;
   updated_at: string;
   user_id: string;
@@ -13,7 +49,7 @@ export type Player = {
   team_id: string;
   name: string;
   number: number;
-  role: string;
+  role: PlayerRole;
   avatar_url?: string | null;
   created_at: string;
   updated_at: string;
@@ -62,6 +98,19 @@ export type Substitution = {
   position: string;
   comments: string;
   timestamp: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Event = {
+  id: string;
+  team_id: string;
+  match_id: string;
+  set_id: string;
+  home_score: number;
+  away_score: number;
+  type: string;
+  comment: string;
   created_at: string;
   updated_at: string;
 };

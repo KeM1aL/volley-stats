@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -22,16 +22,17 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Team } from "@/lib/types";
-import { supabase } from "@/lib/supabase/client";
+import { Championship, Team } from "@/lib/types";
 import { useLocalDb } from "@/components/providers/local-database-provider";
+import { ChampionshipSelect } from "../championships/championship-select";
 
 const formSchema = z.object({
   name: z.string().min(1, "Team name is required"),
+  championship: z.custom<Championship | null>(() => true).nullable(),
 });
 
 type EditTeamDialogProps = {
-  team: Team | null;
+  team: (Team & { championship?: Championship }) | null;
   onClose: () => void;
 };
 
@@ -45,26 +46,28 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: team?.name || "",
+      championship: team?.championship || null,
     },
   });
+
+  useEffect(() => {
+    if (team) {
+      form.reset({
+        name: team.name,
+        championship: team.championship || null,
+      });
+    }
+  }, [team, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!team) return;
 
     setIsLoading(true);
     try {
-      // const { data, error } = await supabase
-      //   .from("teams")
-      //   .update({ name: values.name })
-      //   .eq("id", team.id)
-      //   .select()
-      //   .single();
-
-      // if (error) throw error;
-
       await db?.teams.findOne(team.id).update({
-        $set: { 
+        $set: {
           name: values.name,
+          championship_id: values.championship?.id ?? null,
           updated_at: new Date().toISOString(),
         },
       });
@@ -104,6 +107,23 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="championship"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Championship</FormLabel>
+                  <FormControl>
+                    <ChampionshipSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      isClearable
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
