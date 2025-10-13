@@ -109,7 +109,7 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
       storage: getStorage()
     }),
     multiInstance: true,
-    ignoreDuplicate: true,
+    ignoreDuplicate: false,
   }).then(async (db) => {
     // Create collections
     try {
