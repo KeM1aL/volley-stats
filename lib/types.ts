@@ -49,7 +49,7 @@ export type Player = {
   team_id: string;
   name: string;
   number: number;
-  role: PlayerRole;
+  role: string;
   avatar_url?: string | null;
   created_at: string;
   updated_at: string;
