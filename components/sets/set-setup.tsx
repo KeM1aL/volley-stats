@@ -297,6 +297,7 @@ export function SetSetup({
             <Label>Libero</Label>
             <div className="flex flex-row items-center space-x-1">
               <Select
+                defaultValue={null as unknown as string}
                 onValueChange={(value) =>
                   setLineup((prev) => ({
                     ...prev,
