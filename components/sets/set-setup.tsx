@@ -84,11 +84,45 @@ export function SetSetup({
         ...prev,
         [selectedPosition]: selectedPlayer.id,
       }));
+    }
+  }, [selectedRole, selectedPlayer, selectedPosition]);
+
+  const handleSelectPlayer = async (player: Player) => {
+    setSelectedPlayer(player);
+    if(player.role) {
+      setSelectedRole(player.role as PlayerRole);
+    } else {
+      setSelectedRole(null);
+    }
+  }
+
+  const handleSelectPosition = async (position: PlayerPosition | null) => {
+    if(!position) {
       setSelectedPosition(null);
       setSelectedRole(null);
       setSelectedPlayer(null);
+      return;
     }
-  }, [selectedRole, selectedPlayer, selectedPosition]);
+    if (positions[position]) {
+      let playerId = positions[position];
+      let player = playerById.get(playerId);
+      if (player) {
+        setSelectedPlayer(player);
+      } else {
+        setSelectedPlayer(null);
+      }
+      const role = Object.keys(lineup).find(role => lineup[role as PlayerRole].includes(playerId));
+      if (role) {
+        setSelectedRole(role as PlayerRole);
+      } else {
+        setSelectedRole(null);
+      }
+    } else {
+      setSelectedPlayer(null);
+      setSelectedRole(null);
+    }
+    setSelectedPosition(position);
+  }
 
   const handleComplete = async () => {
     // setIsLoading(true);
@@ -203,22 +237,33 @@ export function SetSetup({
             players={players}
             playerById={playerById}
             lineup={positions}
-            onSelect={setSelectedPosition}
+            onSelect={handleSelectPosition}
           />
 
           {selectedPosition && (
             <Card className="p-1 space-y-2 border-indigo-500/100">
+              <PlayerSelector
+                players={players.filter((player) =>
+                  Object.entries(positions).every(
+                    ([key, value]) =>
+                      key === selectedPosition || value !== player.id
+                  )
+                )}
+                selectedPlayer={selectedPlayer}
+                onPlayerSelect={handleSelectPlayer}
+              />
               <div className="grid grid-cols-4 gap-6">
                 <div className="col-span-2 col-start-2">
-                  <Label>Role</Label>
+                  <Label>Role {selectedRole}</Label>
                   <div className="flex flex-row items-center space-x-1">
                     <Select
+                      value={selectedRole ? selectedRole as string : undefined}
                       onValueChange={(value: PlayerRole) => {
                         setSelectedRole(value);
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={`Select role`} />
+                        <SelectValue placeholder={`Select role`}  />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.values(PlayerRole)
@@ -244,16 +289,6 @@ export function SetSetup({
                   </div>
                 </div>
               </div>
-              <PlayerSelector
-                players={players.filter((player) =>
-                  Object.entries(positions).every(
-                    ([key, value]) =>
-                      key === selectedPosition || value !== player.id
-                  )
-                )}
-                selectedPlayer={selectedPlayer}
-                onPlayerSelect={setSelectedPlayer}
-              />
             </Card>
           )}
         </div>
