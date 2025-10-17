@@ -44,13 +44,16 @@ export type Team = {
   user_id: string;
 };
 
-export type Player = {
+export type TeamMember = {
   id: string;
   team_id: string;
   name: string;
   number: number;
-  role: string;
+  position: string;
+  user_id?: string | null;
+  role?: 'owner'| 'coach' | 'staff' | 'player' | null;
   avatar_url?: string | null;
+  comments?: string | null;
   created_at: string;
   updated_at: string;
 };

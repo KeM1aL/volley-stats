@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Player } from "@/lib/types";
+import { TeamMember } from "@/lib/types";
 import { PlayerPosition } from "@/lib/enums";
 
 interface CourtDiagramProps {
-  players: Player[];
-  playerById: Map<string, Player>;
+  players: TeamMember[];
+  playerById: Map<string, TeamMember>;
   lineup: { [key in PlayerPosition]: string };
   className?: string;
   onSelect?: (position: PlayerPosition | null) => void;

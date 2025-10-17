@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { createClient } from "@/lib/supabase/client";
-import { Match, Set, ScorePoint, Player } from "@/lib/types";
+import { Match, Set, ScorePoint, TeamMember } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type StatisticsDialogProps = {
@@ -30,7 +30,7 @@ type StatisticsDialogProps = {
 export function StatisticsDialog({ match, onClose }: StatisticsDialogProps) {
   const [sets, setSets] = useState<Set[]>([]);
   const [points, setPoints] = useState<ScorePoint[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function StatisticsDialog({ match, onClose }: StatisticsDialogProps) {
         supabase.from("sets").select("*").eq("match_id", match.id),
         supabase.from("score_points").select("*").eq("match_id", match.id),
         supabase
-          .from("players")
+          .from("team_members")
           .select("*")
           .in("team_id", [match.home_team_id, match.away_team_id]),
       ]);

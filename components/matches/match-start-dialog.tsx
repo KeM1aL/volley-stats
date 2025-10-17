@@ -1,6 +1,6 @@
 "use client";
 
-import type { Match, Player, Team } from "@/lib/types";
+import type { Match, TeamMember, Team } from "@/lib/types";
 import { MatchLineupSetup } from "@/components/matches/match-lineup-setup";
 import {
   Dialog,
@@ -29,7 +29,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   const [managedTeam, setManagedTeam] = useState<Team | null>(null);
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);
   const [awayTeam, setAwayTeam] = useState<Team | null>(null);
-  const [players, setPlayers] = useState<Player[] | null>(null);
+  const [players, setPlayers] = useState<TeamMember[] | null>(null);
   const [availablePlayers, setAvailablePlayers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
@@ -79,7 +79,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
 
       // if (playersResponse.error) throw playersResponse.error;
 
-      const playerDocs = await db.players
+      const playerDocs = await db.team_members
         .find({
           selector: {
             team_id: team.id as string,

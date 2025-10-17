@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlayerStat, Team, Player, Set, Match } from "@/lib/types";
+import { PlayerStat, Team, TeamMember, Set, Match } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -37,7 +37,7 @@ interface PlayerPerformanceProps {
   match: Match;
   managedTeam: Team;
   opponentTeam: Team;
-  players: Player[];
+  players: TeamMember[];
   stats: PlayerStat[];
   sets: Set[];
 }

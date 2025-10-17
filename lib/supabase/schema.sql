@@ -9,18 +9,23 @@ create table if not exists public.teams (
 
 alter publication supabase_realtime add table "public"."teams";
 
-create table if not exists public.players (
+-- Create an enum type for team member roles
+create type public.team_member_role as enum ('owner', 'coach', 'staff', 'player');
+
+create table if not exists public.team_members (
   id uuid default gen_random_uuid() primary key,
-  team_id uuid references public.teams(id) not null,
+  team_id uuid references public.teams(id) on delete cascade not null,
   name text not null,
   number integer not null,
-  role text not null,
+  position text not null, -- player's position
+  user_id uuid references auth.users(id),
+  role public.team_member_role not null default 'player',
   avatar_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
-alter publication supabase_realtime add table "public"."players";
+alter publication supabase_realtime add table "public"."team_members";
 
 create table if not exists public.matches (
   id uuid default gen_random_uuid() primary key,
@@ -54,7 +59,7 @@ create table if not exists public.sets (
   current_lineup jsonb not null default '{}'::jsonb,
   first_lineup jsonb not null default '{}'::jsonb,
   player_roles jsonb not null default '{}'::jsonb,
-  constraint status_check check (status in ('upcoming', 'live', 'completed')),
+  constraint status_check check (status in ('upcoming', 'live', 'completed'))
 );
 
 alter publication supabase_realtime add table "public"."sets";
@@ -64,8 +69,8 @@ alter publication supabase_realtime add table "public"."sets";
   match_id uuid references public.matches(id) not null,
   team_id uuid references public.teams(id) not null,
   set_id uuid references public.sets(id) not null,
-  player_out_id uuid references public.players(id) not null,
-  player_in_id uuid references public.players(id) not null,
+  player_out_id uuid references public.team_members(id) not null,
+  player_in_id uuid references public.team_members(id) not null,
   position text not null,
   comments text,
   timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
@@ -80,18 +85,18 @@ create table if not exists public.score_points (
   id uuid default gen_random_uuid() primary key,
   match_id uuid references public.matches(id) not null,
   set_id uuid references public.sets(id) not null,
-  player_stat_id uuid references public.player_stats(id),
+  player_stat_id uuid,
   scoring_team_id uuid references public.teams(id) not null,
   action_team_id uuid references public.teams(id) not null,
   result text not null check (result in ('success', 'error')),
   point_type text not null check (point_type in ('serve', 'spike', 'block', 'reception', 'defense', 'unknown')),
-  player_id uuid references public.players(id),
+  player_id uuid references public.team_members(id),
   timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   home_score integer not null,
   away_score integer not null,
-  current_rotation jsonb not null,
+  current_rotation jsonb not null
 );
 
 alter publication supabase_realtime add table "public"."score_points";
@@ -101,7 +106,7 @@ create table if not exists public.player_stats (
   match_id uuid references public.matches(id) not null,
   set_id uuid references public.sets(id) not null,
   team_id uuid references public.teams(id) not null,
-  player_id uuid references public.players(id) not null,
+  player_id uuid references public.team_members(id) not null,
   position text check (position in ('p1', 'p2', 'p3', 'p4', 'p5', 'p6')),
   stat_type text not null,
   result text not null,
@@ -112,6 +117,9 @@ create table if not exists public.player_stats (
 );
 
 alter publication supabase_realtime add table "public"."player_stats";
+
+alter table public.score_points add constraint fk_player_stat_id foreign key (player_stat_id) references public.player_stats(id);
+
 
 -- Create function to update timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -128,8 +136,8 @@ CREATE TRIGGER update_teams_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_players_updated_at
-    BEFORE UPDATE ON public.players
+CREATE TRIGGER update_team_members_updated_at
+    BEFORE UPDATE ON public.team_members
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -160,7 +168,7 @@ CREATE TRIGGER update_player_stats_updated_at
 
 -- Add indexes for timestamp columns
 CREATE INDEX idx_teams_timestamps ON public.teams (created_at, updated_at);
-CREATE INDEX idx_players_timestamps ON public.players (created_at, updated_at);
+CREATE INDEX idx_team_members_timestamps ON public.team_members (created_at, updated_at);
 CREATE INDEX idx_matches_timestamps ON public.matches (created_at, updated_at);
 CREATE INDEX idx_sets_timestamps ON public.sets (created_at, updated_at);
 CREATE INDEX idx_substitutions_timestamps ON public.substitutions (created_at, updated_at);
@@ -169,7 +177,7 @@ CREATE INDEX idx_player_stats_timestamps ON public.player_stats (created_at, upd
 
 -- Set up row level security
 alter table public.teams enable row level security;
-alter table public.players enable row level security;
+alter table public.team_members enable row level security;
 alter table public.matches enable row level security;
 alter table public.sets enable row level security;
 alter table public.substitutions enable row level security;
@@ -193,20 +201,20 @@ create policy "Users can delete their own teams"
   on public.teams for delete
   using (auth.uid() = user_id);
 
--- Players policies
-create policy "Users can view players from their teams"
-  on public.players for select
+-- Team Members policies
+create policy "Team members can view players from their teams"
+  on public.team_members for select
   using (exists (
     select 1 from public.teams
-    where teams.id = players.team_id
+    where teams.id = team_members.team_id
     and teams.user_id = auth.uid()
   ));
 
-create policy "Users can manage players from their teams"
-  on public.players for all
+create policy "Team owners and editors can manage players from their teams"
+  on public.team_members for all
   using (exists (
     select 1 from public.teams
-    where teams.id = players.team_id
+    where teams.id = team_members.team_id
     and teams.user_id = auth.uid()
   ));
 

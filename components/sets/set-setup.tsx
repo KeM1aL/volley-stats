@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { PlayerPosition, PlayerRole } from "@/lib/enums";
 import { toast } from "@/hooks/use-toast";
-import { Match, Player, Set, Team } from "@/lib/types";
+import { Match, TeamMember, Set, Team } from "@/lib/types";
 import { string } from "zod";
 import { CourtDiagram } from "../matches/live/court-diagram";
 import { PlayerSelector } from "../matches/live/player-selector";
@@ -22,8 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 type SetSetupProps = {
   match: Match;
   sets: Set[];
-  players: Player[];
-  playerById: Map<string, Player>;
+  players: TeamMember[];
+  playerById: Map<string, TeamMember>;
   homeTeam: Team;
   awayTeam: Team;
   setNumber: number;
@@ -50,7 +50,7 @@ export function SetSetup({
   const [selectedPosition, setSelectedPosition] =
     useState<PlayerPosition | null>(null);
   const [selectedRole, setSelectedRole] = useState<PlayerRole | null>(null);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<TeamMember | null>(null);
   const [serverTeamId, setServerTeamId] = useState<string | null>(null);
   const [lineup, setLineup] = useState<Record<PlayerRole, string[]>>(
     {} as Record<PlayerRole, string[]>
@@ -87,10 +87,10 @@ export function SetSetup({
     }
   }, [selectedRole, selectedPlayer, selectedPosition]);
 
-  const handleSelectPlayer = async (player: Player) => {
+  const handleSelectPlayer = async (player: TeamMember) => {
     setSelectedPlayer(player);
-    if(player.role) {
-      setSelectedRole(player.role as PlayerRole);
+    if(player.position) {
+      setSelectedRole(player.position as PlayerRole);
     } else {
       setSelectedRole(null);
     }

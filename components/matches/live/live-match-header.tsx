@@ -1,6 +1,6 @@
 "use client";
 
-import { Match, Set, Team } from "@/lib/types";
+import { Match, Set, Team, TeamMember } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { MatchScoreDetails } from "../match-score-details";
 

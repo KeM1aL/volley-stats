@@ -24,21 +24,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Player } from "@/lib/types";
+import { TeamMember } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { deleteAvatar } from "@/lib/supabase/storage";
 
 type PlayerTableProps = {
-  players: Player[];
-  onEdit: (player: Player) => void;
-  onPlayersChange: (players: Player[]) => void;
+  players: TeamMember[];
+  onEdit: (player: TeamMember) => void;
+  onPlayersChange: (players: TeamMember[]) => void;
 };
 
 export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTableProps) {
   const { localDb: db } = useLocalDb();
   const { toast } = useToast();
-  const [deletePlayer, setDeletePlayer] = useState<Player | null>(null);
+  const [deletePlayer, setDeletePlayer] = useState<TeamMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -57,7 +57,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
 
       // if (error) throw error;
 
-      await db?.players.findOne(deletePlayer.id).remove();
+      await db?.team_members.findOne(deletePlayer.id).remove();
 
       onPlayersChange(players.filter(p => p.id !== deletePlayer.id));
 
@@ -87,6 +87,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
             <TableHead>#</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Position</TableHead>
+            <TableHead>Role</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -106,7 +107,8 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
               </TableCell>
               <TableCell>{player.number}</TableCell>
               <TableCell className="font-medium">{player.name}</TableCell>
-              <TableCell>{player.role}</TableCell>
+              <TableCell>{player.position}</TableCell>
+              <TableCell className="capitalize">{player.role}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button

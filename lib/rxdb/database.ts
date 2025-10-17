@@ -6,7 +6,7 @@ import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
-import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
+import { wrappedValidateAjvStorage } from "rxdb/plugins/validate-ajv";
 import {
   teamSchema,
   playerSchema,
@@ -22,7 +22,7 @@ import {
 } from './schema';
 import type {
   Team,
-  Player,
+  TeamMember,
   Match,
   Set,
   PlayerStat,
@@ -46,7 +46,7 @@ type DatabaseCollections = {
   seasons: RxCollection<Season>;
   events: RxCollection<Event>;
   teams: RxCollection<Team>;
-  players: RxCollection<Player>;
+  team_members: RxCollection<TeamMember>;
   matches: RxCollection<Match>;
   sets: RxCollection<Set>;
   substitutions: RxCollection<Substitution>;
@@ -126,7 +126,7 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
         teams: {
           schema: teamSchema,
         },
-        players: {
+        team_members: {
           schema: playerSchema,
         },
         matches: {

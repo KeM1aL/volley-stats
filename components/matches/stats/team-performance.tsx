@@ -30,7 +30,7 @@ import {
   PlayerStat,
   ScorePoint,
   Set,
-  Player,
+  TeamMember,
   Team,
 } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -62,7 +62,7 @@ interface TeamPerformanceProps {
   sets: Set[];
   points: ScorePoint[];
   stats: PlayerStat[];
-  players: Player[];
+  players: TeamMember[];
 }
 
 export function TeamPerformance({

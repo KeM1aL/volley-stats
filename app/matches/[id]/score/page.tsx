@@ -11,7 +11,7 @@ import { Download, Share2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import type {
   Match,
-  Player,
+  TeamMember,
   PlayerStat,
   ScorePoint,
   Set,
@@ -42,8 +42,8 @@ export default function LiveScorePage() {
   const [points, setPoints] = useState<ScorePoint[]>([]);
   const [stats, setStats] = useState<PlayerStat[]>([]);
   const [sets, setSets] = useState<Set[]>([]);
-  const [set, setSet] = useState<Set>();
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [set, setSet] = useState<Set | undefined>();
+  const [players, setPlayers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -105,8 +105,8 @@ export default function LiveScorePage() {
             ? matchData.home_available_players
             : matchData.away_available_players;
         const { data: availablePlayersData, error: availablePlayersError } =
-          await supabase
-            .from("players")
+          await supabase // @ts-ignore
+            .from("team_members")
             .select("*")
             .in("id", playerIds as string[]);
         if (availablePlayersError) throw availablePlayersError;

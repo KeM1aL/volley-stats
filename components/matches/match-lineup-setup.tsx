@@ -4,7 +4,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Match, Player, Team } from "@/lib/types";
+import { Match, TeamMember, Team } from "@/lib/types";
 import { Check } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 
 type MatchSetupProps = {
   match: Match;
-  players: Player[]
+  players: TeamMember[]
   availablePlayers: string[]
   setAvailablePlayers: Dispatch<SetStateAction<string[]>>
 };
@@ -21,7 +21,7 @@ export function MatchLineupSetup({ match, players, availablePlayers, setAvailabl
   const { localDb: db } = useLocalDb();
   const [isLoading, setIsLoading] = useState(false);
 
-  const sortPlayers = (a: Player, b: Player) => {
+  const sortPlayers = (a: TeamMember, b: TeamMember) => {
     const aLower = a.name.toLowerCase();
     const bLower = b.name.toLowerCase();
 
@@ -30,7 +30,7 @@ export function MatchLineupSetup({ match, players, availablePlayers, setAvailabl
     return 0;
   };
 
-  const togglePlayerAvailability = (player: Player) => {
+  const togglePlayerAvailability = (player: TeamMember) => {
     if (availablePlayers.includes(player.id)) {
       setAvailablePlayers(availablePlayers.filter((id) => id !== player.id));
     } else {

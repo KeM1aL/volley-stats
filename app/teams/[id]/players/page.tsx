@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,38 +10,39 @@ import { NewPlayerDialog } from "@/components/players/new-player-dialog";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Player, Team } from "@/lib/types";
+import { TeamMember, Team } from "@/lib/types";
 
 export default function PlayersPage() {
   const params = useParams();
   const router = useRouter();
   const { localDb: db } = useLocalDb();
   const [team, setTeam] = useState<Team | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [players, setPlayers] = useState<TeamMember[]>([]);
+  const [editingPlayer, setEditingPlayer] = useState<TeamMember | null>(null);
   const [isNewPlayerOpen, setIsNewPlayerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    const supabase = createClient();
+    const teamId = params.id as string;
+
+    const [teamResponse, playersResponse] = await Promise.all([
+      supabase.from("teams").select("*").eq("id", teamId).single(),
+      supabase.from("team_members").select("*").eq("team_id", teamId),
+    ]);
+
+    if (teamResponse.error) throw teamResponse.error;
+    if (playersResponse.error) throw playersResponse.error;
+
+    setTeam(teamResponse.data);
+    setPlayers(playersResponse.data);
+    setIsLoading(false);
+  }, [params.id]);
+
   useEffect(() => {
-    const loadData = async () => {
-      const supabase = createClient();
-      const teamId = params.id as string;
-
-      const [teamResponse, playersResponse] = await Promise.all([
-        supabase.from("teams").select("*").eq("id", teamId).single(),
-        supabase.from("players").select("*").eq("team_id", teamId),
-      ]);
-
-      if (teamResponse.error) throw teamResponse.error;
-      if (playersResponse.error) throw playersResponse.error;
-
-      setTeam(teamResponse.data);
-      setPlayers(playersResponse.data);
-      setIsLoading(false);
-    };
-
     loadData();
-  }, [db, params.id]);
+  }, [loadData]);
 
   if (isLoading) {
     return <Skeleton className="h-[600px] w-full" />;
@@ -73,20 +74,14 @@ export default function PlayersPage() {
       <EditPlayerDialog
         player={editingPlayer}
         onClose={() => setEditingPlayer(null)}
-        onPlayerUpdated={(updatedPlayer) => {
-          setPlayers(players.map(p => 
-            p.id === updatedPlayer.id ? updatedPlayer : p
-          ));
-        }}
+        onPlayerUpdated={() => loadData()}
       />
 
       <NewPlayerDialog
         teamId={team.id}
         open={isNewPlayerOpen}
         onClose={() => setIsNewPlayerOpen(false)}
-        onPlayerCreated={(newPlayer) => {
-          setPlayers([...players, newPlayer]);
-        }}
+        onPlayerCreated={() => loadData()}
       />
     </div>
   );

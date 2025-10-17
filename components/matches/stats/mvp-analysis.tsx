@@ -1,6 +1,6 @@
 "use client";
 
-import { PlayerStat, Player, Set } from "@/lib/types";
+import { PlayerStat, TeamMember, Set } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateMVPScore } from "@/lib/stats/calculations";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,7 +8,7 @@ import { Trophy } from "lucide-react";
 
 interface MVPCalculatorProps {
   stats: PlayerStat[];
-  players: Player[];
+  players: TeamMember[];
   sets: Set[];
 }
 

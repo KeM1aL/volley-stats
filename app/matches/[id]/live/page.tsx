@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
   Match,
-  Player,
+  TeamMember,
   PlayerStat,
   ScorePoint,
   Set,
@@ -49,8 +49,8 @@ export default function LiveMatchPage() {
   const { localDb: db } = useLocalDb();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
-  const [teamPlayers, setTeamPlayers] = useState<Player[]>([]);
-  const [teamPlayerById, setTeamPlayerById] = useState<Map<string, Player>>(new Map());
+  const [teamPlayers, setTeamPlayers] = useState<TeamMember[]>([]);
+  const [teamPlayerById, setTeamPlayerById] = useState<Map<string, TeamMember>>(new Map());
   const [homeTeam, setHomeTeam] = useState<Team>();
   const [awayTeam, setAwayTeam] = useState<Team>();
   const [managedTeam, setManagedTeam] = useState<Team>();
@@ -60,7 +60,7 @@ export default function LiveMatchPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      const playerById: Map<string, Player> = new Map();
+      const playerById: Map<string, TeamMember> = new Map();
       teamPlayers.forEach((player) => {
         playerById.set(player.id, player);
       });
@@ -122,7 +122,7 @@ export default function LiveMatchPage() {
         teamId === match.home_team_id
           ? match.home_available_players
           : match.away_available_players;
-      const availablePlayerDocs = await db.players.findByIds(playerIds as string[]).exec();
+      const availablePlayerDocs = await db.team_members.findByIds(playerIds as string[]).exec();
       if (availablePlayerDocs) {
         setTeamPlayers(
           Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())

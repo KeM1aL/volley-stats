@@ -5,7 +5,7 @@ import {
   Match,
   Set,
   ScorePoint,
-  Player,
+  TeamMember,
   Substitution,
   Team,
 } from "@/lib/types";
@@ -23,8 +23,8 @@ type ScoreBoardProps = {
   set: Set;
   score: Score;
   managedTeam: Team;
-  players: Player[];
-  playerById: Map<string, Player>;
+  players: TeamMember[];
+  playerById: Map<string, TeamMember>;
   points: ScorePoint[];
   onSubstitution: (substitution: Substitution) => Promise<void>;
 };

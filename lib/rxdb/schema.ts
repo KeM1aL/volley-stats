@@ -5,7 +5,7 @@ export type CollectionName =
   | "match_formats"
   | "seasons"
   | "teams"
-  | "players"
+  | "team_members"
   | "matches"
   | "sets"
   | "substitutions"
@@ -134,9 +134,16 @@ export const playerSchema = toTypedRxJsonSchema({
   properties: {
     id: { type: "string", maxLength: 36 },
     team_id: { type: "string", maxLength: 36 },
+    user_id: { type: ["string", "null"], maxLength: 36 },
     name: { type: "string" },
     number: { type: "number" },
-    role: { type: "string" },
+    role: {
+      type: "string",
+      enum: ["owner", "coach", "staff", "player"],
+      default: "player",
+    },
+    position: { type: "string" },
+    comments: { type: ["string", "null"] },
     avatar_url: { type: ["string", "null"] },
     ...timestampFields,
   },

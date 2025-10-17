@@ -34,11 +34,11 @@ import {
 } from "@/hooks/use-settings";
 import { removeRxDatabase, RxCollection } from "rxdb";
 import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/label"; 
 import { CollectionName } from "@/lib/rxdb/schema";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
-import { chunk, delay } from "@/lib/utils";
+import { chunk, delay } from "@/lib/utils"; 
 
 const languages = [
   { value: "en", label: "English" },
@@ -121,6 +121,7 @@ export default function SettingsPage() {
         ["score_points", db.score_points],
         ["substitutions", db.substitutions],
         ["events", db.events],
+        ["team_members", db.team_members],
       ]);
       const entries = Array.from(collections.entries());
       for (const [name, collection] of entries) {
@@ -243,7 +244,7 @@ export default function SettingsPage() {
     try {
       handleResetLocalMatches(false);
       db!.teams?.remove();
-      db!.players?.remove();
+      db!.team_members?.remove();
       if (loadingIndicator) {
         toast({
           title: "Cache cleared",

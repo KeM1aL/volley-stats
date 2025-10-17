@@ -26,10 +26,11 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
       const syncHandler = new SyncHandler();
       const collections = new Map<CollectionName, RxCollection>([
         ['teams', database.localDb.teams],
-        ['players', database.localDb.players],
+        ['team_members', database.localDb.team_members],
         ['matches', database.localDb.matches],
         ['sets', database.localDb.sets],
         ['substitutions', database.localDb.substitutions],
+        ['events', database.localDb.events],
         ['score_points', database.localDb.score_points],
         ['player_stats', database.localDb.player_stats],
       ]);

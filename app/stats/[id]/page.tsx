@@ -11,7 +11,7 @@ import { Download, Share2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import type {
   Match,
-  Player,
+  TeamMember,
   PlayerStat,
   ScorePoint,
   Set,
@@ -38,7 +38,7 @@ export default function MatchStatsPage() {
   const [points, setPoints] = useState<ScorePoint[]>([]);
   const [stats, setStats] = useState<PlayerStat[]>([]);
   const [sets, setSets] = useState<Set[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -99,8 +99,8 @@ export default function MatchStatsPage() {
           teamId === matchData.home_team_id
             ? matchData.home_available_players
             : matchData.away_available_players;
-        const { data: availablePlayersData, error: availablePlayersError } =
-          await supabase.from("players").select("*").in("id", playerIds as string[]);
+        const { data: availablePlayersData, error: availablePlayersError } = // @ts-ignore
+          await supabase.from("team_members").select("*").in("id", playerIds as string[]);
         if (availablePlayersError) throw availablePlayersError;
         setPlayers(availablePlayersData);
 
@@ -182,8 +182,8 @@ export default function MatchStatsPage() {
         const playerIds =
           teamId === match.home_team_id
             ? match.home_available_players
-            : match.away_available_players;
-        const availablePlayerDocs = await db.players
+            : match.away_available_players; // @ts-ignore
+        const availablePlayerDocs = await db.team_members
           .findByIds(playerIds as string[])
           .exec();
         if (availablePlayerDocs) {

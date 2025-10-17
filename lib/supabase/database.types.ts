@@ -287,7 +287,7 @@ export type Database = {
             foreignKeyName: "player_stats_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
-            referencedRelation: "players"
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
           {
@@ -299,47 +299,6 @@ export type Database = {
           },
           {
             foreignKeyName: "player_stats_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      players: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          id: string
-          name: string
-          number: number
-          role: string
-          team_id: string
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          id?: string
-          name: string
-          number: number
-          role: string
-          team_id: string
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-          number?: number
-          role?: string
-          team_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "players_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
@@ -436,7 +395,7 @@ export type Database = {
             foreignKeyName: "score_points_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
-            referencedRelation: "players"
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
           {
@@ -611,14 +570,14 @@ export type Database = {
             foreignKeyName: "substitutions_player_in_id_fkey"
             columns: ["player_in_id"]
             isOneToOne: false
-            referencedRelation: "players"
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "substitutions_player_out_id_fkey"
             columns: ["player_out_id"]
             isOneToOne: false
-            referencedRelation: "players"
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
           {
@@ -630,6 +589,56 @@ export type Database = {
           },
           {
             foreignKeyName: "substitutions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          avatar_url: string | null
+          comments: string | null
+          created_at: string
+          id: string
+          name: string
+          number: number
+          position: string
+          role: Database["public"]["Enums"]["team_member_role"]
+          team_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          number: number
+          position: string
+          role?: Database["public"]["Enums"]["team_member_role"]
+          team_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          number?: number
+          position?: string
+          role?: Database["public"]["Enums"]["team_member_role"]
+          team_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
@@ -684,6 +693,7 @@ export type Database = {
       championship_format: "2x2" | "3x3" | "4x4" | "6x6"
       championship_gender: "male" | "female"
       championship_type: "regional" | "departmental" | "national"
+      team_member_role: "owner" | "coach" | "staff" | "player"
       formatType: "6x6" | "4x4"
     }
     CompositeTypes: {
@@ -816,6 +826,7 @@ export const Constants = {
       championship_format: ["2x2", "3x3", "4x4", "6x6"],
       championship_gender: ["male", "female"],
       championship_type: ["regional", "departmental", "national"],
+      team_member_role: ["owner", "coach", "staff", "player"],
       formatType: ["6x6", "4x4"],
     },
   },

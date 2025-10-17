@@ -1,14 +1,14 @@
-import { PlayerStat, Player, Set, ScorePoint, Team, Match } from "@/lib/types";
+import { PlayerStat, TeamMember, Set, ScorePoint, Team, Match } from "@/lib/types";
 import { StatResult, StatType, PlayerPosition } from "@/lib/enums";
 import { string } from 'zod';
 
 interface MVPStat {
   setNumber?: number;
-  player: Player;
+  player: TeamMember;
   score: number;
 }
 
-export function calculateMVPScore(stats: PlayerStat[], players: Player[], sets: Set[]): { matchMVP: MVPStat, setMVPs: MVPStat[] } {
+export function calculateMVPScore(stats: PlayerStat[], players: TeamMember[], sets: Set[]): { matchMVP: MVPStat, setMVPs: MVPStat[] } {
   const weights = {
     [StatType.SERVE]: 1,
     [StatType.SPIKE]: 1.2,
@@ -312,7 +312,7 @@ interface PlayerExploitationStats {
 export function analyzePlayerExploitation(
   stats: PlayerStat[],
   points: ScorePoint[],
-  players: Player[],
+  players: TeamMember[],
   playerId: string
 ): Record<string, PlayerExploitationStats> {
   const exploitationStats: Record<string, PlayerExploitationStats> = {};

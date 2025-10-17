@@ -2,8 +2,8 @@
 
 import type {
   Match,
-  Player,
   Team,
+  TeamMember,
   Set,
   Substitution,
 } from "@/lib/types";
@@ -49,8 +49,8 @@ const formSchema = z.object({
 type PlayerReplacementDialogProps = {
   match: Match;
   set: Set;
-  players: Player[];
-  playerById: Map<string, Player>;
+  players: TeamMember[];
+  playerById: Map<string, TeamMember>;
   onSubstitution: (substitution: Substitution) => Promise<void>;
 };
 

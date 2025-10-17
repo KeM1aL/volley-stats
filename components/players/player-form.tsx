@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PlayerRole } from "@/lib/enums";
-import { Player } from "@/lib/types";
+import { TeamMember } from "@/lib/types";
 import { AvatarUpload } from "./avatar-upload";
 
 const formSchema = z.object({
@@ -35,7 +35,7 @@ const formSchema = z.object({
 });
 
 type PlayerFormProps = {
-  defaultValues?: Partial<Player>;
+  defaultValues?: Partial<TeamMember>;
   onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
   submitLabel: string;
   isSubmitting: boolean;
@@ -54,7 +54,7 @@ export function PlayerForm({
     defaultValues: {
       name: defaultValues?.name || "",
       number: defaultValues?.number || 0,
-      position: defaultValues?.role || "",
+      position: defaultValues?.position || "",
       avatar_url: defaultValues?.avatar_url || null,
     },
   });

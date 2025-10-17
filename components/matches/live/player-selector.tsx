@@ -1,15 +1,15 @@
 "use client";
 
-import { Player } from "@/lib/types";
+import { TeamMember } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface PlayerSelectorProps {
-  players: Player[];
-  liberoPlayer?: Player | null;
-  selectedPlayer: Player | null;
-  onPlayerSelect: (player: Player) => void;
+  players: TeamMember[];
+  liberoPlayer?: TeamMember | null;
+  selectedPlayer: TeamMember | null;
+  onPlayerSelect: (player: TeamMember) => void;
   className?: string;
 }
 

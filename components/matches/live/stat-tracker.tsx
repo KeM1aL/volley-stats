@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Match, Player, PlayerStat, ScorePoint, Set, Team } from "@/lib/types";
+import { Match, TeamMember, PlayerStat, ScorePoint, Set, Team } from "@/lib/types";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -30,7 +30,7 @@ type StatTrackerProps = {
   stats: PlayerStat[];
   score: Score;
   points: ScorePoint[];
-  playerById: Map<string, Player>;
+  playerById: Map<string, TeamMember>;
   onPoint: (point: ScorePoint) => Promise<void>;
   onStat: (stat: PlayerStat) => Promise<void>;
   onUndo: () => Promise<void>;
@@ -70,10 +70,10 @@ export function StatTracker({
   const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const { canUndo, canRedo } = useCommandHistory();
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<TeamMember | null>(null);
   const [availableStatTypes, setAvailableStatTypes] =  useState<StatType[]>(Object.values(StatType));
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [liberoPlayer, setLiberoPlayer] = useState<Player | null>(null);
+  const [players, setPlayers] = useState<TeamMember[]>([]);
+  const [liberoPlayer, setLiberoPlayer] = useState<TeamMember | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -81,7 +81,7 @@ export function StatTracker({
     const loadData = async () => {
       console.log('Loaded data')
       const setPlayerIds = Object.values(currentSet.current_lineup);
-      const players: Player[] = [];
+      const players: TeamMember[] = [];
       for (const playerId of setPlayerIds) {
         const player = playerById.get(playerId);
         if (player) {
