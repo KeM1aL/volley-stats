@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Player } from "@/lib/types";
+import { TeamMember } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";
@@ -17,7 +17,7 @@ type NewPlayerDialogProps = {
   teamId: string;
   open: boolean;
   onClose: () => void;
-  onPlayerCreated: (player: Player) => void;
+  onPlayerCreated: (player: TeamMember) => void;
 };
 
 export function NewPlayerDialog({
@@ -39,10 +39,11 @@ export function NewPlayerDialog({
         name: values.name,
         number: values.number,
         avatar_url: values.avatar_url,
-        role: values.position,
+        role: values.role,
+        position: values.position,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as Player;
+      } as TeamMember;
 
       // const { data, error } = await supabase
       //   .from("players")
@@ -52,7 +53,7 @@ export function NewPlayerDialog({
 
       // if (error) throw error;
 
-      await db?.players.insert(player);
+      await db?.team_members.insert(player);
 
       onPlayerCreated(player);
 

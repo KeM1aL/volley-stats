@@ -1,3 +1,10 @@
+export enum TeamMemberRole {
+  PLAYER = "player",
+  COACH = "coach",
+  OWNER = "owner",
+  STAFF = "staff"
+}
+
 export enum PlayerRole {
   SETTER = "setter",
   OPPOSITE = "opposite",

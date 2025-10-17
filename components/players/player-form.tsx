@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlayerRole } from "@/lib/enums";
+import { PlayerRole, TeamMemberRole } from "@/lib/enums";
 import { TeamMember } from "@/lib/types";
 import { AvatarUpload } from "./avatar-upload";
 
@@ -29,8 +29,9 @@ const formSchema = z.object({
   number: z.coerce
     .number()
     .min(0, "Number must be positive")
-    .max(99, "Number must be less than 100"),
-  position: z.string().min(1, "Position is required"),
+    .max(99, "Number must be less than 100").optional(),
+  position: z.string().optional(),
+  role: z.string().optional(),
   avatar_url: z.string().nullable(),
 });
 
@@ -55,6 +56,7 @@ export function PlayerForm({
       name: defaultValues?.name || "",
       number: defaultValues?.number || 0,
       position: defaultValues?.position || "",
+      role: defaultValues?.role || "",
       avatar_url: defaultValues?.avatar_url || null,
     },
   });
@@ -137,6 +139,31 @@ export function PlayerForm({
                             return "Libero";
                         }
                       })()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.values(TeamMemberRole).map((role) => (
+                    <SelectItem key={role} value={role} className="capitalize">
+                      {role}
                     </SelectItem>
                   ))}
                 </SelectContent>

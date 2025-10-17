@@ -8,16 +8,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Player } from "@/lib/types";
+import { TeamMember } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";
 import { update } from "rxdb/plugins/update";
 
 type EditPlayerDialogProps = {
-  player: Player | null;
+  player: TeamMember | null;
   onClose: () => void;
-  onPlayerUpdated: (player: Player) => void;
+  onPlayerUpdated: (player: TeamMember) => void;
 };
 
 export function EditPlayerDialog({
@@ -47,11 +47,12 @@ export function EditPlayerDialog({
 
       // if (error) throw error;
 
-      await db?.players.findOne(player.id).update({
+      await db?.team_members.findOne(player.id).update({
         $set: {
           name: values.name,
           number: values.number,
-          role: values.position,
+          role: values.role,
+          position: values.position,
           avatar_url: values.avatar_url,
           updated_at: new Date().toISOString(),
         },
