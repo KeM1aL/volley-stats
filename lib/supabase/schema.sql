@@ -1,8 +1,22 @@
 -- Create tables for the volleyball statistics app
+create table if not exists public.clubs (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  user_id uuid references auth.users(id) not null,
+  website text,
+  contact_email text,
+  contact_phone text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter publication supabase_realtime add table "public"."clubs";
+
 create table if not exists public.teams (
   id uuid default gen_random_uuid() primary key,
   name text not null,
   user_id uuid references auth.users(id) not null,
+  club_id uuid references public.clubs(id) on delete cascade,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -26,6 +40,20 @@ create table if not exists public.team_members (
 );
 
 alter publication supabase_realtime add table "public"."team_members";
+
+-- Create an enum type for club member roles
+create type public.club_member_role as enum ('owner', 'admin', 'member');
+
+create table if not exists public.club_members (
+  id uuid default gen_random_uuid() primary key,
+  club_id uuid references public.clubs(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  role public.club_member_role not null default 'member',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter publication supabase_realtime add table "public"."club_members";
 
 create table if not exists public.matches (
   id uuid default gen_random_uuid() primary key,
@@ -131,6 +159,16 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers for all tables
+CREATE TRIGGER update_clubs_updated_at
+    BEFORE UPDATE ON public.clubs
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_club_members_updated_at
+    BEFORE UPDATE ON public.club_members
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_teams_updated_at
     BEFORE UPDATE ON public.teams
     FOR EACH ROW
@@ -168,6 +206,8 @@ CREATE TRIGGER update_player_stats_updated_at
 
 -- Add indexes for timestamp columns
 CREATE INDEX idx_teams_timestamps ON public.teams (created_at, updated_at);
+CREATE INDEX idx_clubs_timestamps ON public.clubs (created_at, updated_at);
+CREATE INDEX idx_club_members_timestamps ON public.club_members (created_at, updated_at);
 CREATE INDEX idx_team_members_timestamps ON public.team_members (created_at, updated_at);
 CREATE INDEX idx_matches_timestamps ON public.matches (created_at, updated_at);
 CREATE INDEX idx_sets_timestamps ON public.sets (created_at, updated_at);
@@ -176,6 +216,8 @@ CREATE INDEX idx_score_points_timestamps ON public.score_points (created_at, upd
 CREATE INDEX idx_player_stats_timestamps ON public.player_stats (created_at, updated_at);
 
 -- Set up row level security
+alter table public.clubs enable row level security;
+alter table public.club_members enable row level security;
 alter table public.teams enable row level security;
 alter table public.team_members enable row level security;
 alter table public.matches enable row level security;
@@ -183,6 +225,30 @@ alter table public.sets enable row level security;
 alter table public.substitutions enable row level security;
 alter table public.score_points enable row level security;
 alter table public.player_stats enable row level security;
+
+-- Club policies
+create policy "Users can view clubs they are a member of"
+  on public.clubs for select
+  using (exists (
+    select 1 from public.club_members
+    where club_members.club_id = clubs.id
+    and club_members.user_id = auth.uid()
+  ));
+
+create policy "Club owners can manage their clubs"
+  on public.clubs for all
+  using (exists (
+    select 1 from public.club_members
+    where club_members.club_id = clubs.id
+    and club_members.user_id = auth.uid()
+    and club_members.role = 'owner'
+  ));
+
+-- Club Members policies
+create policy "Club members can view other members of their clubs"
+  on public.club_members for select
+  using (exists (select 1 from public.club_members where club_id = club_members.club_id and user_id = auth.uid()));
+
 
 -- Create policies
 create policy "Users can view their own teams"

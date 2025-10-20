@@ -18,7 +18,9 @@ import {
   championshipSchema,
   eventSchema,
   matchFormatSchema,
-  seasonSchema
+  seasonSchema,
+  clubSchema,
+  clubMemberSchema
 } from './schema';
 import type {
   Team,
@@ -30,7 +32,9 @@ import type {
   ScorePoint,
   Championship,
   MatchFormat,
-  Season
+  Season,
+  Club,
+  ClubMember
 } from '@/lib/types';
 const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 // Add plugins
@@ -43,6 +47,8 @@ addRxPlugin(RxDBUpdatePlugin);
 type DatabaseCollections = {
   championships: RxCollection<Championship>;
   match_formats: RxCollection<MatchFormat>;
+  clubs: RxCollection<Club>;
+  club_members: RxCollection<ClubMember>;
   seasons: RxCollection<Season>;
   events: RxCollection<Event>;
   teams: RxCollection<Team>;
@@ -119,6 +125,12 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
         },
         match_formats: {
           schema: matchFormatSchema,
+        },
+        clubs: {
+          schema: clubSchema,
+        },
+        club_members: {
+          schema: clubMemberSchema,
         },
         seasons: {
           schema: seasonSchema,

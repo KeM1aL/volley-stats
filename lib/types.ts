@@ -37,11 +37,32 @@ export type MatchFormat = {
 export type Team = {
   id: string;
   name: string;
+  club_id?: string | null;
   championship_id: number | null;
   championship?: Championship;
   created_at: string;
   updated_at: string;
   user_id: string;
+};
+
+export type Club = {
+  id: string;
+  name: string;
+  user_id: string;
+  website?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClubMember = {
+  id: string;
+  club_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member';
+  created_at: string;
+  updated_at: string;
 };
 
 export type TeamMember = {
@@ -51,7 +72,7 @@ export type TeamMember = {
   number: number;
   position: string;
   user_id?: string | null;
-  role?: 'owner'| 'coach' | 'staff' | 'player' | null;
+  role: string;
   avatar_url?: string | null;
   comments?: string | null;
   created_at: string;

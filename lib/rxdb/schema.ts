@@ -11,7 +11,9 @@ export type CollectionName =
   | "substitutions"
   | "score_points"
   | "player_stats"
-  | "events";
+  | "events"
+  | "clubs"
+  | "club_members";
 
 const timestampFields = {
   created_at: { type: "string", "format": "date-time", maxLength: 32 },
@@ -116,14 +118,53 @@ export const teamSchema = toTypedRxJsonSchema({
   primaryKey: "id",
   type: "object",
   properties: {
+    id: { type: "string", maxLength: 36 }, // uuid
+    name: { type: "string" },
+    user_id: { type: "string", maxLength: 36 },
+    club_id: { type: ["string", "null"], maxLength: 36 },
+    championship_id: { type: ["number", "null"] },
+    ...timestampFields,
+  },
+  required: ["id", "name", "user_id", "club_id", "created_at", "updated_at"],
+  indexes: ["user_id", "club_id", "created_at", "updated_at"],
+});
+
+// Club Schema
+export const clubSchema = toTypedRxJsonSchema({
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
     id: { type: "string", maxLength: 36 },
     name: { type: "string" },
     user_id: { type: "string", maxLength: 36 },
-    championship_id: { type: ["number", "null"] },
+    website: { type: ["string", "null"] },
+    contact_email: { type: ["string", "null"] },
+    contact_phone: { type: ["string", "null"] },
     ...timestampFields,
   },
   required: ["id", "name", "user_id", "created_at", "updated_at"],
   indexes: ["user_id", "created_at", "updated_at"],
+});
+
+// Club Member Schema
+export const clubMemberSchema = toTypedRxJsonSchema({
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+    id: { type: "string", maxLength: 36 },
+    club_id: { type: "string", maxLength: 36 },
+    user_id: { type: "string", maxLength: 36 },
+    role: {
+      type: "string",
+      enum: ["owner", "admin", "member"],
+      default: "member",
+    },
+    ...timestampFields,
+  },
+  required: ["id", "club_id", "user_id", "role", "created_at", "updated_at"],
+  indexes: ["club_id", "user_id", "created_at", "updated_at"],
 });
 
 // Player Schema

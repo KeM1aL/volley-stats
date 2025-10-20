@@ -61,6 +61,74 @@ export type Database = {
           },
         ]
       }
+      club_members: {
+        Row: {
+          club_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["club_member_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          club_id: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["club_member_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          club_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["club_member_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_members_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clubs: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           away_score: number
@@ -605,7 +673,7 @@ export type Database = {
           name: string
           number: number
           position: string
-          role: Database["public"]["Enums"]["team_member_role"]
+          role: string
           team_id: string
           updated_at: string
           user_id: string | null
@@ -618,7 +686,7 @@ export type Database = {
           name: string
           number: number
           position: string
-          role?: Database["public"]["Enums"]["team_member_role"]
+          role?: string
           team_id: string
           updated_at?: string
           user_id?: string | null
@@ -631,7 +699,7 @@ export type Database = {
           name?: string
           number?: number
           position?: string
-          role?: Database["public"]["Enums"]["team_member_role"]
+          role?: string
           team_id?: string
           updated_at?: string
           user_id?: string | null
@@ -649,6 +717,7 @@ export type Database = {
       teams: {
         Row: {
           championship_id: number | null
+          club_id: string | null
           created_at: string
           id: string
           name: string
@@ -657,6 +726,7 @@ export type Database = {
         }
         Insert: {
           championship_id?: number | null
+          club_id?: string | null
           created_at?: string
           id?: string
           name: string
@@ -665,6 +735,7 @@ export type Database = {
         }
         Update: {
           championship_id?: number | null
+          club_id?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -672,6 +743,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "teams_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "teams_current_championship_id_fkey"
             columns: ["championship_id"]
@@ -693,7 +771,7 @@ export type Database = {
       championship_format: "2x2" | "3x3" | "4x4" | "6x6"
       championship_gender: "male" | "female"
       championship_type: "regional" | "departmental" | "national"
-      team_member_role: "owner" | "coach" | "staff" | "player"
+      club_member_role: "owner" | "admin" | "member"
       formatType: "6x6" | "4x4"
     }
     CompositeTypes: {
@@ -826,7 +904,7 @@ export const Constants = {
       championship_format: ["2x2", "3x3", "4x4", "6x6"],
       championship_gender: ["male", "female"],
       championship_type: ["regional", "departmental", "national"],
-      team_member_role: ["owner", "coach", "staff", "player"],
+      club_member_role: ["owner", "admin", "member"],
       formatType: ["6x6", "4x4"],
     },
   },
