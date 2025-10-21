@@ -125,8 +125,8 @@ export const teamSchema = toTypedRxJsonSchema({
     championship_id: { type: ["number", "null"] },
     ...timestampFields,
   },
-  required: ["id", "name", "user_id", "club_id", "created_at", "updated_at"],
-  indexes: ["user_id", "club_id", "created_at", "updated_at"],
+  required: ["id", "name", "user_id",  "created_at", "updated_at"],
+  indexes: ["user_id",  "created_at", "updated_at"],
 });
 
 // Club Schema

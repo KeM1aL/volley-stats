@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -23,8 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Championship, Team } from "@/lib/types";
-import { useLocalDb } from "@/components/providers/local-database-provider";
 import { ChampionshipSelect } from "../championships/championship-select";
+import { useTeamApi } from "@/hooks/use-team-api";
 
 const formSchema = z.object({
   name: z.string().min(1, "Team name is required"),
@@ -38,9 +38,9 @@ type EditTeamDialogProps = {
 
 export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
   const router = useRouter();
-  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const teamApi = useTeamApi();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,12 +64,9 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
 
     setIsLoading(true);
     try {
-      await db?.teams.findOne(team.id).update({
-        $set: {
-          name: values.name,
-          championship_id: values.championship?.id ?? null,
-          updated_at: new Date().toISOString(),
-        },
+      await teamApi.updateTeam(team.id, {
+        name: values.name,
+        championship_id: values.championship?.id ?? null,
       });
 
       toast({

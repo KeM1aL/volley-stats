@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,29 +6,33 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamTable } from "@/components/teams/team-table";
 import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
-import { useLocalDb } from "@/components/providers/local-database-provider";
-import { createClient } from "@/lib/supabase/client";
+import { useTeamApi } from "@/hooks/use-team-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Team } from "@/lib/types";
+import { Sort } from "@/lib/api/types";
 
 export default function TeamsPage() {
   const router = useRouter();
-  const { localDb: db } = useLocalDb();
   const [teams, setTeams] = useState<Team[]>([]);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const teamApi = useTeamApi();
 
   useEffect(() => {
     const loadTeams = async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("teams").select("*").order("name", { ascending: true });;
-      if (error) throw error;
-      setTeams(data);
-      setIsLoading(false);
+      try {
+        const sort: Sort<Team>[] = [{ field: 'name', direction: 'asc' }];
+        const data = await teamApi.getTeams(undefined, sort);
+        setTeams(data);
+      } catch (error) {
+        console.error("Failed to load teams:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadTeams();
-  }, [db]);
+  }, [teamApi]);
 
   if (isLoading) {
     return <Skeleton className="h-[600px] w-full" />;

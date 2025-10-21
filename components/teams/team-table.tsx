@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -24,8 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Team } from "@/lib/types";
-import { supabase } from "@/lib/supabase/client";
-import { useLocalDb } from "@/components/providers/local-database-provider";
+import { useTeamApi } from "@/hooks/use-team-api";
 
 type TeamTableProps = {
   teams: Team[];
@@ -34,24 +33,17 @@ type TeamTableProps = {
 
 export function TeamTable({ teams, onEdit }: TeamTableProps) {
   const router = useRouter();
-  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
-  const [deleteTeam, setDeleteTeam] = useState<Team | null>(null);
+  const teamApi = useTeamApi();
+  const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!deleteTeam) return;
+    if (!deletingTeam) return;
 
     setIsDeleting(true);
     try {
-      // const { error } = await supabase
-      //   .from("teams")
-      //   .delete()
-      //   .eq("id", deleteTeam.id);
-
-      // if (error) throw error;
-
-      await db?.teams.findOne(deleteTeam.id).remove();
+      await teamApi.deleteTeam(deletingTeam.id);
 
       toast({
         title: "Team deleted",
@@ -68,7 +60,7 @@ export function TeamTable({ teams, onEdit }: TeamTableProps) {
       });
     } finally {
       setIsDeleting(false);
-      setDeleteTeam(null);
+      setDeletingTeam(null);
     }
   };
 
@@ -112,7 +104,7 @@ export function TeamTable({ teams, onEdit }: TeamTableProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setDeleteTeam(team)}
+                    onClick={() => setDeletingTeam(team)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -123,7 +115,7 @@ export function TeamTable({ teams, onEdit }: TeamTableProps) {
         </TableBody>
       </Table>
 
-      <AlertDialog open={!!deleteTeam} onOpenChange={() => setDeleteTeam(null)}>
+      <AlertDialog open={!!deletingTeam} onOpenChange={() => setDeletingTeam(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

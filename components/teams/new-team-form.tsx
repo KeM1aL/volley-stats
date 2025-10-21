@@ -1,10 +1,9 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,10 +15,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from "@/lib/supabase/client";
+
+import { useTeamApi } from "@/hooks/use-team-api";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Championship, Team } from "@/lib/types";
 import { ChampionshipSelect } from "../championships/championship-select";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 const formSchema = z.object({
   teamName: z.string().min(1, "Team name is required"),
@@ -31,9 +34,9 @@ type NewTeamFormProps = {
 };
 
 export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
-  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const teamApi = useTeamApi();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,17 +52,17 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const team = {
+      const newTeam: Omit<Team, 'championship'> = {
         id: crypto.randomUUID(),
         name: values.teamName,
         championship_id: values.championship?.id ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         user_id: session.user.id,
-      } as Team;
-
-      await db?.teams.insert(team);
-      onTeamCreated(team.id);
+      };
+      
+      const createdTeam = await teamApi.createTeam(newTeam);
+      onTeamCreated(createdTeam.id);
       
       toast({
         title: "Team created",
