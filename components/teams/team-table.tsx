@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Users } from "lucide-react";
+import { Eye, Pencil, Trash2, Users } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -29,9 +29,10 @@ import { useTeamApi } from "@/hooks/use-team-api";
 type TeamTableProps = {
   teams: Team[];
   onEdit: (team: Team) => void;
+  canManage: (team: Team) => boolean;
 };
 
-export function TeamTable({ teams, onEdit }: TeamTableProps) {
+export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
   const router = useRouter();
   const { toast } = useToast();
   const teamApi = useTeamApi();
@@ -69,9 +70,9 @@ export function TeamTable({ teams, onEdit }: TeamTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Players</TableHead>
+            <TableHead>Team Name</TableHead>
+            <TableHead>Championship</TableHead>
+            <TableHead>Club</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -79,35 +80,42 @@ export function TeamTable({ teams, onEdit }: TeamTableProps) {
           {teams.map((team) => (
             <TableRow key={team.id}>
               <TableCell className="font-medium">{team.name}</TableCell>
-              <TableCell>
-                {new Date(team.created_at).toLocaleDateString()}
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push(`/teams/${team.id}/players`)}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Manage
-                </Button>
-              </TableCell>
+              <TableCell>{team.championships?.name}</TableCell>
+              <TableCell>{team.club?.name}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(team)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeletingTeam(team)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/teams/${team.id}`)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  {canManage(team) && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/teams/${team.id}/players`)}
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(team)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeletingTeam(team)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </TableCell>
             </TableRow>

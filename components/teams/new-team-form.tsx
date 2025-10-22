@@ -58,6 +58,7 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
         championship_id: values.championship?.id ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        club_id: null,
         user_id: session.user.id,
       };
       

@@ -7,13 +7,39 @@ export const applySupabaseSorting = <T>(query: any, sort: Sort<T>[]) => {
   return query;
 };
 
-export const applySupabaseFilters = <T>(query: any, filter: Filter<T>) => {
-  for (const key in filter) {
-    const filterValue = filter[key as keyof T];
-    if (typeof filterValue === 'object' && filterValue !== null && '$in' in filterValue) {
-      query = query.in(key, filterValue.$in);
-    } else {
-      query = query.eq(key, filterValue);
+export const applySupabaseFilters = (query: any, filters: Filter[]) => {
+  for (const filter of filters) {
+    switch (filter.operator) {
+      case "eq":
+        query = query.eq(filter.field, filter.value);
+        break;
+      case "neq":
+        query = query.neq(filter.field, filter.value);
+        break;
+      case "gt":
+        query = query.gt(filter.field, filter.value);
+        break;
+      case "gte":
+        query = query.gte(filter.field, filter.value);
+        break;
+      case "lt":
+        query = query.lt(filter.field, filter.value);
+        break;
+      case "lte":
+        query = query.lte(filter.field, filter.value);
+        break;
+      case "like":
+        query = query.like(filter.field, filter.value);
+        break;
+      case "ilike":
+        query = query.ilike(filter.field, filter.value);
+        break;
+      case "in":
+        query = query.in(filter.field, filter.value);
+        break;
+      case "is":
+        query = query.is(filter.field, filter.value);
+        break;
     }
   }
   return query;

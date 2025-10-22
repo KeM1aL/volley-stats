@@ -12,10 +12,35 @@ export class SupabaseDataStore<
 > implements DataStore<T> {
   constructor(private tableName: TableName) {}
 
-  async getAll(filter?: Filter<T>, sort?: Sort<T>[]): Promise<T[]> {
-    let query = supabase.from(this.tableName).select("*");
-    if (filter) {
-      query = applySupabaseFilters<T>(query, filter);
+  async getAll(filters?: Filter[], sort?: Sort<T>[], joins?: string[]): Promise<T[]> {
+    let select = "*";
+    
+
+    if (joins && joins.length > 0) {
+      joins.forEach((join) => {
+        if (!select.includes(`${join}(`)) {
+          select += `,${join}(*)`;
+        }
+      });
+    }
+
+    if (filters) {
+      filters.forEach((f) => {
+        if (f.field.includes(".")) {
+          const tableName = f.field.split(".")[0];
+
+          if (select.includes(`${tableName}(*)`)) {
+            select = select.replace(`${tableName}(*)`, `${tableName}!inner(*)`);
+          } else if(!select.includes(`${tableName}!inner(*)`)) {
+            select += `,${tableName}!inner(*)`;
+          }
+        }
+      });
+    }
+
+    let query = supabase.from(this.tableName).select(select);
+    if (filters && filters.length > 0) {
+      query = applySupabaseFilters(query, filters);
     }
     if (sort) {
       query = applySupabaseSorting<T>(query, sort);
@@ -23,6 +48,13 @@ export class SupabaseDataStore<
     const { data, error } = await query;
     if (error) throw error;
     return (data as T[]) || [];
+  }
+
+  async get(id: string | number): Promise<T> {
+    let query = supabase.from(this.tableName).select('*').eq('id', id as any);
+    const { data, error } = await query;
+      if (error) throw error;
+      return (data as T);
   }
 
   async create(item: Partial<T>): Promise<T> {

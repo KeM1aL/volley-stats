@@ -52,6 +52,34 @@ export enum MatchStatus {
   COMPLETED = "completed",
 }
 
+export enum ChampionshipType {
+  REGIONAL = "regional",
+  DEPARTMENTAL = "departmental",
+  NATIONAL = "national",
+}
+
+export enum ChampionshipFormat {
+  TWO_X_TWO = "2x2",
+  THREE_X_THREE = "3x3",
+  FOUR_X_FOUR = "4x4",
+  SIX_X_SIX = "6x6",
+}
+
+export enum ChampionshipAgeCategory {
+  U10 = "U10",
+  U12 = "U12",
+  U14 = "U14",
+  U16 = "U16",
+  U18 = "U18",
+  U21 = "U21",
+  SENIOR = "senior",
+}
+
+export enum ChampionshipGender {
+  MALE = "male",
+  FEMALE = "female",
+}
+
 export type Score = {
   home: number,
   away: number,

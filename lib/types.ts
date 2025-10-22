@@ -1,16 +1,17 @@
 import { PlayerPosition, PlayerRole } from "./enums";
+import { Json } from "./supabase/database.types";
 
 export type Championship = {
   id: number;
   name: string;
   type: string;
-  metadata: string;
+  metadata: string | null;
   default_match_format: number;
-  format: '4x4' | '6x6';
+  format: '2x2' | '3x3' | '4x4' | '6x6';
   age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior';
   gender: 'female' | 'male';
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 export type Season = {
@@ -37,9 +38,10 @@ export type MatchFormat = {
 export type Team = {
   id: string;
   name: string;
-  club_id?: string | null;
+  club_id: string | null;
+  club?: Club | null;
   championship_id: number | null;
-  championship?: Championship;
+  championships?: Championship;
   created_at: string;
   updated_at: string;
   user_id: string;

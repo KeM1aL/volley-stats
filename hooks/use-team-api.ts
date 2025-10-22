@@ -1,5 +1,5 @@
-import { createApi } from "@/lib/api";
+import { getApi } from "@/lib/api";
 
 export const useTeamApi = () => {
-  return createApi().teams;
+  return getApi().teams;
 };

@@ -1,8 +1,12 @@
 import { createTeamApi } from "./teams";
+import { createChampionshipApi } from "./championships";
+import { createClubApi } from "./clubs";
 
-export const createApi = () => {
-  return {
-    teams: createTeamApi(),
-    // ... other apis
-  };
+const api = {
+  teams: createTeamApi(),
+  championships: createChampionshipApi(),
+  clubs: createClubApi(),
+  // ... other apis
 };
+
+export const getApi = () => api;
