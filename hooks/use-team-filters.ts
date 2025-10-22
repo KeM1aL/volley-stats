@@ -1,10 +1,11 @@
 
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Championship, Club } from '@/lib/types';
 import { Filter } from '@/lib/api/types';
 import { isEqual } from 'lodash';
+import { useDebounce } from './use-debounce';
 
 export type TeamFilterState = {
   searchTerm: string;
@@ -32,38 +33,42 @@ export function useTeamFilters(onFilter: (filters: Filter[]) => void) {
 
   const isDirty = useMemo(() => !isEqual(filters, appliedFilters), [filters, appliedFilters]);
 
-  const handleFilter = useCallback(() => {
+  // Debounce the filters state before applying them
+  const debouncedFilters = useDebounce(filters, 500); // 500ms debounce for all filters
+
+  // Effect to apply filters when debouncedFilters change
+  useEffect(() => {
     const newFilters: Filter[] = [];
-    if (filters.searchTerm) {
-      newFilters.push({ field: 'name', operator: 'ilike', value: `%${filters.searchTerm}%` });
+    if (debouncedFilters.searchTerm) {
+      newFilters.push({ field: 'name', operator: 'ilike', value: `%${debouncedFilters.searchTerm}%` });
     }
-    if (filters.selectedChampionship) {
-      newFilters.push({ field: 'championship_id', operator: 'eq', value: filters.selectedChampionship.id });
+    if (debouncedFilters.selectedChampionship) {
+      newFilters.push({ field: 'championship_id', operator: 'eq', value: debouncedFilters.selectedChampionship.id });
     }
-    if (filters.selectedClub) {
-      newFilters.push({ field: 'club_id', operator: 'eq', value: filters.selectedClub.id });
+    if (debouncedFilters.selectedClub) {
+      newFilters.push({ field: 'club_id', operator: 'eq', value: debouncedFilters.selectedClub.id });
     }
-    if (filters.championshipType) {
-      newFilters.push({ field: 'championships.type', operator: 'eq', value: filters.championshipType });
+    if (debouncedFilters.championshipType) {
+      newFilters.push({ field: 'championships.type', operator: 'eq', value: debouncedFilters.championshipType });
     }
-    if (filters.championshipFormat) {
-      newFilters.push({ field: 'championships.format', operator: 'eq', value: filters.championshipFormat });
+    if (debouncedFilters.championshipFormat) {
+      newFilters.push({ field: 'championships.format', operator: 'eq', value: debouncedFilters.championshipFormat });
     }
-    if (filters.championshipAgeCategory) {
-      newFilters.push({ field: 'championships.age_category', operator: 'eq', value: filters.championshipAgeCategory });
+    if (debouncedFilters.championshipAgeCategory) {
+      newFilters.push({ field: 'championships.age_category', operator: 'eq', value: debouncedFilters.championshipAgeCategory });
     }
-    if (filters.championshipGender) {
-      newFilters.push({ field: 'championships.gender', operator: 'eq', value: filters.championshipGender });
+    if (debouncedFilters.championshipGender) {
+      newFilters.push({ field: 'championships.gender', operator: 'eq', value: debouncedFilters.championshipGender });
     }
     onFilter(newFilters);
-    setAppliedFilters(filters);
-  }, [filters, onFilter]);
+    setAppliedFilters(debouncedFilters); // Update applied filters after debounce
+  }, [debouncedFilters, onFilter]);
 
   const handleReset = useCallback(() => {
     setFilters(initialState);
-    setAppliedFilters(initialState);
-    onFilter([]);
-  }, [onFilter]);
+    // setAppliedFilters(initialState); // This will be handled by the useEffect above
+    // onFilter([]); // This will be handled by the useEffect above
+  }, []); // Removed onFilter from dependencies as it's handled by useEffect
 
   const updateFilter = <K extends keyof TeamFilterState>(key: K, value: TeamFilterState[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -72,7 +77,6 @@ export function useTeamFilters(onFilter: (filters: Filter[]) => void) {
   return {
     filters,
     updateFilter,
-    handleFilter,
     handleReset,
     isDirty,
   };
