@@ -18,15 +18,17 @@ import { useToast } from '@/hooks/use-toast';
 
 import { useTeamApi } from "@/hooks/use-team-api";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { Championship, Team } from "@/lib/types";
+import { Championship, Club, Team } from "@/lib/types";
 import { ChampionshipSelect } from "../championships/championship-select";
 import { createClient } from "@/lib/supabase/client";
+import { ClubSelect } from "../clubs/club-select";
 
 const supabase = createClient();
 
 const formSchema = z.object({
   teamName: z.string().min(1, "Team name is required"),
-  championship: z.custom<Championship | null>(() => true).nullable(),
+  championships: z.custom<Championship | null>(() => true).nullable(),
+  clubs: z.custom<Club | null>(() => true).nullable(),
 });
 
 type NewTeamFormProps = {
@@ -42,7 +44,8 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       teamName: "",
-      championship: null,
+      championships: null,
+      clubs: null,
     },
   });
 
@@ -52,13 +55,13 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const newTeam: Omit<Team, 'championship'> = {
+      const newTeam: Omit<Team, 'championships'> = {
         id: crypto.randomUUID(),
         name: values.teamName,
-        championship_id: values.championship?.id ?? null,
+        championship_id: values.championships?.id ?? null,
+        club_id: values.clubs?.id ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        club_id: null,
         user_id: session.user.id,
       };
       
@@ -104,12 +107,30 @@ export function NewTeamForm({ onTeamCreated }: NewTeamFormProps) {
 
         <FormField
           control={form.control}
-          name="championship"
+          name="championships"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Championship</FormLabel>
               <FormControl>
                 <ChampionshipSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  isClearable
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+         <FormField
+          control={form.control}
+          name="clubs"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Club</FormLabel>
+              <FormControl>
+                <ClubSelect
                   value={field.value}
                   onChange={field.onChange}
                   isClearable

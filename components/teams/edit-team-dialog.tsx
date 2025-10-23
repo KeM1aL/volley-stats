@@ -22,17 +22,19 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Championship, Team } from "@/lib/types";
+import { Championship, Club, Team } from "@/lib/types";
 import { ChampionshipSelect } from "../championships/championship-select";
 import { useTeamApi } from "@/hooks/use-team-api";
+import { ClubSelect } from "../clubs/club-select";
 
 const formSchema = z.object({
   name: z.string().min(1, "Team name is required"),
-  championship: z.custom<Championship | null>(() => true).nullable(),
+  championships: z.custom<Championship | null>(() => true).nullable(),
+  clubs: z.custom<Club | null>(() => true).nullable(),
 });
 
 type EditTeamDialogProps = {
-  team: (Team & { championship?: Championship }) | null;
+  team: Team | null;
   onClose: () => void;
 };
 
@@ -46,7 +48,8 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: team?.name || "",
-      championship: team?.championship || null,
+      championships: team?.championships || null,
+      clubs: team?.clubs || null,
     },
   });
 
@@ -54,7 +57,8 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
     if (team) {
       form.reset({
         name: team.name,
-        championship: team.championship || null,
+        championships: team.championships || null,
+        clubs: team.clubs || null,
       });
     }
   }, [team, form]);
@@ -66,7 +70,8 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
     try {
       await teamApi.updateTeam(team.id, {
         name: values.name,
-        championship_id: values.championship?.id ?? null,
+        championship_id: values.championships?.id ?? null,
+        club_id: values.clubs?.id ?? null,
       });
 
       toast({
@@ -111,12 +116,29 @@ export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
             />
             <FormField
               control={form.control}
-              name="championship"
+              name="championships"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Championship</FormLabel>
                   <FormControl>
                     <ChampionshipSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      isClearable
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="clubs"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Club</FormLabel>
+                  <FormControl>
+                    <ClubSelect
                       value={field.value}
                       onChange={field.onChange}
                       isClearable

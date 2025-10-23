@@ -81,7 +81,7 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
             <TableRow key={team.id}>
               <TableCell className="font-medium">{team.name}</TableCell>
               <TableCell>{team.championships?.name}</TableCell>
-              <TableCell>{team.club?.name}</TableCell>
+              <TableCell>{team.clubs?.name}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button

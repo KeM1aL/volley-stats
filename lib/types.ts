@@ -39,7 +39,7 @@ export type Team = {
   id: string;
   name: string;
   club_id: string | null;
-  club?: Club | null;
+  clubs?: Club | null;
   championship_id: number | null;
   championships?: Championship;
   created_at: string;

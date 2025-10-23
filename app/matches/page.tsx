@@ -18,7 +18,7 @@ import { Match, Team } from "@/lib/types";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
-export default function MatchHistoryPage() {
+export default function MatchPage() {
   const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);

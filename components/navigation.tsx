@@ -19,14 +19,9 @@ import { FullScreenToggle } from "./fullscreen-toggle";
 
 const routes = [
   {
-    href: "/matches/history",
+    href: "/matches",
     label: "Matches",
     icon: Volleyball,
-  },
-  {
-    href: "/stats",
-    label: "Statistics",
-    icon: BarChart3,
   },
   {
     href: "/teams",
