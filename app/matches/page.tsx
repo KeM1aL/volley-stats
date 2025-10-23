@@ -11,7 +11,6 @@ import { MatchHistoryTable } from "@/components/matches/history/match-history-ta
 import { MatchFilters } from "@/components/matches/history/match-filters";
 import { TeamStats } from "@/components/matches/history/team-stats";
 import { StatisticsDialog } from "@/components/matches/history/statistics-dialog";
-import { CompareDialog } from "@/components/matches/history/compare-dialog";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Match, Team } from "@/lib/types";
@@ -27,7 +26,7 @@ export default function MatchPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [opponent, setOpponent] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [compareMatches, setCompareMatches] = useState<Match[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -114,7 +113,7 @@ export default function MatchPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Match History</h1>
+          <h1 className="text-3xl font-bold">Matches</h1>
           <p className="text-muted-foreground">
             View and analyze match statistics
           </p>
@@ -133,12 +132,6 @@ export default function MatchPage() {
             <Filter className="h-4 w-4 mr-2" />
             Filters
           </Button>
-          {matches.length >= 2 && (
-            <Button onClick={() => setCompareMatches(matches.slice(0, 2))}>
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Compare Matches
-            </Button>
-          )}
         </div>
       </div>
 
@@ -183,11 +176,6 @@ export default function MatchPage() {
       <StatisticsDialog
         match={selectedMatch}
         onClose={() => setSelectedMatch(null)}
-      />
-
-      <CompareDialog
-        matches={compareMatches}
-        onClose={() => setCompareMatches([])}
       />
     </div>
   );
