@@ -89,6 +89,9 @@ export type Match = {
   location: string | null;
   home_team_id: string;
   away_team_id: string;
+  championship_id: number | null;
+  season_id: number | null;
+  match_format_id: number;
   home_score: number;
   away_score: number;
   status: 'upcoming' | 'live' | 'completed';

@@ -8,10 +8,12 @@ export type FilterOperator =
   | "like"
   | "ilike"
   | "in"
-  | "is";
+  | "is"
+  | "or"
+  | "and";
 
 export type Filter = {
-  field: string;
+  field?: string;
   operator: FilterOperator;
   value: any;
 };

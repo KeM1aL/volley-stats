@@ -40,6 +40,12 @@ export const applySupabaseFilters = (query: any, filters: Filter[]) => {
       case "is":
         query = query.is(filter.field, filter.value);
         break;
+      case "or":
+        query = query.or(filter.value);
+        break;
+      case "and":
+        query = query.and(filter.value);
+        break;
     }
   }
   return query;

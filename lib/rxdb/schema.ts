@@ -211,10 +211,11 @@ export const matchSchema = toTypedRxJsonSchema({
     location: { type: ["string", "null"] },
     home_team_id: { type: "string", maxLength: 36 },
     away_team_id: { type: "string", maxLength: 36 },
+    championship_id: { type: ["number", "null"] },
+    season_id: { type: ["number", "null"] },
     home_score: { type: "number" },
     away_score: { type: "number" },
-    match_format: { type: "number" },
-    season_id: { type: "number" },
+    match_format_id: { type: "number" },
     status: {
       type: "string",
       enum: ["upcoming", "live", "completed"],

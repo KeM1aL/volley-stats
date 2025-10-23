@@ -8,28 +8,42 @@ import { BarChart3, Filter, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MatchHistoryTable } from "@/components/matches/history/match-history-table";
-import { MatchFilters } from "@/components/matches/history/match-filters";
 import { TeamStats } from "@/components/matches/history/team-stats";
 import { StatisticsDialog } from "@/components/matches/history/statistics-dialog";
 import { useLocalDb } from "@/components/providers/local-database-provider";
-import { createClient } from "@/lib/supabase/client";
-import { Match, Team } from "@/lib/types";
+import { ClubSelect } from "@/components/clubs/club-select";
+import { ChampionshipSelect } from "@/components/championships/championship-select";
+import { TeamSelect } from "@/components/teams/team-select";
+import { Label } from "@/components/ui/label";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Match, Team, Club, Championship } from "@/lib/types";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useClubApi } from "@/hooks/use-club-api";
+import { useMatchApi } from "@/hooks/use-match-api";
+import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
+import { Filter as ApiFilter, Sort } from "@/lib/api/types";
 
 export default function MatchPage() {
   const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [opponent, setOpponent] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+  const [selectedChampionship, setSelectedChampionship] = useState<Championship | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+
+  const matchApi = useMatchApi();
 
   useEffect(() => {
     const loadData = async () => {
@@ -39,57 +53,66 @@ export default function MatchPage() {
       const savedSettings = localStorage.getItem("userSettings");
       if (savedSettings) {
         const settings = JSON.parse(savedSettings);
-        if(!selectedTeam && settings.favoriteTeam) {
-          setSelectedTeam(settings.favoriteTeam);
+        if (!selectedTeam && settings.favoriteTeam) {
+          // Assuming favoriteTeam is a Team object or has enough info to fetch one
+          // This part might need adjustment based on what's stored in localStorage
+          // For now, let's assume it's a team object
+          setSelectedTeamId(settings.favoriteTeam);
         }
       }
 
       try {
-        const supabase = createClient();
+        const filters: ApiFilter[] = [
+        ];
 
-        // Load teams first
-        const { data: teamsData, error: teamsError } = await supabase
-          .from("teams")
-          .select("*");
-
-        if (teamsError) throw teamsError;
-        setTeams(teamsData);
-
-        // If a team is selected, load its matches
-        if (selectedTeam) {
-          let query = supabase
-            .from("matches")
-            .select(
-              `
-              *,
-              home_team:teams!matches_home_team_id_fkey(*),
-              away_team:teams!matches_away_team_id_fkey(*)
-            `
-            )
-            .or(
-              `home_team_id.eq.${selectedTeam},away_team_id.eq.${selectedTeam}`
-            );
-
-          // Apply date range filter
-          if (dateRange?.from) {
-            query = query.gte("date", format(dateRange.from, "yyyy-MM-dd"));
-          }
-          if (dateRange?.to) {
-            query = query.lte("date", format(dateRange.to, "yyyy-MM-dd"));
-          }
-
-          // Apply opponent filter
-          if (opponent) {
-            query = query.or(
-              `home_team_id.eq.${opponent},away_team_id.eq.${opponent}`
-            );
-          }
-
-          const { data: matchesData, error: matchesError } = await query;
-
-          if (matchesError) throw matchesError;
-          setMatches(matchesData);
+        if(selectedTeam) {
+          filters.push({
+            operator: "or",
+            value: `home_team_id.eq.${selectedTeam.id},away_team_id.eq.${selectedTeam.id}`,
+          });
+        } else if (selectedTeamId) {
+          filters.push({
+            operator: "or",
+            value: `home_team_id.eq.${selectedTeamId},away_team_id.eq.${selectedTeamId}`,
+          });
         }
+
+        if (selectedChampionship) {
+          filters.push({
+            field: "championship_id",
+            operator: "eq",
+            value: selectedChampionship.id,
+          });
+        }
+
+        if(selectedClub) {
+          // filters.push({
+          //   field: "home_team.club_id",
+          //   operator: "eq",
+          //   value: selectedClub.id,
+          // });
+        }
+
+        if (dateRange?.from) {
+          filters.push({
+            field: "date",
+            operator: "gte",
+            value: format(dateRange.from, "yyyy-MM-dd"),
+          });
+        }
+
+        if (dateRange?.to) {
+          filters.push({
+            field: "date",
+            operator: "lte",
+            value: format(dateRange.to, "yyyy-MM-dd"),
+          });
+        }
+
+        const joins = ["home_team:teams!matches_home_team_id_fkey", "away_team:teams!matches_away_team_id_fkey"];
+        const sort: Sort<Match>[] = [{ field: 'date', direction: 'asc' }];
+        const matchesData = await matchApi.getMatchs(filters, undefined, joins);
+        setMatches(matchesData);
       } catch (error) {
         console.error("Error loading data:", error);
         setError(
@@ -107,7 +130,23 @@ export default function MatchPage() {
     };
 
     loadData();
-  }, [db, selectedTeam, dateRange, opponent, toast]);
+  }, [
+    selectedTeam,
+    dateRange,
+    toast,
+    selectedChampionship,
+    matchApi,
+  ]);
+
+  const handleTeamChange = (team: Team | null) => {
+    setSelectedTeam(team);
+    if (team && team.club_id) {
+      const clubApi = useClubApi();
+      clubApi.getClubById(team.club_id).then(setSelectedClub);
+    } else {
+      setSelectedClub(null);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -135,21 +174,53 @@ export default function MatchPage() {
         </div>
       </div>
 
-      <MatchFilters
-        teams={teams}
-        selectedTeam={selectedTeam}
-        onTeamChange={setSelectedTeam}
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-        opponent={opponent}
-        onOpponentChange={setOpponent}
-        open={showFilters}
-        onOpenChange={setShowFilters}
-      />
+      <Collapsible open={showFilters} onOpenChange={setShowFilters}>
+        <CollapsibleContent>
+          <Card className="mb-8">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <Label>Championship</Label>
+                  <ChampionshipSelect
+                    value={selectedChampionship}
+                    onChange={setSelectedChampionship}
+                    isClearable
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Club</Label>
+                  <ClubSelect
+                    value={selectedClub}
+                    onChange={setSelectedClub}
+                    isClearable
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Team</Label>
+                  <TeamSelect
+                    value={selectedTeam}
+                    onChange={handleTeamChange}
+                    clubId={selectedClub?.id?.toString()}
+                    championshipId={selectedChampionship?.id}
+                    isClearable
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date range</Label>
+                  <DatePickerWithRange
+                    date={dateRange}
+                    onDateChange={setDateRange}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
 
       {selectedTeam && (
         <div className="grid md:grid-cols-3 gap-6">
-          <TeamStats teamId={selectedTeam} matches={matches} />
+          <TeamStats teamId={selectedTeam.id} matches={matches} />
         </div>
       )}
 
@@ -158,18 +229,11 @@ export default function MatchPage() {
           <CardTitle>Matches</CardTitle>
         </CardHeader>
         <CardContent>
-          {!selectedTeam && (
-            <div className="text-center py-8 text-muted-foreground">
-              No team selected.
-            </div>
-          )}
-          {selectedTeam && (
             <MatchHistoryTable
               matches={matches}
               error={error}
               isLoading={isLoading}
             />
-          )}
         </CardContent>
       </Card>
 

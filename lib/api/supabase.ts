@@ -26,7 +26,7 @@ export class SupabaseDataStore<
 
     if (filters) {
       filters.forEach((f) => {
-        if (f.field.includes(".")) {
+        if (f.field && f.field.includes(".")) {
           const tableName = f.field.split(".")[0];
 
           if (select.includes(`${tableName}(*)`)) {

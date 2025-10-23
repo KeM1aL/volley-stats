@@ -3,6 +3,7 @@
 import { Championship } from "@/lib/types";
 import AsyncSelect from "react-select/async";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
+import { Filter } from "@/lib/api/types";
 
 type ChampionshipSelectProps = {
   value: Championship | null;
@@ -10,13 +11,20 @@ type ChampionshipSelectProps = {
   isClearable?: boolean;
 };
 
-const loadOptions = async (inputValue: string, championshipApi: ReturnType<typeof useChampionshipApi>): Promise<Championship[]> => {
+const loadOptions = async (
+  inputValue: string,
+  championshipApi: ReturnType<typeof useChampionshipApi>,
+): Promise<Championship[]> => {
   try {
-    const championships = await championshipApi.getChampionships([{
-      field: "name",
-      operator: "ilike",
-      value: `${inputValue}%`
-    }]);
+    const filters: Filter[] = [
+      {
+        field: "name",
+        operator: "ilike",
+        value: `${inputValue}%`,
+      },
+    ];
+
+    const championships = await championshipApi.getChampionships(filters);
     return championships;
   } catch (error) {
     console.error("Error fetching championships", error);

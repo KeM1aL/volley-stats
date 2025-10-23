@@ -231,6 +231,7 @@ export type Database = {
           away_available_players: string[] | null
           away_score: number
           away_team_id: string
+          championship_id: number | null
           created_at: string
           date: string
           home_available_players: string[] | null
@@ -238,7 +239,7 @@ export type Database = {
           home_team_id: string
           id: string
           location: string | null
-          match_format: number
+          match_format_id: number
           season_id: number | null
           status: string
           updated_at: string
@@ -247,6 +248,7 @@ export type Database = {
           away_available_players?: string[] | null
           away_score?: number
           away_team_id: string
+          championship_id?: number | null
           created_at?: string
           date: string
           home_available_players?: string[] | null
@@ -254,7 +256,7 @@ export type Database = {
           home_team_id: string
           id?: string
           location?: string | null
-          match_format?: number
+          match_format_id?: number
           season_id?: number | null
           status?: string
           updated_at?: string
@@ -263,6 +265,7 @@ export type Database = {
           away_available_players?: string[] | null
           away_score?: number
           away_team_id?: string
+          championship_id?: number | null
           created_at?: string
           date?: string
           home_available_players?: string[] | null
@@ -270,7 +273,7 @@ export type Database = {
           home_team_id?: string
           id?: string
           location?: string | null
-          match_format?: number
+          match_format_id?: number
           season_id?: number | null
           status?: string
           updated_at?: string
@@ -284,6 +287,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "matches_championship_id_fkey"
+            columns: ["championship_id"]
+            isOneToOne: false
+            referencedRelation: "championships"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "matches_home_team_id_fkey"
             columns: ["home_team_id"]
             isOneToOne: false
@@ -292,7 +302,7 @@ export type Database = {
           },
           {
             foreignKeyName: "matches_match_format_fkey"
-            columns: ["match_format"]
+            columns: ["match_format_id"]
             isOneToOne: false
             referencedRelation: "match_formats"
             referencedColumns: ["id"]
@@ -764,7 +774,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      _is_club_member: {
+        Args: { p_club: string; p_user: string }
+        Returns: boolean
+      }
     }
     Enums: {
       age_category: "U10" | "U12" | "U14" | "U16" | "U18" | "U21" | "senior"
