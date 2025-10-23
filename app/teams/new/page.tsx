@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { NewTeamForm } from "@/components/teams/new-team-form";
+import { TeamForm } from "@/components/teams/team-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function NewTeamPage() {
-  const [teamId, setTeamId] = useState<string | null>(null);
   const router = useRouter();
 
-  const onTeamCreated = (id: string) => {
-    setTeamId(id);
+  const onTeamCreated = () => {
     router.push("/teams");
   };
 
@@ -22,7 +19,7 @@ export default function NewTeamPage() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <NewTeamForm onTeamCreated={onTeamCreated} />
+        <TeamForm onSuccess={onTeamCreated} />
       </CardContent>
     </Card>
   );

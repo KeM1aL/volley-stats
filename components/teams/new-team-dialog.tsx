@@ -6,22 +6,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Team } from "@/lib/types";
 import { TeamForm } from "./team-form";
 
-type EditTeamDialogProps = {
-  team: Team | null;
+type NewTeamDialogProps = {
+  open: boolean;
   onClose: () => void;
 };
 
-export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
+export function NewTeamDialog({ open, onClose }: NewTeamDialogProps) {
   return (
-    <Dialog open={!!team} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Team</DialogTitle>
+          <DialogTitle>New Team</DialogTitle>
         </DialogHeader>
-        <TeamForm team={team} onClose={onClose} />
+        <TeamForm onClose={onClose} />
       </DialogContent>
     </Dialog>
   );

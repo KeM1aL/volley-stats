@@ -11,10 +11,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Team } from "@/lib/types";
 import { Filter, Sort } from "@/lib/api/types";
 import { TeamFilters } from "@/components/teams/team-filters";
+import { NewTeamDialog } from "@/components/teams/new-team-dialog";
 
 export default function TeamsPage() {
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
+  const [newTeam, setNewTeam] = useState<boolean>(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<Filter[]>([]);
@@ -47,7 +49,7 @@ export default function TeamsPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Teams</h1>
-        <Button onClick={() => router.push("/teams/new")}>
+        <Button onClick={() => setNewTeam(true)}>
           <Plus className="h-4 w-4 mr-2" />
           New Team
         </Button>
@@ -63,6 +65,11 @@ export default function TeamsPage() {
       <EditTeamDialog
         team={editingTeam}
         onClose={() => setEditingTeam(null)}
+      />
+
+      <NewTeamDialog
+        open={newTeam}
+        onClose={() => setNewTeam(false)}
       />
     </div>
   );
