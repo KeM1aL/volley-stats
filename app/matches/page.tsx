@@ -28,16 +28,25 @@ import { useMatchApi } from "@/hooks/use-match-api";
 import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import { Filter as ApiFilter, Sort } from "@/lib/api/types";
 
+const lastSeptember = new Date();
+if (lastSeptember.getMonth() < 8) {
+  lastSeptember.setFullYear(lastSeptember.getFullYear() - 1);
+}
+lastSeptember.setMonth(8);
+lastSeptember.setDate(1);
+
 export default function MatchPage() {
-  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: lastSeptember
+  });
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
-  const [selectedChampionship, setSelectedChampionship] = useState<Championship | null>(null);
+  const [selectedChampionship, setSelectedChampionship] =
+    useState<Championship | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -60,83 +69,78 @@ export default function MatchPage() {
           setSelectedTeamId(settings.favoriteTeam);
         }
       }
+        try {
+          const filters: ApiFilter[] = [];
 
-      try {
-        const filters: ApiFilter[] = [
-        ];
+          if (selectedTeam) {
+            filters.push({
+              operator: "or",
+              value: `home_team_id.eq.${selectedTeam.id},away_team_id.eq.${selectedTeam.id}`,
+            });
+          } else if (selectedTeamId) {
+            filters.push({
+              operator: "or",
+              value: `home_team_id.eq.${selectedTeamId},away_team_id.eq.${selectedTeamId}`,
+            });
+          }
 
-        if(selectedTeam) {
-          filters.push({
-            operator: "or",
-            value: `home_team_id.eq.${selectedTeam.id},away_team_id.eq.${selectedTeam.id}`,
+          if (selectedChampionship) {
+            filters.push({
+              field: "championship_id",
+              operator: "eq",
+              value: selectedChampionship.id,
+            });
+          }
+
+          if (selectedClub) {
+            // filters.push({
+            //   field: "home_team.club_id",
+            //   operator: "eq",
+            //   value: selectedClub.id,
+            // });
+          }
+
+          if (dateRange?.from) {
+            filters.push({
+              field: "date",
+              operator: "gte",
+              value: format(dateRange.from, "yyyy-MM-dd"),
+            });
+          }
+
+          if (dateRange?.to) {
+            filters.push({
+              field: "date",
+              operator: "lte",
+              value: format(dateRange.to, "yyyy-MM-dd"),
+            });
+          }
+
+          const joins = [
+            "home_team:teams!matches_home_team_id_fkey",
+            "away_team:teams!matches_away_team_id_fkey",
+          ];
+          const sort: Sort<Match>[] = [{ field: "date", direction: "asc" }];
+          const matchesData = await matchApi.getMatchs(filters, sort, joins);
+          setMatches(matchesData);
+        } catch (error) {
+          console.error("Error loading data:", error);
+          setError(
+            error instanceof Error ? error : new Error("Failed to load data")
+          );
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description:
+              "Failed to load matches. Please try refreshing the page.",
           });
-        } else if (selectedTeamId) {
-          filters.push({
-            operator: "or",
-            value: `home_team_id.eq.${selectedTeamId},away_team_id.eq.${selectedTeamId}`,
-          });
+        } finally {
+          setIsLoading(false);
         }
-
-        if (selectedChampionship) {
-          filters.push({
-            field: "championship_id",
-            operator: "eq",
-            value: selectedChampionship.id,
-          });
-        }
-
-        if(selectedClub) {
-          // filters.push({
-          //   field: "home_team.club_id",
-          //   operator: "eq",
-          //   value: selectedClub.id,
-          // });
-        }
-
-        if (dateRange?.from) {
-          filters.push({
-            field: "date",
-            operator: "gte",
-            value: format(dateRange.from, "yyyy-MM-dd"),
-          });
-        }
-
-        if (dateRange?.to) {
-          filters.push({
-            field: "date",
-            operator: "lte",
-            value: format(dateRange.to, "yyyy-MM-dd"),
-          });
-        }
-
-        const joins = ["home_team:teams!matches_home_team_id_fkey", "away_team:teams!matches_away_team_id_fkey"];
-        const sort: Sort<Match>[] = [{ field: 'date', direction: 'asc' }];
-        const matchesData = await matchApi.getMatchs(filters, undefined, joins);
-        setMatches(matchesData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-        setError(
-          error instanceof Error ? error : new Error("Failed to load data")
-        );
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description:
-            "Failed to load matches. Please try refreshing the page.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
     };
 
     loadData();
-  }, [
-    selectedTeam,
-    dateRange,
-    toast,
-    selectedChampionship,
-    matchApi,
-  ]);
+  }, [selectedTeam, dateRange, toast, selectedChampionship, matchApi]);
 
   const handleTeamChange = (team: Team | null) => {
     setSelectedTeam(team);
@@ -229,11 +233,11 @@ export default function MatchPage() {
           <CardTitle>Matches</CardTitle>
         </CardHeader>
         <CardContent>
-            <MatchHistoryTable
-              matches={matches}
-              error={error}
-              isLoading={isLoading}
-            />
+          <MatchHistoryTable
+            matches={matches}
+            error={error}
+            isLoading={isLoading}
+          />
         </CardContent>
       </Card>
 
