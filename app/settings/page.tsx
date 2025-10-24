@@ -49,7 +49,6 @@ const languages = [
 
 export default function SettingsPage() {
   const { localDb: db } = useLocalDb();
-  const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -67,28 +66,6 @@ export default function SettingsPage() {
     resolver: zodResolver(settingsSchema),
     defaultValues: settings,
   });
-
-  useEffect(() => {
-    const loadTeams = async () => {
-      if (!db) return;
-
-      try {
-        const teamDocs = await db.teams.find().exec();
-        setTeams(teamDocs.map((doc) => doc.toJSON()));
-      } catch (error) {
-        console.error("Failed to load teams:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load teams",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTeams();
-  }, [db]);
 
   useEffect(() => {
     if (!isLoadingSettings) {
@@ -313,37 +290,6 @@ export default function SettingsPage() {
         <CardContent className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="favoriteTeam"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Favorite Team</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a team" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {teams.map((team) => (
-                          <SelectItem key={team.id} value={team.id}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      This team will be highlighted in match listings
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name="language"

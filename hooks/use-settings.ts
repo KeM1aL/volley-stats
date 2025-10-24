@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { z } from "zod";
+import { useAuth } from "@/contexts/auth-context";
+import { getUser, updateProfile } from "@/lib/api/users";
+import { supabase } from "@/lib/supabase/client";
 
 export const settingsSchema = z.object({
   favoriteTeam: z.string().optional(),
@@ -27,31 +30,39 @@ const defaultSettings: Settings = {
 
 export function useSettings() {
   const { theme, setTheme } = useTheme();
+  const { user, setUser } = useAuth();
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadSettings = () => {
-      try {
-        const savedSettings = localStorage.getItem("userSettings");
-        if (savedSettings) {
-          const parsed = JSON.parse(savedSettings);
-          const validated = settingsSchema.parse(parsed);
-          setSettings(validated);
-          setTheme(validated.theme);
-        }
-      } catch (error) {
-        console.error("Failed to load settings:", error);
-        // Fallback to defaults if there's an error
-        setSettings(defaultSettings);
-        setTheme(defaultSettings.theme);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadSettings = useCallback(() => {
+    try {
+      const savedSettings = localStorage.getItem("userSettings");
+      let loadedSettings = defaultSettings;
 
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        const validated = settingsSchema.parse(parsed);
+        loadedSettings = { ...loadedSettings, ...validated };
+      }
+
+      if (user?.profile?.language) {
+        loadedSettings.language = user.profile.language;
+      }
+
+      setSettings(loadedSettings);
+      setTheme(loadedSettings.theme);
+    } catch (error) {
+      console.error("Failed to load settings:", error);
+      setSettings(defaultSettings);
+      setTheme(defaultSettings.theme);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setTheme, user]);
+
+  useEffect(() => {
     loadSettings();
-  }, [setTheme]);
+  }, [loadSettings]);
 
   const updateSettings = async (newSettings: Partial<Settings>) => {
     try {
@@ -60,15 +71,24 @@ export function useSettings() {
         ...newSettings,
       };
 
-      // Validate settings before saving
       const validated = settingsSchema.parse(updatedSettings);
 
-      // Update theme if it changed
       if (newSettings.theme && newSettings.theme !== settings.theme) {
         setTheme(newSettings.theme);
       }
 
-      // Save to localStorage
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session && newSettings.language) {
+        await updateProfile(session.user.id, {
+          language: newSettings.language,
+        });
+        const updatedUser = await getUser();
+        setUser(updatedUser);
+      }
+
       localStorage.setItem("userSettings", JSON.stringify(validated));
       setSettings(validated);
 

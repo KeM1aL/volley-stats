@@ -41,6 +41,14 @@ export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
   return data || [];
 };
 
+export const updateProfile = async (userId: string, profile: Partial<Profile>): Promise<Profile> => {
+  const { data, error } = await supabase.from('profiles').update(profile).eq('id', userId).select();
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data[0] || null;
+};
+
 export const getClubMembers = async (userId: string): Promise<ClubMember[]> => {
   const { data, error } = await supabase.from('club_members').select('*, clubs(*)').eq('user_id', userId);
   if (error) {

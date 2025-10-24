@@ -54,13 +54,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
+        <AuthProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <LocalDatabaseProvider>
               <LoadingBar />
               <div className="min-h-screen bg-background">
@@ -71,8 +71,8 @@ export default function RootLayout({
               </div>
               <Toaster />
             </LocalDatabaseProvider>
-          </AuthProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

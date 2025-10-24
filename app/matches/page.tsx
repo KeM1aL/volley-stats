@@ -39,7 +39,6 @@ export default function MatchPage() {
   const { toast } = useToast();
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: lastSeptember
   });
@@ -58,17 +57,6 @@ export default function MatchPage() {
     const loadData = async () => {
       setIsLoading(true);
       setError(null);
-
-      const savedSettings = localStorage.getItem("userSettings");
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings);
-        if (!selectedTeam && settings.favoriteTeam) {
-          // Assuming favoriteTeam is a Team object or has enough info to fetch one
-          // This part might need adjustment based on what's stored in localStorage
-          // For now, let's assume it's a team object
-          setSelectedTeamId(settings.favoriteTeam);
-        }
-      }
         try {
           const filters: ApiFilter[] = [];
 
@@ -76,11 +64,6 @@ export default function MatchPage() {
             filters.push({
               operator: "or",
               value: `home_team_id.eq.${selectedTeam.id},away_team_id.eq.${selectedTeam.id}`,
-            });
-          } else if (selectedTeamId) {
-            filters.push({
-              operator: "or",
-              value: `home_team_id.eq.${selectedTeamId},away_team_id.eq.${selectedTeamId}`,
             });
           }
 
