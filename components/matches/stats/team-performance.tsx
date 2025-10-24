@@ -63,6 +63,7 @@ interface TeamPerformanceProps {
   points: ScorePoint[];
   stats: PlayerStat[];
   players: TeamMember[];
+  isPdfGenerating?: boolean; // Added for PDF generation context
 }
 
 export function TeamPerformance({

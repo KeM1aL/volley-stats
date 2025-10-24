@@ -7,6 +7,7 @@ type LiveMatchHeaderProps = {
   sets: Set[];
   homeTeam: Team;
   awayTeam: Team;
+  isPdfGenerating?: boolean; // Added for PDF generation context
 };
 
 export function MatchScoreDetails({ match, sets, homeTeam, awayTeam }: LiveMatchHeaderProps) {

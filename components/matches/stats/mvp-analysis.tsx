@@ -10,6 +10,7 @@ interface MVPCalculatorProps {
   stats: PlayerStat[];
   players: TeamMember[];
   sets: Set[];
+  isPdfGenerating?: boolean; // Added for PDF generation context
 }
 
 export function MVPAnalysis({ stats, players, sets }: MVPCalculatorProps) {

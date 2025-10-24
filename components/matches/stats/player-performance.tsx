@@ -40,6 +40,7 @@ interface PlayerPerformanceProps {
   players: TeamMember[];
   stats: PlayerStat[];
   sets: Set[];
+  isPdfGenerating?: boolean; // Added for PDF generation context
 }
 
 interface PlayerPositionStats

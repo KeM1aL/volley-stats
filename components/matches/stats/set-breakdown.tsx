@@ -29,6 +29,7 @@ interface SetBreakdownProps {
   opponentTeam: Team,
   sets: Set[];
   points: ScorePoint[];
+  isPdfGenerating?: boolean; // Added for PDF generation context
 }
 
 export function SetBreakdown({ match, sets, points, managedTeam, opponentTeam }: SetBreakdownProps) {

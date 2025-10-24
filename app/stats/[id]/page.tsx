@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Share2 } from "lucide-react";
 import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import type {
   Match,
   TeamMember,
@@ -40,6 +41,8 @@ export default function MatchStatsPage() {
   const [sets, setSets] = useState<Set[]>([]);
   const [players, setPlayers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview"); // State to manage active tab for export
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false); // State to indicate if PDF generation is in progress
 
   useEffect(() => {
     const loadData = async () => {
@@ -99,8 +102,14 @@ export default function MatchStatsPage() {
           teamId === matchData.home_team_id
             ? matchData.home_available_players
             : matchData.away_available_players;
-        const { data: availablePlayersData, error: availablePlayersError } = // @ts-ignore
-          await supabase.from("team_members").select("*").in("id", playerIds as string[]);
+        const {
+          data: availablePlayersData,
+          error: availablePlayersError,
+        } = // @ts-ignore
+          await supabase
+            .from("team_members")
+            .select("*")
+            .in("id", playerIds as string[]);
         if (availablePlayersError) throw availablePlayersError;
         setPlayers(availablePlayersData);
 
@@ -225,6 +234,109 @@ export default function MatchStatsPage() {
     }
   }, [db, matchId, isOnline]);
 
+  const exportToPDF = async () => {
+    if (!match || isPdfGenerating) return;
+
+    setIsPdfGenerating(true); // Set generating state to true
+
+    toast({
+      title: "Generating PDF...",
+      description:
+        "Please wait while your match statistics are being compiled.",
+    });
+
+    const doc = new jsPDF("p", "pt", "a4");
+    const margin = 20;
+    let yOffset = margin;
+
+    const tabsToExport = ["overview", "scores", "sets", "players"];
+    // const setsToExport = [null, ...sets.map((s) => s.id)]; // No longer needed as a direct loop variable
+
+    try {
+      for (const tab of tabsToExport) {
+        setActiveTab(tab); // Activate the main tab
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for tab content to render
+
+        const elementId = `${tab}-section`;
+        const input = document.getElementById(elementId);
+
+        if (input) {
+          // 1. Capture "All Sets" view for the current tab
+          doc.addPage();
+          yOffset = margin;
+          doc.setFontSize(20);
+          doc.text(`${tab.charAt(0).toUpperCase() + tab.slice(1)} - All Sets Overview`, margin, yOffset);
+          yOffset += 40;
+
+          const canvasAllSets = await html2canvas(input, {
+            scale: 2,
+            useCORS: true,
+          });
+          const imgDataAllSets = canvasAllSets.toDataURL("image/png");
+          const imgWidth = 595 - 2 * margin;
+          const imgHeightAllSets = (canvasAllSets.height * imgWidth) / canvasAllSets.width;
+
+          if (yOffset + imgHeightAllSets > doc.internal.pageSize.height - margin && yOffset !== margin + 40) {
+            doc.addPage();
+            yOffset = margin;
+          }
+          doc.addImage(imgDataAllSets, "PNG", margin, yOffset, imgWidth, imgHeightAllSets);
+          yOffset += imgHeightAllSets + margin;
+
+          // 2. Iterate and capture for each individual set for the current tab
+          for (const set of sets) { // Iterate through actual sets
+            //TODO Select individual set
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for data filtering and re-render
+
+            doc.addPage();
+            yOffset = margin;
+            doc.setFontSize(20);
+            doc.text(`${tab.charAt(0).toUpperCase() + tab.slice(1)} - Set ${set.set_number} Breakdown`, margin, yOffset);
+            yOffset += 40;
+
+            const canvasIndividualSet = await html2canvas(input, {
+              scale: 2,
+              useCORS: true,
+            });
+            const imgDataIndividualSet = canvasIndividualSet.toDataURL("image/png");
+            const imgHeightIndividualSet = (canvasIndividualSet.height * imgWidth) / canvasIndividualSet.width;
+
+            if (yOffset + imgHeightIndividualSet > doc.internal.pageSize.height - margin && yOffset !== margin + 40) {
+              doc.addPage();
+              yOffset = margin;
+            }
+            doc.addImage(imgDataIndividualSet, "PNG", margin, yOffset, imgWidth, imgHeightIndividualSet);
+            yOffset += imgHeightIndividualSet + margin;
+          }
+
+          // Add a new page for the next main tab
+          if (tab !== tabsToExport[tabsToExport.length - 1]) {
+            doc.addPage();
+            yOffset = margin;
+          }
+        } else {
+          console.warn(`Element with ID ${elementId} not found for PDF export.`);
+        }
+      }
+
+      doc.save(`match-stats-${matchId}.pdf`);
+      toast({
+        title: "PDF Generated!",
+        description: "Your match statistics PDF has been downloaded.",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        variant: "destructive",
+        title: "PDF Generation Failed",
+        description: "There was an error generating the PDF.",
+      });
+    } finally {
+      setIsPdfGenerating(false); // Reset generating state
+      setActiveTab("overview"); // Reset active tab after export
+    }
+  };
+
   const shareStats = async () => {
     try {
       await navigator.share({
@@ -245,7 +357,6 @@ export default function MatchStatsPage() {
       </div>
     );
   }
-
   if (!match) {
     return <div>Match not found</div>;
   }
@@ -263,12 +374,20 @@ export default function MatchStatsPage() {
           {/* <Button variant="outline" onClick={exportToCSV}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
-          </Button>
-          <Button variant="outline" onClick={exportToPDF}>
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
           </Button> */}
-          <Button variant="outline" onClick={shareStats}>
+          <Button
+            variant="outline"
+            onClick={exportToPDF}
+            disabled={isPdfGenerating}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {isPdfGenerating ? "Generating..." : "Export PDF"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={shareStats}
+            disabled={isPdfGenerating}
+          >
             <Share2 className="h-4 w-4 mr-2" />
             Share
           </Button>
@@ -277,7 +396,11 @@ export default function MatchStatsPage() {
 
       <Card>
         <CardContent className="p-6">
-          <Tabs defaultValue="overview" className="space-y-4">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-4"
+          >
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="scores">Scores</TabsTrigger>
@@ -286,7 +409,11 @@ export default function MatchStatsPage() {
               <TabsTrigger value="team">Team</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="space-y-4">
+            <TabsContent
+              value="overview"
+              id="overview-section"
+              className="space-y-4"
+            >
               <div className="grid md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
@@ -307,6 +434,7 @@ export default function MatchStatsPage() {
                             ? managedTeam!
                             : opponentTeam!
                         }
+                        isPdfGenerating={isPdfGenerating}
                       />
                     </div>
                   </CardContent>
@@ -328,17 +456,18 @@ export default function MatchStatsPage() {
               <MVPAnalysis sets={sets} stats={stats} players={players} />
             </TabsContent>
 
-            <TabsContent value="sets">
+            <TabsContent value="sets" id="sets-section">
               <SetBreakdown
                 match={match}
                 sets={sets}
                 points={points}
                 managedTeam={managedTeam!}
                 opponentTeam={opponentTeam!}
+                isPdfGenerating={isPdfGenerating}
               />
             </TabsContent>
 
-            <TabsContent value="players">
+            <TabsContent value="players" id="players-section">
               <PlayerPerformance
                 match={match}
                 managedTeam={managedTeam!}
@@ -349,8 +478,13 @@ export default function MatchStatsPage() {
               />
             </TabsContent>
 
-            <TabsContent value="scores">
-              <ScoreProgression match={match} points={points} sets={sets} />
+            <TabsContent value="scores" id="scores-section">
+              <ScoreProgression
+                match={match}
+                points={points}
+                sets={sets}
+                isPdfGenerating={isPdfGenerating}
+              />
             </TabsContent>
 
             <TabsContent value="team">
@@ -361,6 +495,7 @@ export default function MatchStatsPage() {
                 points={points}
                 stats={stats}
                 players={players}
+                isPdfGenerating={isPdfGenerating}
               />
             </TabsContent>
           </Tabs>

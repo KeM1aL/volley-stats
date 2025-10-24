@@ -21,19 +21,20 @@ import {
 } from "recharts";
 import { Match, ScorePoint, Set } from "@/lib/types";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { SetSelector } from "./set-selector";
 
 interface ScoreProgressionProps {
   match: Match;
   points: ScorePoint[];
   sets: Set[];
+  isPdfGenerating?: boolean; // Added for PDF generation context
 }
 
-export function ScoreProgression({ match, sets, points }: ScoreProgressionProps) {
-  const [selectedSet, setSelectedSet] = useState<string>("all");
+export function ScoreProgression({ match, sets, points, isPdfGenerating }: ScoreProgressionProps) {
+  const [selectedSet, setSelectedSet] = useState<string | null>(null);
 
   const progressionData = points
-    .filter((p) => selectedSet === "all" || p.set_id === selectedSet)
+    .filter((p) => selectedSet === null || p.set_id === selectedSet)
     .map((point, index) => ({
       point: index + 1,
       home: point.home_score,
@@ -43,32 +44,7 @@ export function ScoreProgression({ match, sets, points }: ScoreProgressionProps)
 
   return (
     <div className="space-y-6">
-      <div className="inline-flex">
-        <Button
-          variant={selectedSet === "all" ? "default" : "outline"}
-          onClick={() => setSelectedSet("all")}
-          className="rounded-r-none"
-        >
-          All Sets
-        </Button>
-        {sets.map((set, index) => (
-          <Button
-            variant={selectedSet === set.id ? "default" : "outline"}
-            key={set.id}
-            onClick={() => setSelectedSet(set.id)}
-            className={`
-                        ${index === sets.length - 1 ? "rounded-l-none" : ""}
-                        ${
-                          index >= 0 && index < sets.length - 1
-                            ? "rounded-none border-x-0"
-                            : ""
-                        }
-                      `}
-          >
-            Set {set.set_number}
-          </Button>
-        ))}
-      </div>
+      <SetSelector sets={sets} selectedSetId={selectedSet} onSelectSet={setSelectedSet} />
       <Card>
         <CardHeader>
           <CardTitle>Score Progression</CardTitle>
@@ -88,6 +64,7 @@ export function ScoreProgression({ match, sets, points }: ScoreProgressionProps)
                 stroke="hsl(var(--chart-1))"
                 name="Home"
                 strokeWidth={2}
+                isAnimationActive={!!!isPdfGenerating}
               />
               <Line
                 type="monotone"
@@ -95,6 +72,7 @@ export function ScoreProgression({ match, sets, points }: ScoreProgressionProps)
                 stroke="hsl(var(--chart-2))"
                 name="Away"
                 strokeWidth={2}
+                isAnimationActive={!!!isPdfGenerating}
               />
             </LineChart>
           </ResponsiveContainer>
