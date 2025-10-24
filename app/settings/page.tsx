@@ -49,7 +49,6 @@ const languages = [
 
 export default function SettingsPage() {
   const { localDb: db } = useLocalDb();
-  const [isLoading, setIsLoading] = useState(true);
   const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
@@ -260,7 +259,7 @@ export default function SettingsPage() {
     });
   };
 
-  if (isLoading || isLoadingSettings) {
+  if (isLoadingSettings) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />

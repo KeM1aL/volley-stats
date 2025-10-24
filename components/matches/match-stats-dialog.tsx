@@ -77,9 +77,8 @@ export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <BarChart2 className="h-4 w-4 mr-2" />
-          Stats
+        <Button variant="ghost" size="sm" title="View Stats">
+          <BarChart2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

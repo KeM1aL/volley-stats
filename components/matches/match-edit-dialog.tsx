@@ -77,9 +77,8 @@ export default function MatchEditDialog({ match }: MatchStartDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Pencil className="h-4 w-4 mr-2" />
-          Edit
+        <Button variant="ghost" size="sm" title="Edit Match">
+          <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

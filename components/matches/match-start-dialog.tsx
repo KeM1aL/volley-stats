@@ -149,9 +149,8 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Volleyball className="h-4 w-4 mr-2" />
-          Start
+        <Button variant="ghost" size="sm" title="Start Match">
+          <Volleyball className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

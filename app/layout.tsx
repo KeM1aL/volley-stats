@@ -3,10 +3,10 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LocalDatabaseProvider } from '@/components/providers/local-database-provider';
-import { AuthProvider } from '@/contexts/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
 import { LoadingBar } from '@/components/ui/loading-bar';
+import { AuthProvider } from '@/contexts/auth-context';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -54,13 +54,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
       </head>
       <body>
-        <AuthProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
             <LocalDatabaseProvider>
               <LoadingBar />
               <div className="min-h-screen bg-background">
@@ -71,8 +71,8 @@ export default function RootLayout({
               </div>
               <Toaster />
             </LocalDatabaseProvider>
-          </ThemeProvider>
-        </AuthProvider>
+            </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

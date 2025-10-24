@@ -77,9 +77,8 @@ export default function MatchScoreDialog({ match }: MatchStatsDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Cast className="h-4 w-4 mr-2" />
-          Score
+        <Button variant="ghost" size="sm" title="Live Score">
+          <Cast className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

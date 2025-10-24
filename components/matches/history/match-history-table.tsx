@@ -25,6 +25,7 @@ import MatchStartDialog from "../match-start-dialog";
 import MatchEditDialog from "../match-edit-dialog";
 import MatchStatsDialog from "../match-stats-dialog";
 import MatchScoreDialog from "../match-score-dialog";
+import { useAuth } from "@/contexts/auth-context";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
@@ -40,8 +41,29 @@ export function MatchHistoryTable({
   error,
   isLoading,
 }: MatchHistoryTableProps) {
+  const { user } = useAuth();
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  const isMemberOfTeamOrClub = (match: Match) => {
+    if (!user) return false;
+
+    const isHomeTeamMember = user.teamMembers?.some(
+      (member) => member.team_id === match.home_team_id
+    );
+    const isAwayTeamMember = user.teamMembers?.some(
+      (member) => member.team_id === match.away_team_id
+    );
+
+    const isHomeClubMember = user.clubMembers?.some(
+      (member) => member.club_id === match.home_team?.club_id
+    );
+    const isAwayClubMember = user.clubMembers?.some(
+      (member) => member.club_id === match.away_team?.club_id
+    );
+
+    return isHomeTeamMember || isAwayTeamMember || isHomeClubMember || isAwayClubMember;
+  };
 
   const sortMatches = (a: Match, b: Match) => {
     switch (sortField) {
@@ -128,7 +150,7 @@ export function MatchHistoryTable({
             </div>
           </TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="w-[100px]">Actions</TableHead>
+          {user && <TableHead className="w-[100px]">Actions</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -145,21 +167,25 @@ export function MatchHistoryTable({
             <TableCell>
               <span className="capitalize">{match.status}</span>
             </TableCell>
-            <TableCell>
-              {(() => {
-                switch (match.status) {
-                  case MatchStatus.UPCOMING:
-                    return <MatchStartDialog match={match} />;
-                  case MatchStatus.COMPLETED:
-                    return <MatchStatsDialog match={match} />;
-                  case MatchStatus.LIVE:
-                    return <MatchEditDialog match={match} />;
-                  default:
-                    return null;
-                }
-              })()}
-              <MatchScoreDialog match={match} />
-            </TableCell>
+            {user && isMemberOfTeamOrClub(match) && (
+              <TableCell>
+                <div className="flex gap-2">
+                  {(() => {
+                    switch (match.status) {
+                      case MatchStatus.UPCOMING:
+                        return <MatchStartDialog match={match} />;
+                      case MatchStatus.COMPLETED:
+                        return <MatchStatsDialog match={match} />;
+                      case MatchStatus.LIVE:
+                        return <><MatchEditDialog match={match} /> <MatchScoreDialog match={match} /></>;
+                      default:
+                        return null;
+                    }
+                  })()}
+                  
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>
