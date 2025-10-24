@@ -9,6 +9,7 @@ import {
   Settings,
   Menu,
   LogOut,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -18,6 +19,11 @@ import { ThemeToggle } from "./theme-toggle";
 import { FullScreenToggle } from "./fullscreen-toggle";
 
 const routes = [
+  {
+    href: "/championships",
+    label: "Championships",
+    icon: Trophy,
+  },
   {
     href: "/matches",
     label: "Matches",

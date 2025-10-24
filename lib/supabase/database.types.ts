@@ -24,6 +24,7 @@ export type Database = {
           id: number
           metadata: Json | null
           name: string
+          season_id: number | null
           type: string
           updated_at: string | null
         }
@@ -36,6 +37,7 @@ export type Database = {
           id?: number
           metadata?: Json | null
           name: string
+          season_id?: number | null
           type: string
           updated_at?: string | null
         }
@@ -48,6 +50,7 @@ export type Database = {
           id?: number
           metadata?: Json | null
           name?: string
+          season_id?: number | null
           type?: string
           updated_at?: string | null
         }
@@ -57,6 +60,13 @@ export type Database = {
             columns: ["default_match_format"]
             isOneToOne: false
             referencedRelation: "match_formats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "championships_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
             referencedColumns: ["id"]
           },
         ]

@@ -9,7 +9,8 @@ export type Championship = {
   default_match_format: number;
   format: '2x2' | '3x3' | '4x4' | '6x6';
   age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior';
-  gender: 'female' | 'male';
+  gender: 'female' | 'male' | 'mixte';
+  season_id: number;
   created_at: string | null;
   updated_at: string | null;
 };

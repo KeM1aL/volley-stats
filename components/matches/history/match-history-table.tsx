@@ -23,7 +23,6 @@ import { MatchStatus } from "@/lib/enums";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MatchStartDialog from "../match-start-dialog";
 import MatchEditDialog from "../match-edit-dialog";
-import { useRouter } from "next/navigation";
 import MatchStatsDialog from "../match-stats-dialog";
 import MatchScoreDialog from "../match-score-dialog";
 
@@ -41,7 +40,6 @@ export function MatchHistoryTable({
   error,
   isLoading,
 }: MatchHistoryTableProps) {
-  const router = useRouter();
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 

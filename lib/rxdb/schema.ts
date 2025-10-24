@@ -29,11 +29,12 @@ export const championshipSchema = toTypedRxJsonSchema({
     id: { type: "string", maxLength: 8 },
     name: { type: "string" },
     type: { type: "string" },
+    season_id: { type: ["number", "null"] },
     metadata: { type: "string" },
     default_match_format: { type: "number" },
     format: {
       type: "string",
-      enum: ["4x4", "6x6"],
+      enum: ["2x2", "3x3", "4x4", "6x6"],
       maxLength: 6,
     },
     age_category: {
@@ -43,7 +44,7 @@ export const championshipSchema = toTypedRxJsonSchema({
     },
     gender: {
       type: "string",
-      enum: ["female", "male"],
+      enum: ["female", "male", "mixte"],
       maxLength: 6,
     },
     ...timestampFields,
