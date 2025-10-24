@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Volleyball } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocalDb } from "../providers/local-database-provider";
 import { toast } from "@/hooks/use-toast";
 import { MatchManagedTeamSetup } from "./match-managed-setup";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context"; // Import useAuth
 
 type MatchStartDialogProps = {
   match: Match;
@@ -25,6 +26,7 @@ type MatchStartDialogProps = {
 
 export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   const { localDb: db } = useLocalDb();
+  const { user } = useAuth(); // Use the auth context
   const router = useRouter();
   const [managedTeam, setManagedTeam] = useState<Team | null>(null);
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);
@@ -33,6 +35,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   const [availablePlayers, setAvailablePlayers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -48,8 +51,8 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
         }
 
         const teams = Array.from(teamDocs.values());
-        setHomeTeam(teams[0].toJSON());
-        setAwayTeam(teams[1].toJSON());
+        setHomeTeam(teams.find(t => t.id === match.home_team_id)?.toJSON() || null);
+        setAwayTeam(teams.find(t => t.id === match.away_team_id)?.toJSON() || null);
       } catch (error) {
         console.error("Failed to load teams:", error);
         toast({
@@ -65,20 +68,23 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     loadTeams();
   }, [db, match.id]);
 
+  const userManagedTeams = useMemo(() => {
+    if (!user || !user.teamMembers) return [];
+    const managedTeamIds = user.teamMembers.map(member => member.team_id);
+    const teams: Team[] = [];
+    if (homeTeam && managedTeamIds.includes(homeTeam.id)) {
+      teams.push(homeTeam);
+    }
+    if (awayTeam && managedTeamIds.includes(awayTeam.id)) {
+      teams.push(awayTeam);
+    }
+    return teams;
+  }, [user, homeTeam, awayTeam]);
+
   const loadTeamPlayers = async (team: Team) => {
     if (!db) return;
     setIsLoadingPlayers(true);
     try {
-
-      // const supabase = createClient();
-
-      // const playersResponse = await supabase
-      //   .from("players")
-      //   .select("*")
-      //   .eq("team_id", teamId);
-
-      // if (playersResponse.error) throw playersResponse.error;
-
       const playerDocs = await db.team_members
         .find({
           selector: {
@@ -144,44 +150,69 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     }
     setManagedTeam(selectedTeam);
     await loadTeamPlayers(selectedTeam!);
+    setIsDialogOpen(false); // Close dialog after selection
   }
 
+  const handleOpenChange = (open: boolean) => {
+    if (open && !isLoading && homeTeam && awayTeam) {
+      if (userManagedTeams.length === 1) {
+        const selectedTeam = userManagedTeams[0];
+        setManagedTeam(selectedTeam);
+        loadTeamPlayers(selectedTeam);
+        setIsDialogOpen(false);
+      } else if (userManagedTeams.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Permission Denied",
+          description: "You do not have permission to manage either team in this match.",
+        });
+        setIsDialogOpen(false);
+      } else {
+        setIsDialogOpen(true);
+      }
+    } else if (!open) {
+      setIsDialogOpen(false);
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" title="Start Match">
+        <Button variant="ghost" size="sm" title="Start Match" disabled={isLoading || userManagedTeams.length === 0}>
           <Volleyball className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Match Setup</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <MatchManagedTeamSetup
-            homeTeam={homeTeam!}
-            awayTeam={awayTeam!}
-            onTeamSelected={onManagedTeamSelected}
-          />
-          {managedTeam && players && (
-            <MatchLineupSetup
-              match={match}
-              players={players}
-              availablePlayers={availablePlayers}
-              setAvailablePlayers={setAvailablePlayers}
+      {userManagedTeams.length > 1 && ( // Only show content if user can manage both
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Match Setup</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <MatchManagedTeamSetup
+              homeTeam={homeTeam!}
+              awayTeam={awayTeam!}
+              onTeamSelected={onManagedTeamSelected}
             />
-          )}
-        </div>
-        <DialogFooter>
-          <Button
-            onClick={onSetupComplete}
-            className="w-full"
-            disabled={isLoading || availablePlayers.length < 6}
-          >
-            Start Match
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+            {managedTeam && players && (
+              <MatchLineupSetup
+                match={match}
+                players={players}
+                availablePlayers={availablePlayers}
+                setAvailablePlayers={setAvailablePlayers}
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={onSetupComplete}
+              className="w-full"
+              disabled={isLoading || availablePlayers.length < 6}
+            >
+              Start Match
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      )}
     </Dialog>
   );
 }

@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button";
 import { BarChart2, Cast, Pencil, Volleyball } from "lucide-react";
 import { MatchManagedTeamSetup } from "./match-managed-setup";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocalDb } from "../providers/local-database-provider";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context"; // Import useAuth
 
 type MatchStatsDialogProps = {
   match: Match;
@@ -25,10 +26,12 @@ type MatchStatsDialogProps = {
 
 export default function MatchScoreDialog({ match }: MatchStatsDialogProps) {
   const { localDb: db } = useLocalDb();
+  const { user } = useAuth(); // Use the auth context
   const router = useRouter();
   const [homeTeam, setHomeTeam] = useState<Team | null>(null);
   const [awayTeam, setAwayTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -44,8 +47,8 @@ export default function MatchScoreDialog({ match }: MatchStatsDialogProps) {
         }
 
         const teams = Array.from(teamDocs.values());
-        setHomeTeam(teams[0].toJSON());
-        setAwayTeam(teams[1].toJSON());
+        setHomeTeam(teams.find(t => t.id === match.home_team_id)?.toJSON() || null);
+        setAwayTeam(teams.find(t => t.id === match.away_team_id)?.toJSON() || null);
       } catch (error) {
         console.error("Failed to load teams:", error);
         toast({
@@ -61,38 +64,67 @@ export default function MatchScoreDialog({ match }: MatchStatsDialogProps) {
     loadTeams();
   }, [db, match.id]);
 
-  async function onManagedTeamSelected(teamId: string): Promise<void> {
-    let selectedTeamId;
-    if (teamId === match.away_team_id) {
-      selectedTeamId = match.away_team_id;
-    } else {
-      selectedTeamId = match.home_team_id;
+  const userManagedTeams = useMemo(() => {
+    if (!user || !user.teamMembers) return [];
+    const managedTeamIds = user.teamMembers.map(member => member.team_id);
+    const teams: Team[] = [];
+    if (homeTeam && managedTeamIds.includes(homeTeam.id)) {
+      teams.push(homeTeam);
     }
-    const params = new URLSearchParams();
-    params.set("team", selectedTeamId);
+    if (awayTeam && managedTeamIds.includes(awayTeam.id)) {
+      teams.push(awayTeam);
+    }
+    return teams;
+  }, [user, homeTeam, awayTeam]);
 
+  async function onManagedTeamSelected(teamId: string): Promise<void> {
+    const params = new URLSearchParams();
+    params.set("team", teamId);
     router.push(`/matches/${match.id}/score?${params.toString()}`);
+    setIsDialogOpen(false); // Close dialog after selection
   }
 
+  const handleOpenChange = (open: boolean) => {
+    if (open && !isLoading && homeTeam && awayTeam) {
+      if (userManagedTeams.length === 1) {
+        onManagedTeamSelected(userManagedTeams[0].id);
+        setIsDialogOpen(false);
+      } else if (userManagedTeams.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Permission Denied",
+          description: "You do not have permission to manage either team in this match.",
+        });
+        setIsDialogOpen(false);
+      } else {
+        setIsDialogOpen(true);
+      }
+    } else if (!open) {
+      setIsDialogOpen(false);
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" title="Live Score">
+        <Button variant="ghost" size="sm" title="Live Score" disabled={isLoading || userManagedTeams.length === 0}>
           <Cast className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Select Managing Team</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <MatchManagedTeamSetup
-            homeTeam={homeTeam!}
-            awayTeam={awayTeam!}
-            onTeamSelected={onManagedTeamSelected}
-          />
-        </div>
-      </DialogContent>
+      {userManagedTeams.length > 1 && ( // Only show content if user can manage both
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Select Managing Team</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <MatchManagedTeamSetup
+              homeTeam={homeTeam!}
+              awayTeam={awayTeam!}
+              onTeamSelected={onManagedTeamSelected}
+            />
+          </div>
+        </DialogContent>
+      )}
     </Dialog>
   );
 }
