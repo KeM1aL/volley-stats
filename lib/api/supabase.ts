@@ -1,10 +1,8 @@
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { DataStore } from "./datastore";
 import { Filter, Sort } from "./types";
 import { applySupabaseFilters, applySupabaseSorting } from "./utils";
 import { Database } from "../supabase/database.types";
-
-const supabase = createClient();
 
 export class SupabaseDataStore<
   TableName extends keyof Database["public"]["Tables"],

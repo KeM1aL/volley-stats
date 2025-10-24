@@ -1,0 +1,50 @@
+  import { ClubMember, Profile, TeamMember, User } from '@/lib/types';
+import { supabase } from '../supabase/client';
+
+export const getUser = async (): Promise<User | null> => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return null;
+  }
+
+  const [profile, teamMembers, clubMembers] = await Promise.all([
+    getProfile(session.user.id),
+    getTeamMembers(session.user.id),
+    getClubMembers(session.user.id),
+  ]);
+
+  return {
+    id: session.user.id,
+    email: session.user.email,
+    profile,
+    teamMembers,
+    clubMembers,
+  };
+};
+
+export const getProfile = async (userId: string): Promise<Profile> => {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data[0] || null;
+};
+
+export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
+  const { data, error } = await supabase.from('team_members').select('*, teams(*)').eq('user_id', userId);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data || [];
+};
+
+export const getClubMembers = async (userId: string): Promise<ClubMember[]> => {
+  const { data, error } = await supabase.from('club_members').select('*, clubs(*)').eq('user_id', userId);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data || [];
+};

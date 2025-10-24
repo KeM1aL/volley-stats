@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { Session } from "@supabase/supabase-js";
+import { User } from "@/lib/types";
+import { getUser } from "@/lib/api/users";
 import { supabase } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
 
@@ -21,19 +23,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        const user = await getUser();
+        setUser(user);
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
     });
 

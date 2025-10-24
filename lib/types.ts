@@ -35,6 +35,23 @@ export type MatchFormat = {
   updated_at: string;
 };
 
+export type User = {
+  id: string;
+  email: string | undefined;
+  profile: Profile;
+  teamMembers?: TeamMember[];
+  clubMembers?: ClubMember[];
+};
+
+export type Profile = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  language: string;
+};
+
+
+
 export type Team = {
   id: string;
   name: string;
@@ -61,6 +78,7 @@ export type Club = {
 export type ClubMember = {
   id: string;
   club_id: string;
+  clubs?: Club | null;
   user_id: string;
   role: 'owner' | 'admin' | 'member';
   created_at: string;
@@ -70,6 +88,7 @@ export type ClubMember = {
 export type TeamMember = {
   id: string;
   team_id: string;
+  teams?: Team | null;
   name: string;
   number: number;
   position: string;

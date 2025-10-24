@@ -388,16 +388,19 @@ export type Database = {
         Row: {
           first_name: string | null
           id: string
+          language: string
           last_name: string | null
         }
         Insert: {
           first_name?: string | null
           id: string
+          language?: string
           last_name?: string | null
         }
         Update: {
           first_name?: string | null
           id?: string
+          language?: string
           last_name?: string | null
         }
         Relationships: []
