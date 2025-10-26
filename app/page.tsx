@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { MoveRight } from "lucide-react";
 import { FeaturesSection } from "@/components/landing/features-section";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 export default async function Home() {
   const supabase = await createClient();

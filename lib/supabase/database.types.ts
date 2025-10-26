@@ -19,10 +19,11 @@ export type Database = {
           age_category: Database["public"]["Enums"]["age_category"]
           created_at: string | null
           default_match_format: number
+          ext_code: string | null
+          ext_source: string | null
           format: Database["public"]["Enums"]["championship_format"]
           gender: Database["public"]["Enums"]["championship_gender"]
           id: number
-          metadata: Json | null
           name: string
           season_id: number | null
           type: string
@@ -32,10 +33,11 @@ export type Database = {
           age_category: Database["public"]["Enums"]["age_category"]
           created_at?: string | null
           default_match_format?: number
+          ext_code?: string | null
+          ext_source?: string | null
           format: Database["public"]["Enums"]["championship_format"]
           gender: Database["public"]["Enums"]["championship_gender"]
           id?: number
-          metadata?: Json | null
           name: string
           season_id?: number | null
           type: string
@@ -45,10 +47,11 @@ export type Database = {
           age_category?: Database["public"]["Enums"]["age_category"]
           created_at?: string | null
           default_match_format?: number
+          ext_code?: string | null
+          ext_source?: string | null
           format?: Database["public"]["Enums"]["championship_format"]
           gender?: Database["public"]["Enums"]["championship_gender"]
           id?: number
-          metadata?: Json | null
           name?: string
           season_id?: number | null
           type?: string
@@ -239,14 +242,19 @@ export type Database = {
       matches: {
         Row: {
           away_available_players: string[] | null
-          away_score: number
+          away_score: number | null
           away_team_id: string
+          away_total: number | null
           championship_id: number | null
           created_at: string
           date: string
+          detailed_scores: string[] | null
+          ext_code: string | null
+          ext_source: string | null
           home_available_players: string[] | null
-          home_score: number
+          home_score: number | null
           home_team_id: string
+          home_total: number | null
           id: string
           location: string | null
           match_format_id: number
@@ -256,14 +264,19 @@ export type Database = {
         }
         Insert: {
           away_available_players?: string[] | null
-          away_score?: number
+          away_score?: number | null
           away_team_id: string
+          away_total?: number | null
           championship_id?: number | null
           created_at?: string
           date: string
+          detailed_scores?: string[] | null
+          ext_code?: string | null
+          ext_source?: string | null
           home_available_players?: string[] | null
-          home_score?: number
+          home_score?: number | null
           home_team_id: string
+          home_total?: number | null
           id?: string
           location?: string | null
           match_format_id?: number
@@ -273,14 +286,19 @@ export type Database = {
         }
         Update: {
           away_available_players?: string[] | null
-          away_score?: number
+          away_score?: number | null
           away_team_id?: string
+          away_total?: number | null
           championship_id?: number | null
           created_at?: string
           date?: string
+          detailed_scores?: string[] | null
+          ext_code?: string | null
+          ext_source?: string | null
           home_available_players?: string[] | null
-          home_score?: number
+          home_score?: number | null
           home_team_id?: string
+          home_total?: number | null
           id?: string
           location?: string | null
           match_format_id?: number
@@ -742,28 +760,34 @@ export type Database = {
           championship_id: number | null
           club_id: string | null
           created_at: string
+          ext_code: string | null
+          ext_source: string | null
           id: string
           name: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           championship_id?: number | null
           club_id?: string | null
           created_at?: string
+          ext_code?: string | null
+          ext_source?: string | null
           id?: string
           name: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           championship_id?: number | null
           club_id?: string | null
           created_at?: string
+          ext_code?: string | null
+          ext_source?: string | null
           id?: string
           name?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -799,6 +823,7 @@ export type Database = {
       championship_type: "regional" | "departmental" | "national"
       club_member_role: "owner" | "admin" | "member"
       formatType: "6x6" | "4x4"
+      status: "upcoming" | "live" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -932,6 +957,7 @@ export const Constants = {
       championship_type: ["regional", "departmental", "national"],
       club_member_role: ["owner", "admin", "member"],
       formatType: ["6x6", "4x4"],
+      status: ["upcoming", "live", "completed"],
     },
   },
 } as const

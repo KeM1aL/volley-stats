@@ -30,7 +30,6 @@ export const championshipSchema = toTypedRxJsonSchema({
     name: { type: "string" },
     type: { type: "string" },
     season_id: { type: ["number", "null"] },
-    metadata: { type: "string" },
     default_match_format: { type: "number" },
     format: {
       type: "string",
@@ -47,6 +46,8 @@ export const championshipSchema = toTypedRxJsonSchema({
       enum: ["female", "male", "mixte"],
       maxLength: 6,
     },
+    ext_code: { type: ["string", "null"] },
+    ext_source: { type: ["string", "null"] },
     ...timestampFields,
   },
   required: [
@@ -121,13 +122,15 @@ export const teamSchema = toTypedRxJsonSchema({
   properties: {
     id: { type: "string", maxLength: 36 }, // uuid
     name: { type: "string" },
-    user_id: { type: "string", maxLength: 36 },
+    user_id: { type: ["string", "null"], maxLength: 36 },
     club_id: { type: ["string", "null"], maxLength: 36 },
     championship_id: { type: ["number", "null"] },
+    ext_code: { type: ["string", "null"] },
+    ext_source: { type: ["string", "null"] },
     ...timestampFields,
   },
-  required: ["id", "name", "user_id",  "created_at", "updated_at"],
-  indexes: ["user_id",  "created_at", "updated_at"],
+  required: ["id", "name",  "created_at", "updated_at"],
+  indexes: ["created_at", "updated_at"],
 });
 
 // Club Schema
@@ -214,8 +217,8 @@ export const matchSchema = toTypedRxJsonSchema({
     away_team_id: { type: "string", maxLength: 36 },
     championship_id: { type: ["number", "null"] },
     season_id: { type: ["number", "null"] },
-    home_score: { type: "number" },
-    away_score: { type: "number" },
+    home_score: { type: ["number", "null"] },
+    away_score: { type: ["number", "null"] },
     match_format_id: { type: "number" },
     status: {
       type: "string",
@@ -230,6 +233,11 @@ export const matchSchema = toTypedRxJsonSchema({
       type: "array",
       items: { type: "string", maxLength: 36 },
     },
+    ext_code: { type: ["string", "null"] },
+    ext_source: { type: ["string", "null"] },
+    home_total: { type: ["number", "null"] },
+    away_total: { type: ["number", "null"] },
+    detailed_scores: { type: ["array", "null"], items: { type: "string" } },
     ...timestampFields,
   },
   required: [

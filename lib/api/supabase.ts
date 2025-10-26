@@ -3,12 +3,16 @@ import { DataStore } from "./datastore";
 import { Filter, Sort } from "./types";
 import { applySupabaseFilters, applySupabaseSorting } from "./utils";
 import { Database } from "../supabase/database.types";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export class SupabaseDataStore<
   TableName extends keyof Database["public"]["Tables"],
   T = Database["public"]["Tables"][TableName]["Row"]
 > implements DataStore<T> {
-  constructor(private tableName: TableName) {}
+  private supabase: SupabaseClient<Database>;
+  constructor(private tableName: TableName, supabaseClient: SupabaseClient<Database> = supabase) {
+    this.supabase = supabaseClient;
+  }
 
   async getAll(filters?: Filter[], sort?: Sort<T>[], joins?: string[]): Promise<T[]> {
     let select = "*";
@@ -36,7 +40,7 @@ export class SupabaseDataStore<
       });
     }
 
-    let query = supabase.from(this.tableName).select(select);
+    let query = this.supabase.from(this.tableName).select(select);
     if (filters && filters.length > 0) {
       query = applySupabaseFilters(query, filters);
     }
@@ -48,15 +52,25 @@ export class SupabaseDataStore<
     return (data as T[]) || [];
   }
 
-  async get(id: string | number): Promise<T> {
-    let query = supabase.from(this.tableName).select('*').eq('id', id as any);
+  async get(id: string | number, joins?: string[]): Promise<T | null> {
+    let select = "*";
+    
+
+    if (joins && joins.length > 0) {
+      joins.forEach((join) => {
+        if (!select.includes(`${join}(`)) {
+          select += `,${join}(*)`;
+        }
+      });
+    }
+    let query = this.supabase.from(this.tableName).select(select).eq('id', id as any).single();
     const { data, error } = await query;
       if (error) throw error;
       return (data as T);
   }
 
   async create(item: Partial<T>): Promise<T> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from(this.tableName)
       // @ts-ignore
       .insert(item)
@@ -67,7 +81,7 @@ export class SupabaseDataStore<
   }
 
   async update(id: string | number, updates: Partial<T>): Promise<T> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from(this.tableName)
       .update(updates as any)
       .eq("id", id as any)
@@ -78,7 +92,7 @@ export class SupabaseDataStore<
   }
 
   async delete(id: string | number): Promise<void> {
-    const { error } = await supabase.from(this.tableName).delete().eq("id", id as any);
+    const { error } = await this.supabase.from(this.tableName).delete().eq("id", id as any);
     if (error) throw error;
   }
 }

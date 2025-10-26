@@ -236,12 +236,12 @@ export class ScorePointCommand implements Command {
       this.match = {
         home_score:
           homeScore > awayScore
-            ? previousState.match!.home_score + 1
-            : previousState.match!.home_score,
+            ? previousState.match!.home_score! + 1
+            : previousState.match!.home_score!,
         away_score:
           awayScore > homeScore
-            ? previousState.match!.away_score + 1
-            : previousState.match!.away_score,
+            ? previousState.match!.away_score! + 1
+            : previousState.match!.away_score!,
       };
       if (
         this.match.home_score === 3 ||

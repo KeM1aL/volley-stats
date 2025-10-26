@@ -72,6 +72,10 @@ export function MatchHistoryTable({
           ? new Date(a.date).getTime() - new Date(b.date).getTime()
           : new Date(b.date).getTime() - new Date(a.date).getTime();
       case "score":
+        a.home_score = a.home_score || 0;
+        a.away_score = a.away_score || 0;
+        b.home_score = b.home_score || 0;
+        b.away_score = b.away_score || 0;
         const aScore = Math.abs(a.home_score - a.away_score);
         const bScore = Math.abs(b.home_score - b.away_score);
         return sortDirection === "asc" ? aScore - bScore : bScore - aScore;

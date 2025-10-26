@@ -1,16 +1,16 @@
 import { PlayerPosition, PlayerRole } from "./enums";
-import { Json } from "./supabase/database.types";
 
 export type Championship = {
   id: number;
   name: string;
   type: string;
-  metadata: string | null;
   default_match_format: number;
   format: '2x2' | '3x3' | '4x4' | '6x6';
   age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior';
   gender: 'female' | 'male' | 'mixte';
-  season_id: number;
+  season_id: number | null;
+  ext_code: string | null;
+  ext_source: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -60,9 +60,11 @@ export type Team = {
   clubs?: Club | null;
   championship_id: number | null;
   championships?: Championship;
+  ext_code: string | null;
+  ext_source: string | null;
   created_at: string;
   updated_at: string;
-  user_id: string;
+  user_id: string | null;
 };
 
 export type Club = {
@@ -112,11 +114,16 @@ export type Match = {
   championship_id: number | null;
   season_id: number | null;
   match_format_id: number;
-  home_score: number;
-  away_score: number;
-  status: 'upcoming' | 'live' | 'completed';
+  home_score: number | null;
+  away_score: number | null;
+  status: string;
   home_available_players: string[] | null;
   away_available_players: string[] | null;
+  ext_code: string | null;
+  ext_source: string | null;
+  home_total: number | null;
+  away_total: number | null;
+  detailed_scores: string[] | null;
   created_at: string;
   updated_at: string;
 };

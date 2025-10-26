@@ -27,8 +27,8 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
   const wins = teamTerminatedMatches.filter((match) => {
     const isHome = match.home_team_id === teamId;
     return isHome
-      ? match.home_score > match.away_score
-      : match.away_score > match.home_score;
+      ? match.home_score! > match.away_score!
+      : match.away_score! > match.home_score!;
   }).length;
 
   const totalMatches = teamTerminatedMatches.length;
@@ -40,11 +40,11 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
       return sum;
     }
     const myScore = match.home_team_id === teamId
-      ? match.home_score
-      : match.away_score;
+      ? match.home_score!
+      : match.away_score!;
     const opponentScore = match.home_team_id === teamId
-      ? match.away_score
-      : match.home_score;
+      ? match.away_score!
+      : match.home_score!;
     if(opponentScore > myScore + 1) {
       return sum;
     }
@@ -103,9 +103,9 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
             {teamTerminatedMatches.slice(-5).map((match, index) => {
               const isWin =
                 (match.home_team_id === teamId &&
-                  match.home_score > match.away_score) ||
+                  match.home_score! > match.away_score!) ||
                 (match.away_team_id === teamId &&
-                  match.away_score > match.home_score);
+                  match.away_score! > match.home_score!);
               return (
                 <div
                   key={index}

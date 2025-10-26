@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
-import { Championship } from "@/lib/types";
+import { Championship, Season } from "@/lib/types";
 import { LoadingPage } from "@/components/loading-page";
 import { MatchHistoryTable } from "@/components/matches/history/match-history-table";
 import { DateRange } from "react-day-picker";
@@ -18,9 +18,10 @@ import { TeamSelect } from "@/components/teams/team-select";
 import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import { useToast } from "@/hooks/use-toast";
 import { useClubApi } from "@/hooks/use-club-api";
+import { useSeasonApi } from "@/hooks/use-season-api";
 import { TeamStats } from "@/components/matches/history/team-stats";
 import { StatisticsDialog } from "@/components/matches/history/statistics-dialog";
-import { BarChart3, Filter, Plus } from "lucide-react";
+import { BarChart3, Filter, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -52,6 +53,7 @@ export default function ChampionshipDetailPage() {
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(true);
 
@@ -155,6 +157,35 @@ export default function ChampionshipDetailPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    if (!championship) return;
+
+    setIsRefreshing(true);
+    try {
+      const response = await fetch(
+        `/api/import/ffvb`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            championshipId: championship.id,
+            seasonId: championship.season_id
+          })
+        }
+      );
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error || "Failed to refresh matches");
+      }
+      toast({ title: "Success", description: "Matches have been refreshed successfully." });
+    } catch (error: any) { 
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+    setIsRefreshing(false);
+  };
+
   if (isLoading && !championship) {
     return <LoadingPage />;
   }
@@ -181,6 +212,16 @@ export default function ChampionshipDetailPage() {
           </p>
         </div>
         <div className="flex gap-4">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </Button>
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}

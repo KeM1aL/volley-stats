@@ -128,6 +128,9 @@ importers:
       framer-motion:
         specifier: ^11.11.11
         version: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      html2canvas:
+        specifier: ^1.4.1
+        version: 1.4.1
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -149,6 +152,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      papaparse:
+        specifier: ^5.5.3
+        version: 5.5.3
       postcss:
         specifier: ^8.5.6
         version: 8.5.6
@@ -216,6 +222,9 @@ importers:
       '@types/node':
         specifier: 22.8.7
         version: 22.8.7
+      '@types/papaparse':
+        specifier: ^5.3.16
+        version: 5.3.16
       '@types/react':
         specifier: 18.3.12
         version: 18.3.12
@@ -223,7 +232,7 @@ importers:
         specifier: 18.3.1
         version: 18.3.1
       supabase:
-        specifier: ^2.53.6
+        specifier: '>=1.8.1'
         version: 2.53.6
 
 packages:
@@ -2139,6 +2148,9 @@ packages:
 
   '@types/pako@2.0.4':
     resolution: {integrity: sha512-VWDCbrLeVXJM9fihYodcLiIv0ku+AlOa/TQ1SvYOaBuyrSKgEcro95LJyIsJ4vSo6BXIxOKxiJAat04CmST9Fw==}
+
+  '@types/papaparse@5.3.16':
+    resolution: {integrity: sha512-T3VuKMC2H0lgsjI9buTB3uuKj3EMD2eap1MOuEQuBQ44EnDx/IkGhU6EwiTf9zG3za4SKlmwKAImdDKdNnCsXg==}
 
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
@@ -4121,6 +4133,9 @@ packages:
 
   pako@2.1.0:
     resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
+
+  papaparse@5.5.3:
+    resolution: {integrity: sha512-5QvjGxYVjxO59MGU2lHVYpRWBBtKHnlIAcSe1uNFCkkptUh63NFRj0FJQm7nR67puEruUci/ZkjmEFrjCAyP4A==}
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -7423,6 +7438,10 @@ snapshots:
 
   '@types/pako@2.0.4': {}
 
+  '@types/papaparse@5.3.16':
+    dependencies:
+      '@types/node': 22.8.7
+
   '@types/parse-json@4.0.2': {}
 
   '@types/phoenix@1.6.6': {}
@@ -7934,8 +7953,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  base64-arraybuffer@1.0.2:
-    optional: true
+  base64-arraybuffer@1.0.2: {}
 
   base64-js@1.5.1: {}
 
@@ -8136,7 +8154,6 @@ snapshots:
   css-line-break@2.1.0:
     dependencies:
       utrie: 1.0.2
-    optional: true
 
   cssesc@3.0.0: {}
 
@@ -8431,8 +8448,8 @@ snapshots:
       '@typescript-eslint/parser': 8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2)
       eslint: 9.35.0(jiti@1.21.7)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.35.0(jiti@1.21.7))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-typescript@3.10.1)(eslint@9.35.0(jiti@1.21.7))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.35.0(jiti@1.21.7))
       eslint-plugin-react: 7.37.5(eslint@9.35.0(jiti@1.21.7))
       eslint-plugin-react-hooks: 5.2.0(eslint@9.35.0(jiti@1.21.7))
@@ -8451,7 +8468,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7)):
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.35.0(jiti@1.21.7)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3
@@ -8462,22 +8479,22 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-typescript@3.10.1)(eslint@9.35.0(jiti@1.21.7))
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7)):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.35.0(jiti@1.21.7)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2)
       eslint: 9.35.0(jiti@1.21.7)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.35.0(jiti@1.21.7))
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-typescript@3.10.1)(eslint@9.35.0(jiti@1.21.7)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -8488,7 +8505,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.35.0(jiti@1.21.7)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7)))(eslint@9.35.0(jiti@1.21.7))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.46.0(eslint@9.35.0(jiti@1.21.7))(typescript@5.2.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.35.0(jiti@1.21.7))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -8961,7 +8978,6 @@ snapshots:
     dependencies:
       css-line-break: 2.1.0
       text-segmentation: 1.0.3
-    optional: true
 
   http-parser-js@0.5.10: {}
 
@@ -9589,6 +9605,8 @@ snapshots:
   package-json-from-dist@1.0.1: {}
 
   pako@2.1.0: {}
+
+  papaparse@5.5.3: {}
 
   parent-module@1.0.1:
     dependencies:
@@ -10390,7 +10408,6 @@ snapshots:
   text-segmentation@1.0.3:
     dependencies:
       utrie: 1.0.2
-    optional: true
 
   thenify-all@1.6.0:
     dependencies:
@@ -10583,7 +10600,6 @@ snapshots:
   utrie@1.0.2:
     dependencies:
       base64-arraybuffer: 1.0.2
-    optional: true
 
   validator@13.15.15: {}
 

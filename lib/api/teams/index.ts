@@ -1,9 +1,10 @@
-import { Team } from "./types";
 import { Filter, Sort } from "../types";
 import { SupabaseDataStore } from "../supabase";
+import { Team } from "@/lib/types";
+import { SupabaseClient } from "@supabase/supabase-js";
 
-export const createTeamApi = () => {
-  const dataStore = new SupabaseDataStore("teams");
+export const createTeamApi = (supabaseClient?: SupabaseClient) => {
+  const dataStore = new SupabaseDataStore("teams", supabaseClient);
 
   return {
     getTeams: (filters?: Filter[], sort?: Sort<Team>[],joins?: string[]) => dataStore.getAll(filters, sort, joins),

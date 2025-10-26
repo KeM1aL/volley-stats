@@ -91,6 +91,8 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           user_id: session.user.id,
+          ext_code: null,
+          ext_source: null
         };
 
         const createdTeam = await teamApi.createTeam(newTeam);
