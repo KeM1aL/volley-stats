@@ -150,16 +150,15 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     }
     setManagedTeam(selectedTeam);
     await loadTeamPlayers(selectedTeam!);
-    setIsDialogOpen(false); // Close dialog after selection
   }
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = async (open: boolean) => {
     if (open && !isLoading && homeTeam && awayTeam) {
       if (userManagedTeams.length === 1) {
         const selectedTeam = userManagedTeams[0];
         setManagedTeam(selectedTeam);
-        loadTeamPlayers(selectedTeam);
-        setIsDialogOpen(false);
+        await loadTeamPlayers(selectedTeam);
+        setIsDialogOpen(true);
       } else if (userManagedTeams.length === 0) {
         toast({
           variant: "destructive",
@@ -182,7 +181,6 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
           <Volleyball className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      {userManagedTeams.length > 1 && ( // Only show content if user can manage both
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Match Setup</DialogTitle>
@@ -212,7 +210,6 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
             </Button>
           </DialogFooter>
         </DialogContent>
-      )}
     </Dialog>
   );
 }
