@@ -1,5 +1,8 @@
 "use client";
 
+import React, { useState, useRef, useImperativeHandle } from "react";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import {
   Card,
   CardContent,
@@ -16,22 +19,71 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  AreaChart,
-  Area,
 } from "recharts";
 import { Match, ScorePoint, Set } from "@/lib/types";
-import { useState } from "react";
 import { SetSelector } from "./set-selector";
+import { PdfExportHandle } from "@/lib/pdf/types";
 
 interface ScoreProgressionProps {
   match: Match;
   points: ScorePoint[];
   sets: Set[];
-  isPdfGenerating?: boolean; // Added for PDF generation context
+  isPdfGenerating?: boolean;
 }
 
-export function ScoreProgression({ match, sets, points, isPdfGenerating }: ScoreProgressionProps) {
+const ScoreProgression = React.forwardRef<
+  PdfExportHandle,
+  ScoreProgressionProps
+>(({ match, sets, points, isPdfGenerating }, ref) => {
   const [selectedSet, setSelectedSet] = useState<string | null>(null);
+  const scoreProgressionRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    generatePdfContent: async (doc, initialYOffset, allSets, tabTitle) => {
+      let currentYOffset = initialYOffset;
+      const margin = 20;
+      const imgWidth = 595 - 2 * margin;
+
+      const setsToIterate = [...allSets.map((s) => s.id)];
+
+      for (const setId of setsToIterate) {
+        setSelectedSet(setId);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const subTitle =
+          setId === null
+            ? "All Sets Overview"
+            : `Set ${
+                allSets.find((s) => s.id === setId)?.set_number || ""
+              } Breakdown`;
+
+        doc.addPage();
+        currentYOffset = margin;
+        doc.setFontSize(16);
+        doc.text(`${tabTitle} - ${subTitle}`, margin, currentYOffset);
+        currentYOffset += 30;
+
+        if (scoreProgressionRef.current) {
+          const canvas = await html2canvas(scoreProgressionRef.current, {
+            scale: 2,
+            useCORS: true,
+          });
+          const imgData = canvas.toDataURL("image/png");
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          if (currentYOffset + imgHeight > doc.internal.pageSize.height - margin) {
+            doc.addPage();
+            currentYOffset = margin;
+          }
+          doc.addImage(imgData, "PNG", margin, currentYOffset, imgWidth, imgHeight);
+          currentYOffset += imgHeight + margin;
+        } else {
+          console.warn(`Score Progression content element not found for PDF export.`);
+        }
+      }
+      return currentYOffset;
+    },
+  }));
 
   const progressionData = points
     .filter((p) => selectedSet === null || p.set_id === selectedSet)
@@ -43,7 +95,7 @@ export function ScoreProgression({ match, sets, points, isPdfGenerating }: Score
     }));
 
   return (
-    <div className="space-y-6">
+    <div ref={scoreProgressionRef} id="scores-section-content" className="space-y-6">
       <SetSelector sets={sets} selectedSetId={selectedSet} onSelectSet={setSelectedSet} />
       <Card>
         <CardHeader>
@@ -98,6 +150,7 @@ export function ScoreProgression({ match, sets, points, isPdfGenerating }: Score
                 stroke="hsl(var(--primary))"
                 name="Difference"
                 strokeWidth={2}
+                isAnimationActive={!!!isPdfGenerating}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -105,4 +158,8 @@ export function ScoreProgression({ match, sets, points, isPdfGenerating }: Score
       </Card>
     </div>
   );
-}
+});
+
+ScoreProgression.displayName = "ScoreProgression";
+
+export { ScoreProgression };

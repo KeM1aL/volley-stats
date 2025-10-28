@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,8 @@ import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { supabase } from "@/lib/supabase/client";
+import { MatchOverview } from "@/components/matches/stats/match-overview";
+import { PdfExportHandle } from "@/lib/pdf/types";
 
 export default function MatchStatsPage() {
   const { id: matchId } = useParams();
@@ -41,8 +43,14 @@ export default function MatchStatsPage() {
   const [sets, setSets] = useState<Set[]>([]);
   const [players, setPlayers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview"); // State to manage active tab for export
+  const [activeTab, setActiveTab] = useState("overview");
   const [isPdfGenerating, setIsPdfGenerating] = useState(false); // State to indicate if PDF generation is in progress
+
+  const overviewRef = useRef<PdfExportHandle>(null);
+  const setBreakdownRef = useRef<PdfExportHandle>(null);
+  const playerPerformanceRef = useRef<PdfExportHandle>(null);
+  const scoreProgressionRef = useRef<PdfExportHandle>(null);
+  const teamPerformanceRef = useRef<PdfExportHandle>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -237,85 +245,54 @@ export default function MatchStatsPage() {
   const exportToPDF = async () => {
     if (!match || isPdfGenerating) return;
 
-    setIsPdfGenerating(true); // Set generating state to true
-
+    setIsPdfGenerating(true);
     toast({
       title: "Generating PDF...",
-      description:
-        "Please wait while your match statistics are being compiled.",
+      description: "Please wait while your match statistics are being compiled.",
     });
 
     const doc = new jsPDF("p", "pt", "a4");
-    const margin = 20;
-    let yOffset = margin;
+    const margin = 40;
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-    const tabsToExport = ["overview", "scores", "sets", "players"];
-    // const setsToExport = [null, ...sets.map((s) => s.id)]; // No longer needed as a direct loop variable
+    // --- Title Page ---
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text("Match Statistics", pageWidth / 2, 60, { align: "center" });
+
+    if (managedTeam && opponentTeam) {
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${managedTeam.name} vs ${opponentTeam.name}`, pageWidth / 2, 90, {
+        align: "center",
+      });
+    }
+
+    doc.setFontSize(12);
+    doc.text(new Date(match.date).toLocaleDateString(), pageWidth / 2, 110, {
+      align: "center",
+    });
+
+    const componentsToExport = [
+      { ref: overviewRef, title: "Overview", tab : "overview" },
+      { ref: scoreProgressionRef, title: "Score Progression", tab : "scores"},
+      { ref: setBreakdownRef, title: "Set Breakdown", tab : "sets"},
+      { ref: playerPerformanceRef, title: "Player Performance", tab : "players"},
+      { ref: teamPerformanceRef, title: "Team Performance", tab : "team"},
+    ];
+
+    const initialTab = activeTab;
 
     try {
-      for (const tab of tabsToExport) {
-        setActiveTab(tab); // Activate the main tab
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for tab content to render
-
-        const elementId = `${tab}-section`;
-        const input = document.getElementById(elementId);
-
-        if (input) {
-          // 1. Capture "All Sets" view for the current tab
-          doc.addPage();
-          yOffset = margin;
-          doc.setFontSize(20);
-          doc.text(`${tab.charAt(0).toUpperCase() + tab.slice(1)} - All Sets Overview`, margin, yOffset);
-          yOffset += 40;
-
-          const canvasAllSets = await html2canvas(input, {
-            scale: 2,
-            useCORS: true,
-          });
-          const imgDataAllSets = canvasAllSets.toDataURL("image/png");
-          const imgWidth = 595 - 2 * margin;
-          const imgHeightAllSets = (canvasAllSets.height * imgWidth) / canvasAllSets.width;
-
-          if (yOffset + imgHeightAllSets > doc.internal.pageSize.height - margin && yOffset !== margin + 40) {
-            doc.addPage();
-            yOffset = margin;
-          }
-          doc.addImage(imgDataAllSets, "PNG", margin, yOffset, imgWidth, imgHeightAllSets);
-          yOffset += imgHeightAllSets + margin;
-
-          // 2. Iterate and capture for each individual set for the current tab
-          for (const set of sets) { // Iterate through actual sets
-            //TODO Select individual set
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for data filtering and re-render
-
-            doc.addPage();
-            yOffset = margin;
-            doc.setFontSize(20);
-            doc.text(`${tab.charAt(0).toUpperCase() + tab.slice(1)} - Set ${set.set_number} Breakdown`, margin, yOffset);
-            yOffset += 40;
-
-            const canvasIndividualSet = await html2canvas(input, {
-              scale: 2,
-              useCORS: true,
-            });
-            const imgDataIndividualSet = canvasIndividualSet.toDataURL("image/png");
-            const imgHeightIndividualSet = (canvasIndividualSet.height * imgWidth) / canvasIndividualSet.width;
-
-            if (yOffset + imgHeightIndividualSet > doc.internal.pageSize.height - margin && yOffset !== margin + 40) {
-              doc.addPage();
-              yOffset = margin;
-            }
-            doc.addImage(imgDataIndividualSet, "PNG", margin, yOffset, imgWidth, imgHeightIndividualSet);
-            yOffset += imgHeightIndividualSet + margin;
-          }
-
-          // Add a new page for the next main tab
-          if (tab !== tabsToExport[tabsToExport.length - 1]) {
-            doc.addPage();
-            yOffset = margin;
-          }
+      for (const { ref, title, tab } of componentsToExport) {
+        setActiveTab(tab);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        if (ref.current) {
+          await ref.current.generatePdfContent(doc, margin, sets, title);
         } else {
-          console.warn(`Element with ID ${elementId} not found for PDF export.`);
+          console.warn(
+            `Ref for ${title} not found. Skipping PDF generation for this component.`
+          );
         }
       }
 
@@ -332,8 +309,8 @@ export default function MatchStatsPage() {
         description: "There was an error generating the PDF.",
       });
     } finally {
-      setIsPdfGenerating(false); // Reset generating state
-      setActiveTab("overview"); // Reset active tab after export
+      setIsPdfGenerating(false);
+      setActiveTab(initialTab);
     }
   };
 
@@ -409,86 +386,66 @@ export default function MatchStatsPage() {
               <TabsTrigger value="team">Team</TabsTrigger>
             </TabsList>
 
-            <TabsContent
-              value="overview"
-              id="overview-section"
-              className="space-y-4"
-            >
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Final Score</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="w-full">
-                      <MatchScoreDetails
-                        match={match}
-                        sets={sets}
-                        homeTeam={
-                          match.home_team_id === managedTeam?.id
-                            ? managedTeam!
-                            : opponentTeam!
-                        }
-                        awayTeam={
-                          match.away_team_id === managedTeam?.id
-                            ? managedTeam!
-                            : opponentTeam!
-                        }
-                        isPdfGenerating={isPdfGenerating}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Match Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <p>Total Sets: {sets.length}</p>
-                      <p>Total Points: {points.length}</p>
-                      <p>Duration: {sets.length * 25} minutes</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              <MVPAnalysis sets={sets} stats={stats} players={players} />
+            <TabsContent value="overview" id="overview-section" className="space-y-4" >
+              {match && managedTeam && opponentTeam && (
+                <MatchOverview
+                  ref={overviewRef}
+                  match={match}
+                  managedTeam={managedTeam}
+                  opponentTeam={opponentTeam}
+                  points={points}
+                  stats={stats}
+                  sets={sets}
+                  players={players}
+                  isPdfGenerating={isPdfGenerating}
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="sets" id="sets-section">
-              <SetBreakdown
-                match={match}
-                sets={sets}
-                points={points}
-                managedTeam={managedTeam!}
-                opponentTeam={opponentTeam!}
-                isPdfGenerating={isPdfGenerating}
-              />
+              {match && managedTeam && opponentTeam && (
+                <SetBreakdown
+                  ref={setBreakdownRef}
+                  match={match}
+                  sets={sets}
+                  points={points}
+                  managedTeam={managedTeam}
+                  opponentTeam={opponentTeam}
+                  isPdfGenerating={isPdfGenerating}
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="players" id="players-section">
-              <PlayerPerformance
-                match={match}
-                managedTeam={managedTeam!}
-                opponentTeam={opponentTeam!}
-                players={players}
-                stats={stats}
-                sets={sets}
-              />
+              {match && managedTeam && opponentTeam && (
+                <PlayerPerformance
+                  ref={playerPerformanceRef}
+                  match={match}
+                  managedTeam={managedTeam}
+                  opponentTeam={opponentTeam}
+                  players={players}
+                  stats={stats}
+                  sets={sets}
+                  isPdfGenerating={isPdfGenerating}
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="scores" id="scores-section">
-              <ScoreProgression
-                match={match}
-                points={points}
-                sets={sets}
-                isPdfGenerating={isPdfGenerating}
-              />
+              {match && (
+                <ScoreProgression
+                  ref={scoreProgressionRef}
+                  match={match}
+                  points={points}
+                  sets={sets}
+                  isPdfGenerating={isPdfGenerating}
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="team">
               <TeamPerformance
+                ref={teamPerformanceRef}
                 match={match}
                 managedTeam={managedTeam!}
                 sets={sets}

@@ -41,7 +41,6 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
     },
     ref
   ) => {
-    const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
     const overviewRef = useRef<HTMLDivElement>(null);
 
     useImperativeHandle(ref, () => ({
@@ -50,33 +49,9 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
         const margin = 20;
         const imgWidth = 595 - 2 * margin; // A4 width (595pt) - 2 * margin
 
-        const setsToIterate = [null, ...allSets.map((s) => s.id)];
-
-        for (const setId of setsToIterate) {
-          setSelectedSetId(setId);
-          await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for state update and re-render
-
-          const currentSets = setId
-            ? allSets.filter((set) => set.id === setId)
-            : allSets;
-          const currentPoints = setId
-            ? points.filter((point) => point.set_id === setId)
-            : points;
-          const currentStats = setId
-            ? stats.filter((stat) => stat.set_id === setId)
-            : stats;
-
-          const subTitle =
-            setId === null
-              ? "All Sets Overview"
-              : `Set ${
-                  allSets.find((s) => s.id === setId)?.set_number || ""
-                } Breakdown`;
-
-          doc.addPage();
           currentYOffset = margin;
           doc.setFontSize(16);
-          doc.text(`${tabTitle} - ${subTitle}`, margin, currentYOffset);
+          doc.text(`${tabTitle}`, margin, currentYOffset);
           currentYOffset += 30;
 
           if (overviewRef.current) {
@@ -84,32 +59,22 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
               scale: 2,
               useCORS: true,
             });
-            const imgData = canvas.toDataURL("image/png");
+            const imgData = canvas.toDataURL("image/jpeg", 0.9);
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
             if (currentYOffset + imgHeight > doc.internal.pageSize.height - margin) {
               doc.addPage();
               currentYOffset = margin;
             }
-            doc.addImage(imgData, "PNG", margin, currentYOffset, imgWidth, imgHeight);
+            doc.addImage(imgData, "JPEG", margin, currentYOffset, imgWidth, imgHeight);
             currentYOffset += imgHeight + margin;
           } else {
             console.warn(`Overview content element not found for PDF export.`);
           }
-        }
+        
         return currentYOffset;
       },
     }));
-
-    const currentSets = selectedSetId
-      ? sets.filter((set) => set.id === selectedSetId)
-      : sets;
-    const currentPoints = selectedSetId
-      ? points.filter((point) => point.set_id === selectedSetId)
-      : points;
-    const currentStats = selectedSetId
-      ? stats.filter((stat) => stat.set_id === selectedSetId)
-      : stats;
 
     return (
       <div ref={overviewRef} id="overview-section-content">
@@ -122,7 +87,7 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
               <div className="w-full">
                 <MatchScoreDetails
                   match={match}
-                  sets={currentSets}
+                  sets={sets}
                   homeTeam={
                     match.home_team_id === managedTeam?.id
                       ? managedTeam!
@@ -145,16 +110,16 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <p>Total Sets: {currentSets.length}</p>
-                <p>Total Points: {currentPoints.length}</p>
-                <p>Duration: {currentSets.length * 25} minutes</p>
+                <p>Total Sets: {sets.length}</p>
+                <p>Total Points: {points.length}</p>
+                <p>Duration: {sets.length * 25} minutes</p>
               </div>
             </CardContent>
           </Card>
         </div>
         <MVPAnalysis
-          sets={currentSets}
-          stats={currentStats}
+          sets={sets}
+          stats={stats}
           players={players}
           isPdfGenerating={isPdfGenerating}
         />

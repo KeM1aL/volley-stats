@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useRef, useImperativeHandle } from "react";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import { PlayerStat, Team, TeamMember, Set, Match } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,16 +34,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { getPlayerSetStats } from "@/lib/stats/calculations";
-
-interface PlayerPerformanceProps {
-  match: Match;
-  managedTeam: Team;
-  opponentTeam: Team;
-  players: TeamMember[];
-  stats: PlayerStat[];
-  sets: Set[];
-  isPdfGenerating?: boolean; // Added for PDF generation context
-}
+import { PdfExportHandle } from "@/lib/pdf/types";
 
 interface PlayerPositionStats
   extends Record<
@@ -54,6 +47,16 @@ interface PlayerPositionStats
   worstReceptionPosition: PlayerPosition | null;
 }
 
+interface PlayerPerformanceProps {
+  match: Match;
+  managedTeam: Team;
+  opponentTeam: Team;
+  players: TeamMember[];
+  stats: PlayerStat[];
+  sets: Set[];
+  isPdfGenerating?: boolean;
+}
+
 export const variants = {
   [StatResult.SUCCESS]: "text-green-700",
   [StatResult.ERROR]: "text-red-700",
@@ -61,16 +64,82 @@ export const variants = {
   [StatResult.GOOD]: "text-blue-700",
 };
 
-export function PlayerPerformance({
-  match,
-  managedTeam,
-  opponentTeam,
-  players,
-  stats,
-  sets,
-}: PlayerPerformanceProps) {
+const PlayerPerformance = React.forwardRef<
+  PdfExportHandle,
+  PlayerPerformanceProps
+>(({ match, managedTeam, opponentTeam, players, stats, sets }, ref) => {
   const [selectedSet, setSelectedSet] = useState<string>("all");
   const [selectedTab, setSelectedTab] = useState("overview");
+  const playerPerformanceRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    generatePdfContent: async (doc, initialYOffset, allSets, tabTitle) => {
+      let currentYOffset = initialYOffset;
+      const margin = 20;
+      const imgWidth = 595 - 2 * margin;
+
+      const setsToIterate = [null, ...allSets.map((s) => s.id)];
+
+      const tabsToIterate = ["overview", "details", "positions"];
+      
+
+      for (const tab of tabsToIterate) {
+        setSelectedTab(tab);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        doc.addPage();
+        currentYOffset = margin;
+
+        for (const setId of setsToIterate) {
+          setSelectedSet(setId === null ? "all" : setId);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          const subTitle =
+            setId === null
+              ? "All Sets Overview"
+              : `Set ${
+                  allSets.find((s) => s.id === setId)?.set_number || ""
+                } Breakdown`;
+
+          doc.addPage();
+          currentYOffset = margin;
+          doc.setFontSize(16);
+          doc.text(`${tabTitle} - ${subTitle}`, margin, currentYOffset);
+          currentYOffset += 30;
+
+          if (playerPerformanceRef.current) {
+            const canvas = await html2canvas(playerPerformanceRef.current, {
+              scale: 2,
+              useCORS: true,
+            });
+            const imgData = canvas.toDataURL("image/jpeg", 0.9);
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            if (
+              currentYOffset + imgHeight >
+              doc.internal.pageSize.height - margin
+            ) {
+              doc.addPage();
+              currentYOffset = margin;
+            }
+            doc.addImage(
+              imgData,
+              "JPEG",
+              margin,
+              currentYOffset,
+              imgWidth,
+              imgHeight
+            );
+            currentYOffset += imgHeight + margin;
+          } else {
+            console.warn(
+              `Player Performance content element not found for PDF export.`
+            );
+          }
+        }
+      }
+      return currentYOffset;
+    },
+  }));
 
   const getPlayerSetPositionStats = (
     playerId: string,
@@ -202,7 +271,8 @@ export function PlayerPerformance({
       sets,
       managedTeam!,
       opponentTeam!,
-      playerId
+      playerId,
+      selectedSet === "all" ? undefined : selectedSet
     );
     return [
       {
@@ -249,7 +319,7 @@ export function PlayerPerformance({
   };
 
   return (
-    <Card>
+    <Card ref={playerPerformanceRef} id="players-section-content">
       <CardHeader>
         <CardTitle>Player Performance Analysis</CardTitle>
       </CardHeader>
@@ -473,8 +543,8 @@ export function PlayerPerformance({
                       <TableHead>Player</TableHead>
                       {Object.values(PlayerPosition).map((position) => (
                         <TableHead key={`${position}-spike`}>
-                          {position.toUpperCase()}
-                          (<span className={variants[StatResult.SUCCESS]}>
+                          {position.toUpperCase()}(
+                          <span className={variants[StatResult.SUCCESS]}>
                             P
                           </span>
                           /<span className={variants[StatResult.GOOD]}>G</span>/
@@ -508,19 +578,35 @@ export function PlayerPerformance({
                           {Object.values(PlayerPosition).map((position) => (
                             <TableCell key={`${position}-spike`}>
                               <span className={variants[StatResult.SUCCESS]}>
-                                {stats[StatType.SPIKE][position][StatResult.SUCCESS]}
+                                {
+                                  stats[StatType.SPIKE][position][
+                                    StatResult.SUCCESS
+                                  ]
+                                }
                               </span>
                               /
                               <span className={variants[StatResult.GOOD]}>
-                                {stats[StatType.SPIKE][position][StatResult.GOOD]}
+                                {
+                                  stats[StatType.SPIKE][position][
+                                    StatResult.GOOD
+                                  ]
+                                }
                               </span>
                               /
                               <span className={variants[StatResult.BAD]}>
-                                {stats[StatType.SPIKE][position][StatResult.BAD]}
+                                {
+                                  stats[StatType.SPIKE][position][
+                                    StatResult.BAD
+                                  ]
+                                }
                               </span>
                               /
                               <span className={variants[StatResult.ERROR]}>
-                                {stats[StatType.SPIKE][position][StatResult.ERROR]}
+                                {
+                                  stats[StatType.SPIKE][position][
+                                    StatResult.ERROR
+                                  ]
+                                }
                               </span>
                             </TableCell>
                           ))}
@@ -555,8 +641,8 @@ export function PlayerPerformance({
                       <TableHead>Player</TableHead>
                       {Object.values(PlayerPosition).map((position) => (
                         <TableHead key={`${position}-reception`}>
-                          {position.toUpperCase()}
-                          (<span className={variants[StatResult.SUCCESS]}>
+                          {position.toUpperCase()}(
+                          <span className={variants[StatResult.SUCCESS]}>
                             P
                           </span>
                           /<span className={variants[StatResult.GOOD]}>G</span>/
@@ -588,19 +674,35 @@ export function PlayerPerformance({
                           {Object.values(PlayerPosition).map((position) => (
                             <TableCell key={`${position}-reception`}>
                               <span className={variants[StatResult.SUCCESS]}>
-                                {stats[StatType.RECEPTION][position][StatResult.SUCCESS]}
+                                {
+                                  stats[StatType.RECEPTION][position][
+                                    StatResult.SUCCESS
+                                  ]
+                                }
                               </span>
                               /
                               <span className={variants[StatResult.GOOD]}>
-                                {stats[StatType.RECEPTION][position][StatResult.GOOD]}
+                                {
+                                  stats[StatType.RECEPTION][position][
+                                    StatResult.GOOD
+                                  ]
+                                }
                               </span>
                               /
                               <span className={variants[StatResult.BAD]}>
-                                {stats[StatType.RECEPTION][position][StatResult.BAD]}
+                                {
+                                  stats[StatType.RECEPTION][position][
+                                    StatResult.BAD
+                                  ]
+                                }
                               </span>
                               /
                               <span className={variants[StatResult.ERROR]}>
-                                {stats[StatType.RECEPTION][position][StatResult.ERROR]}
+                                {
+                                  stats[StatType.RECEPTION][position][
+                                    StatResult.ERROR
+                                  ]
+                                }
                               </span>
                             </TableCell>
                           ))}
@@ -630,4 +732,8 @@ export function PlayerPerformance({
       </CardContent>
     </Card>
   );
-}
+});
+
+PlayerPerformance.displayName = "PlayerPerformance";
+
+export { PlayerPerformance };
