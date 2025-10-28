@@ -21,6 +21,7 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (database.localDb && user) {
+      console.log('Initializing sync...', user)
       // syncData().catch(console.error);
 
       const syncHandler = new SyncHandler();
