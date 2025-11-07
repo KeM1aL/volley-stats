@@ -79,7 +79,6 @@ export function StatTracker({
 
   useEffect(() => {
     const loadData = async () => {
-      console.log('Loaded data')
       const setPlayerIds = Object.values(currentSet.current_lineup);
       const players: TeamMember[] = [];
       for (const playerId of setPlayerIds) {

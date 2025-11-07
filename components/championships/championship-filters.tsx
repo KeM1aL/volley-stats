@@ -34,7 +34,7 @@ export function ChampionshipFilters() {
     fetchAndSetDefaultSeason();
   }, [seasonApi, setFilters]);
 
-  const handleFilterChange = (key: keyof ChampionshipFilterType, value: string | number | undefined) => {
+  const handleFilterChange = (key: keyof ChampionshipFilterType, value: string | undefined) => {
     setFilters({ ...filters, [key]: value });
   };
 
@@ -51,7 +51,7 @@ export function ChampionshipFilters() {
               id="season"
               options={[...seasons.map((season) => ({ value: String(season.id), label: season.name }))]}
               value={filters.seasonId ? { value: String(filters.seasonId), label: seasons.find(s => s.id === filters.seasonId)?.name || "" } : null}
-              onChange={(selectedOption) => handleFilterChange("seasonId", selectedOption ? Number(selectedOption.value) : undefined)}
+              onChange={(selectedOption) => handleFilterChange("seasonId", selectedOption ? selectedOption.value : undefined)}
               isClearable
               placeholder="Select a season"
             />

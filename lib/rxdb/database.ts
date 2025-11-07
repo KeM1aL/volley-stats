@@ -161,12 +161,34 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
         },
       });
     } catch (error) {
+      console.error('Error creating RxDB collections:', error);
+
       if (error instanceof RxError) {
         const url_string = window.location.href;
         const url = new URL(url_string);
         const removeDbFlag = url.searchParams.get('remove-database');
-        if (inDevEnvironment || removeDbFlag === 'true') {
-          removeRxDatabase(getDatabaseName(), getRxStorageDexie());
+
+        // Check if it's a schema version conflict or database corruption
+        const isSchemaError = error.code === 'SC13' || // schema validation failed
+                              error.code === 'DB1' || // database version mismatch
+                              (error as any).name === 'OpenFailedError' ||
+                              error.message?.includes('schema') ||
+                              error.message?.includes('version');
+
+        if (isSchemaError) {
+          console.warn('Schema version conflict detected. Database needs to be reset.');
+
+          // Auto-remove in development or if flag is set
+          if (inDevEnvironment || removeDbFlag === 'true') {
+            console.log('Removing old database and reinitializing...');
+            await removeRxDatabase(getDatabaseName(), getRxStorageDexie());
+
+            // Reset the promise to allow recreation
+            dbPromise = null;
+
+            // Recursively retry database creation
+            return getDatabase();
+          }
         }
       }
       throw error;

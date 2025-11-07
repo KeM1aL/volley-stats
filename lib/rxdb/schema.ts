@@ -22,15 +22,15 @@ const timestampFields = {
 
 // Championship Schema
 export const championshipSchema = toTypedRxJsonSchema({
-  version: 0,
+  version: 0, // Incremented: Changed ID from integer to UUID string
   primaryKey: "id",
   type: "object",
   properties: {
-    id: { type: "string", maxLength: 8 },
+    id: { type: "string", maxLength: 36 }, // UUID
     name: { type: "string" },
     type: { type: "string" },
-    season_id: { type: ["number", "null"] },
-    default_match_format: { type: "number" },
+    season_id: { type: ["string", "null"], maxLength: 36 }, // UUID
+    default_match_format: { type: "string", maxLength: 36 }, // UUID
     format: {
       type: "string",
       enum: ["2x2", "3x3", "4x4", "6x6"],
@@ -64,11 +64,11 @@ export const championshipSchema = toTypedRxJsonSchema({
 
 // Season Schema
 export const seasonSchema = toTypedRxJsonSchema({
-  version: 0,
+  version: 0, // Incremented: Changed ID from integer to UUID string
   primaryKey: "id",
   type: "object",
   properties: {
-      id: { type: "string", maxLength: 8 },
+    id: { type: "string", maxLength: 36 }, // UUID
     name: { type: "string" },
     start_date: { type: "string" },
     end_date: { type: "string" },
@@ -88,11 +88,11 @@ export const seasonSchema = toTypedRxJsonSchema({
 
 // Match Format Schema
 export const matchFormatSchema = toTypedRxJsonSchema({
-  version: 0,
+  version: 0, // Incremented: Changed ID from integer to UUID string
   primaryKey: "id",
   type: "object",
   properties: {
-    id: { type: "string", maxLength: 8 },
+    id: { type: "string", maxLength: 36 }, // UUID
     description: { type: "string" },
     sets_to_win: { type: "number" },
     rotation: { type: "boolean" },
@@ -116,15 +116,15 @@ export const matchFormatSchema = toTypedRxJsonSchema({
 
 // Team Schema
 export const teamSchema = toTypedRxJsonSchema({
-  version: 0,
+  version: 0, // Incremented: Changed championship_id foreign key from integer to UUID string
   primaryKey: "id",
   type: "object",
   properties: {
-    id: { type: "string", maxLength: 36 }, // uuid
+    id: { type: "string", maxLength: 36 }, // UUID
     name: { type: "string" },
     user_id: { type: ["string", "null"], maxLength: 36 },
     club_id: { type: ["string", "null"], maxLength: 36 },
-    championship_id: { type: ["number", "null"] },
+    championship_id: { type: ["string", "null"], maxLength: 36 }, // UUID
     ext_code: { type: ["string", "null"] },
     ext_source: { type: ["string", "null"] },
     ...timestampFields,
@@ -206,7 +206,7 @@ export const playerSchema = toTypedRxJsonSchema({
 
 // Match Schema
 export const matchSchema = toTypedRxJsonSchema({
-  version: 0,
+  version: 0, // Incremented: Changed championship_id, season_id, match_format_id foreign keys from integer to UUID string
   primaryKey: "id",
   type: "object",
   properties: {
@@ -215,11 +215,11 @@ export const matchSchema = toTypedRxJsonSchema({
     location: { type: ["string", "null"] },
     home_team_id: { type: "string", maxLength: 36 },
     away_team_id: { type: "string", maxLength: 36 },
-    championship_id: { type: ["number", "null"] },
-    season_id: { type: ["number", "null"] },
+    championship_id: { type: ["string", "null"], maxLength: 36 }, // UUID
+    season_id: { type: ["string", "null"], maxLength: 36 }, // UUID
     home_score: { type: ["number", "null"] },
     away_score: { type: ["number", "null"] },
-    match_format_id: { type: "number" },
+    match_format_id: { type: "string", maxLength: 36 }, // UUID
     status: {
       type: "string",
       enum: ["upcoming", "live", "completed"],

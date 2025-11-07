@@ -52,7 +52,7 @@ export class SupabaseDataStore<
     return (data as T[]) || [];
   }
 
-  async get(id: string | number, joins?: string[]): Promise<T | null> {
+  async get(id: string, joins?: string[]): Promise<T | null> {
     let select = "*";
     
 
@@ -80,7 +80,7 @@ export class SupabaseDataStore<
     return data as T;
   }
 
-  async update(id: string | number, updates: Partial<T>): Promise<T> {
+  async update(id: string, updates: Partial<T>): Promise<T> {
     const { data, error } = await this.supabase
       .from(this.tableName)
       .update(updates as any)
@@ -91,7 +91,7 @@ export class SupabaseDataStore<
     return data as T;
   }
 
-  async delete(id: string | number): Promise<void> {
+  async delete(id: string): Promise<void> {
     const { error } = await this.supabase.from(this.tableName).delete().eq("id", id as any);
     if (error) throw error;
   }

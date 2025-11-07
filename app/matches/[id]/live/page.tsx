@@ -178,7 +178,7 @@ export default function LiveMatchPage() {
         description:
           error instanceof Error ? error.message : "Failed to load match data",
       });
-      router.push("/matches/history");
+      router.push("/matches");
     } finally {
       setIsLoading(false);
     }

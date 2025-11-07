@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type ChampionshipFilters = {
-  seasonId?: number;
+  seasonId?: string;
   format?: string;
   gender?: string;
   ageCategory?: string;

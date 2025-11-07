@@ -18,42 +18,42 @@ export type Database = {
         Row: {
           age_category: Database["public"]["Enums"]["age_category"]
           created_at: string | null
-          default_match_format: number
+          default_match_format: string
           ext_code: string | null
           ext_source: string | null
           format: Database["public"]["Enums"]["championship_format"]
           gender: Database["public"]["Enums"]["championship_gender"]
-          id: number
+          id: string
           name: string
-          season_id: number | null
+          season_id: string | null
           type: string
           updated_at: string | null
         }
         Insert: {
           age_category: Database["public"]["Enums"]["age_category"]
           created_at?: string | null
-          default_match_format?: number
+          default_match_format: string
           ext_code?: string | null
           ext_source?: string | null
           format: Database["public"]["Enums"]["championship_format"]
           gender: Database["public"]["Enums"]["championship_gender"]
-          id?: number
+          id?: string
           name: string
-          season_id?: number | null
+          season_id?: string | null
           type: string
           updated_at?: string | null
         }
         Update: {
           age_category?: Database["public"]["Enums"]["age_category"]
           created_at?: string | null
-          default_match_format?: number
+          default_match_format?: string
           ext_code?: string | null
           ext_source?: string | null
           format?: Database["public"]["Enums"]["championship_format"]
           gender?: Database["public"]["Enums"]["championship_gender"]
-          id?: number
+          id?: string
           name?: string
-          season_id?: number | null
+          season_id?: string | null
           type?: string
           updated_at?: string | null
         }
@@ -208,7 +208,7 @@ export type Database = {
           created_at: string | null
           decisive_point: boolean
           description: string | null
-          id: number
+          id: string
           point_by_set: number
           point_final_set: number
           rotation: boolean
@@ -219,7 +219,7 @@ export type Database = {
           created_at?: string | null
           decisive_point: boolean
           description?: string | null
-          id?: never
+          id?: string
           point_by_set: number
           point_final_set: number
           rotation: boolean
@@ -230,7 +230,7 @@ export type Database = {
           created_at?: string | null
           decisive_point?: boolean
           description?: string | null
-          id?: never
+          id?: string
           point_by_set?: number
           point_final_set?: number
           rotation?: boolean
@@ -245,7 +245,7 @@ export type Database = {
           away_score: number | null
           away_team_id: string
           away_total: number | null
-          championship_id: number | null
+          championship_id: string | null
           created_at: string
           date: string
           detailed_scores: string[] | null
@@ -257,8 +257,8 @@ export type Database = {
           home_total: number | null
           id: string
           location: string | null
-          match_format_id: number
-          season_id: number | null
+          match_format_id: string
+          season_id: string | null
           status: string
           updated_at: string
         }
@@ -267,7 +267,7 @@ export type Database = {
           away_score?: number | null
           away_team_id: string
           away_total?: number | null
-          championship_id?: number | null
+          championship_id?: string | null
           created_at?: string
           date: string
           detailed_scores?: string[] | null
@@ -279,8 +279,8 @@ export type Database = {
           home_total?: number | null
           id?: string
           location?: string | null
-          match_format_id?: number
-          season_id?: number | null
+          match_format_id: string
+          season_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -289,7 +289,7 @@ export type Database = {
           away_score?: number | null
           away_team_id?: string
           away_total?: number | null
-          championship_id?: number | null
+          championship_id?: string | null
           created_at?: string
           date?: string
           detailed_scores?: string[] | null
@@ -301,8 +301,8 @@ export type Database = {
           home_total?: number | null
           id?: string
           location?: string | null
-          match_format_id?: number
-          season_id?: number | null
+          match_format_id?: string
+          season_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -329,7 +329,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "matches_match_format_fkey"
+            foreignKeyName: "matches_match_format_id_fkey"
             columns: ["match_format_id"]
             isOneToOne: false
             referencedRelation: "match_formats"
@@ -534,7 +534,7 @@ export type Database = {
         Row: {
           created_at: string
           end_date: string
-          id: number
+          id: string
           name: string
           start_date: string
           updated_at: string
@@ -542,7 +542,7 @@ export type Database = {
         Insert: {
           created_at?: string
           end_date: string
-          id?: never
+          id?: string
           name: string
           start_date: string
           updated_at?: string
@@ -550,7 +550,7 @@ export type Database = {
         Update: {
           created_at?: string
           end_date?: string
-          id?: never
+          id?: string
           name?: string
           start_date?: string
           updated_at?: string
@@ -757,7 +757,7 @@ export type Database = {
       }
       teams: {
         Row: {
-          championship_id: number | null
+          championship_id: string | null
           club_id: string | null
           created_at: string
           ext_code: string | null
@@ -768,7 +768,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          championship_id?: number | null
+          championship_id?: string | null
           club_id?: string | null
           created_at?: string
           ext_code?: string | null
@@ -779,7 +779,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          championship_id?: number | null
+          championship_id?: string | null
           club_id?: string | null
           created_at?: string
           ext_code?: string | null
@@ -791,17 +791,17 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "teams_championship_id_fkey"
+            columns: ["championship_id"]
+            isOneToOne: false
+            referencedRelation: "championships"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "teams_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "teams_current_championship_id_fkey"
-            columns: ["championship_id"]
-            isOneToOne: false
-            referencedRelation: "championships"
             referencedColumns: ["id"]
           },
         ]

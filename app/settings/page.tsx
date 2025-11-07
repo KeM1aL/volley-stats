@@ -122,7 +122,7 @@ export default function SettingsPage() {
             const chunk = chunks[index];
 
             const { error: updateError } = await supabase
-              .from(name)
+              .from(name as any)
               .upsert(chunk)
               .select();
             if (updateError) throw updateError;

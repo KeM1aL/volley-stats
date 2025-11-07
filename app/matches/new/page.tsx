@@ -11,7 +11,7 @@ export default function NewMatchPage() {
 
   const onMatchCreated = (id: string) => {
     setMatchId(id);
-    router.push("/matches/history");
+    router.push("/matches");
   };
 
   return (

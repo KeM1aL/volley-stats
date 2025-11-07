@@ -1,14 +1,14 @@
 import { PlayerPosition, PlayerRole } from "./enums";
 
 export type Championship = {
-  id: number;
+  id: string; // UUID
   name: string;
   type: string;
-  default_match_format: number;
+  default_match_format: string; // UUID reference to match_format
   format: '2x2' | '3x3' | '4x4' | '6x6';
   age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior';
   gender: 'female' | 'male' | 'mixte';
-  season_id: number | null;
+  season_id: string | null; // UUID reference to season
   ext_code: string | null;
   ext_source: string | null;
   created_at: string | null;
@@ -16,7 +16,7 @@ export type Championship = {
 };
 
 export type Season = {
-  id: number;
+  id: string; // UUID
   name: string;
   start_date: string;
   end_date: string;
@@ -25,7 +25,7 @@ export type Season = {
 };
 
 export type MatchFormat = {
-  id: number;
+  id: string; // UUID
   description: string;
   sets_to_win: number;
   rotation: boolean;
@@ -58,7 +58,7 @@ export type Team = {
   name: string;
   club_id: string | null;
   clubs?: Club | null;
-  championship_id: number | null;
+  championship_id: string | null; // UUID reference
   championships?: Championship;
   ext_code: string | null;
   ext_source: string | null;
@@ -111,9 +111,9 @@ export type Match = {
   location: string | null;
   home_team_id: string;
   away_team_id: string;
-  championship_id: number | null;
-  season_id: number | null;
-  match_format_id: number;
+  championship_id: string | null; // UUID reference
+  season_id: string | null; // UUID reference
+  match_format_id: string; // UUID reference
   home_score: number | null;
   away_score: number | null;
   status: string;

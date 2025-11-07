@@ -21,11 +21,13 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (database.localDb && user) {
-      console.log('Initializing sync...', user)
-      // syncData().catch(console.error);
-
       const syncHandler = new SyncHandler();
       const collections = new Map<CollectionName, RxCollection>([
+        ['championships', database.localDb.championships],
+        ['seasons', database.localDb.seasons],
+        ['match_formats', database.localDb.match_formats],
+        ['clubs', database.localDb.clubs],
+        ['club_members', database.localDb.club_members],
         ['teams', database.localDb.teams],
         ['team_members', database.localDb.team_members],
         ['matches', database.localDb.matches],
@@ -60,10 +62,21 @@ export function LocalDatabaseProvider({ children }: { children: React.ReactNode 
   }
 
   if (database.error) {
+    const errorString = JSON.stringify(database.error, null, 2);
+    const isSchemaError = errorString.includes('OpenFailedError') ||
+                          errorString.includes('schema') ||
+                          errorString.includes('version');
+
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-destructive">Failed to initialize local database</p>
-        {inDevEnvironment && <pre>{JSON.stringify(database.error, null, 2)}</pre>}
+      <div className="flex h-screen items-center justify-center flex-col gap-4 p-8">
+        <p className="text-destructive font-semibold">Failed to initialize local database</p>
+        {isSchemaError && (
+          <div className="text-sm text-muted-foreground max-w-md text-center">
+            <p>The database schema has been updated and is incompatible with existing data.</p>
+            <p className="mt-2">Click below to clear the local database. Your data will be re-synced from the server on next login.</p>
+          </div>
+        )}
+        {inDevEnvironment && <pre className="text-xs max-w-2xl overflow-auto">{errorString}</pre>}
         <Button onClick={clearLocalDatabase}>Clear Local Database</Button>
       </div>
     );

@@ -43,7 +43,7 @@ export function MatchHistoryTable({
 }: MatchHistoryTableProps) {
   const { user } = useAuth();
   const [sortField, setSortField] = useState<SortField>("date");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const isMemberOfTeamOrClub = (match: Match) => {
     if (!user) return false;

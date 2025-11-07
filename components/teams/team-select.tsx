@@ -10,14 +10,14 @@ type TeamSelectProps = {
   onChange: (value: Team | null) => void;
   isClearable?: boolean;
   clubId?: string | null;
-  championshipId?: number | null;
+  championshipId?: string | null;
 };
 
 const loadOptions = async (
   inputValue: string,
   teamApi: ReturnType<typeof useTeamApi>,
   clubId?: string | null,
-  championshipId?: number | null
+  championshipId?: string | null
 ): Promise<Team[]> => {
   try {
     const filters: Filter[] = [

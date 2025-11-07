@@ -1,14 +1,20 @@
   import { Club, ClubMember, Profile, Team, TeamMember, User } from '@/lib/types';
 import { supabase } from '../supabase/client';
+import { Session } from '@supabase/supabase-js';
 
-export const getUser = async (): Promise<User | null> => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
+export const getUser = async (session?: Session | null): Promise<User | null> => {
+  console.log('Loading user profile ...');
   if (!session) {
+    const {
+      data: { session: sessionData },
+    } = await supabase.auth.getSession();
+    session = sessionData;
+  }
+  if (!session) {
+    console.warn('No session found');
     return null;
   }
+  console.log('Session found', session);
 
   const [profile, teamMembers, clubMembers] = await Promise.all([
     getProfile(session.user.id),
@@ -23,7 +29,7 @@ export const getUser = async (): Promise<User | null> => {
     teamMembers: [...teamMembers, ...clubMembers.teams],
     clubMembers: clubMembers.clubs,
   };
-  console.log('User', user);
+  console.log('User Profile', user);
   return user;
 };
 
