@@ -1,11 +1,7 @@
 import { Command, MatchState } from "./command";
-import { Match, Set, PlayerStat, Substitution, ScorePoint } from "@/lib/types";
+import { Match, Set, PlayerStat, Substitution, ScorePoint, MatchFormat } from "@/lib/types";
 import { VolleyballDatabase } from "../rxdb/database";
 import { PointType, StatResult } from "../enums";
-
-const NORMAL_SET_SCORE = 25;
-const TIE_BREAK_SET_SCORE = 15;
-const TIE_BREAK_SET_NUMBER = 5;
 
 export class SetSetupCommand implements Command {
   private previousState: MatchState;
@@ -181,7 +177,6 @@ export class ScorePointCommand implements Command {
     db: VolleyballDatabase
   ) {
     this.previousState = { ...previousState };
-
     this.point = point;
     this.db = db;
 
@@ -196,29 +191,52 @@ export class ScorePointCommand implements Command {
       home_score: homeScore,
       away_score: awayScore,
     };
+    const format = previousState.match!.match_formats as MatchFormat;
     if (previousState.set!.server_team_id !== scoringTeamId) {
       this.set.server_team_id = scoringTeamId;
-      if (myTeam) {
+      if (myTeam && format.rotation) {
         let current_lineup = { ...previousState.set!.current_lineup };
         const p1Player = current_lineup.p1;
-        current_lineup.p1 = current_lineup.p2;
-        current_lineup.p2 = current_lineup.p3;
-        current_lineup.p3 = current_lineup.p4;
-        current_lineup.p4 = current_lineup.p5;
-        current_lineup.p5 = current_lineup.p6;
-        current_lineup.p6 = p1Player;
+        switch(format.format) {
+          case "2x2":
+            current_lineup.p1 = current_lineup.p2;
+            current_lineup.p2 = p1Player;
+            break;
+          case "3x3":
+            current_lineup.p1 = current_lineup.p2;
+            current_lineup.p2 = current_lineup.p3;
+            current_lineup.p3 = p1Player;
+            break;
+          case "4x4":
+            current_lineup.p1 = current_lineup.p2;
+            current_lineup.p2 = current_lineup.p3;
+            current_lineup.p3 = current_lineup.p4;
+            current_lineup.p4 = p1Player;
+            break;
+          case "6x6":
+            current_lineup.p1 = current_lineup.p2;
+            current_lineup.p2 = current_lineup.p3;
+            current_lineup.p3 = current_lineup.p4;
+            current_lineup.p4 = current_lineup.p5;
+            current_lineup.p5 = current_lineup.p6;
+            current_lineup.p6 = p1Player;
+          break;
+        }
+        
         this.set.current_lineup = current_lineup;
       }
     }
 
     let setTerminated = false;
+    //TODO manage 1 set to win & no tie break (means draw possible)
+    const TIE_BREAK_SET_NUMBER = format.sets_to_win * 2 - 1;
     if (
       (setNumber < TIE_BREAK_SET_NUMBER &&
-        (homeScore >= NORMAL_SET_SCORE || awayScore >= NORMAL_SET_SCORE) &&
-        Math.abs(homeScore - awayScore) >= 2) ||
+        (homeScore >= format.point_by_set || awayScore >= format.point_by_set) &&
+        (format.decisive_point || Math.abs(homeScore - awayScore) >= 2)) ||
       (setNumber === TIE_BREAK_SET_NUMBER &&
-        (homeScore >= TIE_BREAK_SET_SCORE || awayScore >= TIE_BREAK_SET_SCORE) &&
-        Math.abs(homeScore - awayScore) >= 2)
+        (homeScore >= format.point_final_set || awayScore >= format.point_final_set) &&
+        (format.decisive_point || Math.abs(homeScore - awayScore) >= 2))
     ) {
       this.set.status = "completed";
       setTerminated = true;
@@ -243,9 +261,10 @@ export class ScorePointCommand implements Command {
             ? previousState.match!.away_score! + 1
             : previousState.match!.away_score!,
       };
+      //TODO manage no tie break (means draw possible)
       if (
-        this.match.home_score === 3 ||
-        this.match.away_score === 3
+        this.match.home_score === format.sets_to_win ||
+        this.match.away_score === format.sets_to_win
       ) {
         this.match.status = "completed";
       }

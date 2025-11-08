@@ -98,7 +98,7 @@ export function ScoreBoard({
       <PointsHistory match={match} points={points} />
 
       <div className="mt-auto">
-        <CourtDiagram players={players} playerById={playerById} lineup={set.current_lineup} />
+        <CourtDiagram players={players} playerById={playerById} matchFormat={match.match_formats!} lineup={set.current_lineup} />
       </div>
     </div>
   );

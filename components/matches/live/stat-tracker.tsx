@@ -109,7 +109,7 @@ export function StatTracker({
   useEffect(() => {
     const updateData = async () => {
       if(currentSet.server_team_id === managedTeam.id) {
-        let servingPlayer = playerById.get(currentSet.current_lineup.p1);
+        let servingPlayer = playerById.get(currentSet.current_lineup.p1!);
         if(servingPlayer) {
           setSelectedPlayer(servingPlayer);
         }

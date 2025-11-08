@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { PlayerPosition, PlayerRole } from "@/lib/enums";
 import { toast } from "@/hooks/use-toast";
-import { Match, TeamMember, Set, Team } from "@/lib/types";
+import { Match, TeamMember, Set, Team, MatchFormat } from "@/lib/types";
 import { string } from "zod";
 import { CourtDiagram } from "../matches/live/court-diagram";
 import { PlayerSelector } from "../matches/live/player-selector";
@@ -69,7 +69,7 @@ export function SetSetup({
             (playerId) => playerId !== selectedPlayer.id
           );
         });
-        if(filteredLineup[selectedRole]) {
+        if (filteredLineup[selectedRole]) {
           filteredLineup[selectedRole].push(selectedPlayer.id);
         } else {
           filteredLineup[selectedRole] = [selectedPlayer.id];
@@ -89,15 +89,15 @@ export function SetSetup({
 
   const handleSelectPlayer = async (player: TeamMember) => {
     setSelectedPlayer(player);
-    if(player.position) {
+    if (player.position) {
       setSelectedRole(player.position as PlayerRole);
     } else {
       setSelectedRole(null);
     }
-  }
+  };
 
   const handleSelectPosition = async (position: PlayerPosition | null) => {
-    if(!position) {
+    if (!position) {
       setSelectedPosition(null);
       setSelectedRole(null);
       setSelectedPlayer(null);
@@ -111,7 +111,9 @@ export function SetSetup({
       } else {
         setSelectedPlayer(null);
       }
-      const role = Object.keys(lineup).find(role => lineup[role as PlayerRole].includes(playerId));
+      const role = Object.keys(lineup).find((role) =>
+        lineup[role as PlayerRole].includes(playerId)
+      );
       if (role) {
         setSelectedRole(role as PlayerRole);
       } else {
@@ -122,18 +124,34 @@ export function SetSetup({
       setSelectedRole(null);
     }
     setSelectedPosition(position);
-  }
+  };
 
   const handleComplete = async () => {
     // setIsLoading(true);
-    if (
-      !positions[PlayerPosition.P1] ||
-      !positions[PlayerPosition.P2] ||
-      !positions[PlayerPosition.P3] ||
-      !positions[PlayerPosition.P4] ||
-      !positions[PlayerPosition.P5] ||
-      !positions[PlayerPosition.P6]
-    ) {
+
+    //list of existing positions based on matchFormat ie 2x2 means only P1 & P2 exists
+    const existingPositions: PlayerPosition[] = [
+      PlayerPosition.P1,
+      PlayerPosition.P2,
+    ];
+    switch (match.match_formats?.format) {
+      case "3x3":
+        existingPositions.push(PlayerPosition.P3);
+        break;
+      case "4x4":
+        existingPositions.push(PlayerPosition.P3, PlayerPosition.P4);
+        break;
+      case "6x6":
+        existingPositions.push(
+          PlayerPosition.P3,
+          PlayerPosition.P4,
+          PlayerPosition.P5,
+          PlayerPosition.P6
+        );
+        break;
+    }
+
+    if (existingPositions.some((position) => !positions[position])) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -169,6 +187,14 @@ export function SetSetup({
       }
     });
 
+    const effectiveLineup = Object.entries(existingPositions).reduce(
+      (acc, [_key, value]) => {
+        acc[value as PlayerPosition] = positions[value as PlayerPosition];
+        return acc;
+      },
+      {} as Record<PlayerPosition, string>
+    );
+
     // Save lineups and start the set
     const set: Set = {
       id: crypto.randomUUID(),
@@ -181,22 +207,8 @@ export function SetSetup({
       server_team_id: setServerTeamId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      first_lineup: {
-        p1: positions[PlayerPosition.P1],
-        p2: positions[PlayerPosition.P2],
-        p3: positions[PlayerPosition.P3],
-        p4: positions[PlayerPosition.P4],
-        p5: positions[PlayerPosition.P5],
-        p6: positions[PlayerPosition.P6],
-      },
-      current_lineup: {
-        p1: positions[PlayerPosition.P1],
-        p2: positions[PlayerPosition.P2],
-        p3: positions[PlayerPosition.P3],
-        p4: positions[PlayerPosition.P4],
-        p5: positions[PlayerPosition.P5],
-        p6: positions[PlayerPosition.P6],
-      },
+      first_lineup: effectiveLineup,
+      current_lineup: effectiveLineup,
       player_roles: playerRoles,
     };
     try {
@@ -237,6 +249,7 @@ export function SetSetup({
             players={players}
             playerById={playerById}
             lineup={positions}
+            matchFormat={match.match_formats!}
             onSelect={handleSelectPosition}
           />
 
@@ -257,13 +270,15 @@ export function SetSetup({
                   <Label>Role {selectedRole}</Label>
                   <div className="flex flex-row items-center space-x-1">
                     <Select
-                      value={selectedRole ? selectedRole as string : undefined}
+                      value={
+                        selectedRole ? (selectedRole as string) : undefined
+                      }
                       onValueChange={(value: PlayerRole) => {
                         setSelectedRole(value);
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={`Select role`}  />
+                        <SelectValue placeholder={`Select role`} />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.values(PlayerRole)
@@ -292,44 +307,46 @@ export function SetSetup({
             </Card>
           )}
         </div>
-        <div className="grid grid-cols-4 gap-6">
-          <div className="col-span-2 col-start-2">
-            <Label>Libero</Label>
-            <div className="flex flex-row items-center space-x-1">
-              <Select
-                defaultValue={null as unknown as string}
-                onValueChange={(value) =>
-                  setLineup((prev) => ({
-                    ...prev,
-                    [PlayerRole.LIBERO]: [value],
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={`Select player`} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null as unknown as string}>
-                    None
-                  </SelectItem>
-                  {players
-                    .filter((player) =>
-                      Object.entries(lineup).every(
-                        ([key, values]) =>
-                          key === PlayerRole.LIBERO ||
-                          !values.includes(player.id)
+        {match.match_formats?.format === "6x6" && (
+          <div className="grid grid-cols-4 gap-6">
+            <div className="col-span-2 col-start-2">
+              <Label>Libero</Label>
+              <div className="flex flex-row items-center space-x-1">
+                <Select
+                  defaultValue={null as unknown as string}
+                  onValueChange={(value) =>
+                    setLineup((prev) => ({
+                      ...prev,
+                      [PlayerRole.LIBERO]: [value],
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={`Select player`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null as unknown as string}>
+                      None
+                    </SelectItem>
+                    {players
+                      .filter((player) =>
+                        Object.entries(lineup).every(
+                          ([key, values]) =>
+                            key === PlayerRole.LIBERO ||
+                            !values.includes(player.id)
+                        )
                       )
-                    )
-                    .map((player) => (
-                      <SelectItem key={player.id} value={player.id}>
-                        {player.number} - {player.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                      .map((player) => (
+                        <SelectItem key={player.id} value={player.id}>
+                          {player.number} - {player.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* <Separator /> */}

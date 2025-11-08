@@ -115,6 +115,7 @@ export type Match = {
   championship_id: string | null; // UUID reference
   season_id: string | null; // UUID reference
   match_format_id: string; // UUID reference
+  match_formats?: MatchFormat; // Joined relation
   home_score: number | null;
   away_score: number | null;
   status: string;
@@ -138,8 +139,8 @@ export type Set = {
   status: 'upcoming' | 'live' | 'completed';
   first_server_team_id: string;
   server_team_id: string;
-  first_lineup: { [key in PlayerPosition]: string };
-  current_lineup: { [key in PlayerPosition]: string };
+  first_lineup: { [key in PlayerPosition]?: string };
+  current_lineup: { [key in PlayerPosition]?: string };
   player_roles: { [key: string]: PlayerRole };
   created_at: string;
   updated_at: string;
@@ -185,7 +186,7 @@ export type ScorePoint = {
   timestamp: string;
   home_score: number;
   away_score: number;
-  current_rotation: { [key in PlayerPosition]: string };
+  current_rotation: { [key in PlayerPosition]?: string };
   created_at: string;
   updated_at: string;
 };

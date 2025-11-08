@@ -16,6 +16,7 @@ import type {
   Set,
   Substitution,
   Team,
+  MatchFormat,
 } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
@@ -94,6 +95,13 @@ export default function LiveMatchPage() {
       }
 
       const match = matchDoc.toMutableJSON() as Match;
+      const formatDoc = await db.match_formats.findOne(match.match_format_id).exec();
+      if (!formatDoc) {
+        throw new Error("Match format not found");
+      }
+      const format = formatDoc.toMutableJSON();
+      match.match_formats = format as MatchFormat;
+
       const teamDocs = await db.teams
         .findByIds([match.home_team_id, match.away_team_id])
         .exec();
