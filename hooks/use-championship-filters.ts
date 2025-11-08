@@ -2,7 +2,9 @@ import { create } from 'zustand';
 
 export type ChampionshipFilters = {
   seasonId?: string;
-  format?: string;
+  match_formats?: {
+    format?: string;
+  }
   gender?: string;
   ageCategory?: string;
 };

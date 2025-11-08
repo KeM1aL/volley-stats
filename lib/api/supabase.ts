@@ -29,12 +29,29 @@ export class SupabaseDataStore<
     if (filters) {
       filters.forEach((f) => {
         if (f.field && f.field.includes(".")) {
-          const tableName = f.field.split(".")[0];
+          const parts = f.field.split(".");
+          const tableName = parts[0];
 
-          if (select.includes(`${tableName}(*)`)) {
-            select = select.replace(`${tableName}(*)`, `${tableName}!inner(*)`);
-          } else if(!select.includes(`${tableName}!inner(*)`)) {
-            select += `,${tableName}!inner(*)`;
+          // Handle nested paths (e.g., championships.match_formats.format)
+          if (parts.length > 2) {
+            const nestedTable = parts[1];
+            const nestedSelect = `${tableName}!inner(*, ${nestedTable}!inner(*))`;
+
+            // Remove simple join if it exists and replace with nested join
+            if (select.includes(`${tableName}(*)`)) {
+              select = select.replace(`${tableName}(*)`, nestedSelect);
+            } else if (select.includes(`${tableName}!inner(*)`)) {
+              select = select.replace(`${tableName}!inner(*)`, nestedSelect);
+            } else {
+              select += `,${nestedSelect}`;
+            }
+          } else {
+            // Handle simple one-level joins
+            if (select.includes(`${tableName}(*)`)) {
+              select = select.replace(`${tableName}(*)`, `${tableName}!inner(*)`);
+            } else if(!select.includes(`${tableName}!inner(*)`)) {
+              select += `,${tableName}!inner(*)`;
+            }
           }
         }
       });

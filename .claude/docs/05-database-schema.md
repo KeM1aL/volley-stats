@@ -56,12 +56,17 @@
 5. **championships** - Competition categories
    ```typescript
    {
-     id: integer (primary key)
+     id: uuid (primary key)
      name: string
-     format: '2x2' | '3x3' | '4x4' | '6x6'
+     type: string
+     default_match_format: uuid → match_formats.id
      age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior'
      gender: 'female' | 'male' | 'mixte'
+     season_id: uuid? → seasons.id
+     ext_code: string?
+     ext_source: string?
      created_at: timestamp
+     updated_at: timestamp
    }
    ```
 
@@ -80,13 +85,16 @@
 7. **match_formats** - Match format rules
    ```typescript
    {
-     id: integer (primary key)
-     name: string
+     id: uuid (primary key)
+     description: string
+     format: '2x2' | '3x3' | '4x4' | '6x6'
      sets_to_win: integer
-     points_per_set: integer
-     final_set_points: integer
-     has_rotation: boolean
+     rotation: boolean
+     point_by_set: integer
+     point_final_set: integer
+     decisive_point: boolean
      created_at: timestamp
+     updated_at: timestamp
    }
    ```
 

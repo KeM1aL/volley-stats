@@ -167,4 +167,4 @@ export async function exportMatchStatsToPDF(matchId: string) {
 - Track championship seasons
 - View championship standings (future feature)
 
-**Implementation Note**: Championships use integer IDs (not UUIDs) for compatibility with external data sources.
+**Implementation Note**: Championships use UUID IDs. The volleyball format (2x2, 3x3, 4x4, 6x6) is defined in the associated match_format record, allowing different match formats to share the same volleyball format specification.

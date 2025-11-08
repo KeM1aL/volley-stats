@@ -5,7 +5,6 @@ export type Championship = {
   name: string;
   type: string;
   default_match_format: string; // UUID reference to match_format
-  format: '2x2' | '3x3' | '4x4' | '6x6';
   age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior';
   gender: 'female' | 'male' | 'mixte';
   season_id: string | null; // UUID reference to season
@@ -13,6 +12,7 @@ export type Championship = {
   ext_source: string | null;
   created_at: string | null;
   updated_at: string | null;
+  match_formats?: MatchFormat; // Joined relation
 };
 
 export type Season = {
@@ -27,6 +27,7 @@ export type Season = {
 export type MatchFormat = {
   id: string; // UUID
   description: string;
+  format: '2x2' | '3x3' | '4x4' | '6x6';
   sets_to_win: number;
   rotation: boolean;
   point_by_set: number;

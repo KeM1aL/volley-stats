@@ -21,7 +21,6 @@ export type Database = {
           default_match_format: string
           ext_code: string | null
           ext_source: string | null
-          format: Database["public"]["Enums"]["championship_format"]
           gender: Database["public"]["Enums"]["championship_gender"]
           id: string
           name: string
@@ -35,7 +34,6 @@ export type Database = {
           default_match_format: string
           ext_code?: string | null
           ext_source?: string | null
-          format: Database["public"]["Enums"]["championship_format"]
           gender: Database["public"]["Enums"]["championship_gender"]
           id?: string
           name: string
@@ -49,7 +47,6 @@ export type Database = {
           default_match_format?: string
           ext_code?: string | null
           ext_source?: string | null
-          format?: Database["public"]["Enums"]["championship_format"]
           gender?: Database["public"]["Enums"]["championship_gender"]
           id?: string
           name?: string
@@ -208,6 +205,7 @@ export type Database = {
           created_at: string | null
           decisive_point: boolean
           description: string | null
+          format: Database["public"]["Enums"]["championship_format"]
           id: string
           point_by_set: number
           point_final_set: number
@@ -219,6 +217,7 @@ export type Database = {
           created_at?: string | null
           decisive_point: boolean
           description?: string | null
+          format: Database["public"]["Enums"]["championship_format"]
           id?: string
           point_by_set: number
           point_final_set: number
@@ -230,6 +229,7 @@ export type Database = {
           created_at?: string | null
           decisive_point?: boolean
           description?: string | null
+          format?: Database["public"]["Enums"]["championship_format"]
           id?: string
           point_by_set?: number
           point_final_set?: number

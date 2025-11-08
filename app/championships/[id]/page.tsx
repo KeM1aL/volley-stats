@@ -207,7 +207,7 @@ export default function ChampionshipDetailPage() {
             Championship: {championship.name}
           </h1>
           <p className="text-muted-foreground">
-            Format: {championship.format} | Gender: {championship.gender} | Age
+            Format: {championship.match_formats?.format} | Gender: {championship.gender} | Age
             Category: {championship.age_category}
           </p>
         </div>

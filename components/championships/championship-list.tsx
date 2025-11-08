@@ -27,8 +27,8 @@ export function ChampionshipList() {
       if (filters.seasonId) {
         apiFilters.push({ field: "season_id", operator: "eq" as FilterOperator, value: filters.seasonId });
       }
-      if (filters.format) {
-        apiFilters.push({ field: "format", operator: "eq" as FilterOperator, value: filters.format });
+      if (filters.match_formats?.format) {
+        apiFilters.push({ field: "match_formats.format", operator: "eq" as FilterOperator, value: filters.match_formats.format });
       }
       if (filters.gender) {
         apiFilters.push({ field: "gender", operator: "eq" as FilterOperator, value: filters.gender });
@@ -52,7 +52,7 @@ export function ChampionshipList() {
   const groupedChampionships = championships.reduce((acc, championship) => {
     const season = seasons.find((s) => s.id === championship.season_id);
     const seasonName = season ? `Season ${season.name}` : "Unknown Season";
-    const format = championship.format || "Unknown Format";
+    const format = championship.match_formats?.format || "Unknown Format";
 
     if (!acc[seasonName]) {
       acc[seasonName] = {};
@@ -101,7 +101,7 @@ export function ChampionshipList() {
                         <CardTitle>{championship.name}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p>Format: {championship.format}</p>
+                        <p>Format: {championship.match_formats?.format}</p>
                         <p>Gender: {championship.gender}</p>
                         <p>Age Category: {championship.age_category}</p>
                         {/* Add more useful information here */}

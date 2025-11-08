@@ -22,7 +22,7 @@ const timestampFields = {
 
 // Championship Schema
 export const championshipSchema = toTypedRxJsonSchema({
-  version: 0, // Incremented: Changed ID from integer to UUID string
+  version: 0, // Incremented: Removed format field (moved to match_formats)
   primaryKey: "id",
   type: "object",
   properties: {
@@ -31,11 +31,6 @@ export const championshipSchema = toTypedRxJsonSchema({
     type: { type: "string" },
     season_id: { type: ["string", "null"], maxLength: 36 }, // UUID
     default_match_format: { type: "string", maxLength: 36 }, // UUID
-    format: {
-      type: "string",
-      enum: ["2x2", "3x3", "4x4", "6x6"],
-      maxLength: 6,
-    },
     age_category: {
       type: "string",
       enum: ["U10", "U12", "U14", "U16", "U18", "U21", "senior"],
@@ -88,12 +83,17 @@ export const seasonSchema = toTypedRxJsonSchema({
 
 // Match Format Schema
 export const matchFormatSchema = toTypedRxJsonSchema({
-  version: 0, // Incremented: Changed ID from integer to UUID string
+  version: 0, // Incremented: Added format field (moved from championships)
   primaryKey: "id",
   type: "object",
   properties: {
     id: { type: "string", maxLength: 36 }, // UUID
     description: { type: "string" },
+    format: {
+      type: "string",
+      enum: ["2x2", "3x3", "4x4", "6x6"],
+      maxLength: 6,
+    },
     sets_to_win: { type: "number" },
     rotation: { type: "boolean" },
     point_by_set: { type: "number" },
@@ -103,6 +103,7 @@ export const matchFormatSchema = toTypedRxJsonSchema({
   },
   required: [
     "id",
+    "format",
     "sets_to_win",
     "rotation",
     "point_by_set",

@@ -52,7 +52,7 @@ export function useTeamFilters(onFilter: (filters: Filter[]) => void) {
       newFilters.push({ field: 'championships.type', operator: 'eq', value: debouncedFilters.championshipType });
     }
     if (debouncedFilters.championshipFormat) {
-      newFilters.push({ field: 'championships.format', operator: 'eq', value: debouncedFilters.championshipFormat });
+      newFilters.push({ field: 'championships.match_formats.format', operator: 'eq', value: debouncedFilters.championshipFormat });
     }
     if (debouncedFilters.championshipAgeCategory) {
       newFilters.push({ field: 'championships.age_category', operator: 'eq', value: debouncedFilters.championshipAgeCategory });

@@ -38,6 +38,13 @@ export function ChampionshipFilters() {
     setFilters({ ...filters, [key]: value });
   };
 
+  const handleFormatChange = (value: string | undefined) => {
+    setFilters({
+      ...filters,
+      match_formats: value ? { format: value } : undefined
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -66,8 +73,8 @@ export function ChampionshipFilters() {
                 { value: "4x4", label: "4x4" },
                 { value: "6x6", label: "6x6" },
               ]}
-              value={filters.format ? { value: filters.format, label: filters.format } : null}
-              onChange={(selectedOption) => handleFilterChange("format", selectedOption ? selectedOption.value : undefined)}
+              value={filters.match_formats?.format ? { value: filters.match_formats?.format, label: filters.match_formats?.format } : null}
+              onChange={(selectedOption) => handleFormatChange(selectedOption ? selectedOption.value : undefined)}
               isClearable
               placeholder="Select a format"
             />
