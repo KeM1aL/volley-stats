@@ -26,7 +26,7 @@ export type Season = {
 
 export type MatchFormat = {
   id: string; // UUID
-  description: string;
+  description: string | null;
   format: '2x2' | '3x3' | '4x4' | '6x6';
   sets_to_win: number;
   rotation: boolean;

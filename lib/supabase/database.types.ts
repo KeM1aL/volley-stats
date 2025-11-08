@@ -202,7 +202,7 @@ export type Database = {
       }
       match_formats: {
         Row: {
-          created_at: string | null
+          created_at: string
           decisive_point: boolean
           description: string | null
           format: Database["public"]["Enums"]["championship_format"]
@@ -211,10 +211,10 @@ export type Database = {
           point_final_set: number
           rotation: boolean
           sets_to_win: number
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           decisive_point: boolean
           description?: string | null
           format: Database["public"]["Enums"]["championship_format"]
@@ -223,10 +223,10 @@ export type Database = {
           point_final_set: number
           rotation: boolean
           sets_to_win: number
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           decisive_point?: boolean
           description?: string | null
           format?: Database["public"]["Enums"]["championship_format"]
@@ -235,7 +235,7 @@ export type Database = {
           point_final_set?: number
           rotation?: boolean
           sets_to_win?: number
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

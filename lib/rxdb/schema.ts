@@ -88,7 +88,7 @@ export const matchFormatSchema = toTypedRxJsonSchema({
   type: "object",
   properties: {
     id: { type: "string", maxLength: 36 }, // UUID
-    description: { type: "string" },
+    description: { type: ["string", "null"] },
     format: {
       type: "string",
       enum: ["2x2", "3x3", "4x4", "6x6"],

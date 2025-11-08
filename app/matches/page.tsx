@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MatchHistoryTable } from "@/components/matches/history/match-history-table";
 import { TeamStats } from "@/components/matches/history/team-stats";
 import { StatisticsDialog } from "@/components/matches/history/statistics-dialog";
+import { NewMatchDialog } from "@/components/matches/new-match-dialog";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { ClubSelect } from "@/components/clubs/club-select";
 import { ChampionshipSelect } from "@/components/championships/championship-select";
@@ -21,7 +22,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Match, Team, Club, Championship } from "@/lib/types";
-import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useClubApi } from "@/hooks/use-club-api";
 import { useMatchApi } from "@/hooks/use-match-api";
@@ -50,6 +50,7 @@ export default function MatchPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(true);
+  const [newMatchDialogOpen, setNewMatchDialogOpen] = useState(false);
 
   const matchApi = useMatchApi();
 
@@ -145,11 +146,9 @@ export default function MatchPage() {
           </p>
         </div>
         <div className="flex gap-4">
-          <Button asChild>
-            <Link href="/matches/new">
-              <Plus className="h-4 w-4 mr-2" />
-              New Match
-            </Link>
+          <Button onClick={() => setNewMatchDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Match
           </Button>
           <Button
             variant="outline"
@@ -227,6 +226,18 @@ export default function MatchPage() {
       <StatisticsDialog
         match={selectedMatch}
         onClose={() => setSelectedMatch(null)}
+      />
+
+      <NewMatchDialog
+        open={newMatchDialogOpen}
+        onOpenChange={setNewMatchDialogOpen}
+        onSuccess={(matchId) => {
+          // Match list will refresh automatically via RxDB reactivity
+          toast({
+            title: "Success",
+            description: "Match created successfully",
+          });
+        }}
       />
     </div>
   );
