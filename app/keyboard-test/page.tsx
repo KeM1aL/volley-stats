@@ -182,6 +182,52 @@ export default function KeyboardTestPage() {
           </CardContent>
         </Card>
 
+        {/* Layout Information Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Layout Information</CardTitle>
+            <CardDescription>CSS Grid layout and keyboard space management</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Grid Layout:</span>
+              <Badge variant="outline" className="bg-green-500 text-white">Active</Badge>
+            </div>
+            <Separator />
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Keyboard Spacer Height:</span>
+              <span className="font-mono">{height}px</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">VirtualKeyboard overlaysContent:</span>
+              <span className="font-mono text-xs">
+                {typeof navigator !== 'undefined' && 'virtualKeyboard' in navigator && navigator.virtualKeyboard
+                  ? (navigator.virtualKeyboard.overlaysContent ? 'true' : 'false')
+                  : 'not supported'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">env(keyboard-inset-height):</span>
+              <span className="font-mono text-xs">
+                {method === 'virtualKeyboard' ? 'available' : 'not available'}
+              </span>
+            </div>
+            <Separator />
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">CSS --keyboard-height:</span>
+              <span className="font-mono">{height}px</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Body class keyboard-visible:</span>
+              <span className="font-mono text-xs">
+                {typeof document !== 'undefined' && document.body.classList.contains('keyboard-visible')
+                  ? 'true'
+                  : 'false'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Test Inputs Card */}
         <Card>
           <CardHeader>

@@ -170,6 +170,42 @@
   }
 }
 
+/* Keyboard-aware layout grid */
+.keyboard-layout-grid {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "navigation"
+    "content"
+    "keyboard";
+}
+
+.keyboard-layout-grid > header {
+  grid-area: navigation;
+}
+
+.keyboard-main-content {
+  grid-area: content;
+  overflow-y: auto;
+  /* Ensure focused inputs scroll into view above keyboard */
+  scroll-padding-bottom: max(
+    var(--keyboard-height),
+    env(keyboard-inset-height, 0px)
+  );
+}
+
+.keyboard-spacer {
+  grid-area: keyboard;
+  /* Reserve space for keyboard using CSS variables */
+  height: max(
+    var(--keyboard-height),
+    env(keyboard-inset-height, 0px)
+  );
+  /* Smooth transition when keyboard appears/disappears */
+  transition: height 0.3s ease-out;
+}
+
 /* Loading bar animations */
 @keyframes loading-bar-shine {
   0% {

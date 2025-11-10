@@ -48,6 +48,22 @@ interface KeyboardProviderProps {
 export function KeyboardProvider({ children }: KeyboardProviderProps) {
   const keyboardState = useVirtualKeyboard()
 
+  // Enable VirtualKeyboard API manual layout mode
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'virtualKeyboard' in navigator && navigator.virtualKeyboard) {
+      // Tell browser we'll handle keyboard layout ourselves
+      // This enables env(keyboard-inset-height) CSS variable on supported browsers
+      navigator.virtualKeyboard.overlaysContent = true
+    }
+
+    return () => {
+      // Reset to default on cleanup
+      if (typeof navigator !== 'undefined' && 'virtualKeyboard' in navigator && navigator.virtualKeyboard) {
+        navigator.virtualKeyboard.overlaysContent = false
+      }
+    }
+  }, [])
+
   useEffect(() => {
     // Only run in browser
     if (typeof document === 'undefined') {

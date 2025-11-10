@@ -74,11 +74,14 @@ export default function RootLayout({
             <AuthProvider>
               <LocalDatabaseProvider>
                 <LoadingBar />
-                <div className="min-h-screen bg-background">
-                  <Navigation />
-                  <main className="2xl:container 2xl:mx-auto px-2 py-1">
+                <div className="keyboard-layout-grid bg-background">
+                  <header>
+                    <Navigation />
+                  </header>
+                  <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-2 py-1">
                     {children}
                   </main>
+                  <div className="keyboard-spacer" aria-hidden="true" />
                 </div>
                 <Toaster />
               </LocalDatabaseProvider>
