@@ -27,7 +27,7 @@ export const getUser = async (session?: Session | null): Promise<User | null> =>
   console.log('Session found', session);
 
   try {
-    // Add 10 second timeout to all queries
+    // Add timeout to all queries
     const [profile, teamMembers, clubMembers] = await withTimeout(
       Promise.all([
         getProfile(session.user.id),
@@ -80,6 +80,9 @@ export const getProfile = async (userId: string): Promise<Profile> => {
 };
 
 export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
+  if(userId)
+    return [];
+
   const { data, error } = await supabase
     .from('team_members')
     .select('*, teams(*)')
@@ -103,6 +106,11 @@ export const updateProfile = async (userId: string, profile: Partial<Profile>): 
 };
 
 export const getClubMembers = async (userId: string): Promise<{clubs: ClubMember[], teams: TeamMember[]}> => {
+  if(userId)
+    return {
+      clubs: [],
+      teams: []
+      };
   // Start from club_members where user_id exists
   const { data, error } = await supabase
     .from('club_members')
