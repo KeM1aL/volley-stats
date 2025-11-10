@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useTheme } from "next-themes";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +50,8 @@ const languages = [
 
 export default function SettingsPage() {
   const { localDb: db } = useLocalDb();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
@@ -60,6 +63,10 @@ export default function SettingsPage() {
     updateSettings,
     resetSettings,
   } = useSettings();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const form = useForm<Settings>({
     resolver: zodResolver(settingsSchema),
@@ -285,6 +292,33 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      {/* Theme Selector - Standalone (not in form) */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div>
+              <Label>Theme</Label>
+              <p className="text-sm text-muted-foreground">
+                Select your preferred theme appearance
+              </p>
+            </div>
+            {mounted && (
+              <Select value={theme} onValueChange={setTheme}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Language and Notifications Form */}
       <Card>
         <CardContent className="p-6">
           <Form {...form}>
@@ -313,32 +347,6 @@ export default function SettingsPage() {
                             {language.label}
                           </SelectItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="theme"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Theme</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a theme" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

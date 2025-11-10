@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTheme } from "next-themes";
 import { z } from "zod";
 import { useAuth } from "@/contexts/auth-context";
 import { getUser, updateProfile } from "@/lib/api/users";
@@ -10,7 +9,6 @@ import { supabase } from "@/lib/supabase/client";
 export const settingsSchema = z.object({
   favoriteTeam: z.string().optional(),
   language: z.string().min(1, "Please select a language"),
-  theme: z.enum(["light", "dark", "system"]),
   notifications: z.object({
     matchReminders: z.boolean(),
     scoreUpdates: z.boolean(),
@@ -21,7 +19,6 @@ export type Settings = z.infer<typeof settingsSchema>;
 
 const defaultSettings: Settings = {
   language: "en",
-  theme: "system",
   notifications: {
     matchReminders: true,
     scoreUpdates: true,
@@ -29,7 +26,6 @@ const defaultSettings: Settings = {
 };
 
 export function useSettings() {
-  const { theme, setTheme } = useTheme();
   const { user, setUser } = useAuth();
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,15 +46,13 @@ export function useSettings() {
       }
 
       setSettings(loadedSettings);
-      setTheme(loadedSettings.theme);
     } catch (error) {
       console.error("Failed to load settings:", error);
       setSettings(defaultSettings);
-      setTheme(defaultSettings.theme);
     } finally {
       setIsLoading(false);
     }
-  }, [setTheme, user]);
+  }, [user]);
 
   useEffect(() => {
     loadSettings();
@@ -72,10 +66,6 @@ export function useSettings() {
       };
 
       const validated = settingsSchema.parse(updatedSettings);
-
-      if (newSettings.theme && newSettings.theme !== settings.theme) {
-        setTheme(newSettings.theme);
-      }
 
       const {
         data: { session },
@@ -105,7 +95,6 @@ export function useSettings() {
   const resetSettings = () => {
     localStorage.removeItem("userSettings");
     setSettings(defaultSettings);
-    setTheme(defaultSettings.theme);
     return defaultSettings;
   };
 
