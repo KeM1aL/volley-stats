@@ -214,17 +214,19 @@ body.keyboard-visible [data-radix-dialog-content] {
     var(--keyboard-height),
     env(keyboard-inset-height, 0px)
   ) - 2rem) !important;
+
   /* Enable vertical scrolling within dialog */
   overflow-y: auto !important;
-  /* Shift dialog up when keyboard is visible */
-  top: calc(50% - max(
+
+  /* Correct centering: move dialog CENTER up by keyboard-height/2 */
+  top: 50% !important;
+  transform: translateX(-50%) translateY(calc(-50% - max(
     var(--keyboard-height),
     env(keyboard-inset-height, 0px)
-  ) / 2) !important;
+  ) / 2)) !important;
+
   /* Smooth transition */
-  transition: top 0.3s ease-out, max-height 0.3s ease-out !important;
-  /* Reset transform to avoid conflicts */
-  transform: translateX(-50%) translateY(-50%) !important;
+  transition: transform 0.3s ease-out, max-height 0.3s ease-out !important;
 }
 
 /* Ensure dialog content doesn't have conflicting scroll padding */
