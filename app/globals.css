@@ -206,6 +206,25 @@
   transition: height 0.3s ease-out;
 }
 
+/* Keyboard-aware dialog/modal positioning */
+body.keyboard-visible [role="dialog"],
+body.keyboard-visible [data-radix-dialog-content] {
+  /* Adjust max-height to account for keyboard */
+  max-height: calc(100dvh - max(
+    var(--keyboard-height),
+    env(keyboard-inset-height, 0px)
+  ) - 2rem);
+  /* Enable vertical scrolling within dialog */
+  overflow-y: auto;
+  /* Shift dialog up when keyboard is visible */
+  top: calc(50% - max(
+    var(--keyboard-height),
+    env(keyboard-inset-height, 0px)
+  ) / 2);
+  /* Smooth transition */
+  transition: top 0.3s ease-out, max-height 0.3s ease-out;
+}
+
 /* Loading bar animations */
 @keyframes loading-bar-shine {
   0% {
