@@ -1,5 +1,5 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LocalDatabaseProvider } from '@/components/providers/local-database-provider';
@@ -7,8 +7,17 @@ import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
 import { LoadingBar } from '@/components/ui/loading-bar';
 import { AuthProvider } from '@/contexts/auth-context';
+import { KeyboardProvider } from '@/contexts/keyboard-context';
 
 const inter = Inter({ subsets: ['latin'] });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   title: 'VolleyStats for Dummies',
@@ -54,26 +63,28 @@ export default function RootLayout({
         <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          storageKey="theme"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <LocalDatabaseProvider>
-              <LoadingBar />
-              <div className="min-h-screen bg-background">
-                <Navigation />
-                <main className="2xl:container 2xl:mx-auto px-2 py-1">
-                  {children}
-                </main>
-              </div>
-              <Toaster />
-            </LocalDatabaseProvider>
+        <KeyboardProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            storageKey="theme"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>
+              <LocalDatabaseProvider>
+                <LoadingBar />
+                <div className="min-h-screen bg-background">
+                  <Navigation />
+                  <main className="2xl:container 2xl:mx-auto px-2 py-1">
+                    {children}
+                  </main>
+                </div>
+                <Toaster />
+              </LocalDatabaseProvider>
             </AuthProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </KeyboardProvider>
       </body>
     </html>
   );
