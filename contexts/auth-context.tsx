@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 
-type LoadingStage = 'authenticating' | 'profile' | 'memberships' | 'complete';
+type LoadingStage = "authenticating" | "profile" | "memberships" | "complete";
 
 interface AuthContextType {
   user: User | null;
@@ -29,97 +29,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingStage, setLoadingStage] = useState<LoadingStage | null>('authenticating');
+  const [loadingStage, setLoadingStage] = useState<LoadingStage | null>(
+    "authenticating"
+  );
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    let getUserTimeoutId: NodeJS.Timeout | null = null;
-
     // Listen for auth changes
+    const previousSession = session;
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.debug("onAuthStateChange event:", event, "session:", session);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setTimeout(async () => {
+        console.debug("onAuthStateChange event:", event, "session:", session);
 
-      // Handle specific auth events
-      switch (event) {
-        case 'SIGNED_IN':
-          console.log('User signed in');
-          break;
+        // Handle specific auth events
+        switch (event) {
+          case "SIGNED_IN":
+            console.debug("User signed in", [user, previousSession, session]);
+            break;
 
-        case 'SIGNED_OUT':
-          console.log('User signed out');
-          toast({
-            title: "Signed out",
-            description: "You have been successfully signed out.",
-          });
-          setUser(null);
-          setSession(null);
-          setError(null);
-          setLoadingStage(null);
-          setIsLoading(false);
-          return; // Early return, no need to load user
-
-        case 'TOKEN_REFRESHED':
-          console.log('Auth token refreshed successfully');
-          break;
-
-        case 'USER_UPDATED':
-          console.log('User data updated');
-          break;
-
-        default:
-          console.debug('Auth event:', event);
-      }
-
-      setSession(session);
-      setError(null);
-
-      if (session) {
-        // Safety timeout: force loading to stop after 100 seconds (when getUser actually starts)
-        // This is longer than getUser's internal 30s timeout + 2 retries = ~90s total
-        getUserTimeoutId = setTimeout(() => {
-          if (isLoading) {
-            console.error('Auth loading timeout - forcing completion after 100 seconds');
-            setError(new Error('Loading timed out. Please refresh the page.'));
-            setIsLoading(false);
+          case "SIGNED_OUT":
+            console.log("User signed out");
+            toast({
+              title: "Signed out",
+              description: "You have been successfully signed out.",
+            });
+            setUser(null);
+            setSession(null);
+            setError(null);
             setLoadingStage(null);
-          }
-        }, 100000); // 100 seconds (accounts for 30s timeout x 3 attempts)
+            setIsLoading(false);
+            return; // Early return, no need to load user
 
-        try {
-          setLoadingStage('profile');
-          const user = await getUser(session, (stage) => {
-            setLoadingStage(stage);
-          });
-          setUser(user);
-          setError(null);
-          setLoadingStage('complete');
-        } catch (error) {
-          console.error('Failed to load user profile:', error);
-          setUser(null);
-          setError(error instanceof Error ? error : new Error('Failed to load profile'));
-          setLoadingStage(null);
-        } finally {
-          if (getUserTimeoutId) {
-            clearTimeout(getUserTimeoutId);
-          }
+          case "TOKEN_REFRESHED":
+            console.log("Auth token refreshed successfully");
+            break;
+
+          case "USER_UPDATED":
+            console.log("User data updated");
+            break;
+
+          default:
+            console.debug("Auth event:", event);
         }
-      } else {
-        setUser(null);
+        setSession(session);
         setError(null);
-        setLoadingStage(null);
-      }
 
-      setIsLoading(false);
+        if (session) {
+          try {
+            setLoadingStage("profile");
+            const user = await getUser(session, (stage) => {
+              setLoadingStage(stage);
+            });
+            setUser(user);
+            setError(null);
+            setLoadingStage("complete");
+          } catch (error) {
+            console.error("Failed to load user profile:", error);
+            setUser(null);
+            setError(
+              error instanceof Error
+                ? error
+                : new Error("Failed to load profile")
+            );
+            setLoadingStage(null);
+          } finally {
+          }
+        } else {
+          setUser(null);
+          setError(null);
+          setLoadingStage(null);
+        }
+
+        setIsLoading(false);
+      }, 0);
     });
 
     return () => {
       subscription.unsubscribe();
-      if (getUserTimeoutId) {
-        clearTimeout(getUserTimeoutId);
-      }
     };
   }, []);
 
@@ -149,11 +138,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               description: "Your session has been successfully refreshed.",
             });
           } catch (error) {
-            console.error('Failed to refresh session:', error);
+            console.error("Failed to refresh session:", error);
             toast({
               variant: "destructive",
               title: "Refresh Failed",
-              description: "Could not extend your session. Please sign in again.",
+              description:
+                "Could not extend your session. Please sign in again.",
             });
           }
         };
@@ -171,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Log session already expired
       if (timeUntilExpiry <= 0) {
-        console.error('Session has expired');
+        console.error("Session has expired");
       }
     };
 
@@ -195,28 +185,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const reloadUser = async () => {
     if (session) {
       setError(null);
-      setLoadingStage('profile');
+      setLoadingStage("profile");
       try {
         const user = await getUser(session, (stage) => {
           setLoadingStage(stage);
         });
         setUser(user);
-        setLoadingStage('complete');
+        setLoadingStage("complete");
       } catch (error) {
-        console.error('Failed to reload user:', error);
-        setError(error instanceof Error ? error : new Error('Failed to reload profile'));
+        console.error("Failed to reload user:", error);
+        setError(
+          error instanceof Error ? error : new Error("Failed to reload profile")
+        );
         setLoadingStage(null);
       }
     }
   };
 
   // Only show loading screen when we have a session and are loading user data
-  if (isLoading && (loadingStage !== 'authenticating' || session)) {
+  if (isLoading && (loadingStage !== "authenticating" || session)) {
     const loadingMessages: Record<LoadingStage, string> = {
-      authenticating: 'Authenticating...',
-      profile: 'Loading your profile...',
-      memberships: 'Loading team memberships...',
-      complete: 'Almost ready...',
+      authenticating: "Authenticating...",
+      profile: "Loading your profile...",
+      memberships: "Loading team memberships...",
+      complete: "Almost ready...",
     };
 
     return (
@@ -224,7 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            {loadingStage ? loadingMessages[loadingStage] : 'Loading...'}
+            {loadingStage ? loadingMessages[loadingStage] : "Loading..."}
           </p>
         </div>
       </div>

@@ -1,13 +1,10 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -17,53 +14,27 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          response = NextResponse.next({
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
             request,
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          )
+          cookiesToSet.forEach(({ name, value }) => supabaseResponse.cookies.set(name, value))
         },
       },
     }
   )
-
-  // Explicitly refresh the session to ensure token is valid
-  // This will validate AND refresh the token if needed
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.refreshSession();
-
-  // Handle refresh errors (expired refresh token, invalid session, etc.)
-  if (error) {
-    console.error('Session refresh failed in middleware:', error.message);
-
-    // Only redirect to auth if not already on auth/public pages
-    if (
-      !request.nextUrl.pathname.startsWith('/auth') &&
-      !request.nextUrl.pathname.startsWith('/stats') &&
-      !request.nextUrl.pathname.endsWith('/score') &&
-      request.nextUrl.pathname !== '/'
-    ) {
-      const redirectUrl = new URL('/auth', request.url);
-      redirectUrl.searchParams.set('error', 'session_expired');
-      return NextResponse.redirect(redirectUrl);
-    }
-  }
-
-  // Check if user is authenticated
+  const { data } = await supabase.auth.getClaims()
+  const user = data?.claims
   if (
-    !session &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/stats') &&
-    !request.nextUrl.pathname.endsWith('/score') &&
-    request.nextUrl.pathname !== '/'
+    !user &&
+    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/auth')
   ) {
-    const redirectUrl = new URL('/auth', request.url);
-    return NextResponse.redirect(redirectUrl);
+    // no user, potentially respond by redirecting the user to the login page
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth'
+    //url.searchParams.set('redirectTo', request.nextUrl.pathname)
+    return NextResponse.redirect(url)
   }
-
-  return response;
+  return supabaseResponse
 }

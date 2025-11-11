@@ -2,14 +2,8 @@ import { Button } from "@/components/ui/button";
 import { MoveRight } from "lucide-react";
 import { FeaturesSection } from "@/components/landing/features-section";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 export default async function Home() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   return (
     <div className="flex flex-col gap-8">
@@ -20,7 +14,7 @@ export default async function Home() {
         <p className="text-xl text-muted-foreground mb-8">
           Track, analyze, and improve your team's performance with simple analytics
         </p>
-        {!user && <div className="flex flex-wrap justify-center gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           <Button asChild size="lg" className="group">
             <Link href="/auth">
               Get Started
@@ -32,7 +26,7 @@ export default async function Home() {
               Learn More
             </Link>
           </Button>
-        </div>}
+        </div>
       </section>
 
       <FeaturesSection />

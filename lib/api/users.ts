@@ -4,12 +4,16 @@ import { Session } from '@supabase/supabase-js';
 
 // Helper: Promise with timeout
 const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, errorMsg: string): Promise<T> => {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(errorMsg)), timeoutMs)
-    ),
-  ]);
+  // return Promise.race([
+  //   promise,
+  //   new Promise<T>((_, reject) =>
+  //     setTimeout(() => {
+  //       console.log('timeout ' + errorMsg)
+  //       reject(new Error(errorMsg))
+  //     }, timeoutMs)
+  //   ),
+  // ]);
+  return promise;
 };
 
 // Helper: Retry with exponential backoff
@@ -78,6 +82,7 @@ export const getUser = async (
         30000,
         'Loading profile timed out after 30 seconds. Please check your connection and try again.'
       );
+      console.log('User Profile', profile);
 
       // Load memberships
       onStageChange?.('memberships');
@@ -89,6 +94,7 @@ export const getUser = async (
         30000,
         'Loading team memberships timed out after 30 seconds. Please check your connection and try again.'
       );
+      console.log('User Memberships', [teamMembers, clubMembers]);
 
       const user = {
         id: session.user.id,
@@ -98,7 +104,7 @@ export const getUser = async (
         clubMembers: clubMembers.clubs,
       };
 
-      console.log('User Profile', user);
+      console.log('Full User', user);
       return user;
     } catch (error) {
       console.error('getUser failed:', error);
@@ -106,7 +112,7 @@ export const getUser = async (
       throw new Error(
         error instanceof Error
           ? error.message
-          : 'Failed to load user profile'
+          : 'Failed to load user'
       );
     }
   });

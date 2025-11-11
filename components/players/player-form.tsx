@@ -56,7 +56,7 @@ export function PlayerForm({
       name: defaultValues?.name || "",
       number: defaultValues?.number || 0,
       position: defaultValues?.position || "",
-      role: defaultValues?.role || "",
+      role: defaultValues?.role || "player",
       avatar_url: defaultValues?.avatar_url || null,
     },
   });
@@ -91,6 +91,31 @@ export function PlayerForm({
               <FormControl>
                 <Input {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+       <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.values(TeamMemberRole).map((role) => (
+                    <SelectItem key={role} value={role} className="capitalize">
+                      {role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -139,31 +164,6 @@ export function PlayerForm({
                             return "Libero";
                         }
                       })()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {Object.values(TeamMemberRole).map((role) => (
-                    <SelectItem key={role} value={role} className="capitalize">
-                      {role}
                     </SelectItem>
                   ))}
                 </SelectContent>

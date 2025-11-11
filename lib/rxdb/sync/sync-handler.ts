@@ -162,7 +162,7 @@ export class SyncHandler {
                   console.debug(`Skipping initial sync for record ${remoteId} in ${name} as local version is newer or same.`);
                   // If local is newer, queue it for update to Supabase
                   if (localDocUpdatedAt > remoteUpdatedAt) {
-                    console.log(`Queueing local document ${localDoc.id} from ${name} for UPDATE to Supabase as it's newer than server version.`);
+                    console.debug(`Queueing local document ${localDoc.id} from ${name} for UPDATE to Supabase as it's newer than server version.`);
                     this.queueChange(name, {
                       operation: 'UPDATE',
                       documentId: localDoc.id,
@@ -194,7 +194,7 @@ export class SyncHandler {
 
         for (const localDocInDb of allLocalDocs) {
           if (!serverDocIds.has(localDocInDb.id)) {
-            console.log(`Queueing purely local document ${localDocInDb.id} from ${name} for INSERT to Supabase.`);
+            console.debug(`Queueing purely local document ${localDocInDb.id} from ${name} for INSERT to Supabase.`);
             this.queueChange(name, {
               operation: 'INSERT',
               documentId: localDocInDb.id,
@@ -279,7 +279,7 @@ export class SyncHandler {
         if (queuedItem?.data?.updated_at) {
           const queuedLocalUpdatedAt = new Date(queuedItem.data.updated_at as string);
           if (queuedLocalUpdatedAt > remoteUpdatedAt) {
-            console.log(`Skipping incoming Supabase ${eventType} for ${remoteId} in ${collection.name} as a newer local change is already queued.`);
+            console.debug(`Skipping incoming Supabase ${eventType} for ${remoteId} in ${collection.name} as a newer local change is already queued.`);
             return;
           }
         }
@@ -289,7 +289,7 @@ export class SyncHandler {
         if (localDoc && localDoc.updated_at) {
           const localDocUpdatedAt = new Date(localDoc.updated_at);
           if (localDocUpdatedAt >= remoteUpdatedAt) {
-            console.log(`Skipping incoming Supabase ${eventType} for ${remoteId} in ${collection.name} as local version is newer or same.`);
+            console.debug(`Skipping incoming Supabase ${eventType} for ${remoteId} in ${collection.name} as local version is newer or same.`);
             return;
           }
         }

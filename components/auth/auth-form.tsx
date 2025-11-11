@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -29,6 +29,7 @@ export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { setSession } = useAuth();
 
@@ -57,9 +58,9 @@ export function AuthForm() {
       } else {
         // Update session in context
         setSession(authResponse.data.session);
-        
-        router.push("/teams");
-        router.refresh()
+        const redirectTo = searchParams.get("redirectTo");
+        router.replace(redirectTo || "/");
+        router.refresh();
       }
     } catch (error) {
       console.error("Failed to sign in:", error);

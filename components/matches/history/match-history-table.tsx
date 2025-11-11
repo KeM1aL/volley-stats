@@ -48,6 +48,10 @@ export function MatchHistoryTable({
   const isMemberOfTeamOrClub = (match: Match) => {
     if (!user) return false;
 
+    if(match.home_team?.user_id === user.id || match.away_team?.user_id === user.id) {
+      return true;
+    }
+
     const isHomeTeamMember = user.teamMembers?.some(
       (member) => member.team_id === match.home_team_id
     );

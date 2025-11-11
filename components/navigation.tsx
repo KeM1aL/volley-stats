@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   Volleyball,
   BarChart3,
@@ -83,7 +84,13 @@ export function Navigation() {
             </div>
           )}
           <Link href="/" className="flex items-center gap-2 font-semibold pl-2">
-            <span>VolleyStats for Dummies</span>
+            <Image
+                  src='/logo.png'
+                          alt="VolleyStats for Dummies"
+                          width='50'
+                          height='50'
+                          className="rounded-lg object-cover"
+                        />
           </Link>
           {user && (
             <nav className="hidden md:flex items-center gap-6 mx-6">
