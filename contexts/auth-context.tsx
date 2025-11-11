@@ -6,6 +6,8 @@ import { User } from "@/lib/types";
 import { getUser } from "@/lib/api/users";
 import { supabase } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 type LoadingStage = 'authenticating' | 'profile' | 'memberships' | 'complete';
 
@@ -29,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingStage, setLoadingStage] = useState<LoadingStage | null>('authenticating');
   const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     let getUserTimeoutId: NodeJS.Timeout | null = null;
@@ -36,8 +39,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.debug("onAuthStateChange", _event, session);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.debug("onAuthStateChange event:", event, "session:", session);
+
+      // Handle specific auth events
+      switch (event) {
+        case 'SIGNED_IN':
+          console.log('User signed in');
+          break;
+
+        case 'SIGNED_OUT':
+          console.log('User signed out');
+          toast({
+            title: "Signed out",
+            description: "You have been successfully signed out.",
+          });
+          setUser(null);
+          setSession(null);
+          setError(null);
+          setLoadingStage(null);
+          setIsLoading(false);
+          return; // Early return, no need to load user
+
+        case 'TOKEN_REFRESHED':
+          console.log('Auth token refreshed successfully');
+          break;
+
+        case 'USER_UPDATED':
+          console.log('User data updated');
+          break;
+
+        default:
+          console.debug('Auth event:', event);
+      }
+
       setSession(session);
       setError(null);
 
@@ -87,6 +122,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
   }, []);
+
+  // Session health monitoring - check for expiry and warn user
+  useEffect(() => {
+    if (!session) return;
+
+    const checkSessionExpiry = () => {
+      if (!session?.expires_at) return;
+
+      const expiresAt = session.expires_at * 1000; // Convert to milliseconds
+      const now = Date.now();
+      const timeUntilExpiry = expiresAt - now;
+      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+      // Warn user 5 minutes before expiry
+      if (timeUntilExpiry > 0 && timeUntilExpiry <= fiveMinutes) {
+        const minutesLeft = Math.ceil(timeUntilExpiry / 60000);
+        console.warn(`Session expires in ${minutesLeft} minute(s)`);
+
+        const handleExtendSession = async () => {
+          try {
+            const { error } = await supabase.auth.refreshSession();
+            if (error) throw error;
+            toast({
+              title: "Session Extended",
+              description: "Your session has been successfully refreshed.",
+            });
+          } catch (error) {
+            console.error('Failed to refresh session:', error);
+            toast({
+              variant: "destructive",
+              title: "Refresh Failed",
+              description: "Could not extend your session. Please sign in again.",
+            });
+          }
+        };
+
+        toast({
+          title: "Session Expiring Soon",
+          description: `Your session will expire in ${minutesLeft} minute(s). Click "Extend Session" to stay logged in.`,
+          action: (
+            <ToastAction altText="Extend Session" onClick={handleExtendSession}>
+              Extend Session
+            </ToastAction>
+          ),
+        });
+      }
+
+      // Log session already expired
+      if (timeUntilExpiry <= 0) {
+        console.error('Session has expired');
+      }
+    };
+
+    // Check immediately
+    checkSessionExpiry();
+
+    // Check every 5 minutes
+    const intervalId = setInterval(checkSessionExpiry, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [session, toast]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
