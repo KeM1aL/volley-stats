@@ -12,7 +12,46 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, errorMsg: string
   ]);
 };
 
-export const getUser = async (session?: Session | null): Promise<User | null> => {
+// Helper: Retry with exponential backoff
+const withRetry = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 2,
+  baseDelayMs: number = 1000
+): Promise<T> => {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+
+      // Don't retry on validation errors (user profile not found, etc.)
+      if (!lastError.message.includes('timed out')) {
+        throw lastError;
+      }
+
+      // If this was the last attempt, throw the error
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+
+      // Wait before retrying (exponential backoff)
+      const delayMs = baseDelayMs * Math.pow(2, attempt);
+      console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+
+  throw lastError || new Error('Retry failed');
+};
+
+type LoadingStage = 'profile' | 'memberships';
+
+export const getUser = async (
+  session?: Session | null,
+  onStageChange?: (stage: LoadingStage) => void
+): Promise<User | null> => {
   console.log('Loading user profile ...');
   if (!session) {
     const {
@@ -26,37 +65,51 @@ export const getUser = async (session?: Session | null): Promise<User | null> =>
   }
   console.log('Session found', session);
 
-  try {
-    // Add timeout to all queries
-    const [profile, teamMembers, clubMembers] = await withTimeout(
-      Promise.all([
-        getProfile(session.user.id),
-        getTeamMembers(session.user.id),
-        getClubMembers(session.user.id),
-      ]),
-      10000,
-      'Loading user profile timed out. Please check your connection and try again.'
-    );
+  // Wrap in retry logic for timeout errors
+  return await withRetry(async () => {
+    try {
+      if (!session || !session.user) {
+        throw new Error('No user found in session');
+      }
+      // Load profile first
+      onStageChange?.('profile');
+      const profile = await withTimeout(
+        getProfile(session!.user.id),
+        30000,
+        'Loading profile timed out after 30 seconds. Please check your connection and try again.'
+      );
 
-    const user = {
-      id: session.user.id,
-      email: session.user.email,
-      profile,
-      teamMembers: [...teamMembers, ...clubMembers.teams],
-      clubMembers: clubMembers.clubs,
-    };
+      // Load memberships
+      onStageChange?.('memberships');
+      const [teamMembers, clubMembers] = await withTimeout(
+        Promise.all([
+          getTeamMembers(session.user.id),
+          getClubMembers(session.user.id),
+        ]),
+        30000,
+        'Loading team memberships timed out after 30 seconds. Please check your connection and try again.'
+      );
 
-    console.log('User Profile', user);
-    return user;
-  } catch (error) {
-    console.error('getUser failed:', error);
-    // Re-throw with context
-    throw new Error(
-      error instanceof Error
-        ? error.message
-        : 'Failed to load user profile'
-    );
-  }
+      const user = {
+        id: session.user.id,
+        email: session.user.email,
+        profile,
+        teamMembers: [...teamMembers, ...clubMembers.teams],
+        clubMembers: clubMembers.clubs,
+      };
+
+      console.log('User Profile', user);
+      return user;
+    } catch (error) {
+      console.error('getUser failed:', error);
+      // Re-throw with context
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load user profile'
+      );
+    }
+  });
 };
 
 export const getProfile = async (userId: string): Promise<Profile> => {
@@ -80,8 +133,6 @@ export const getProfile = async (userId: string): Promise<Profile> => {
 };
 
 export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
-  if(userId)
-    return [];
 
   const { data, error } = await supabase
     .from('team_members')
@@ -106,11 +157,6 @@ export const updateProfile = async (userId: string, profile: Partial<Profile>): 
 };
 
 export const getClubMembers = async (userId: string): Promise<{clubs: ClubMember[], teams: TeamMember[]}> => {
-  if(userId)
-    return {
-      clubs: [],
-      teams: []
-      };
   // Start from club_members where user_id exists
   const { data, error } = await supabase
     .from('club_members')

@@ -7,10 +7,13 @@ import { getUser } from "@/lib/api/users";
 import { supabase } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
 
+type LoadingStage = 'authenticating' | 'profile' | 'memberships' | 'complete';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  loadingStage: LoadingStage | null;
   error: Error | null;
   signOut: () => Promise<void>;
   setSession: (session: Session | null) => void;
@@ -24,17 +27,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingStage, setLoadingStage] = useState<LoadingStage | null>('authenticating');
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Safety timeout: force loading to stop after 15 seconds
-    const timeoutId = setTimeout(() => {
-      if (isLoading) {
-        console.error('Auth loading timeout - forcing completion');
-        setError(new Error('Loading timed out. Please refresh the page.'));
-        setIsLoading(false);
-      }
-    }, 15000);
+    let getUserTimeoutId: NodeJS.Timeout | null = null;
 
     // Listen for auth changes
     const {
@@ -45,27 +42,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
 
       if (session) {
+        // Safety timeout: force loading to stop after 100 seconds (when getUser actually starts)
+        // This is longer than getUser's internal 30s timeout + 2 retries = ~90s total
+        getUserTimeoutId = setTimeout(() => {
+          if (isLoading) {
+            console.error('Auth loading timeout - forcing completion after 100 seconds');
+            setError(new Error('Loading timed out. Please refresh the page.'));
+            setIsLoading(false);
+            setLoadingStage(null);
+          }
+        }, 100000); // 100 seconds (accounts for 30s timeout x 3 attempts)
+
         try {
-          const user = await getUser(session);
+          setLoadingStage('profile');
+          const user = await getUser(session, (stage) => {
+            setLoadingStage(stage);
+          });
           setUser(user);
           setError(null);
+          setLoadingStage('complete');
         } catch (error) {
           console.error('Failed to load user profile:', error);
           setUser(null);
           setError(error instanceof Error ? error : new Error('Failed to load profile'));
+          setLoadingStage(null);
+        } finally {
+          if (getUserTimeoutId) {
+            clearTimeout(getUserTimeoutId);
+          }
         }
       } else {
         setUser(null);
         setError(null);
+        setLoadingStage(null);
       }
 
       setIsLoading(false);
-      clearTimeout(timeoutId);
     });
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(timeoutId);
+      if (getUserTimeoutId) {
+        clearTimeout(getUserTimeoutId);
+      }
     };
   }, []);
 
@@ -78,20 +97,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const reloadUser = async () => {
     if (session) {
       setError(null);
+      setLoadingStage('profile');
       try {
-        const user = await getUser(session);
+        const user = await getUser(session, (stage) => {
+          setLoadingStage(stage);
+        });
         setUser(user);
+        setLoadingStage('complete');
       } catch (error) {
         console.error('Failed to reload user:', error);
         setError(error instanceof Error ? error : new Error('Failed to reload profile'));
+        setLoadingStage(null);
       }
     }
   };
 
-  if (isLoading) {
+  // Only show loading screen when we have a session and are loading user data
+  if (isLoading && (loadingStage !== 'authenticating' || session)) {
+    const loadingMessages: Record<LoadingStage, string> = {
+      authenticating: 'Authenticating...',
+      profile: 'Loading your profile...',
+      memberships: 'Loading team memberships...',
+      complete: 'Almost ready...',
+    };
+
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            {loadingStage ? loadingMessages[loadingStage] : 'Loading...'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -129,6 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         isLoading,
+        loadingStage,
         error,
         signOut,
         setSession,

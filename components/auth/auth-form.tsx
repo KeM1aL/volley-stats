@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@/contexts/auth-context";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -103,12 +104,14 @@ export function AuthForm() {
         />
         <div className="flex flex-col gap-2">
           <Button type="submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSignUp ? "Sign Up" : "Sign In"}
           </Button>
           <Button
             type="button"
             variant="ghost"
             onClick={() => setIsSignUp(!isSignUp)}
+            disabled={isLoading}
           >
             {isSignUp ? "Already have an account?" : "Need an account?"}
           </Button>
