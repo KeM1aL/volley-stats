@@ -511,13 +511,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "score_points_player_stat_id_fkey"
-            columns: ["player_stat_id"]
-            isOneToOne: false
-            referencedRelation: "player_stats"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "score_points_scoring_team_id_fkey"
             columns: ["scoring_team_id"]
             isOneToOne: false
