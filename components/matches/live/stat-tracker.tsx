@@ -178,16 +178,19 @@ export function StatTracker({
         scoringTeamId === match.home_team_id ? score.home + 1 : score.home;
       const newAwayScore =
         scoringTeamId === match.away_team_id ? score.away + 1 : score.away;
+      const pointNumber = newHomeScore + newAwayScore;
+
+      const timestamp = new Date().toISOString();
       const point: ScorePoint = {
         id: crypto.randomUUID(),
         match_id: match.id,
         set_id: currentSet.id,
+        point_number: pointNumber,
         scoring_team_id: scoringTeamId,
         point_type: type,
         player_id: null,
-        timestamp: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        timestamp: timestamp,
+        created_at: timestamp,
         home_score: newHomeScore,
         away_score: newAwayScore,
         current_rotation: currentSet!.current_lineup,

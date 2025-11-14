@@ -17,7 +17,7 @@ export type Database = {
       championships: {
         Row: {
           age_category: Database["public"]["Enums"]["age_category"]
-          created_at: string | null
+          created_at: string
           default_match_format: string
           ext_code: string | null
           ext_source: string | null
@@ -26,11 +26,11 @@ export type Database = {
           name: string
           season_id: string | null
           type: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           age_category: Database["public"]["Enums"]["age_category"]
-          created_at?: string | null
+          created_at?: string
           default_match_format: string
           ext_code?: string | null
           ext_source?: string | null
@@ -39,11 +39,11 @@ export type Database = {
           name: string
           season_id?: string | null
           type: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           age_category?: Database["public"]["Enums"]["age_category"]
-          created_at?: string | null
+          created_at?: string
           default_match_format?: string
           ext_code?: string | null
           ext_source?: string | null
@@ -52,7 +52,7 @@ export type Database = {
           name?: string
           season_id?: string | null
           type?: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -444,6 +444,7 @@ export type Database = {
           match_id: string
           player_id: string | null
           player_stat_id: string | null
+          point_number: number
           point_type: string
           result: string
           scoring_team_id: string
@@ -461,6 +462,7 @@ export type Database = {
           match_id: string
           player_id?: string | null
           player_stat_id?: string | null
+          point_number: number
           point_type: string
           result: string
           scoring_team_id: string
@@ -478,6 +480,7 @@ export type Database = {
           match_id?: string
           player_id?: string | null
           player_stat_id?: string | null
+          point_number?: number
           point_type?: string
           result?: string
           scoring_team_id?: string

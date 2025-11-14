@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { User } from "@/lib/types";
 import { getUser } from "@/lib/api/users";
@@ -34,10 +34,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const sessionRef = useRef<Session | null>(null);
+  const userRef = useRef<User | null>(null);
 
   useEffect(() => {
     // Listen for auth changes
-    const previousSession = session;
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -47,7 +48,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle specific auth events
         switch (event) {
           case "SIGNED_IN":
-            console.debug("User signed in", [user, previousSession, session]);
+            console.debug("User signed in", [
+              userRef.current,
+              sessionRef.current,
+              session,
+            ]);
             break;
 
           case "SIGNED_OUT":
@@ -74,15 +79,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           default:
             console.debug("Auth event:", event);
         }
+        if (session?.access_token === sessionRef.current?.access_token) {
+          // Avoid refresh on tab refocus
+          return;
+        }
+        sessionRef.current = session;
         setSession(session);
         setError(null);
 
         if (session) {
+          if(session.user?.id === userRef.current?.id) {
+            // Avoid refresh if new access token for same user
+            return;
+          }
           try {
             setLoadingStage("profile");
             const user = await getUser(session, (stage) => {
               setLoadingStage(stage);
             });
+            userRef.current = user;
             setUser(user);
             setError(null);
             setLoadingStage("complete");

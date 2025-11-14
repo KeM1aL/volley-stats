@@ -68,10 +68,7 @@ export class SubstitutionCommand implements Command {
   async execute(): Promise<MatchState> {
     await this.db.substitutions.insert(this.substitution);
     await this.db.sets.findOne(this.previousState.set!!.id).update({
-      $set: {
-        ...this.set,
-        updated_at: new Date().toISOString(),
-      },
+      $set: this.set,
     });
     return this.newState;
   }
@@ -84,7 +81,7 @@ export class SubstitutionCommand implements Command {
     });
     console.table(oldSet);
     await this.db.sets.findOne(this.previousState.set!!.id).update({
-      $set: { ...oldSet, updated_at: new Date().toISOString(), },
+      $set: oldSet,
     });
     return this.previousState;
   }
@@ -108,7 +105,7 @@ export class PlayerStatCommand implements Command {
       ...previousState,
       stats: [...previousState.stats, stat],
     };
-    
+
     if (
       stat.result === StatResult.ERROR ||
       stat.result === StatResult.SUCCESS
@@ -121,16 +118,20 @@ export class PlayerStatCommand implements Command {
         const newHomeScore = scoringTeamId === previousState.match!.home_team_id ? previousState.score.home + 1 : previousState.score.home;
         const newAwayScore = scoringTeamId === previousState.match!.away_team_id ? previousState.score.away + 1 : previousState.score.away;
 
+        // Calculate point_number: count of existing points in this set + 1
+        const pointNumber = newHomeScore + newAwayScore;
+
+        const timestamp = new Date().toISOString();
         const point: ScorePoint = {
           id: crypto.randomUUID(),
           match_id: stat.match_id,
           set_id: stat.set_id,
+          point_number: pointNumber,
           scoring_team_id: scoringTeamId,
           point_type: pointType,
           player_id: stat.player_id,
-          timestamp: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          timestamp: timestamp,
+          created_at: timestamp,
           home_score: newHomeScore,
           away_score: newAwayScore,
           current_rotation: previousState.set!.current_lineup,
@@ -280,12 +281,12 @@ export class ScorePointCommand implements Command {
     await this.db.score_points.insert(this.point);
 
     await this.db.sets.findOne(this.previousState.set!!.id).update({
-      $set: { ...this.set, updated_at: new Date().toISOString(), },
+      $set: this.set,
     });
 
     if (this.match) {
       await this.db.matches.findOne(this.previousState.match!!.id).update({
-        $set: { ...this.match, updated_at: new Date().toISOString(), },
+        $set: this.match,
       });
     }
     return this.newState;
@@ -298,7 +299,7 @@ export class ScorePointCommand implements Command {
       oldSet[key as keyof Set] = this.previousState.set![key as keyof Set] as never;
     });
     await this.db.sets.findOne(this.previousState.set!!.id).update({
-      $set: { ...oldSet, updated_at: new Date().toISOString(), },
+      $set: oldSet,
     });
 
     if (this.match) {
@@ -307,7 +308,7 @@ export class ScorePointCommand implements Command {
         oldMatch[key as keyof Match] = this.previousState.match![key as keyof Match] as never;
       });
       await this.db.matches.findOne(this.previousState.match!!.id).update({
-        $set: { ...oldMatch, updated_at: new Date().toISOString(), },
+        $set: oldMatch,
       });
     }
     return this.previousState;

@@ -20,7 +20,8 @@ import {
   matchFormatSchema,
   seasonSchema,
   clubSchema,
-  clubMemberSchema
+  clubMemberSchema,
+  CollectionName
 } from './schema';
 import type {
   Team,
@@ -34,7 +35,8 @@ import type {
   MatchFormat,
   Season,
   Club,
-  ClubMember
+  ClubMember,
+  Event
 } from '@/lib/types';
 const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 // Add plugins
@@ -159,6 +161,18 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
         player_stats: {
           schema: playerStatSchema,
         },
+      });
+
+      Object.values(db.collections as DatabaseCollections).forEach((col) => {
+        col.preInsert((data) => {
+          const now = new Date().toISOString();
+          if (!data.created_at) data.created_at = now;
+          data.updated_at = now;
+        }, false);
+
+        col.preSave((data) => {
+          data.updated_at = new Date().toISOString();
+        }, false);
       });
     } catch (error) {
       console.error('Error creating RxDB collections:', error);

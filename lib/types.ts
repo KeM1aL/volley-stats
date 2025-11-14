@@ -1,5 +1,10 @@
 import { PlayerPosition, PlayerRole } from "./enums";
 
+export type Audited = {
+  created_at?: string;
+  updated_at?: string;
+}
+
 export type Championship = {
   id: string; // UUID
   name: string;
@@ -10,19 +15,15 @@ export type Championship = {
   season_id: string | null; // UUID reference to season
   ext_code: string | null;
   ext_source: string | null;
-  created_at: string | null;
-  updated_at: string | null;
   match_formats?: MatchFormat; // Joined relation
-};
+} & Partial<Audited>;
 
 export type Season = {
   id: string; // UUID
   name: string;
   start_date: string;
   end_date: string;
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type MatchFormat = {
   id: string; // UUID
@@ -33,9 +34,7 @@ export type MatchFormat = {
   point_by_set: number;
   point_final_set: number;
   decisive_point: boolean;
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type User = {
   id: string;
@@ -64,7 +63,7 @@ export type Team = {
   ext_code: string | null;
   ext_source: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   user_id: string | null;
 };
 
@@ -75,9 +74,7 @@ export type Club = {
   website?: string | null;
   contact_email?: string | null;
   contact_phone?: string | null;
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type ClubMember = {
   id: string;
@@ -85,9 +82,7 @@ export type ClubMember = {
   clubs?: Club | null;
   user_id: string;
   role: 'owner' | 'admin' | 'member';
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type TeamMember = {
   id: string;
@@ -100,9 +95,7 @@ export type TeamMember = {
   role: string;
   avatar_url?: string | null;
   comments?: string | null;
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type Match = {
   away_team?: Team | null;
@@ -126,9 +119,7 @@ export type Match = {
   home_total: number | null;
   away_total: number | null;
   detailed_scores: string[] | null;
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type Set = {
   id: string;
@@ -142,9 +133,7 @@ export type Set = {
   first_lineup: { [key in PlayerPosition]?: string };
   current_lineup: { [key in PlayerPosition]?: string };
   player_roles: { [key: string]: PlayerRole };
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type Substitution = {
   id: string;
@@ -156,9 +145,7 @@ export type Substitution = {
   position: string;
   comments: string;
   timestamp: string;
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type Event = {
   id: string;
@@ -169,14 +156,13 @@ export type Event = {
   away_score: number;
   type: string;
   comment: string;
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type ScorePoint = {
   id: string;
   match_id: string;
   set_id: string;
+  point_number: number;
   player_stat_id: string | null;
   scoring_team_id: string;
   point_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense' | 'unknown';
@@ -187,9 +173,7 @@ export type ScorePoint = {
   home_score: number;
   away_score: number;
   current_rotation: { [key in PlayerPosition]?: string };
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
 
 export type PlayerStat = {
   id: string;
@@ -200,6 +184,38 @@ export type PlayerStat = {
   position: 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6' | null;
   stat_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense';
   result: 'success' | 'error' | 'good' | 'bad';
-  created_at: string;
-  updated_at: string;
-};
+} & Partial<Audited>;
+
+// Sync-related types for offline queue management
+
+export type SyncQueueItem = {
+  id: string;
+  collection_name: string;
+  document_id: string;
+  operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  data: any; // JSON object containing the document data
+  status: 'pending' | 'processing' | 'failed';
+  retry_count: number;
+  last_error: string | null;
+  processed_at: string | null;
+} & Partial<Audited>;
+
+export type FailedSyncItem = {
+  id: string;
+  collection_name: string;
+  document_id: string;
+  operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  data: any;
+  retry_count: number;
+  last_error: string | null;
+  failed_at: string;
+} & Partial<Audited>;
+
+export type SyncMetadata = {
+  id: string;
+  collection_name: string;
+  last_pull_at: string | null;
+  last_push_at: string | null;
+  last_sync_success: boolean;
+  last_sync_error: string | null;
+} & Partial<Audited>;

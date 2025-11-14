@@ -16,7 +16,7 @@ export type CollectionName =
   | "club_members";
 
 const timestampFields = {
-  created_at: { type: "string", "format": "date-time", maxLength: 32 },
+  created_at: { type: "string", "format": "date-time", maxLength: 32, final: true },
   updated_at: { type: "string", "format": "date-time", maxLength: 32 },
 };
 
@@ -108,10 +108,13 @@ export const matchFormatSchema = toTypedRxJsonSchema({
     "rotation",
     "point_by_set",
     "point_final_set",
-    "decisive_point", "created_at", "updated_at"
+    "decisive_point", 
+    "created_at", 
+    "updated_at"
   ],
   indexes: [
-    "created_at", "updated_at"
+    "created_at", 
+    "updated_at"
   ],
 });
 
@@ -335,6 +338,7 @@ export const scorePointSchema = toTypedRxJsonSchema({
     id: { type: "string", maxLength: 36 },
     match_id: { type: "string", maxLength: 36 },
     set_id: { type: "string", maxLength: 36 },
+    point_number: { type: "number", minimum: 1, maximum: 1000 },
     player_stat_id: {
       type: ["string", "null"],
       maxLength: 36,
@@ -360,6 +364,7 @@ export const scorePointSchema = toTypedRxJsonSchema({
     "id",
     "match_id",
     "set_id",
+    "point_number",
     "scoring_team_id",
     "action_team_id",
     "result",
