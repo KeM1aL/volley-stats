@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -39,6 +38,7 @@ import {
   CommentDetails,
 } from "@/lib/types/events";
 import { EventForm } from "../events/event-form";
+import { QuickEventButtons } from "../events/quick-event-buttons";
 import {
   Plus,
   Users,
@@ -60,6 +60,9 @@ interface EventsPanelProps {
   homeTeamPlayers: TeamMember[];
   awayTeamPlayers: TeamMember[];
   managedTeamId: string;
+  currentHomeScore?: number;
+  currentAwayScore?: number;
+  currentPointNumber?: number;
 }
 
 const EVENT_ICONS = {
@@ -79,6 +82,9 @@ export function EventsPanel({
   homeTeamPlayers,
   awayTeamPlayers,
   managedTeamId,
+  currentHomeScore,
+  currentAwayScore,
+  currentPointNumber,
 }: EventsPanelProps) {
   const eventApi = useEventApi();
   const [events, setEvents] = useState<Event[]>([]);
@@ -114,7 +120,11 @@ export function EventsPanel({
       const relevantEvents = setId
         ? matchEvents.filter((e) => e.set_id === setId)
         : matchEvents;
-      setEvents(relevantEvents);
+      // Sort events by timestamp descending (newest first)
+      const sortedEvents = relevantEvents.sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      setEvents(sortedEvents);
     } catch (error) {
       console.error("Failed to load events:", error);
     } finally {
@@ -239,8 +249,8 @@ export function EventsPanel({
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3 space-y-2">
+    <Card className="h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-3 space-y-3 flex-shrink-0 overflow-visible">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">Events</CardTitle>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -261,6 +271,8 @@ export function EventsPanel({
                 team={managedTeamSide}
                 homeTeamPlayers={homeTeamPlayers}
                 awayTeamPlayers={awayTeamPlayers}
+                currentHomeScore={currentHomeScore}
+                currentAwayScore={currentAwayScore}
                 onSuccess={() => {
                   setIsCreateDialogOpen(false);
                   loadEvents();
@@ -270,6 +282,20 @@ export function EventsPanel({
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Quick Event Buttons */}
+        <QuickEventButtons
+          matchId={matchId}
+          setId={setId}
+          teamId={managedTeam.id}
+          team={managedTeamSide}
+          homeTeamPlayers={homeTeamPlayers}
+          awayTeamPlayers={awayTeamPlayers}
+          currentHomeScore={currentHomeScore}
+          currentAwayScore={currentAwayScore}
+          currentPointNumber={currentPointNumber}
+          onEventCreated={loadEvents}
+        />
 
         {/* Filter */}
         <div className="flex items-center gap-2">
@@ -293,9 +319,9 @@ export function EventsPanel({
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <ScrollArea className="h-full px-4">
-          <div className="space-y-2 pb-4">
+      <CardContent className="flex-1 min-h-0 p-0">
+        <div className="h-full overflow-y-auto px-4">
+          <div className="space-y-2 pb-4 pt-2">
             {isLoading ? (
               <p className="text-sm text-muted-foreground text-center py-8">Loading events...</p>
             ) : filteredEvents.length === 0 ? (
@@ -326,11 +352,20 @@ export function EventsPanel({
                           </div>
                         </div>
                       </div>
-                      {event.team && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {event.team === "home" ? homeTeam.name : awayTeam.name}
-                        </Badge>
-                      )}
+                      <div className="flex flex-col gap-1 items-end shrink-0">
+                        {event.team && (
+                          <Badge variant="outline" className="text-xs">
+                            {event.team === "home" ? homeTeam.name : awayTeam.name}
+                          </Badge>
+                        )}
+                        {(event.home_score !== undefined && event.home_score !== null &&
+                          event.away_score !== undefined && event.away_score !== null) && (
+                          <Badge variant="secondary" className="text-xs font-mono">
+                            {event.home_score}-{event.away_score}
+                            {event.point_number && ` #${event.point_number}`}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
                     {/* Event Details */}
@@ -340,7 +375,7 @@ export function EventsPanel({
               })
             )}
           </div>
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );

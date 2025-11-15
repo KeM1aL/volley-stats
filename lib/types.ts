@@ -158,6 +158,9 @@ export type Event = {
   player_id: string | null;
   comment?: string | null;
   details: any;
+  home_score?: number | null;
+  away_score?: number | null;
+  point_number?: number | null;
 } & Partial<Audited>;
 
 export type ScorePoint = {

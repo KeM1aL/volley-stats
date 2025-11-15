@@ -407,6 +407,9 @@ export default function LiveMatchPage() {
             matchState.match.away_team_id === managedTeam?.id ? teamPlayers : []
           }
           managedTeamId={managedTeam!.id}
+          currentHomeScore={matchState.set?.home_score ?? 0}
+          currentAwayScore={matchState.set?.away_score ?? 0}
+          currentPointNumber={matchState.points.length > 0 ? matchState.points.length : undefined}
         />
       );
     }
@@ -507,9 +510,9 @@ export default function LiveMatchPage() {
             />
           </nav>
 
-          {/* Column 2: Panel (conditional) - Can scroll */}
+          {/* Column 2: Panel (conditional) - Internal scrolling */}
           {showDesktopPanel && (
-            <aside className="h-full overflow-y-auto border-l">
+            <aside className="h-full overflow-hidden border-l">
               {renderPanelContent()}
             </aside>
           )}
@@ -538,8 +541,10 @@ export default function LiveMatchPage() {
 
           {/* Mobile Panel: Drawer */}
           <Sheet open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
-            <SheetContent side="right" className="w-[85%] overflow-y-auto">
-              {renderPanelContent()}
+            <SheetContent side="right" className="w-[85%] overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-hidden">
+                {renderPanelContent()}
+              </div>
             </SheetContent>
           </Sheet>
         </div>

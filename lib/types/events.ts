@@ -177,6 +177,9 @@ export type CreateEventPayload= {
   team?: EventTeam;
   player_id?: string | null;
   details: EventDetails;
+  home_score?: number | null;
+  away_score?: number | null;
+  point_number?: number | null;
 }
 
 /**

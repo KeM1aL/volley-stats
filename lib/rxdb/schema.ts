@@ -406,6 +406,9 @@ export const eventSchema = toTypedRxJsonSchema({
     player_id: { type: ["string", "null"], maxLength: 36 }, // Player involved in event
     comment: { type: ["string", "null"] }, // General comment at column level
     details: { type: "object" }, // Flexible JSON for event-specific data
+    home_score: { type: ["number", "null"] }, // Home team score when event occurred
+    away_score: { type: ["number", "null"] }, // Away team score when event occurred
+    point_number: { type: ["number", "null"] }, // Point number in set when event occurred
     ...timestampFields,
   },
   required: [

@@ -121,6 +121,10 @@ interface EventFormProps {
   team: "home" | "away" | null;
   homeTeamPlayers?: TeamMember[];
   awayTeamPlayers?: TeamMember[];
+  preSelectedType?: EventType;
+  currentHomeScore?: number;
+  currentAwayScore?: number;
+  currentPointNumber?: number;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -132,18 +136,59 @@ export function EventForm({
   team,
   homeTeamPlayers = [],
   awayTeamPlayers = [],
+  preSelectedType,
+  currentHomeScore,
+  currentAwayScore,
+  currentPointNumber,
   onSuccess,
   onCancel,
 }: EventFormProps) {
   const eventApi = useEventApi();
   const { toast } = useToast();
-  const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null);
+  const [selectedEventType, setSelectedEventType] = useState<EventType | null>(
+    preSelectedType || null
+  );
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
-      event_type: "comment",
-    },
+      event_type: preSelectedType || "",
+      // Timeout defaults
+      duration: 30,
+      timeout_type: "regular",
+      requested_by: "",
+      // Substitution defaults
+      player_in_id: "",
+      player_out_id: "",
+      position: "",
+      // Injury defaults
+      player_id: "",
+      severity: "minor",
+      body_part: "",
+      description: "",
+      medical_intervention: false,
+      player_continued: false,
+      substitution_made: false,
+      // Sanction defaults
+      sanction_type: "warning",
+      target: "player",
+      target_id: "",
+      target_name: "",
+      reason: "",
+      point_penalty: false,
+      // Technical defaults
+      issue_type: "equipment",
+      affected_team: undefined,
+      resolution_time: undefined,
+      resolved: false,
+      // Comment defaults
+      text: "",
+      author: "",
+      importance: "medium",
+      category: "",
+      // General
+      comments: "",
+    } as any, // Using 'as any' because different event types have different required fields
   });
 
   const onSubmit = async (values: EventFormValues) => {
@@ -155,6 +200,9 @@ export function EventForm({
         team,
         event_type: values.event_type,
         details: { ...values },
+        home_score: currentHomeScore,
+        away_score: currentAwayScore,
+        point_number: currentPointNumber,
       };
 
       // Extract player_id for events that have it
@@ -190,37 +238,39 @@ export function EventForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Event Type Selector */}
-        <FormField
-          control={form.control}
-          name="event_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Event Type</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  setSelectedEventType(value as EventType);
-                }}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select event type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {Object.entries(EVENT_TYPE_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Event Type Selector - Hidden when preSelectedType is provided */}
+        {!preSelectedType && (
+          <FormField
+            control={form.control}
+            name="event_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Event Type</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setSelectedEventType(value as EventType);
+                  }}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select event type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {Object.entries(EVENT_TYPE_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* Substitution Fields */}
         {selectedEventType === "substitution" && (
