@@ -13,7 +13,6 @@ import {
   matchSchema,
   setSchema,
   playerStatSchema,
-  substitutionSchema,
   scorePointSchema,
   championshipSchema,
   eventSchema,
@@ -29,7 +28,6 @@ import type {
   Match,
   Set,
   PlayerStat,
-  Substitution,
   ScorePoint,
   Championship,
   MatchFormat,
@@ -57,7 +55,6 @@ type DatabaseCollections = {
   team_members: RxCollection<TeamMember>;
   matches: RxCollection<Match>;
   sets: RxCollection<Set>;
-  substitutions: RxCollection<Substitution>;
   score_points: RxCollection<ScorePoint>;
   player_stats: RxCollection<PlayerStat>;
 };
@@ -148,9 +145,6 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
         },
         sets: {
           schema: setSchema,
-        },
-        substitutions: {
-          schema: substitutionSchema,
         },
         events: {
           schema: eventSchema,

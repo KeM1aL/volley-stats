@@ -8,6 +8,11 @@ import { ScoreBoard } from "@/components/matches/live/score-board";
 import { StatTracker } from "@/components/matches/live/stat-tracker";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { LiveMatchSidebar } from "@/components/matches/live/live-match-sidebar";
+import { PlayerPerformancePanel } from "@/components/matches/live/panels/player-performance-panel";
+import { EventsPanel } from "@/components/matches/live/panels/events-panel";
+import { CourtDiagramPanel } from "@/components/matches/live/panels/court-diagram-panel";
 import type {
   Match,
   TeamMember,
@@ -20,7 +25,6 @@ import type {
 } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
-import { PointType, Score, StatResult } from "@/lib/enums";
 import { useCommandHistory } from "@/hooks/use-command-history";
 import { MatchState } from "@/lib/commands/command";
 import {
@@ -29,10 +33,12 @@ import {
   SetSetupCommand,
   SubstitutionCommand,
 } from "@/lib/commands/match-commands";
-import { PlayerPerformance } from "@/components/matches/stats/player-performance";
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { match } from "assert";
 import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
+import { cn } from "@/lib/utils";
+import { MatchScoreDetails } from "@/components/matches/match-score-details";
+
+type PanelType = "stats" | "events" | "court" | null;
 
 const initialMatchState: MatchState = {
   match: null,
@@ -51,13 +57,21 @@ export default function LiveMatchPage() {
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
   const [teamPlayers, setTeamPlayers] = useState<TeamMember[]>([]);
-  const [teamPlayerById, setTeamPlayerById] = useState<Map<string, TeamMember>>(new Map());
+  const [teamPlayerById, setTeamPlayerById] = useState<Map<string, TeamMember>>(
+    new Map()
+  );
   const [homeTeam, setHomeTeam] = useState<Team>();
   const [awayTeam, setAwayTeam] = useState<Team>();
   const [managedTeam, setManagedTeam] = useState<Team>();
   const [opponentTeam, setOpponentTeam] = useState<Team>();
   const [isLoading, setIsLoading] = useState(true);
   const { history, canUndo, canRedo } = useCommandHistory();
+
+  // Sidebar and panel state
+  const [showDesktopPanel, setShowDesktopPanel] = useState(false); // Desktop grid panel
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false); // Mobile Sheet drawer
+  const [activePanel, setActivePanel] = useState<PanelType>(null);
+  const [navExpanded, setNavExpanded] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -95,7 +109,9 @@ export default function LiveMatchPage() {
       }
 
       const match = matchDoc.toMutableJSON() as Match;
-      const formatDoc = await db.match_formats.findOne(match.match_format_id).exec();
+      const formatDoc = await db.match_formats
+        .findOne(match.match_format_id)
+        .exec();
       if (!formatDoc) {
         throw new Error("Match format not found");
       }
@@ -130,7 +146,9 @@ export default function LiveMatchPage() {
         teamId === match.home_team_id
           ? match.home_available_players
           : match.away_available_players;
-      const availablePlayerDocs = await db.team_members.findByIds(playerIds as string[]).exec();
+      const availablePlayerDocs = await db.team_members
+        .findByIds(playerIds as string[])
+        .exec();
       if (availablePlayerDocs) {
         setTeamPlayers(
           Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())
@@ -343,83 +361,188 @@ export default function LiveMatchPage() {
   if (matchState.match.status === "completed") {
     return (
       <div className="space-y-1">
-        <LiveMatchHeader
-          match={matchState.match}
+        <div className="w-full ml-auto">
+          <MatchScoreDetails
+            match={matchState.match}
+            sets={matchState.sets}
+            homeTeam={homeTeam}
+            awayTeam={awayTeam}
+          />
+        </div>
+
+        <MVPAnalysis
           sets={matchState.sets}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
+          stats={matchState.stats}
+          players={teamPlayers}
         />
-        <MVPAnalysis sets={matchState.sets} stats={matchState.stats} players={teamPlayers} />
       </div>
     );
   }
-  return (
-    <div className="space-y-1">
-      <LiveMatchHeader
-        match={matchState.match}
-        sets={matchState.sets}
-        homeTeam={homeTeam}
-        awayTeam={awayTeam}
-      />
-      <div className="grid md:grid-cols-3 gap-2">
-        {matchState.set && matchState.set.status !== "completed" && (
-          <Card className="p-1">
-            <ScoreBoard
-              match={matchState.match}
-              set={matchState.set}
-              score={matchState.score}
-              managedTeam={managedTeam!}
-              points={matchState.points}
-              players={teamPlayers}
-              playerById={teamPlayerById}
-              onSubstitution={onSubstitutionRecorded}
-            />
-          </Card>
-        )}
-        {matchState.set && matchState.set.status === "completed" && (
-          <Card className="p-1 col-span-2">
-            <PlayerPerformance
-              match={matchState.match}
-              managedTeam={managedTeam!}
-              opponentTeam={opponentTeam!}
-              players={teamPlayers}
-              stats={matchState.stats}
-              sets={matchState.sets}
-            />
-          </Card>
-        )}
 
-        {!matchState.set || matchState.set.status === "completed" ? (
-          <Card className={`p-1 ${!matchState.set ? "col-start-2" : ""}`}>
-            <SetSetup
-              match={matchState.match}
-              sets={matchState.sets}
-              homeTeam={homeTeam}
-              awayTeam={awayTeam}
-              setNumber={matchState.set ? matchState.set.set_number + 1 : 1}
-              players={teamPlayers}
-              playerById={teamPlayerById}
-              onComplete={onSetSetupComplete}
+  // Helper to render the panel content
+  const renderPanelContent = () => {
+    if (!matchState.match) return null;
+
+    if (activePanel === "stats") {
+      return (
+        <PlayerPerformancePanel
+          managedTeam={managedTeam!}
+          stats={matchState.stats}
+          currentSet={matchState.set}
+          playerById={teamPlayerById}
+        />
+      );
+    }
+    if (activePanel === "events") {
+      return (
+        <EventsPanel
+          matchId={matchId}
+          setId={matchState.set?.id || null}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          homeTeamPlayers={
+            matchState.match.home_team_id === managedTeam?.id ? teamPlayers : []
+          }
+          awayTeamPlayers={
+            matchState.match.away_team_id === managedTeam?.id ? teamPlayers : []
+          }
+          managedTeamId={managedTeam!.id}
+        />
+      );
+    }
+    if (activePanel === "court" && matchState.match.match_formats) {
+      return (
+        <CourtDiagramPanel
+          players={teamPlayers}
+          currentSet={matchState.set}
+          matchFormat={matchState.match.match_formats}
+          team={managedTeam!}
+        />
+      );
+    }
+    return null;
+  };
+
+  // Helper to render main content
+  const renderMainContent = () => {
+    if (!matchState.match) return null;
+
+    if (!matchState.set || matchState.set.status === "completed") {
+      return (
+        <Card className="p-1 h-full">
+          <SetSetup
+            match={matchState.match}
+            sets={matchState.sets}
+            homeTeam={homeTeam}
+            awayTeam={awayTeam}
+            setNumber={matchState.set ? matchState.set.set_number + 1 : 1}
+            players={teamPlayers}
+            playerById={teamPlayerById}
+            onComplete={onSetSetupComplete}
+          />
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="p-1 h-full">
+        <StatTracker
+          onStat={onPlayerStatRecorded}
+          onPoint={onPointRecorded}
+          onUndo={handleUndo}
+          playerById={teamPlayerById}
+          opponentTeam={opponentTeam!}
+          managedTeam={managedTeam!}
+          match={matchState.match}
+          currentSet={matchState.set}
+          sets={matchState.sets}
+          stats={matchState.stats}
+          points={matchState.points}
+          score={matchState.score}
+        />
+      </Card>
+    );
+  };
+
+  // Calculate grid columns for desktop/tablet
+  const gridTemplateColumns = showDesktopPanel
+    ? [
+        navExpanded ? "200px" : "48px", // Nav
+        "1fr", // Panel (1/3)
+        "2fr", // Main content (2/3)
+      ].join(" ")
+    : [
+        navExpanded ? "200px" : "48px", // Nav
+        "1fr", // Main content (full width)
+      ].join(" ");
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Row 1: Header - Full Width */}
+      <header className="w-full shrink-0">
+        <MatchScoreDetails
+            match={matchState.match}
+            sets={matchState.sets}
+            homeTeam={homeTeam}
+            awayTeam={awayTeam}
+          />
+      </header>
+
+      {/* Row 2: Content - Responsive Layout */}
+      <div className="flex-1 overflow-hidden">
+        {/* Desktop/Tablet: Grid Layout */}
+        <div
+          className="hidden md:grid h-full gap-2 p-1 transition-all duration-300 ease-in-out"
+          style={{ gridTemplateColumns }}
+        >
+          {/* Column 1: Nav - No scroll */}
+          <nav className="h-full overflow-hidden">
+            <LiveMatchSidebar
+              activePanel={activePanel}
+              onPanelChange={setActivePanel}
+              showPanel={showDesktopPanel}
+              onTogglePanel={() => setShowDesktopPanel(!showDesktopPanel)}
+              navExpanded={navExpanded}
+              onToggleNav={() => setNavExpanded(!navExpanded)}
             />
-          </Card>
-        ) : (
-          <Card className="p-1 col-span-2">
-            <StatTracker
-              onStat={onPlayerStatRecorded}
-              onPoint={onPointRecorded}
-              onUndo={handleUndo}
-              playerById={teamPlayerById}
-              opponentTeam={opponentTeam!}
-              managedTeam={managedTeam!}
-              match={matchState.match}
-              currentSet={matchState.set}
-              sets={matchState.sets}
-              stats={matchState.stats}
-              points={matchState.points}
-              score={matchState.score}
+          </nav>
+
+          {/* Column 2: Panel (conditional) - Can scroll */}
+          {showDesktopPanel && (
+            <aside className="h-full overflow-y-auto border-l">
+              {renderPanelContent()}
+            </aside>
+          )}
+
+          {/* Column 3: Main Content - Can scroll */}
+          <main className="h-full overflow-y-auto">{renderMainContent()}</main>
+        </div>
+
+        {/* Mobile: Flex Layout + Drawer */}
+        <div className="md:hidden flex flex-col h-full">
+          {/* Mobile Nav: Horizontal Icons */}
+          <nav className="shrink-0 border-b">
+            <LiveMatchSidebar
+              activePanel={activePanel}
+              onPanelChange={setActivePanel}
+              showPanel={showMobileDrawer}
+              onTogglePanel={() => setShowMobileDrawer(!showMobileDrawer)}
+              isMobile={true}
             />
-          </Card>
-        )}
+          </nav>
+
+          {/* Mobile Main Content */}
+          <main className="flex-1 overflow-y-auto p-2">
+            {renderMainContent()}
+          </main>
+
+          {/* Mobile Panel: Drawer */}
+          <Sheet open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
+            <SheetContent side="right" className="w-[85%] overflow-y-auto">
+              {renderPanelContent()}
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </div>
   );

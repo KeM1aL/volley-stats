@@ -102,7 +102,6 @@ export default function SettingsPage() {
         ["sets", db.sets],
         ["player_stats", db.player_stats],
         ["score_points", db.score_points],
-        ["substitutions", db.substitutions],
         ["events", db.events],
         ["team_members", db.team_members],
       ]);
@@ -187,7 +186,7 @@ export default function SettingsPage() {
   const handleResetLocalStats = (loadingIndicator: boolean = true) => {
     if (loadingIndicator) setIsDeletingCache(true);
     try {
-      db!.substitutions?.remove();
+      db!.events?.remove();
       db!.score_points?.remove();
       db!.player_stats?.remove();
       if (loadingIndicator) {

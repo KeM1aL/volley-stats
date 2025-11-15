@@ -204,7 +204,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
             <Button
               onClick={onSetupComplete}
               className="w-full"
-              disabled={isLoading || availablePlayers.length < 6}
+              disabled={isLoading}
             >
               Start Match
             </Button>

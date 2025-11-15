@@ -23,8 +23,6 @@ import { SetBreakdown } from "@/components/matches/stats/set-breakdown";
 import { PlayerPerformance } from "@/components/matches/stats/player-performance";
 import { ScoreProgression } from "@/components/matches/stats/score-progression";
 import { TeamPerformance } from "@/components/matches/stats/team-performance";
-import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
-import { MatchScoreDetails } from "@/components/matches/match-score-details";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { supabase } from "@/lib/supabase/client";
 import { MatchOverview } from "@/components/matches/stats/match-overview";

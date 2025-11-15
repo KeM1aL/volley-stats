@@ -149,13 +149,15 @@ export type Substitution = {
 
 export type Event = {
   id: string;
-  team_id: string;
   match_id: string;
-  set_id: string;
-  home_score: number;
-  away_score: number;
-  type: string;
-  comment: string;
+  set_id: string | null;
+  team_id: string | null;
+  event_type: 'substitution' | 'timeout' | 'injury' | 'sanction' | 'technical' | 'comment';
+  timestamp: string;
+  team: 'home' | 'away' | null;
+  player_id: string | null;
+  comment?: string | null;
+  details: any;
 } & Partial<Audited>;
 
 export type ScorePoint = {

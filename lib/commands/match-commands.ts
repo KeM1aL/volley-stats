@@ -1,7 +1,8 @@
 import { Command, MatchState } from "./command";
-import { Match, Set, PlayerStat, Substitution, ScorePoint, MatchFormat } from "@/lib/types";
+import { Match, Set, PlayerStat, Substitution, ScorePoint, MatchFormat, Event } from "@/lib/types";
 import { VolleyballDatabase } from "../rxdb/database";
 import { PointType, StatResult } from "../enums";
+import { SubstitutionDetails } from "../types/events";
 
 export class SetSetupCommand implements Command {
   private previousState: MatchState;
@@ -39,7 +40,7 @@ export class SetSetupCommand implements Command {
 export class SubstitutionCommand implements Command {
   private previousState: MatchState;
   private newState: MatchState;
-  private substitution: Substitution;
+  private event: Event;
   private set: Partial<Set>;
   private db: VolleyballDatabase;
 
@@ -49,7 +50,6 @@ export class SubstitutionCommand implements Command {
     db: VolleyballDatabase
   ) {
     this.previousState = { ...previousState };
-    this.substitution = substitution;
     this.set = {
       current_lineup: {
         ...previousState.set!.current_lineup,
@@ -63,10 +63,38 @@ export class SubstitutionCommand implements Command {
       sets: [...previousState.sets!.slice(0, -1), newSet],
     };
     this.db = db;
+
+    // Create event record
+    const timestamp = new Date().toISOString();
+    const details: SubstitutionDetails = {
+      player_in_id: substitution.player_in_id,
+      player_out_id: substitution.player_out_id,
+      position: substitution.position,
+      comments: substitution.comments || "",
+    };
+
+    // Determine if home or away team
+    const team: "home" | "away" =
+      substitution.team_id === previousState.match!.home_team_id ? "home" : "away";
+
+    this.event = {
+      id: substitution.id, // Use the substitution ID as event ID for consistency
+      match_id: substitution.match_id,
+      set_id: substitution.set_id,
+      team_id: substitution.team_id,
+      event_type: "substitution",
+      timestamp,
+      team,
+      player_id: substitution.player_in_id, // Primary player is the one entering
+      details,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
   }
 
   async execute(): Promise<MatchState> {
-    await this.db.substitutions.insert(this.substitution);
+    // Write to events table only
+    await this.db.events.insert(this.event);
     await this.db.sets.findOne(this.previousState.set!!.id).update({
       $set: this.set,
     });
@@ -74,7 +102,8 @@ export class SubstitutionCommand implements Command {
   }
 
   async undo(): Promise<MatchState> {
-    await this.db.substitutions.findOne(this.substitution.id).remove();
+    // Remove event record
+    await this.db.events.findOne(this.event.id).remove();
     const oldSet: Partial<Set> = {};
     Object.keys(this.set).forEach((key) => {
       oldSet[key as keyof Set] = this.previousState.set![key as keyof Set] as never;

@@ -8,7 +8,6 @@ export type CollectionName =
   | "team_members"
   | "matches"
   | "sets"
-  | "substitutions"
   | "score_points"
   | "player_stats"
   | "events"
@@ -16,7 +15,7 @@ export type CollectionName =
   | "club_members";
 
 const timestampFields = {
-  created_at: { type: "string", "format": "date-time", maxLength: 32, final: true },
+  created_at: { type: "string", "format": "date-time", maxLength: 32/*, final: true */},
   updated_at: { type: "string", "format": "date-time", maxLength: 32 },
 };
 
@@ -298,37 +297,6 @@ export const setSchema = toTypedRxJsonSchema({
   indexes: ["match_id", "created_at", "updated_at"],
 });
 
-// Substitution Schema
-export const substitutionSchema = toTypedRxJsonSchema({
-  version: 0,
-  primaryKey: "id",
-  type: "object",
-  properties: {
-    id: { type: "string", maxLength: 36 },
-    match_id: { type: "string", maxLength: 36 },
-    team_id: { type: "string", maxLength: 36 },
-    set_id: { type: "string", maxLength: 36 },
-    player_out_id: { type: "string", maxLength: 36 },
-    player_in_id: { type: "string", maxLength: 36 },
-    position: { type: "string", enum: ["p1", "p2", "p3", "p4", "p5", "p6"] },
-    comments: { type: "string" },
-    timestamp: { type: "string" },
-    ...timestampFields,
-  },
-  required: [
-    "id",
-    "match_id",
-    "set_id",
-    "player_out_id",
-    "player_in_id",
-    "position",
-    "timestamp",
-    "created_at",
-    "updated_at",
-  ],
-  indexes: ["match_id", "set_id", "created_at", "updated_at"],
-});
-
 // ScorePoint Schema
 export const scorePointSchema = toTypedRxJsonSchema({
   version: 0,
@@ -414,35 +382,44 @@ export const playerStatSchema = toTypedRxJsonSchema({
   indexes: ["match_id", "set_id", "player_id", "created_at", "updated_at"],
 });
 
-// Event Schema
+// Event Schema - Enhanced for comprehensive event tracking
 export const eventSchema = toTypedRxJsonSchema({
-  version: 0,
+  version: 0, // Incremented: Enhanced schema for unified event system
   primaryKey: "id",
   type: "object",
   properties: {
     id: { type: "string", maxLength: 36 },
-    team_id: { type: "string", maxLength: 36 },
     match_id: { type: "string", maxLength: 36 },
-    set_id: { type: "string", maxLength: 36 },
-    home_score: { type: "number" },
-    away_score: { type: "number" },
-    type: { type: "string" },
-    comment: { type: "string" },
+    set_id: { type: ["string", "null"], maxLength: 36 }, // Nullable for match-level events
+    team_id: { type: ["string", "null"], maxLength: 36 }, // Nullable for non-team events
+    event_type: {
+      type: "string",
+      enum: ["substitution", "timeout", "injury", "sanction", "technical", "comment"],
+      maxLength: 20,
+    },
+    timestamp: { type: "string", format: "date-time", maxLength: 32 },
+    team: {
+      type: ["string", "null"],
+      enum: ["home", "away", null],
+      maxLength: 10,
+    },
+    player_id: { type: ["string", "null"], maxLength: 36 }, // Player involved in event
+    comment: { type: ["string", "null"] }, // General comment at column level
+    details: { type: "object" }, // Flexible JSON for event-specific data
     ...timestampFields,
   },
   required: [
     "id",
-    "team_id",
     "match_id",
-    "set_id",
-    "type",
+    "event_type",
+    "timestamp",
     "created_at",
     "updated_at"
   ],
   indexes: [
-    "team_id",
+    "event_type",
     "match_id",
-    "set_id",
+    ["match_id", "timestamp"], // Composite index for efficient timeline queries
     "created_at",
     "updated_at",
   ],

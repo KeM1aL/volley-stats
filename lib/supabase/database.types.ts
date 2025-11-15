@@ -141,42 +141,76 @@ export type Database = {
       }
       events: {
         Row: {
-          away_score: number
           comment: string | null
           created_at: string
-          home_score: number
+          details: Json | null
+          event_type: string
           id: string
           match_id: string
-          set_id: string
+          player_id: string | null
+          set_id: string | null
+          team: string | null
           team_id: string | null
-          type: string
+          timestamp: string
           updated_at: string | null
         }
         Insert: {
-          away_score?: number
           comment?: string | null
           created_at?: string
-          home_score?: number
+          details?: Json | null
+          event_type?: string
           id?: string
           match_id: string
-          set_id: string
+          player_id?: string | null
+          set_id?: string | null
+          team?: string | null
           team_id?: string | null
-          type: string
+          timestamp?: string
           updated_at?: string | null
         }
         Update: {
-          away_score?: number
           comment?: string | null
           created_at?: string
-          home_score?: number
+          details?: Json | null
+          event_type?: string
           id?: string
           match_id?: string
-          set_id?: string
+          player_id?: string | null
+          set_id?: string | null
+          team?: string | null
           team_id?: string | null
-          type?: string
+          timestamp?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "events_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_match"
             columns: ["match_id"]
@@ -617,84 +651,6 @@ export type Database = {
           {
             foreignKeyName: "sets_server_team_id_fkey"
             columns: ["server_team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      substitutions: {
-        Row: {
-          comments: string | null
-          created_at: string
-          id: string
-          match_id: string
-          player_in_id: string
-          player_out_id: string
-          position: string
-          set_id: string
-          team_id: string
-          timestamp: string
-          updated_at: string
-        }
-        Insert: {
-          comments?: string | null
-          created_at?: string
-          id?: string
-          match_id: string
-          player_in_id: string
-          player_out_id: string
-          position: string
-          set_id: string
-          team_id: string
-          timestamp?: string
-          updated_at?: string
-        }
-        Update: {
-          comments?: string | null
-          created_at?: string
-          id?: string
-          match_id?: string
-          player_in_id?: string
-          player_out_id?: string
-          position?: string
-          set_id?: string
-          team_id?: string
-          timestamp?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "substitutions_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "matches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "substitutions_player_in_id_fkey"
-            columns: ["player_in_id"]
-            isOneToOne: false
-            referencedRelation: "team_members"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "substitutions_player_out_id_fkey"
-            columns: ["player_out_id"]
-            isOneToOne: false
-            referencedRelation: "team_members"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "substitutions_set_id_fkey"
-            columns: ["set_id"]
-            isOneToOne: false
-            referencedRelation: "sets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "substitutions_team_id_fkey"
-            columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]

@@ -124,7 +124,7 @@ export function CourtDiagram({
   }
 
   return (
-    <div className={cn("relative aspect-[3/2] bg-muted rounded-lg", className)}>
+    <div className={cn("relative aspect-[3/2] bg-muted rounded-lg max-h-[600px]", className)}>
       {/* Court outline */}
       <div className="absolute inset-4 border-2 border-primary">
         {/* 3-meter line */}
