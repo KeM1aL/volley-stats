@@ -13,6 +13,7 @@ import { LiveMatchSidebar } from "@/components/matches/live/live-match-sidebar";
 import { PlayerPerformancePanel } from "@/components/matches/live/panels/player-performance-panel";
 import { EventsPanel } from "@/components/matches/live/panels/events-panel";
 import { CourtDiagramPanel } from "@/components/matches/live/panels/court-diagram-panel";
+import { ScorePointsPanel } from "@/components/matches/live/panels/score-points-panel";
 import type {
   Match,
   TeamMember,
@@ -38,7 +39,7 @@ import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
 import { cn } from "@/lib/utils";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
 
-type PanelType = "stats" | "events" | "court" | null;
+type PanelType = "stats" | "events" | "court" | "points" | null;
 
 const initialMatchState: MatchState = {
   match: null,
@@ -400,16 +401,24 @@ export default function LiveMatchPage() {
           setId={matchState.set?.id || null}
           homeTeam={homeTeam}
           awayTeam={awayTeam}
-          homeTeamPlayers={
-            matchState.match.home_team_id === managedTeam?.id ? teamPlayers : []
-          }
-          awayTeamPlayers={
-            matchState.match.away_team_id === managedTeam?.id ? teamPlayers : []
-          }
+          players={teamPlayers}
+          playerById={teamPlayerById}
           managedTeamId={managedTeam!.id}
           currentHomeScore={matchState.set?.home_score ?? 0}
           currentAwayScore={matchState.set?.away_score ?? 0}
           currentPointNumber={matchState.points.length > 0 ? matchState.points.length : undefined}
+        />
+      );
+    }
+    if (activePanel === "points") {
+      return (
+        <ScorePointsPanel
+          scorePoints={matchState.points}
+          playerStats={matchState.stats}
+          playerById={teamPlayerById}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          managedTeamId={managedTeam!.id}
         />
       );
     }

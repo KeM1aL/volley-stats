@@ -119,8 +119,7 @@ interface EventFormProps {
   setId: string | null;
   teamId: string | null;
   team: "home" | "away" | null;
-  homeTeamPlayers?: TeamMember[];
-  awayTeamPlayers?: TeamMember[];
+  players?: TeamMember[];
   preSelectedType?: EventType;
   currentHomeScore?: number;
   currentAwayScore?: number;
@@ -134,8 +133,7 @@ export function EventForm({
   setId,
   teamId,
   team,
-  homeTeamPlayers = [],
-  awayTeamPlayers = [],
+  players = [],
   preSelectedType,
   currentHomeScore,
   currentAwayScore,
@@ -233,7 +231,7 @@ export function EventForm({
     }
   };
 
-  const availablePlayers = team === "home" ? homeTeamPlayers : awayTeamPlayers;
+  const availablePlayers = players;
 
   return (
     <Form {...form}>

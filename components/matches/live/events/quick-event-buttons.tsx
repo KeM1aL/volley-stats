@@ -19,8 +19,7 @@ interface QuickEventButtonsProps {
   setId: string | null;
   teamId: string | null;
   team: "home" | "away" | null;
-  homeTeamPlayers?: TeamMember[];
-  awayTeamPlayers?: TeamMember[];
+  players?: TeamMember[];
   currentHomeScore?: number;
   currentAwayScore?: number;
   currentPointNumber?: number;
@@ -32,8 +31,7 @@ export function QuickEventButtons({
   setId,
   teamId,
   team,
-  homeTeamPlayers = [],
-  awayTeamPlayers = [],
+  players = [],
   currentHomeScore,
   currentAwayScore,
   currentPointNumber,
@@ -138,8 +136,7 @@ export function QuickEventButtons({
               setId={setId}
               teamId={teamId}
               team={team}
-              homeTeamPlayers={homeTeamPlayers}
-              awayTeamPlayers={awayTeamPlayers}
+              players={players}
               preSelectedType={selectedEventType}
               currentHomeScore={currentHomeScore}
               currentAwayScore={currentAwayScore}

@@ -8,9 +8,10 @@ import {
   ChartBar,
   CalendarClock,
   Grid3x3,
+  Target,
 } from "lucide-react";
 
-type PanelType = "stats" | "events" | "court" | null;
+type PanelType = "stats" | "events" | "court" | "points" | null;
 
 interface LiveMatchSidebarProps {
   activePanel: PanelType;
@@ -63,6 +64,22 @@ export function LiveMatchSidebar({
         }
       },
       isActive: activePanel === "events" && showPanel,
+    },
+    {
+      id: "points",
+      title: "Points",
+      icon: Target,
+      onClick: () => {
+        if (activePanel === "points") {
+          onTogglePanel();
+        } else {
+          onPanelChange("points");
+          if (!showPanel) {
+            onTogglePanel();
+          }
+        }
+      },
+      isActive: activePanel === "points" && showPanel,
     },
     {
       id: "court",

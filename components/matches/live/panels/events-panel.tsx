@@ -51,14 +51,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 
 interface EventsPanelProps {
   matchId: string;
   setId: string | null;
   homeTeam: Team;
   awayTeam: Team;
-  homeTeamPlayers: TeamMember[];
-  awayTeamPlayers: TeamMember[];
+  players: TeamMember[];
+  playerById: Map<string, TeamMember>;
   managedTeamId: string;
   currentHomeScore?: number;
   currentAwayScore?: number;
@@ -79,14 +80,14 @@ export function EventsPanel({
   setId,
   homeTeam,
   awayTeam,
-  homeTeamPlayers,
-  awayTeamPlayers,
+  players,
+  playerById,
   managedTeamId,
   currentHomeScore,
   currentAwayScore,
   currentPointNumber,
 }: EventsPanelProps) {
-  const eventApi = useEventApi();
+  const { localDb: db } = useLocalDb();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<EventType | "all">("all");
@@ -95,7 +96,6 @@ export function EventsPanel({
 
   // Determine managed team and opponent team
   const managedTeam = managedTeamId === homeTeam.id ? homeTeam : awayTeam;
-  const managedTeamPlayers = managedTeamId === homeTeam.id ? homeTeamPlayers : awayTeamPlayers;
   const managedTeamSide = managedTeamId === homeTeam.id ? "home" : "away";
 
   // Load events
@@ -115,15 +115,15 @@ export function EventsPanel({
   const loadEvents = async () => {
     try {
       setIsLoading(true);
-      const matchEvents = await eventApi.getMatchEvents(matchId);
-      // Filter by set if setId is provided
-      const relevantEvents = setId
-        ? matchEvents.filter((e) => e.set_id === setId)
-        : matchEvents;
-      // Sort events by timestamp descending (newest first)
-      const sortedEvents = relevantEvents.sort(
-        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
+      const eventDocs = await db?.events.find({
+            selector: {
+              set_id: setId,
+              match_id: matchId,
+            },
+            sort: [{ created_at: "desc" }],
+          }).exec();
+      
+      const sortedEvents = eventDocs ? Array.from(eventDocs.values()).map((doc) => doc.toJSON()) : [];
       setEvents(sortedEvents);
     } catch (error) {
       console.error("Failed to load events:", error);
@@ -133,8 +133,7 @@ export function EventsPanel({
   };
 
   const getPlayerName = (playerId: string): string => {
-    const allPlayers = [...homeTeamPlayers, ...awayTeamPlayers];
-    const player = allPlayers.find((p) => p.id === playerId);
+    const player = playerById.get(playerId);
     return player ? `#${player.number} ${player.name}` : "Unknown Player";
   };
 
@@ -269,8 +268,7 @@ export function EventsPanel({
                 setId={setId}
                 teamId={managedTeam.id}
                 team={managedTeamSide}
-                homeTeamPlayers={homeTeamPlayers}
-                awayTeamPlayers={awayTeamPlayers}
+                players={players}
                 currentHomeScore={currentHomeScore}
                 currentAwayScore={currentAwayScore}
                 onSuccess={() => {
@@ -289,8 +287,7 @@ export function EventsPanel({
           setId={setId}
           teamId={managedTeam.id}
           team={managedTeamSide}
-          homeTeamPlayers={homeTeamPlayers}
-          awayTeamPlayers={awayTeamPlayers}
+          players={players}
           currentHomeScore={currentHomeScore}
           currentAwayScore={currentAwayScore}
           currentPointNumber={currentPointNumber}
