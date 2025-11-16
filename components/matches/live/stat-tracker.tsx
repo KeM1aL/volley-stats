@@ -221,32 +221,36 @@ export function StatTracker({
   }
 
   return (
-    <CardContent className="space-y-1 p-0">
-      <PlayerSelector
-        players={players}
-        liberoPlayer={liberoPlayer}
-        selectedPlayer={selectedPlayer}
-        onPlayerSelect={setSelectedPlayer}
-      />
-      <div className="space-y-0">
+    <CardContent className="flex flex-col max-h-[85vh] p-0">
+      {/* Player Selector - Fixed at top */}
+      <div className="shrink-0">
+        <PlayerSelector
+          players={players}
+          liberoPlayer={liberoPlayer}
+          selectedPlayer={selectedPlayer}
+          onPlayerSelect={setSelectedPlayer}
+        />
+      </div>
+
+      {/* Stat Cards Section - Scrollable on mobile only */}
+      <div className="space-y-1 overflow-y-auto md:overflow-y-hidden py-1">
         {availableStatTypes.map((type, index) => (
           <Card
             key={type}
             className={`w-full mx-auto overflow-hidden ${colorData[index].border} border-2`}
-            
           >
             <div className="flex">
               {/* Vertical text on the left side */}
               <div
-                className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}
+                className={`text-primary-foreground p-2 md:p-4 flex items-center justify-center relative ${colorData[index].color}`}
               >
-                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-base md:text-xl font-bold origin-center">
                   {type.replace("_", " ").substring(0, 5)}
                 </span>
               </div>
               <div className="flex-1">
                 <CardContent className="p-1">
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-1 md:gap-2">
                     {Object.values(StatResult).map((result) => (
                       <StatButton
                         key={result}
@@ -260,9 +264,9 @@ export function StatTracker({
                 </CardContent>
               </div>
               <div
-                className={`text-primary-foreground p-4 flex items-center justify-center relative ${colorData[index].color}`}
+                className={`text-primary-foreground p-2 md:p-4 flex items-center justify-center relative ${colorData[index].color}`}
               >
-                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-xl font-bold origin-center">
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-base md:text-xl font-bold origin-center">
                   {type.replace("_", " ").substring(0, 5)}
                 </span>
               </div>
@@ -270,7 +274,9 @@ export function StatTracker({
           </Card>
         ))}
       </div>
-      <div className="space-y-1">
+
+      {/* Point Buttons + Undo - Separated with margin */}
+      <div className="space-y-1 mt-2">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           <Button
             onClick={() =>
@@ -278,15 +284,15 @@ export function StatTracker({
             }
             disabled={isRecording || isLoading}
             className={cn(
-              "h-14 text-lg font-semibold transition-transform active:scale-95",
+              "min-h-14 md:min-h-16 text-base md:text-lg font-semibold transition-transform active:scale-95",
               variants[StatResult.ERROR]
             )}
           >
             <div>
-              <div className="text-md font-medium">
+              <div className="text-sm md:text-md font-medium">
                 '{managedTeam.name}' Error
               </div>
-              <div className="text-sm opacity-75">-1</div>
+              <div className="text-xs md:text-sm opacity-75">-1</div>
             </div>
           </Button>
           <Button
@@ -295,15 +301,15 @@ export function StatTracker({
             }
             disabled={isRecording || isLoading}
             className={cn(
-              "h-14 text-lg font-semibold transition-transform active:scale-95",
+              "min-h-14 md:min-h-16 text-base md:text-lg font-semibold transition-transform active:scale-95",
               variants[StatResult.SUCCESS]
             )}
           >
             <div>
-              <div className="text-md font-medium">
+              <div className="text-sm md:text-md font-medium">
                 '{managedTeam.name}' Point
               </div>
-              <div className="text-sm opacity-75">+1</div>
+              <div className="text-xs md:text-sm opacity-75">+1</div>
             </div>
           </Button>
           <Button
@@ -312,15 +318,15 @@ export function StatTracker({
             }
             disabled={isRecording || isLoading}
             className={cn(
-              "h-14 text-lg font-semibold transition-transform active:scale-95",
+              "min-h-14 md:min-h-16 text-base md:text-lg font-semibold transition-transform active:scale-95",
               variants[StatResult.ERROR]
             )}
           >
             <div>
-              <div className="text-md font-medium">
+              <div className="text-sm md:text-md font-medium">
                 '{opponentTeam.name}' Point
               </div>
-              <div className="text-sm opacity-75">-1</div>
+              <div className="text-xs md:text-sm opacity-75">-1</div>
             </div>
           </Button>
           <Button
@@ -333,27 +339,25 @@ export function StatTracker({
             }
             disabled={isRecording || isLoading}
             className={cn(
-              "h-14 text-lg font-semibold transition-transform active:scale-95",
+              "min-h-14 md:min-h-16 text-base md:text-lg font-semibold transition-transform active:scale-95",
               variants[StatResult.SUCCESS]
             )}
           >
             <div>
-              <div className="text-md font-medium">
+              <div className="text-sm md:text-md font-medium">
                 '{opponentTeam.name}' Error
               </div>
-              <div className="text-sm opacity-75">+1</div>
+              <div className="text-xs md:text-sm opacity-75">+1</div>
             </div>
           </Button>
         </div>
-      </div>
-      <div className="space-y-1">
         <div className="grid grid-cols-1">
           <Button
             variant="outline"
             onClick={() => onUndo()}
             disabled={isRecording || isLoading}
             className={cn(
-              "h-12 text-lg font-semibold transition-transform active:scale-95"
+              "min-h-12 md:min-h-14 text-base md:text-lg font-semibold transition-transform active:scale-95"
             )}
           >
             <RotateCcw className="h-4 w-4 mr-2" /> Cancel Last Action
