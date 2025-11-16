@@ -223,7 +223,7 @@ export function CourtDiagramPanel({
           </span>
         )}</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col min-h-0 overflow-auto">
+      <CardContent className="flex-1 flex flex-col min-h-0">
         {!currentSet ? (
           <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
             No active set

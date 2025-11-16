@@ -517,8 +517,8 @@ export default function LiveMatchPage() {
             </aside>
           )}
 
-          {/* Column 3: Main Content - Can scroll */}
-          <main className="h-full overflow-y-auto">{renderMainContent()}</main>
+          {/* Column 3: Main Content - No page scroll */}
+          <main className="h-full overflow-hidden">{renderMainContent()}</main>
         </div>
 
         {/* Mobile: Flex Layout + Drawer */}
@@ -535,7 +535,7 @@ export default function LiveMatchPage() {
           </nav>
 
           {/* Mobile Main Content */}
-          <main className="flex-1 overflow-y-auto p-2">
+          <main className="flex-1 overflow-hidden p-2">
             {renderMainContent()}
           </main>
 

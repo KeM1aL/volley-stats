@@ -183,7 +183,7 @@ export function PlayerPerformancePanel({
   };
 
   return (
-    <Card className="flex flex-col">
+    <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">
           Player Performance
@@ -195,7 +195,7 @@ export function PlayerPerformancePanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
-        <ScrollArea className="px-4">
+        <ScrollArea className="h-full px-4">
           <div className="space-y-3 pb-4">
             {playerStats.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
