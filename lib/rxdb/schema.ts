@@ -17,6 +17,7 @@ export type CollectionName =
 const timestampFields = {
   created_at: { type: "string", "format": "date-time", maxLength: 32/*, final: true */},
   updated_at: { type: "string", "format": "date-time", maxLength: 32 },
+  _deleted: { type: "boolean" }
 };
 
 // Championship Schema
@@ -184,13 +185,13 @@ export const playerSchema = toTypedRxJsonSchema({
     team_id: { type: "string", maxLength: 36 },
     user_id: { type: ["string", "null"], maxLength: 36 },
     name: { type: "string" },
-    number: { type: "number" },
+    number: { type: ["number", "null"] },
     role: {
       type: "string",
       enum: ["owner", "coach", "staff", "player"],
       default: "player",
     },
-    position: { type: "string" },
+    position: { type: ["string", "null"] },
     comments: { type: ["string", "null"] },
     avatar_url: { type: ["string", "null"] },
     ...timestampFields,
