@@ -491,14 +491,14 @@ export default function LiveMatchPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Row 1: Header - Full Width */}
-      <header className="w-full shrink-0">
+      <div className="w-full shrink-0">
         <MatchScoreDetails
             match={matchState.match}
             sets={matchState.sets}
             homeTeam={homeTeam}
             awayTeam={awayTeam}
           />
-      </header>
+      </div>
 
       {/* Row 2: Content - Responsive Layout */}
       <div className="flex-1 overflow-hidden">

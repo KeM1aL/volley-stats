@@ -119,11 +119,14 @@
 }
 
 /* Hide header in fullscreen mode on shorter screens (but not when keyboard is visible) */
-@media (max-height: 900px) {
+@media (max-height: 1280px) {
   :fullscreen header {
     display: none;
   }
 
+:fullscreen #live-match {
+  top: 0;
+}
   /* Don't hide header if keyboard is visible (user needs navigation) */
   body.keyboard-visible:fullscreen header {
     display: block;
