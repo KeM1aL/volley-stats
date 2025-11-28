@@ -525,12 +525,18 @@ export default function LiveMatchPage() {
           {/* Column 2: Panel (conditional) - Internal scrolling */}
           {showDesktopPanel && (
             <aside className="h-full overflow-hidden border-l">
-              {renderPanelContent()}
+              <div className="h-full overflow-y-auto live-match-scroll">
+                {renderPanelContent()}
+              </div>
             </aside>
           )}
 
-          {/* Column 3: Main Content - No page scroll */}
-          <main className="h-full overflow-hidden">{renderMainContent()}</main>
+          {/* Column 3: Main Content - Independent scrolling */}
+          <main className="h-full overflow-hidden">
+            <div className="h-full overflow-y-auto live-match-scroll">
+              {renderMainContent()}
+            </div>
+          </main>
         </div>
 
         {/* Mobile: Flex Layout + Drawer */}
@@ -548,13 +554,15 @@ export default function LiveMatchPage() {
 
           {/* Mobile Main Content */}
           <main className="flex-1 overflow-hidden p-2">
-            {renderMainContent()}
+            <div className="h-full overflow-y-auto live-match-scroll">
+              {renderMainContent()}
+            </div>
           </main>
 
           {/* Mobile Panel: Drawer */}
           <Sheet open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
             <SheetContent side="right" className="w-[85%] overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto live-match-scroll">
                 {renderPanelContent()}
               </div>
             </SheetContent>

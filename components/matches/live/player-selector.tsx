@@ -33,7 +33,7 @@ export function PlayerSelector({
                 e.stopPropagation();
               }}
               className={cn(
-                "flex justify-start gap-2 p-2 rounded-lg transition-colors border",
+                "flex justify-start gap-2 p-2 rounded-lg transition-colors border min-h-[60px]",
                 selectedPlayer?.id === player.id
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted hover:bg-muted/80  text-primary"
