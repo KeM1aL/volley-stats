@@ -245,13 +245,14 @@ export default function LiveMatchPage() {
 
         setMatchState(newMatchState);
 
+        const playerOut = teamPlayerById.get(substitution.player_out_id);
+        const playerIn = teamPlayerById.get(substitution.player_in_id);
+
         toast({
-          title: "Subscription recorded",
-          description: `Player #${
-            teamPlayerById.get(substitution.player_out_id)!.number
-          } substituted for ${
-            teamPlayerById.get(substitution.player_in_id)!.number
-          }`,
+          title: "Substitution recorded",
+          description: playerOut && playerIn
+            ? `#${playerOut.number} ${playerOut.name} replaced by #${playerIn.number} ${playerIn.name} at position ${substitution.position}`
+            : "Substitution recorded successfully",
         });
       } catch (error) {
         console.error("Failed to record substitution:", error);
@@ -262,7 +263,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState]
+    [db, matchState, history, teamPlayerById]
   );
 
   const onPlayerStatRecorded = useCallback(
@@ -407,6 +408,8 @@ export default function LiveMatchPage() {
           currentHomeScore={matchState.set?.home_score ?? 0}
           currentAwayScore={matchState.set?.away_score ?? 0}
           currentPointNumber={matchState.points.length > 0 ? matchState.points.length : undefined}
+          currentLineup={matchState.set?.current_lineup}
+          onSubstitutionRecorded={onSubstitutionRecorded}
         />
       );
     }
