@@ -2,16 +2,11 @@
 
 import { createContext, useContext, useEffect } from "react";
 import { useLocalDatabase } from "@/hooks/use-local-database";
-import { SyncHandler } from "@/lib/rxdb/sync/sync-handler";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { SyncIndicator } from "@/components/sync-indicator";
-import { CollectionName } from "@/lib/rxdb/schema";
-import { RxCollection } from "rxdb";
 import { Button } from "../ui/button";
-import { supabase } from "@/lib/supabase/client";
-import { replicateSupabase } from "@/lib/rxdb/sync";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 
 const LocalDatabaseContext = createContext<ReturnType<
   typeof useLocalDatabase
@@ -23,8 +18,8 @@ export function LocalDatabaseProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const database = useLocalDatabase();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const database = useLocalDatabase(!!user && !authLoading);
   const router = useRouter();
 
   // useEffect(() => {
@@ -54,65 +49,25 @@ export function LocalDatabaseProvider({
   // }, [database.localDb, user]);
 
   useEffect(() => {
-    const initReplicateSupabase = async () => {
-      if (database.localDb && user) {
-        const collections = new Map<CollectionName, RxCollection>([
-          ["championships", database.localDb.championships],
-          ["seasons", database.localDb.seasons],
-          ["match_formats", database.localDb.match_formats],
-          ["clubs", database.localDb.clubs],
-          ["club_members", database.localDb.club_members],
-          ["teams", database.localDb.teams],
-          ["team_members", database.localDb.team_members],
-          ["matches", database.localDb.matches],
-          ["sets", database.localDb.sets],
-          ["events", database.localDb.events],
-          ["score_points", database.localDb.score_points],
-          ["player_stats", database.localDb.player_stats],
-        ]);
-        const replicationPromises:Promise<void>[] = [];
-        collections.forEach((collection, collectionName) => {
-          const replication = replicateSupabase({
-            tableName: collectionName,
-            client: supabase,
-            collection,
-            replicationIdentifier: `${collectionName}-supabase`,
-            live: true,
-            pull: {
-              batchSize: 50,
-
-              modifier: (doc) => {
-                // Object.keys(doc).forEach((key) => {
-                //   if (doc[key] !== false && !doc[key]) {
-                //     console.debug(
-                //       `deleting key ${key} from doc ${JSON.stringify(doc)}`
-                //     );
-                //     delete doc[key];
-                //   }
-                // });
-                return doc;
-              },
-            },
-            push: {
-              batchSize: 50,
-            },
-            modifiedField: "updated_at",
-            deletedField: "_deleted",
-          });
-          replication.error$.subscribe((err) =>
-            console.error(`[replication-${collectionName}]`, err)
-          );
-          replicationPromises.push(replication.awaitInitialReplication());
-        });
-
-        await Promise.all(replicationPromises);
-
-        return () => {};
-      }
-    };
-
-    initReplicateSupabase();
+    if (database.localDb) {
+        // Pass user to SyncManager
+        console.debug('LocalDatabaseProvider: Setting user for SyncManager', user);
+        if ((database.localDb as any).syncManager) {
+            (database.localDb as any).syncManager.setUser(user);
+            return () => {
+                (database.localDb as any).syncManager.cleanup();
+            };
+        }
+    }
   }, [database.localDb, user]);
+
+  const { isOnline } = useOnlineStatus();
+
+  useEffect(() => {
+      if (database.localDb && (database.localDb as any).syncManager) {
+          (database.localDb as any).syncManager.setOnlineStatus(isOnline);
+      }
+  }, [database.localDb, isOnline]);
 
   const clearLocalDatabase = () => {
     const params = new URLSearchParams();

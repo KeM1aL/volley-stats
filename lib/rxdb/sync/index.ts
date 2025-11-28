@@ -5,6 +5,7 @@ import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { Subject } from 'rxjs';
 import { DEFAULT_MODIFIED_FIELD, DEFAULT_DELETED_FIELD, POSTGRES_INSERT_CONFLICT_CODE, addDocEqualityToQuery } from './helper';
 import { SupabaseCheckpoint, SyncOptionsSupabase } from './types';
+import { table } from 'console';
 
 
 
@@ -92,7 +93,12 @@ export function replicateSupabase<RxDocType>(
                 let query = options.client
                     .from(options.tableName)
                     .select('*');
+
+                if (options.pull?.queryBuilder) {
+                    query = options.pull.queryBuilder(query);
+                }
                 if (lastPulledCheckpoint) {
+                    console.debug('lastPulledCheckpoint', [options.tableName, lastPulledCheckpoint]);
                     const { modified, id } = lastPulledCheckpoint;
 
                     // WHERE modified > :m OR (modified = :m AND id > :id)
@@ -138,15 +144,19 @@ export function replicateSupabase<RxDocType>(
             rows: RxReplicationWriteToMasterRow<RxDocType>[]
         ) {
             async function insertOrReturnConflict(doc: WithDeleted<RxDocType>): Promise<WithDeleted<RxDocType> | undefined> {
+                console.trace('insertOrReturnConflict', [options.tableName, doc]);
                 const id = (doc as any)[primaryPath];
                 const { error } = await options.client.from(options.tableName).insert(doc)
                 if (!error) {
+                    console.debug('insertOrReturnConflict', [options.tableName, doc, 'inserted']);
                     return;
                 } else if (error.code == POSTGRES_INSERT_CONFLICT_CODE) {
+                    console.debug('insertOrReturnConflict', [options.tableName, doc, 'conflict']);
                     // conflict!
                     const conflict = await fetchById(id);
                     return conflict;
                 } else {
+                    console.debug('insertOrReturnConflict', [options.tableName, doc, 'error']);
                     throw error
                 }
             }
@@ -154,6 +164,7 @@ export function replicateSupabase<RxDocType>(
                 doc: WithDeleted<RxDocType>,
                 assumedMasterState: WithDeleted<RxDocType>
             ): Promise<WithDeleted<RxDocType> | undefined> {
+                console.debug('updateOrReturnConflict', [options.tableName, doc]);
                 ensureNotFalsy(assumedMasterState);
                 const id = (doc as any)[primaryPath];
                 const toRow: Record<string, any> = flatClone(doc);
@@ -178,16 +189,20 @@ export function replicateSupabase<RxDocType>(
                     assumedMasterState,
                     query
                 );
+                console.debug('updateOrReturnConflict', [options.tableName, doc, 'query', query]);
 
                 const { data, error } = await query.select();
                 if (error) {
+                    console.debug('updateOrReturnConflict', [options.tableName, doc, 'error']);
                     throw error;
                 }
 
                 if (data && data.length > 0) {
+                    console.debug('updateOrReturnConflict', [options.tableName, doc, 'updated']);
                     return;
                 } else {
                     // no match -> conflict
+                    console.debug('updateOrReturnConflict', [options.tableName, doc, 'conflict']);
                     return await fetchById(id);
                 }
             }
@@ -206,6 +221,7 @@ export function replicateSupabase<RxDocType>(
                 })
             );
 
+            console.debug('conflicts', [options.tableName, conflicts]);
             return conflicts;
         }
     } : undefined;
@@ -234,6 +250,7 @@ export function replicateSupabase<RxDocType>(
                     'postgres_changes',
                     { event: '*', schema: 'public', table: options.tableName },
                     (payload) => {
+                        console.debug('postgres_changes', options.tableName, payload);
                         /**
                          * We assume soft-deletes in supabase
                          * and therefore cleanup-hard-deletes
@@ -242,6 +259,7 @@ export function replicateSupabase<RxDocType>(
                         if (payload.eventType === 'DELETE') {
                             return;
                         }
+
 
                         const row = payload.new;
                         const doc = rowToDoc(row);

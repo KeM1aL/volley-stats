@@ -38,6 +38,8 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
 
   useEffect(() => {
+    if (!isDialogOpen) return;
+
     const loadTeams = async () => {
       if (!db) return;
       setIsLoading(true);
@@ -66,7 +68,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     };
 
     loadTeams();
-  }, [db, match.id]);
+  }, [db, match.id, isDialogOpen]);
 
   const userManagedTeams = useMemo(() => {
     if (!user || !user.teamMembers) return [];
@@ -156,9 +158,27 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     if (open && !isLoading && homeTeam && awayTeam) {
       if (userManagedTeams.length === 1) {
         const selectedTeam = userManagedTeams[0];
-        setManagedTeam(selectedTeam);
-        await loadTeamPlayers(selectedTeam);
-        setIsDialogOpen(true);
+        // Sync Match
+        toast({
+            title: "Syncing match data...",
+            description: "Please wait while we ensure you have the latest data.",
+        });
+        try {
+            await db?.syncManager.syncMatch(match.id);
+            toast({
+                title: "Ready for offline",
+                description: "Match data is synced. You can now go offline if needed.",
+            });
+            setIsDialogOpen(true);
+        } catch (e) {
+            console.error("Sync failed", e);
+             toast({
+                variant: "destructive",
+                title: "Sync Warning",
+                description: "Failed to fully sync match data. You may proceed but some data might be missing.",
+            });
+            setIsDialogOpen(true);
+        }
       } else if (userManagedTeams.length === 0) {
         toast({
           variant: "destructive",
@@ -167,7 +187,26 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
         });
         setIsDialogOpen(false);
       } else {
-        setIsDialogOpen(true);
+        toast({
+            title: "Syncing match data...",
+            description: "Please wait while we ensure you have the latest data.",
+        });
+        try {
+            await db?.syncManager.syncMatch(match.id);
+            toast({
+                title: "Ready for offline",
+                description: "Match data is synced. You can now go offline if needed.",
+            });
+             setIsDialogOpen(true);
+        } catch (e) {
+             console.error("Sync failed", e);
+             toast({
+                variant: "destructive",
+                title: "Sync Warning",
+                description: "Failed to fully sync match data. You may proceed but some data might be missing.",
+            });
+             setIsDialogOpen(true);
+        }
       }
     } else if (!open) {
       setIsDialogOpen(false);

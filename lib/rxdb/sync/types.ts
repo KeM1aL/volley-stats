@@ -15,6 +15,7 @@ export type SyncOptionsSupabase<RxDocType> = Omit<
     modifiedField?: '_modified' | string;
 
     pull?: Omit<ReplicationPullOptions<RxDocType, SupabaseCheckpoint>, 'handler' | 'stream$'> & {
+        queryBuilder?: (query: any) => any;
     };
     push?: Omit<ReplicationPushOptions<RxDocType>, 'handler'>;
 };

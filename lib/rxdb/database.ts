@@ -36,6 +36,8 @@ import type {
   ClubMember,
   Event
 } from '@/lib/types';
+import { SyncManager } from './sync/manager';
+import { supabase } from '@/lib/supabase/client';
 const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 // Add plugins
 if (inDevEnvironment) {
@@ -44,7 +46,7 @@ if (inDevEnvironment) {
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 
-type DatabaseCollections = {
+export type DatabaseCollections = {
   championships: RxCollection<Championship>;
   match_formats: RxCollection<MatchFormat>;
   clubs: RxCollection<Club>;
@@ -59,7 +61,9 @@ type DatabaseCollections = {
   player_stats: RxCollection<PlayerStat>;
 };
 
-export type VolleyballDatabase = RxDatabase<DatabaseCollections>;
+export type VolleyballDatabase = RxDatabase<DatabaseCollections> & {
+  syncManager: SyncManager;
+};
 
 let dbPromise: Promise<VolleyballDatabase> | null = null;
 
@@ -161,13 +165,19 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
         col.preInsert((data) => {
           const now = new Date().toISOString();
           if (!data.created_at) data.created_at = now;
-          data.updated_at = now;
+          if (!data.updated_at) data.updated_at = now;
         }, false);
 
         col.preSave((data) => {
-          data.updated_at = new Date().toISOString();
+          if (!data.updated_at) data.updated_at = new Date().toISOString();
         }, false);
       });
+
+      // Initialize Sync
+      const syncManager = new SyncManager(db, supabase);
+      await syncManager.initialize();
+      (db as any).syncManager = syncManager;
+
     } catch (error) {
       console.error('Error creating RxDB collections:', error);
 
@@ -202,7 +212,7 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
       throw error;
     }
 
-    return db;
+    return db as VolleyballDatabase;
   });
 
   return dbPromise;

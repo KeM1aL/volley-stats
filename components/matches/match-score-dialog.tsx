@@ -35,6 +35,7 @@ export default function MatchScoreDialog({ match }: MatchStatsDialogProps) {
 
   useEffect(() => {
     const loadTeams = async () => {
+      if (!isDialogOpen) return;
       if (!db) return;
       setIsLoading(true);
       try {
@@ -62,7 +63,7 @@ export default function MatchScoreDialog({ match }: MatchStatsDialogProps) {
     };
 
     loadTeams();
-  }, [db, match.id]);
+  }, [db, match.id, isDialogOpen]);
 
   const userManagedTeams = useMemo(() => {
     if (!user || !user.teamMembers) return [];
@@ -84,8 +85,28 @@ export default function MatchScoreDialog({ match }: MatchStatsDialogProps) {
     setIsDialogOpen(false); // Close dialog after selection
   }
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = async (open: boolean) => {
     if (open && !isLoading && homeTeam && awayTeam) {
+      // Sync Match
+      toast({
+          title: "Syncing match data...",
+          description: "Please wait while we ensure you have the latest data.",
+      });
+      try {
+          await db?.syncManager.syncMatch(match.id);
+          toast({
+              title: "Ready for offline",
+              description: "Match data is synced. You can now go offline if needed.",
+          });
+      } catch (e) {
+           console.error("Sync failed", e);
+           toast({
+              variant: "destructive",
+              title: "Sync Warning",
+              description: "Failed to fully sync match data. You may proceed but some data might be missing.",
+          });
+      }
+
       if (userManagedTeams.length === 1) {
         onManagedTeamSelected(userManagedTeams[0].id);
         setIsDialogOpen(false);

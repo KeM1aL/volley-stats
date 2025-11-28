@@ -36,7 +36,7 @@ export default function TeamsPage() {
         const data = await teamApi.getTeams(filters, sort, ['championships', 'clubs']);
         setTeams(data);
       } catch (error) {
-        console.error("Failed to load teams:", error);
+        console.error("Failed to load teams from api:", error);
       } finally {
         setIsLoading(false);
       }
