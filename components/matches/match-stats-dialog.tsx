@@ -34,7 +34,7 @@ export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
 
   useEffect(() => {
-    if (!isDialogOpen) return;
+    // if (!isDialogOpen) return;
     const loadTeams = async () => {
       if (!db) return;
       setIsLoading(true);

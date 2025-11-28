@@ -34,7 +34,7 @@ export default function MatchEditDialog({ match }: MatchStartDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
 
   useEffect(() => {
-    if (!isDialogOpen) return;
+    // if (!isDialogOpen) return;
     const loadTeams = async () => {
       if (!db) return;
       setIsLoading(true);
@@ -66,6 +66,7 @@ export default function MatchEditDialog({ match }: MatchStartDialogProps) {
   }, [db, match.id, isDialogOpen]);
 
   const userManagedTeams = useMemo(() => {
+    console.log("userManagedTeams", user);
     if (!user || !user.teamMembers) return [];
     const managedTeamIds = user.teamMembers.map(member => member.team_id);
     const teams: Team[] = [];
