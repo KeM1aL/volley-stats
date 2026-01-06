@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, Trash2, Users } from "lucide-react";
+import { Eye, Pencil, Trash2, Users, Search } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -23,8 +23,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
 import { Team } from "@/lib/types";
 import { useTeamApi } from "@/hooks/use-team-api";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type TeamTableProps = {
   teams: Team[];
@@ -35,6 +37,7 @@ type TeamTableProps = {
 export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
   const teamApi = useTeamApi();
   const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -64,6 +67,30 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
       setDeletingTeam(null);
     }
   };
+
+  if (teams.length === 0) {
+    const hasFavorite = user?.profile.favorite_team_id || user?.profile.favorite_club_id;
+
+    return (
+      <EmptyState
+        icon={<Search className="h-12 w-12" />}
+        title="No teams found"
+        description={
+          hasFavorite
+            ? "No teams found with current filters. Try adjusting your search criteria."
+            : "Set your favorite team or club in settings to see teams by default, or use the filters above to find teams."
+        }
+        action={
+          !hasFavorite
+            ? {
+                label: "Go to Settings",
+                href: "/settings"
+              }
+            : undefined
+        }
+      />
+    );
+  }
 
   return (
     <>

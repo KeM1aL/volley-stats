@@ -48,6 +48,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import * as z from "zod";
+import { FavoritesSection } from "@/components/settings/favorites-section";
 
 const languages = [
   { value: "en", label: "English" },
@@ -85,7 +86,7 @@ const emailChangeSchema = z.object({
 export default function SettingsPage() {
   const { localDb: db } = useLocalDb();
   const { theme, setTheme } = useTheme();
-  const { session, reloadUser } = useAuth();
+  const { session, reloadUser, user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -545,6 +546,11 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Favorites Card */}
+      {user && (
+        <FavoritesSection user={user} onUpdate={reloadUser} />
+      )}
 
       {/* Theme Selector - Standalone (not in form) */}
       <Card>

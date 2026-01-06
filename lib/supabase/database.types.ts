@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       championships: {
         Row: {
+          _deleted: boolean
           age_category: Database["public"]["Enums"]["age_category"]
           created_at: string
           default_match_format: string
@@ -29,6 +30,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          _deleted?: boolean
           age_category: Database["public"]["Enums"]["age_category"]
           created_at?: string
           default_match_format: string
@@ -42,6 +44,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          _deleted?: boolean
           age_category?: Database["public"]["Enums"]["age_category"]
           created_at?: string
           default_match_format?: string
@@ -73,6 +76,7 @@ export type Database = {
       }
       club_members: {
         Row: {
+          _deleted: boolean
           club_id: string
           created_at: string
           id: string
@@ -81,6 +85,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          _deleted?: boolean
           club_id: string
           created_at?: string
           id?: string
@@ -89,6 +94,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          _deleted?: boolean
           club_id?: string
           created_at?: string
           id?: string
@@ -108,6 +114,7 @@ export type Database = {
       }
       clubs: {
         Row: {
+          _deleted: boolean
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -118,6 +125,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          _deleted?: boolean
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -128,6 +136,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          _deleted?: boolean
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -141,13 +150,17 @@ export type Database = {
       }
       events: {
         Row: {
+          _deleted: boolean
+          away_score: number | null
           comment: string | null
           created_at: string
           details: Json | null
           event_type: string
+          home_score: number | null
           id: string
           match_id: string
           player_id: string | null
+          point_number: number | null
           set_id: string | null
           team: string | null
           team_id: string | null
@@ -155,13 +168,17 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          _deleted?: boolean
+          away_score?: number | null
           comment?: string | null
           created_at?: string
           details?: Json | null
           event_type?: string
+          home_score?: number | null
           id?: string
           match_id: string
           player_id?: string | null
+          point_number?: number | null
           set_id?: string | null
           team?: string | null
           team_id?: string | null
@@ -169,13 +186,17 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          _deleted?: boolean
+          away_score?: number | null
           comment?: string | null
           created_at?: string
           details?: Json | null
           event_type?: string
+          home_score?: number | null
           id?: string
           match_id?: string
           player_id?: string | null
+          point_number?: number | null
           set_id?: string | null
           team?: string | null
           team_id?: string | null
@@ -236,6 +257,7 @@ export type Database = {
       }
       match_formats: {
         Row: {
+          _deleted: boolean
           created_at: string
           decisive_point: boolean
           description: string | null
@@ -248,6 +270,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          _deleted?: boolean
           created_at?: string
           decisive_point: boolean
           description?: string | null
@@ -260,6 +283,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          _deleted?: boolean
           created_at?: string
           decisive_point?: boolean
           description?: string | null
@@ -275,6 +299,7 @@ export type Database = {
       }
       matches: {
         Row: {
+          _deleted: boolean
           away_available_players: string[] | null
           away_score: number | null
           away_team_id: string
@@ -297,6 +322,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          _deleted?: boolean
           away_available_players?: string[] | null
           away_score?: number | null
           away_team_id: string
@@ -319,6 +345,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          _deleted?: boolean
           away_available_players?: string[] | null
           away_score?: number | null
           away_team_id?: string
@@ -380,6 +407,7 @@ export type Database = {
       }
       player_stats: {
         Row: {
+          _deleted: boolean
           created_at: string
           id: string
           match_id: string
@@ -392,6 +420,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          _deleted?: boolean
           created_at?: string
           id?: string
           match_id: string
@@ -404,6 +433,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          _deleted?: boolean
           created_at?: string
           id?: string
           match_id?: string
@@ -448,27 +478,49 @@ export type Database = {
       }
       profiles: {
         Row: {
+          favorite_club_id: string | null
+          favorite_team_id: string | null
           first_name: string | null
           id: string
           language: string
           last_name: string | null
         }
         Insert: {
+          favorite_club_id?: string | null
+          favorite_team_id?: string | null
           first_name?: string | null
           id: string
           language?: string
           last_name?: string | null
         }
         Update: {
+          favorite_club_id?: string | null
+          favorite_team_id?: string | null
           first_name?: string | null
           id?: string
           language?: string
           last_name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_favorite_club_id_fkey"
+            columns: ["favorite_club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_favorite_team_id_fkey"
+            columns: ["favorite_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       score_points: {
         Row: {
+          _deleted: boolean
           action_team_id: string
           away_score: number
           created_at: string
@@ -487,6 +539,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          _deleted?: boolean
           action_team_id: string
           away_score: number
           created_at?: string
@@ -505,6 +558,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          _deleted?: boolean
           action_team_id?: string
           away_score?: number
           created_at?: string
@@ -562,6 +616,7 @@ export type Database = {
       }
       seasons: {
         Row: {
+          _deleted: boolean
           created_at: string
           end_date: string
           id: string
@@ -570,6 +625,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          _deleted?: boolean
           created_at?: string
           end_date: string
           id?: string
@@ -578,6 +634,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          _deleted?: boolean
           created_at?: string
           end_date?: string
           id?: string
@@ -589,6 +646,7 @@ export type Database = {
       }
       sets: {
         Row: {
+          _deleted: boolean
           away_score: number
           created_at: string
           current_lineup: Json
@@ -604,6 +662,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          _deleted?: boolean
           away_score?: number
           created_at?: string
           current_lineup?: Json
@@ -619,6 +678,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          _deleted?: boolean
           away_score?: number
           created_at?: string
           current_lineup?: Json
@@ -659,6 +719,7 @@ export type Database = {
       }
       team_members: {
         Row: {
+          _deleted: boolean
           avatar_url: string | null
           comments: string | null
           created_at: string
@@ -672,6 +733,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          _deleted?: boolean
           avatar_url?: string | null
           comments?: string | null
           created_at?: string
@@ -685,6 +747,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          _deleted?: boolean
           avatar_url?: string | null
           comments?: string | null
           created_at?: string
@@ -709,6 +772,7 @@ export type Database = {
       }
       teams: {
         Row: {
+          _deleted: boolean
           championship_id: string | null
           club_id: string | null
           created_at: string
@@ -720,6 +784,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          _deleted?: boolean
           championship_id?: string | null
           club_id?: string | null
           created_at?: string
@@ -731,6 +796,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          _deleted?: boolean
           championship_id?: string | null
           club_id?: string | null
           created_at?: string

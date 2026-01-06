@@ -49,6 +49,10 @@ export type Profile = {
   first_name: string | null;
   last_name: string | null;
   language: string;
+  favorite_team_id: string | null;
+  favorite_club_id: string | null;
+  favorite_team?: Team | null;         // Joined relation
+  favorite_club?: Club | null;         // Joined relation
 };
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Match, Team, Club, Championship } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
 import { useClubApi } from "@/hooks/use-club-api";
 import { useMatchApi } from "@/hooks/use-match-api";
 import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
@@ -37,6 +38,7 @@ lastSeptember.setDate(1);
 
 export default function MatchPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -54,8 +56,33 @@ export default function MatchPage() {
 
   const matchApi = useMatchApi();
 
+  // Apply favorites on mount if no manual filters set
+  useMemo(() => {
+    if (!user) return;
+
+    const hasManualFilters = selectedTeam || selectedClub || selectedChampionship;
+
+    if (!hasManualFilters) {
+      if (user.profile.favorite_team) {
+        setSelectedTeam(user.profile.favorite_team);
+      } else if (user.profile.favorite_club) {
+        setSelectedClub(user.profile.favorite_club);
+      }
+    }
+  }, [user]);
+
   useEffect(() => {
     const loadData = async () => {
+      // Don't load if no favorite and no filters set
+      const hasFavorite = user?.profile.favorite_team_id || user?.profile.favorite_club_id;
+      const hasFilters = selectedTeam || selectedClub || selectedChampionship;
+
+      if (!hasFavorite && !hasFilters) {
+        setMatches([]);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
         try {
@@ -74,14 +101,6 @@ export default function MatchPage() {
               operator: "eq",
               value: selectedChampionship.id,
             });
-          }
-
-          if (selectedClub) {
-            // filters.push({
-            //   field: "home_team.club_id",
-            //   operator: "eq",
-            //   value: selectedClub.id,
-            // });
           }
 
           if (dateRange?.from) {
@@ -105,7 +124,7 @@ export default function MatchPage() {
             "away_team:teams!matches_away_team_id_fkey",
           ];
           const sort: Sort<Match>[] = [{ field: "date", direction: "asc" }];
-          const matchesData = await matchApi.getMatchs(filters, sort, joins);
+          let matchesData = await matchApi.getMatchs(filters, sort, joins) as Match[];
           setMatches(matchesData);
         } catch (error) {
           console.error("Error loading data:", error);
@@ -124,7 +143,7 @@ export default function MatchPage() {
     };
 
     loadData();
-  }, [selectedTeam, dateRange, toast, selectedChampionship, matchApi]);
+  }, [selectedTeam, selectedClub, dateRange, toast, selectedChampionship, matchApi, user]);
 
   const handleTeamChange = (team: Team | null) => {
     setSelectedTeam(team);
@@ -134,6 +153,14 @@ export default function MatchPage() {
     } else {
       setSelectedClub(null);
     }
+  };
+
+  const handleClubChange = (club: Club | null) => {
+    setSelectedClub(club);
+  };
+
+  const handleChampionshipChange = (championship: Championship | null) => {
+    setSelectedChampionship(championship);
   };
 
   return (
@@ -169,7 +196,7 @@ export default function MatchPage() {
                   <Label>Championship</Label>
                   <ChampionshipSelect
                     value={selectedChampionship}
-                    onChange={setSelectedChampionship}
+                    onChange={handleChampionshipChange}
                     isClearable
                   />
                 </div>
@@ -177,7 +204,7 @@ export default function MatchPage() {
                   <Label>Club</Label>
                   <ClubSelect
                     value={selectedClub}
-                    onChange={setSelectedClub}
+                    onChange={handleClubChange}
                     isClearable
                   />
                 </div>

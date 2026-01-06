@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 // Helper function to check if a path should be saved for redirect
 function shouldSaveRedirect(pathname: string): boolean {
   // Don't redirect to auth pages
-  if (pathname.startsWith('/auth') || pathname.startsWith('/login')) {
+  if (pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/login')) {
     return false;
   }
 
@@ -72,7 +72,8 @@ export async function updateSession(request: NextRequest) {
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !(request.nextUrl.pathname === '/')
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
