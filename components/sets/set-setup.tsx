@@ -245,13 +245,17 @@ export function SetSetup({
               </div>
             </div>
           )}
-          <CourtDiagram
-            players={players}
-            playerById={playerById}
-            lineup={positions}
-            matchFormat={match.match_formats!}
-            onSelect={handleSelectPosition}
-          />
+          <div className="flex justify-center items-start">
+            <div className="w-full max-w-2xl">
+              <CourtDiagram
+                players={players}
+                playerById={playerById}
+                lineup={positions}
+                matchFormat={match.match_formats!}
+                onSelect={handleSelectPosition}
+              />
+            </div>
+          </div>
 
           {selectedPosition && (
             <Card className="p-1 space-y-2 border-indigo-500/100">
