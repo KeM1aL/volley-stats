@@ -18,6 +18,7 @@ import { string } from "zod";
 import { CourtDiagram } from "../matches/live/court-diagram";
 import { PlayerSelector } from "../matches/live/player-selector";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { cn } from "@/lib/utils";
 
 type SetSetupProps = {
   match: Match;
@@ -245,112 +246,114 @@ export function SetSetup({
               </div>
             </div>
           )}
-          <div className="flex justify-center items-start">
-            <div className="w-full max-w-2xl">
-              <CourtDiagram
-                players={players}
-                playerById={playerById}
-                lineup={positions}
-                matchFormat={match.match_formats!}
-                onSelect={handleSelectPosition}
-              />
+          <div className="grid grid-cols-4 gap-4">
+            <div className={cn("flex justify-center items-start col-span-2", selectedPosition ? "" : "col-start-2")}>
+              <div className="w-full max-w-2xl">
+                <CourtDiagram
+                  players={players}
+                  playerById={playerById}
+                  lineup={positions}
+                  matchFormat={match.match_formats!}
+                  onSelect={handleSelectPosition}
+                />
+              </div>
             </div>
-          </div>
 
-          {selectedPosition && (
-            <Card className="p-1 space-y-2 border-indigo-500/100">
-              <PlayerSelector
-                players={players.filter((player) =>
-                  Object.entries(positions).every(
-                    ([key, value]) =>
-                      key === selectedPosition || value !== player.id
-                  )
-                )}
-                selectedPlayer={selectedPlayer}
-                onPlayerSelect={handleSelectPlayer}
-              />
-              <div className="grid grid-cols-4 gap-6">
-                <div className="col-span-2 col-start-2">
-                  <Label>Role {selectedRole}</Label>
-                  <div className="flex flex-row items-center space-x-1">
-                    <Select
-                      value={
-                        selectedRole ? (selectedRole as string) : undefined
-                      }
-                      onValueChange={(value: PlayerRole) => {
-                        setSelectedRole(value);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={`Select role`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.values(PlayerRole)
-                          .filter((role) => role !== PlayerRole.LIBERO)
-                          .map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {(() => {
-                                switch (role) {
-                                  case PlayerRole.SETTER:
-                                    return "Setter";
-                                  case PlayerRole.OPPOSITE:
-                                    return "Opposite";
-                                  case PlayerRole.OUTSIDE_HITTER:
-                                    return "Outside Hitter";
-                                  case PlayerRole.MIDDLE_HITTER:
-                                    return "Middle Hitter";
-                                }
-                              })()}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+            {selectedPosition && (
+              <Card className="p-1 space-y-2 border-indigo-500/100 col-span-2">
+                <PlayerSelector
+                  players={players.filter((player) =>
+                    Object.entries(positions).every(
+                      ([key, value]) =>
+                        key === selectedPosition || value !== player.id
+                    )
+                  )}
+                  selectedPlayer={selectedPlayer}
+                  onPlayerSelect={handleSelectPlayer}
+                />
+                <div className="grid grid-cols-4 gap-6">
+                  <div className="col-span-2 col-start-2">
+                    <Label>Role {selectedRole}</Label>
+                    <div className="flex flex-row items-center space-x-1">
+                      <Select
+                        value={
+                          selectedRole ? (selectedRole as string) : undefined
+                        }
+                        onValueChange={(value: PlayerRole) => {
+                          setSelectedRole(value);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Select role`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.values(PlayerRole)
+                            .filter((role) => role !== PlayerRole.LIBERO)
+                            .map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {(() => {
+                                  switch (role) {
+                                    case PlayerRole.SETTER:
+                                      return "Setter";
+                                    case PlayerRole.OPPOSITE:
+                                      return "Opposite";
+                                    case PlayerRole.OUTSIDE_HITTER:
+                                      return "Outside Hitter";
+                                    case PlayerRole.MIDDLE_HITTER:
+                                      return "Middle Hitter";
+                                  }
+                                })()}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          )}
-        </div>
-        {match.match_formats?.format === "6x6" && (
-          <div className="grid grid-cols-4 gap-6">
-            <div className="col-span-2 col-start-2">
-              <Label>Libero</Label>
-              <div className="flex flex-row items-center space-x-1">
-                <Select
-                  defaultValue={null as unknown as string}
-                  onValueChange={(value) =>
-                    setLineup((prev) => ({
-                      ...prev,
-                      [PlayerRole.LIBERO]: [value],
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Select player`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null as unknown as string}>
-                      None
-                    </SelectItem>
-                    {players
-                      .filter((player) =>
-                        Object.entries(lineup).every(
-                          ([key, values]) =>
-                            key === PlayerRole.LIBERO ||
-                            !values.includes(player.id)
+              </Card>
+            )}
+          </div>
+          {match.match_formats?.format === "6x6" && (
+            <div className="grid grid-cols-4 gap-6">
+              <div className="col-span-2 col-start-2">
+                <Label>Libero</Label>
+                <div className="flex flex-row items-center space-x-1">
+                  <Select
+                    defaultValue={null as unknown as string}
+                    onValueChange={(value) =>
+                      setLineup((prev) => ({
+                        ...prev,
+                        [PlayerRole.LIBERO]: [value],
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={`Select player`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null as unknown as string}>
+                        None
+                      </SelectItem>
+                      {players
+                        .filter((player) =>
+                          Object.entries(lineup).every(
+                            ([key, values]) =>
+                              key === PlayerRole.LIBERO ||
+                              !values.includes(player.id)
+                          )
                         )
-                      )
-                      .map((player) => (
-                        <SelectItem key={player.id} value={player.id}>
-                          {player.number} - {player.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                        .map((player) => (
+                          <SelectItem key={player.id} value={player.id}>
+                            {player.number} - {player.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* <Separator /> */}
