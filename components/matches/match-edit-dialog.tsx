@@ -67,6 +67,7 @@ export default function MatchEditDialog({ match }: MatchStartDialogProps) {
   }, [db, match.id, isDialogOpen]);
 
   const userManagedTeams = useMemo(() => {
+    console.log("userManagedTeams", user);
     if (!user || !user.teamMembers) return [];
     const managedTeamIds = user.teamMembers.map(member => member.team_id);
     const teams: Team[] = [];

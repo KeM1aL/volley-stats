@@ -245,13 +245,14 @@ export default function LiveMatchPage() {
 
         setMatchState(newMatchState);
 
+        const playerOut = teamPlayerById.get(substitution.player_out_id);
+        const playerIn = teamPlayerById.get(substitution.player_in_id);
+
         toast({
-          title: "Subscription recorded",
-          description: `Player #${
-            teamPlayerById.get(substitution.player_out_id)!.number
-          } substituted for ${
-            teamPlayerById.get(substitution.player_in_id)!.number
-          }`,
+          title: "Substitution recorded",
+          description: playerOut && playerIn
+            ? `#${playerOut.number} ${playerOut.name} replaced by #${playerIn.number} ${playerIn.name} at position ${substitution.position}`
+            : "Substitution recorded successfully",
         });
       } catch (error) {
         console.error("Failed to record substitution:", error);
@@ -262,7 +263,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState]
+    [db, matchState, history, teamPlayerById]
   );
 
   const onPlayerStatRecorded = useCallback(
@@ -407,6 +408,8 @@ export default function LiveMatchPage() {
           currentHomeScore={matchState.set?.home_score ?? 0}
           currentAwayScore={matchState.set?.away_score ?? 0}
           currentPointNumber={matchState.points.length > 0 ? matchState.points.length : undefined}
+          currentLineup={matchState.set?.current_lineup}
+          onSubstitutionRecorded={onSubstitutionRecorded}
         />
       );
     }
@@ -491,14 +494,14 @@ export default function LiveMatchPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Row 1: Header - Full Width */}
-      <header className="w-full shrink-0">
+      <div className="w-full shrink-0">
         <MatchScoreDetails
             match={matchState.match}
             sets={matchState.sets}
             homeTeam={homeTeam}
             awayTeam={awayTeam}
           />
-      </header>
+      </div>
 
       {/* Row 2: Content - Responsive Layout */}
       <div className="flex-1 overflow-hidden">
@@ -522,12 +525,18 @@ export default function LiveMatchPage() {
           {/* Column 2: Panel (conditional) - Internal scrolling */}
           {showDesktopPanel && (
             <aside className="h-full overflow-hidden border-l">
-              {renderPanelContent()}
+              <div className="h-full overflow-y-auto live-match-scroll">
+                {renderPanelContent()}
+              </div>
             </aside>
           )}
 
-          {/* Column 3: Main Content - No page scroll */}
-          <main className="h-full overflow-hidden">{renderMainContent()}</main>
+          {/* Column 3: Main Content - Independent scrolling */}
+          <main className="h-full overflow-hidden">
+            <div className="h-full overflow-y-auto live-match-scroll">
+              {renderMainContent()}
+            </div>
+          </main>
         </div>
 
         {/* Mobile: Flex Layout + Drawer */}
@@ -545,13 +554,15 @@ export default function LiveMatchPage() {
 
           {/* Mobile Main Content */}
           <main className="flex-1 overflow-hidden p-2">
-            {renderMainContent()}
+            <div className="h-full overflow-y-auto live-match-scroll">
+              {renderMainContent()}
+            </div>
           </main>
 
           {/* Mobile Panel: Drawer */}
           <Sheet open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
             <SheetContent side="right" className="w-[85%] overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto live-match-scroll">
                 {renderPanelContent()}
               </div>
             </SheetContent>

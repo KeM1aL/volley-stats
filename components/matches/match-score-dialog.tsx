@@ -34,6 +34,7 @@ export default function MatchScoreDialog({ match }: MatchStatsDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
 
   useEffect(() => {
+    // if (!isDialogOpen) return;
     const loadTeams = async () => {
       if (!isDialogOpen) return;
       if (!db) return;

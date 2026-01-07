@@ -8,6 +8,7 @@ import {
   Upload,
   Volleyball,
   Pencil,
+  Search,
 } from "lucide-react";
 import {
   Table,
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Match, Team } from "@/lib/types";
 import { MatchStatus } from "@/lib/enums";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
 import MatchStartDialog from "../match-start-dialog";
 import MatchEditDialog from "../match-edit-dialog";
 import MatchStatsDialog from "../match-stats-dialog";
@@ -127,10 +129,26 @@ export function MatchHistoryTable({
   }
 
   if (matches.length === 0) {
+    const hasFavorite = user?.profile.favorite_team_id || user?.profile.favorite_club_id;
+
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        No matches found.
-      </div>
+      <EmptyState
+        icon={<Search className="h-12 w-12" />}
+        title="No matches found"
+        description={
+          hasFavorite
+            ? "No matches found with current filters. Try adjusting your search criteria or date range."
+            : "Set your favorite team or club in settings to see your matches by default, or use the filters above to find matches."
+        }
+        action={
+          !hasFavorite
+            ? {
+                label: "Go to Settings",
+                href: "/settings"
+              }
+            : undefined
+        }
+      />
     );
   }
 

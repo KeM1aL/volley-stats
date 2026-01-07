@@ -7,7 +7,7 @@
 ```bash
 # Project Setup
 task-master init                                    # Initialize Task Master in current project
-task-master parse-prd .taskmaster/docs/prd.txt      # Generate tasks from PRD document
+task-master parse-prd .taskmaster/docs/prd.md       # Generate tasks from PRD document
 task-master models --setup                        # Configure AI models interactively
 
 # Daily Development Workflow
@@ -41,9 +41,14 @@ task-master generate                                         # Update task markd
 
 - `.taskmaster/tasks/tasks.json` - Main task data file (auto-managed)
 - `.taskmaster/config.json` - AI model configuration (use `task-master models` to modify)
-- `.taskmaster/docs/prd.txt` - Product Requirements Document for parsing
+- `.taskmaster/docs/prd.md` - Product Requirements Document for parsing (`.md` extension recommended for better editor support)
 - `.taskmaster/tasks/*.txt` - Individual task files (auto-generated from tasks.json)
 - `.env` - API keys for CLI usage
+
+**PRD File Format:** While both `.txt` and `.md` extensions work, **`.md` is recommended** because:
+- Markdown syntax highlighting in editors improves readability
+- Proper rendering when previewing in VS Code, GitHub, or other tools
+- Better collaboration through formatted documentation
 
 ### Claude Code Integration Files
 
@@ -62,11 +67,11 @@ project/
 │   │   ├── task-1.md      # Individual task files
 │   │   └── task-2.md
 │   ├── docs/              # Documentation directory
-│   │   ├── prd.txt        # Product requirements
+│   │   ├── prd.md         # Product requirements (.md recommended)
 │   ├── reports/           # Analysis reports directory
 │   │   └── task-complexity-report.json
 │   ├── templates/         # Template files
-│   │   └── example_prd.txt  # Example PRD template
+│   │   └── example_prd.md  # Example PRD template (.md recommended)
 │   └── config.json        # AI models & settings
 ├── .claude/
 │   ├── settings.json      # Claude Code configuration
@@ -87,6 +92,7 @@ Task Master provides an MCP server that Claude Code can connect to. Configure in
       "command": "npx",
       "args": ["-y", "task-master-ai"],
       "env": {
+        "TASK_MASTER_TOOLS": "core",
         "ANTHROPIC_API_KEY": "your_key_here",
         "PERPLEXITY_API_KEY": "your_key_here",
         "OPENAI_API_KEY": "OPENAI_API_KEY_HERE",
@@ -101,6 +107,18 @@ Task Master provides an MCP server that Claude Code can connect to. Configure in
   }
 }
 ```
+
+### MCP Tool Tiers
+
+Default: `core` (7 tools). Set via `TASK_MASTER_TOOLS` env var.
+
+| Tier | Count | Tools |
+|------|-------|-------|
+| `core` | 7 | `get_tasks`, `next_task`, `get_task`, `set_task_status`, `update_subtask`, `parse_prd`, `expand_task` |
+| `standard` | 14 | core + `initialize_project`, `analyze_project_complexity`, `expand_all`, `add_subtask`, `remove_task`, `add_task`, `complexity_report` |
+| `all` | 44+ | standard + dependencies, tags, research, autopilot, scoping, models, rules |
+
+**Upgrade when tool unavailable:** Edit MCP config, change `TASK_MASTER_TOOLS` from `"core"` to `"standard"` or `"all"`, restart MCP.
 
 ### Essential MCP Tools
 
@@ -138,8 +156,8 @@ complexity_report; // = task-master complexity-report
 # Initialize Task Master
 task-master init
 
-# Create or obtain PRD, then parse it
-task-master parse-prd .taskmaster/docs/prd.txt
+# Create or obtain PRD, then parse it (use .md extension for better editor support)
+task-master parse-prd .taskmaster/docs/prd.md
 
 # Analyze complexity and expand tasks
 task-master analyze-complexity --research

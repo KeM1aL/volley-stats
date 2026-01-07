@@ -16,9 +16,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { useEventApi } from "@/hooks/use-event-api";
 import { Event, TeamMember, Team } from "@/lib/types";
 import {
   EventType,
@@ -38,7 +36,6 @@ import {
   CommentDetails,
 } from "@/lib/types/events";
 import { EventForm } from "../events/event-form";
-import { QuickEventButtons } from "../events/quick-event-buttons";
 import {
   Plus,
   Users,
@@ -48,10 +45,12 @@ import {
   Wrench,
   MessageSquare,
   Filter,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useLocalDb } from "@/components/providers/local-database-provider";
+import type { Substitution } from "@/lib/types";
 
 interface EventsPanelProps {
   matchId: string;
@@ -64,6 +63,8 @@ interface EventsPanelProps {
   currentHomeScore?: number;
   currentAwayScore?: number;
   currentPointNumber?: number;
+  currentLineup?: Record<string, string>;
+  onSubstitutionRecorded?: (substitution: Substitution) => Promise<void>;
 }
 
 const EVENT_ICONS = {
@@ -86,12 +87,15 @@ export function EventsPanel({
   currentHomeScore,
   currentAwayScore,
   currentPointNumber,
+  currentLineup,
+  onSubstitutionRecorded,
 }: EventsPanelProps) {
   const { localDb: db } = useLocalDb();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<EventType | "all">("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedQuickEventType, setSelectedQuickEventType] = useState<EventType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Determine managed team and opponent team
@@ -247,52 +251,83 @@ export function EventsPanel({
     return colorMap[eventType];
   };
 
+  const handleQuickEvent = (eventType: EventType) => {
+    setSelectedQuickEventType(eventType);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setIsCreateDialogOpen(false);
+    setSelectedQuickEventType(null);
+  };
+
+  const handleEventSuccess = () => {
+    handleDialogClose();
+    loadEvents();
+  };
+
   return (
     <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-3 space-y-3 flex-shrink-0 overflow-visible">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">Events</CardTitle>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
-                <Plus className="h-4 w-4 mr-1" />
-                Add
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create Event</DialogTitle>
-              </DialogHeader>
-              <EventForm
-                matchId={matchId}
-                setId={setId}
-                teamId={managedTeam.id}
-                team={managedTeamSide}
-                players={players}
-                currentHomeScore={currentHomeScore}
-                currentAwayScore={currentAwayScore}
-                onSuccess={() => {
-                  setIsCreateDialogOpen(false);
-                  loadEvents();
-                }}
-                onCancel={() => setIsCreateDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleQuickEvent("substitution")}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Substitution
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleQuickEvent("timeout")}
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Timeout
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </div>
         </div>
 
-        {/* Quick Event Buttons */}
-        <QuickEventButtons
-          matchId={matchId}
-          setId={setId}
-          teamId={managedTeam.id}
-          team={managedTeamSide}
-          players={players}
-          currentHomeScore={currentHomeScore}
-          currentAwayScore={currentAwayScore}
-          currentPointNumber={currentPointNumber}
-          onEventCreated={loadEvents}
-        />
+        {/* Event Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogClose}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedQuickEventType
+                  ? `Add ${EVENT_TYPE_LABELS[selectedQuickEventType]}`
+                  : "Create Event"
+                }
+              </DialogTitle>
+            </DialogHeader>
+            <EventForm
+              matchId={matchId}
+              setId={setId}
+              teamId={managedTeam.id}
+              team={managedTeamSide}
+              players={players}
+              preSelectedType={selectedQuickEventType || undefined}
+              currentHomeScore={currentHomeScore}
+              currentAwayScore={currentAwayScore}
+              currentPointNumber={currentPointNumber}
+              currentLineup={currentLineup}
+              db={db}
+              onSubstitutionRecorded={onSubstitutionRecorded}
+              onSuccess={handleEventSuccess}
+              onCancel={handleDialogClose}
+            />
+          </DialogContent>
+        </Dialog>
 
         {/* Filter */}
         <div className="flex items-center gap-2">

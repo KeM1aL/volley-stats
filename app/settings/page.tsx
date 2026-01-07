@@ -35,11 +35,20 @@ import {
 } from "@/hooks/use-settings";
 import { removeRxDatabase, RxCollection } from "rxdb";
 import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
-import { Label } from "@/components/ui/label"; 
+import { Label } from "@/components/ui/label";
 import { CollectionName } from "@/lib/rxdb/schema";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
-import { chunk, delay } from "@/lib/utils"; 
+import { chunk, delay } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
+import {
+  PasswordStrengthIndicator,
+  calculatePasswordStrength,
+} from "@/components/auth/password-strength-indicator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
+import * as z from "zod";
+import { FavoritesSection } from "@/components/settings/favorites-section";
 
 const languages = [
   { value: "en", label: "English" },
@@ -48,14 +57,43 @@ const languages = [
   { value: "de", label: "Deutsch" },
 ];
 
+// Password change schema
+const passwordChangeSchema = z
+  .object({
+    newPassword: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  })
+  .refine(
+    (data) => {
+      const { strength } = calculatePasswordStrength(data.newPassword);
+      return strength !== "weak";
+    },
+    {
+      message: "Password is too weak",
+      path: ["newPassword"],
+    }
+  );
+
+// Email change schema
+const emailChangeSchema = z.object({
+  newEmail: z.string().email("Invalid email address"),
+});
+
 export default function SettingsPage() {
   const { localDb: db } = useLocalDb();
   const { theme, setTheme } = useTheme();
+  const { session, reloadUser, user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
 
   const {
     settings,
@@ -63,6 +101,26 @@ export default function SettingsPage() {
     updateSettings,
     resetSettings,
   } = useSettings();
+
+  // Password change form
+  const passwordForm = useForm<z.infer<typeof passwordChangeSchema>>({
+    resolver: zodResolver(passwordChangeSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  // Email change form
+  const emailForm = useForm<z.infer<typeof emailChangeSchema>>({
+    resolver: zodResolver(emailChangeSchema),
+    defaultValues: {
+      newEmail: "",
+    },
+  });
+
+  const newPassword = passwordForm.watch("newPassword");
+  const pendingEmail = session?.user?.new_email;
 
   useEffect(() => {
     setMounted(true);
@@ -265,6 +323,69 @@ export default function SettingsPage() {
     });
   };
 
+  const handlePasswordChange = async (
+    values: z.infer<typeof passwordChangeSchema>
+  ) => {
+    setIsChangingPassword(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
+        password: values.newPassword,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully changed.",
+      });
+      passwordForm.reset();
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to change password",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleEmailChange = async (
+    values: z.infer<typeof emailChangeSchema>
+  ) => {
+    setIsChangingEmail(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
+        email: values.newEmail,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Confirmation emails sent",
+        description: "Check both your old and new email to confirm the change.",
+      });
+      emailForm.reset();
+
+      // Reload user to show pending email
+      await reloadUser();
+    } catch (error) {
+      console.error("Failed to change email:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to change email",
+      });
+    } finally {
+      setIsChangingEmail(false);
+    }
+  };
+
   if (isLoadingSettings) {
     return (
       <div className="space-y-6">
@@ -291,168 +412,208 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      {/* Account Security Card */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-1">Account Security</h3>
+              <p className="text-sm text-muted-foreground">
+                Manage your password and email address
+              </p>
+            </div>
+
+            {/* Change Password Section */}
+            <div className="space-y-4 pt-4 border-t">
+              <div>
+                <h4 className="font-medium">Change Password</h4>
+                <p className="text-sm text-muted-foreground">
+                  Update your password to keep your account secure
+                </p>
+              </div>
+              <Form {...passwordForm}>
+                <form
+                  onSubmit={passwordForm.handleSubmit(handlePasswordChange)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={passwordForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <PasswordStrengthIndicator password={newPassword} />
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={isChangingPassword}>
+                    {isChangingPassword ? (
+                      <>
+                        <LoadingSpinner size="sm" className="mr-2" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Password"
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </div>
+
+            {/* Change Email Section */}
+            <div className="space-y-4 pt-4 border-t">
+              <div>
+                <h4 className="font-medium">Email Address</h4>
+                <p className="text-sm text-muted-foreground">
+                  Update your email address
+                </p>
+              </div>
+
+              {pendingEmail && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Email change pending - Check both {session?.user?.email} and{" "}
+                    {pendingEmail} to confirm the change.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2">
+                <Label>Current Email</Label>
+                <Input
+                  type="email"
+                  value={session?.user?.email || ""}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+
+              {!pendingEmail && (
+                <Form {...emailForm}>
+                  <form
+                    onSubmit={emailForm.handleSubmit(handleEmailChange)}
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={emailForm.control}
+                      name="newEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>New Email Address</FormLabel>
+                          <FormControl>
+                            <Input type="email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                          <FormDescription>
+                            You will need to confirm this change on both your
+                            old and new email addresses
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" disabled={isChangingEmail}>
+                      {isChangingEmail ? (
+                        <>
+                          <LoadingSpinner size="sm" className="mr-2" />
+                          Sending...
+                        </>
+                      ) : (
+                        "Update Email"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Favorites Card */}
+      {user && (
+        <FavoritesSection user={user} onUpdate={reloadUser} />
+      )}
+
       {/* Theme Selector - Standalone (not in form) */}
       <Card>
         <CardContent className="p-6">
           <div className="space-y-4">
             <div>
-              <Label>Theme</Label>
+              <h3 className="text-lg font-semibold mb-1">Preferences</h3>
               <p className="text-sm text-muted-foreground">
-                Select your preferred theme appearance
+                Select your preferences
               </p>
             </div>
             {mounted && (
-              <Select value={theme} onValueChange={setTheme}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Theme</Label>
+                <Select value={theme} onValueChange={setTheme}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                    <SelectItem value="system">System</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="language"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Language</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a language" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {languages.map((language) => (
+                            <SelectItem
+                              key={language.value}
+                              value={language.value}
+                            >
+                              {language.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-      {/* Language and Notifications Form */}
-      <Card>
-        <CardContent className="p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="language"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Language</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a language" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {languages.map((language) => (
-                          <SelectItem
-                            key={language.value}
-                            value={language.value}
-                          >
-                            {language.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {db && (
-                <div className="space-y-4">
-                  <Label>Local data</Label>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-medium">
-                          Synchronize Match
-                        </Label>
-                        <Input
-                          type="text"
-                          onChange={(e) => setMatchId(e.target.value)}
-                          placeholder="Match ID"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={isSyncing && !matchId}
-                        onClick={() => matchId && performMatchSync()}
-                      >
-                        Synchronize
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-medium">
-                          Clear Local Stats
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Clear the local stats cache
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleResetLocalStats()}
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-medium">
-                          Clear Local Matches
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Clear the local matches cache
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleResetLocalMatches()}
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-medium">
-                          Clear Local Teams
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Clear the local teams cache
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleResetLocalTeams()}
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      disabled={isDeletingCache}
-                      onClick={() => handleResetLocalCache()}
-                    >
-                      {isDeletingCache ? (
-                        <>
-                          <LoadingSpinner size="sm" className="mr-2" />
-                          Deleting...
-                        </>
-                      ) : (
-                        "Clear All"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-4">
+                {/* <div className="space-y-4">
                 <FormLabel>Notifications</FormLabel>
                 <FormField
                   control={form.control}
@@ -494,32 +655,137 @@ export default function SettingsPage() {
                     </FormItem>
                   )}
                 />
-              </div>
+              </div> */}
 
-              <div className="flex justify-between">
+                <div className="flex justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleResetSettings}
+                    disabled={isSaving}
+                  >
+                    Reset to Defaults
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <LoadingSpinner size="sm" className="mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Local database */}
+      {db && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <Label>Local data</Label>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">
+                      Synchronize Match
+                    </Label>
+                    <Input
+                      type="text"
+                      onChange={(e) => setMatchId(e.target.value)}
+                      placeholder="Match ID"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={isSyncing && !matchId}
+                    onClick={() => matchId && performMatchSync()}
+                  >
+                    Synchronize
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">
+                      Clear Local Stats
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Clear the local stats cache
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleResetLocalStats()}
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">
+                      Clear Local Matches
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Clear the local matches cache
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleResetLocalMatches()}
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">
+                      Clear Local Teams
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Clear the local teams cache
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleResetLocalTeams()}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+              <div className="flex justify-end">
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={handleResetSettings}
-                  disabled={isSaving}
+                  variant="destructive"
+                  disabled={isDeletingCache}
+                  onClick={() => handleResetLocalCache()}
                 >
-                  Reset to Defaults
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? (
+                  {isDeletingCache ? (
                     <>
                       <LoadingSpinner size="sm" className="mr-2" />
-                      Saving...
+                      Deleting...
                     </>
                   ) : (
-                    "Save Changes"
+                    "Clear All"
                   )}
                 </Button>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

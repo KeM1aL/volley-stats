@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Championship, Club } from '@/lib/types';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { Championship, Club, Team } from '@/lib/types';
 import { Filter } from '@/lib/api/types';
 import { isEqual } from 'lodash';
 import { useDebounce } from './use-debounce';
@@ -27,17 +27,44 @@ const initialState: TeamFilterState = {
   championshipGender: '',
 };
 
-export function useTeamFilters(onFilter: (filters: Filter[]) => void) {
+export function useTeamFilters(onFilter: (filters: Filter[]) => void, initialFilters?: Partial<TeamFilterState>) {
   const [filters, setFilters] = useState<TeamFilterState>(initialState);
   const [appliedFilters, setAppliedFilters] = useState<TeamFilterState>(initialState);
+  const initialFiltersAppliedRef = useRef(false);
+  const isFirstFilterCall = useRef(true);
 
   const isDirty = useMemo(() => !isEqual(filters, appliedFilters), [filters, appliedFilters]);
 
+  // Apply initial filters when they become available (e.g., after user data loads)
+  useEffect(() => {
+    if (initialFilters && !initialFiltersAppliedRef.current) {
+      console.log(initialFilters.searchTerm);
+      const hasInitialValues = initialFilters.selectedClub || initialFilters.searchTerm || initialFilters.selectedChampionship;
+
+      // Only apply if there are initial values
+      if (hasInitialValues) {
+        setFilters((prev) => ({ ...prev, ...initialFilters }));
+        initialFiltersAppliedRef.current = true;
+      }
+    }
+  }, [initialFilters]);
+
   // Debounce the filters state before applying them
-  const debouncedFilters = useDebounce(filters, 500); // 500ms debounce for all filters
+  const debouncedFilters = useDebounce(filters, 200); // 200ms debounce for all filters
 
   // Effect to apply filters when debouncedFilters change
   useEffect(() => {
+    // Skip first onFilter call if we have initialFilters to apply
+    // This prevents calling onFilter([]) before initialFilters are applied
+    if (isFirstFilterCall.current && initialFilters) {
+      const hasInitialValues = initialFilters.selectedClub || initialFilters.searchTerm || initialFilters.selectedChampionship;
+      if (hasInitialValues) {
+        isFirstFilterCall.current = false;
+        return;
+      }
+    }
+    isFirstFilterCall.current = false;
+
     const newFilters: Filter[] = [];
     if (debouncedFilters.searchTerm) {
       newFilters.push({ field: 'name', operator: 'ilike', value: `%${debouncedFilters.searchTerm}%` });

@@ -121,7 +121,11 @@ export const getUser = async (
 export const getProfile = async (userId: string): Promise<Profile> => {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(`
+      *,
+      favorite_team:teams!profiles_favorite_team_id_fkey(*, clubs:clubs(*)),
+      favorite_club:clubs!profiles_favorite_club_id_fkey(*)
+    `)
     .eq('id', userId)
     .maybeSingle();
 
@@ -135,7 +139,7 @@ export const getProfile = async (userId: string): Promise<Profile> => {
     throw new Error('User profile not found. Please complete your profile setup.');
   }
 
-  return data;
+  return data as unknown as Profile;
 };
 
 export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
@@ -155,11 +159,15 @@ export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
 };
 
 export const updateProfile = async (userId: string, profile: Partial<Profile>): Promise<Profile> => {
-  const { data, error } = await supabase.from('profiles').update(profile).eq('id', userId).select();
+  const { data, error } = await supabase.from('profiles').update(profile).eq('id', userId).select(`
+      *,
+      favorite_team:teams!profiles_favorite_team_id_fkey(*),
+      favorite_club:clubs!profiles_favorite_club_id_fkey(*)
+    `);
   if (error) {
     throw new Error(error.message);
   }
-  return data[0] || null;
+  return (data[0] || null) as unknown as Profile;
 };
 
 export const getClubMembers = async (userId: string): Promise<{clubs: ClubMember[], teams: TeamMember[]}> => {

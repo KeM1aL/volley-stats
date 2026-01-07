@@ -81,7 +81,7 @@ export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
   async function onManagedTeamSelected(teamId: string): Promise<void> {
     const params = new URLSearchParams();
     params.set("team", teamId);
-    router.push(`/stats/${match.id}?${params.toString()}`);
+    router.push(`/matches/${match.id}/stats?${params.toString()}`);
     setIsDialogOpen(false); // Close dialog after selection
   }
 

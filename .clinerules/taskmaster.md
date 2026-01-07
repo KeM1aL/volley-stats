@@ -36,7 +36,7 @@ This document provides a detailed reference for interacting with Taskmaster, cov
     *   `projectVersion`: `Set the initial version for your project, e.g., '0.1.0'.` (CLI: `--version <version>`)
     *   `authorName`: `Author name.` (CLI: `--author <author>`)
     *   `skipInstall`: `Skip installing dependencies. Default is false.` (CLI: `--skip-install`)
-    *   `addAliases`: `Add shell aliases tm and taskmaster. Default is false.` (CLI: `--aliases`)
+    *   `addAliases`: `Add shell aliases tm, taskmaster, hamster, and ham. Default is false.` (CLI: `--aliases`)
     *   `yes`: `Skip prompts and use defaults/provided arguments. Default is false.` (CLI: `-y, --yes`)
 *   **Usage:** Run this once at the beginning of a new project, typically via an integrated tool like Cline. Operates on the current working directory of the MCP server. 
 *   **Important:** Once complete, you *MUST* parse a prd in order to generate tasks. There will be no tasks files until then. The next step after initializing should be to create a PRD using the example PRD in .taskmaster/templates/example_prd.txt. 
@@ -101,7 +101,8 @@ This document provides a detailed reference for interacting with Taskmaster, cov
     *   `withSubtasks`: `Include subtasks indented under their parent tasks in the list.` (CLI: `--with-subtasks`)
     *   `tag`: `Specify which tag context to list tasks from. Defaults to the current active tag.` (CLI: `--tag <name>`)
     *   `file`: `Path to your Taskmaster 'tasks.json' file. Default relies on auto-detection.` (CLI: `-f, --file <file>`)
-*   **Usage:** Get an overview of the project status, often used at the start of a work session.
+    *   `watch`: `Watch for changes and auto-refresh the list in real-time. Works with file storage (fs.watch) and API storage (Supabase Realtime).` (CLI: `-w, --watch`)
+*   **Usage:** Get an overview of the project status, often used at the start of a work session. Use `--watch` to keep the list live-updating as tasks change.
 
 ### 4. Get Next Task (`next_task`)
 
@@ -552,6 +553,20 @@ Environment variables are used **only** for sensitive API keys related to AI pro
     *   `OLLAMA_BASE_URL` (Default: `http://localhost:11434/api`)
 
 **Set API keys** in your **`.env`** file in the project root (for CLI use) or within the `env` section of your **`.cline/mcp.json`** file (for MCP/Cline integration). All other settings (model choice, max tokens, temperature, log level, custom endpoints) are managed in `.taskmaster/config.json` via `task-master models` command or `models` MCP tool.
+
+---
+
+## MCP Tool Tiers
+
+Default: `core` (7 tools). Set via `TASK_MASTER_TOOLS` env var in MCP config.
+
+| Tier | Count | Tools |
+|------|-------|-------|
+| `core` | 7 | `get_tasks`, `next_task`, `get_task`, `set_task_status`, `update_subtask`, `parse_prd`, `expand_task` |
+| `standard` | 14 | core + `initialize_project`, `analyze_project_complexity`, `expand_all`, `add_subtask`, `remove_task`, `add_task`, `complexity_report` |
+| `all` | 44+ | standard + dependencies, tags, research, autopilot, scoping, models, rules |
+
+**Upgrade when tool unavailable:** Edit MCP config (`.cline/mcp.json`, `.mcp.json`, or `.vscode/mcp.json`), change `TASK_MASTER_TOOLS` from `"core"` to `"standard"` or `"all"`, restart MCP.
 
 ---
 

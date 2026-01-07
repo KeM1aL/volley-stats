@@ -11,8 +11,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EventForm } from "./event-form";
-import { TeamMember } from "@/lib/types";
+import { TeamMember, Substitution } from "@/lib/types";
 import { EventType } from "@/lib/types/events";
+import { useLocalDb } from "@/components/providers/local-database-provider";
 
 interface QuickEventButtonsProps {
   matchId: string;
@@ -23,6 +24,8 @@ interface QuickEventButtonsProps {
   currentHomeScore?: number;
   currentAwayScore?: number;
   currentPointNumber?: number;
+  currentLineup?: Record<string, string>;
+  onSubstitutionRecorded?: (substitution: Substitution) => Promise<void>;
   onEventCreated?: () => void;
 }
 
@@ -35,8 +38,11 @@ export function QuickEventButtons({
   currentHomeScore,
   currentAwayScore,
   currentPointNumber,
+  currentLineup,
+  onSubstitutionRecorded,
   onEventCreated,
 }: QuickEventButtonsProps) {
+  const { localDb: db } = useLocalDb();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null);
 
@@ -141,6 +147,9 @@ export function QuickEventButtons({
               currentHomeScore={currentHomeScore}
               currentAwayScore={currentAwayScore}
               currentPointNumber={currentPointNumber}
+              currentLineup={currentLineup}
+              db={db}
+              onSubstitutionRecorded={onSubstitutionRecorded}
               onSuccess={handleSuccess}
               onCancel={handleCancel}
             />

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { v4 as uuid } from "uuid";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,18 +26,26 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEventApi } from "@/hooks/use-event-api";
 import { useToast } from "@/hooks/use-toast";
 import {
   EventType,
   CreateEventPayload,
   EVENT_TYPE_LABELS,
 } from "@/lib/types/events";
-import { TeamMember } from "@/lib/types";
+import { TeamMember, Substitution } from "@/lib/types";
+import type { VolleyballDatabase } from "@/lib/rxdb/database";
+import { PlayerPosition } from "@/lib/enums";
 
 // Base schema for all events
 const baseEventSchema = z.object({
-  event_type: z.enum(["substitution", "timeout", "injury", "sanction", "technical", "comment"]),
+  event_type: z.enum([
+    "substitution",
+    "timeout",
+    "injury",
+    "sanction",
+    "technical",
+    "comment",
+  ]),
 });
 
 // Substitution schema
@@ -73,7 +82,12 @@ const injurySchema = baseEventSchema.extend({
 // Sanction schema
 const sanctionSchema = baseEventSchema.extend({
   event_type: z.literal("sanction"),
-  sanction_type: z.enum(["warning", "yellow_card", "red_card", "disqualification"]),
+  sanction_type: z.enum([
+    "warning",
+    "yellow_card",
+    "red_card",
+    "disqualification",
+  ]),
   target: z.enum(["player", "coach", "staff"]),
   target_id: z.string().optional(),
   target_name: z.string().optional(),
@@ -124,6 +138,9 @@ interface EventFormProps {
   currentHomeScore?: number;
   currentAwayScore?: number;
   currentPointNumber?: number;
+  currentLineup?: Record<string, string>;
+  db: VolleyballDatabase | null;
+  onSubstitutionRecorded?: (substitution: Substitution) => Promise<void>;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -138,10 +155,12 @@ export function EventForm({
   currentHomeScore,
   currentAwayScore,
   currentPointNumber,
+  currentLineup,
+  db,
+  onSubstitutionRecorded,
   onSuccess,
   onCancel,
 }: EventFormProps) {
-  const eventApi = useEventApi();
   const { toast } = useToast();
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(
     preSelectedType || null
@@ -190,33 +209,94 @@ export function EventForm({
   });
 
   const onSubmit = async (values: EventFormValues) => {
+    if (!db) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Database not available",
+      });
+      return;
+    }
+
     try {
-      const payload: CreateEventPayload = {
+      // Handle substitution via SubstitutionCommand
+      if (values.event_type === "substitution") {
+        const substitutionValues = values as z.infer<typeof substitutionSchema>;
+
+        if (!setId) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Cannot record substitution without an active set",
+          });
+          return;
+        }
+
+        if (!onSubstitutionRecorded) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Substitution handler not available",
+          });
+          return;
+        }
+
+        const position = Object.keys(currentLineup!).find((key) => currentLineup![key] === substitutionValues.player_out_id);
+        const substitution: Substitution = {
+          id: uuid(),
+          match_id: matchId,
+          set_id: setId,
+          team_id: teamId!,
+          player_in_id: substitutionValues.player_in_id,
+          player_out_id: substitutionValues.player_out_id,
+          position: position ?? "",
+          comments: substitutionValues.comments ?? "",
+          timestamp: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        // Call the substitution callback (which will execute SubstitutionCommand)
+        await onSubstitutionRecorded(substitution);
+
+        form.reset();
+        onSuccess?.();
+        return;
+      }
+
+      // For all other event types, write directly to RxDB
+      const timestamp = new Date().toISOString();
+
+      // Extract player_id for events that have it
+      let player_id: string | null = null;
+      if (values.event_type === "injury") {
+        player_id = (values as z.infer<typeof injurySchema>).player_id;
+      }
+
+      const event = {
+        id: uuid(),
         match_id: matchId,
         set_id: setId,
         team_id: teamId,
-        team,
         event_type: values.event_type,
+        timestamp,
+        team,
+        player_id,
         details: { ...values },
-        home_score: currentHomeScore,
-        away_score: currentAwayScore,
-        point_number: currentPointNumber,
+        home_score: currentHomeScore ?? null,
+        away_score: currentAwayScore ?? null,
+        point_number: currentPointNumber ?? null,
+        created_at: timestamp,
+        updated_at: timestamp,
       };
 
-      // Extract player_id for events that have it
-      if (values.event_type === "injury" || values.event_type === "substitution") {
-        if (values.event_type === "injury") {
-          payload.player_id = (values as z.infer<typeof injurySchema>).player_id;
-        } else if (values.event_type === "substitution") {
-          payload.player_id = (values as z.infer<typeof substitutionSchema>).player_in_id;
-        }
-      }
-
-      await eventApi.createEvent(payload);
+      await db.events.insert(event);
 
       toast({
         title: "Event created",
-        description: `${EVENT_TYPE_LABELS[values.event_type]} event has been recorded.`,
+        description: `${
+          EVENT_TYPE_LABELS[values.event_type]
+        } event has been recorded.`,
       });
 
       form.reset();
@@ -230,6 +310,13 @@ export function EventForm({
       });
     }
   };
+
+  // Filter players based on current lineup for substitutions
+  const lineupPlayerIds = currentLineup
+    ? new Set(Object.values(currentLineup))
+    : new Set<string>();
+  const playersInLineup = players.filter((p) => lineupPlayerIds.has(p.id));
+  const playersNotInLineup = players.filter((p) => !lineupPlayerIds.has(p.id));
 
   const availablePlayers = players;
 
@@ -278,7 +365,7 @@ export function EventForm({
               name="player_out_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Player Out</FormLabel>
+                  <FormLabel>Player Out (currently in lineup)</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -286,13 +373,22 @@ export function EventForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {availablePlayers.map((player) => (
-                        <SelectItem key={player.id} value={player.id}>
-                          #{player.number} - {player.name}
+                      {playersInLineup.length === 0 ? (
+                        <SelectItem value="" disabled>
+                          No players in lineup
                         </SelectItem>
-                      ))}
+                      ) : (
+                        playersInLineup.map((player) => (
+                          <SelectItem key={player.id} value={player.id}>
+                            #{player.number} - {player.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    Only players currently on the court can be substituted out
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -302,7 +398,7 @@ export function EventForm({
               name="player_in_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Player In</FormLabel>
+                  <FormLabel>Player In (on the bench)</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -310,13 +406,22 @@ export function EventForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {availablePlayers.map((player) => (
-                        <SelectItem key={player.id} value={player.id}>
-                          #{player.number} - {player.name}
+                      {playersNotInLineup.length === 0 ? (
+                        <SelectItem value="" disabled>
+                          No bench players available
                         </SelectItem>
-                      ))}
+                      ) : (
+                        playersNotInLineup.map((player) => (
+                          <SelectItem key={player.id} value={player.id}>
+                            #{player.number} - {player.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    Only players not currently in the lineup can enter
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -450,7 +555,10 @@ export function EventForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Medical intervention required</FormLabel>
@@ -464,7 +572,10 @@ export function EventForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Player continued playing</FormLabel>
@@ -494,7 +605,9 @@ export function EventForm({
                       <SelectItem value="warning">Warning</SelectItem>
                       <SelectItem value="yellow_card">Yellow Card</SelectItem>
                       <SelectItem value="red_card">Red Card</SelectItem>
-                      <SelectItem value="disqualification">Disqualification</SelectItem>
+                      <SelectItem value="disqualification">
+                        Disqualification
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -542,7 +655,10 @@ export function EventForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Point penalty awarded</FormLabel>
@@ -571,7 +687,9 @@ export function EventForm({
                     <SelectContent>
                       <SelectItem value="equipment">Equipment</SelectItem>
                       <SelectItem value="facility">Facility</SelectItem>
-                      <SelectItem value="score_dispute">Score Dispute</SelectItem>
+                      <SelectItem value="score_dispute">
+                        Score Dispute
+                      </SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -586,7 +704,10 @@ export function EventForm({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Describe the technical issue..." />
+                    <Textarea
+                      {...field}
+                      placeholder="Describe the technical issue..."
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -598,7 +719,10 @@ export function EventForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Issue resolved</FormLabel>
@@ -619,7 +743,11 @@ export function EventForm({
                 <FormItem>
                   <FormLabel>Comment</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Enter your comment..." rows={4} />
+                    <Textarea
+                      {...field}
+                      placeholder="Enter your comment..."
+                      rows={4}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

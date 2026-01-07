@@ -104,7 +104,7 @@ export function StatTracker({
       setIsLoading(true);
     }
     loadData();
-  }, [match.id, currentSet.id]);
+  }, [match.id, currentSet.id, currentSet.current_lineup]);
 
   useEffect(() => {
     const updateData = async () => {

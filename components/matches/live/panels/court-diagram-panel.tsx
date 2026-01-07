@@ -223,17 +223,19 @@ export function CourtDiagramPanel({
           </span>
         )}</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col min-h-0">
+      <CardContent className="flex-1 flex flex-col min-h-0 p-3">
         {!currentSet ? (
           <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
             No active set
           </div>
         ) : (
           <>
-            {/* Court Diagram */}
-            <div className={cn("relative bg-muted rounded-lg w-full",
-              aspectRatioClass(netPosition)
-            )}>
+            {/* Centering wrapper */}
+            <div className="flex-1 flex items-center justify-center min-h-0">
+              {/* Court Diagram */}
+              <div className={cn("relative bg-muted rounded-lg w-full max-w-full max-h-full",
+                aspectRatioClass(netPosition)
+              )}>
               {/* Court outline */}
               <div className="absolute inset-4 border-2 border-primary">
                 {/* Net position indicator */}
@@ -300,9 +302,10 @@ export function CourtDiagramPanel({
                 })}
               </div>
             </div>
+            </div>
 
             {/* Controls */}
-            <div className="mt-3 flex justify-between items-center">
+            <div className="mt-3 flex justify-between items-center shrink-0">
               <Button
                 size="sm"
                 variant="outline"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,26 +12,35 @@ import {
 import { ChampionshipSelect } from '@/components/championships/championship-select';
 import { ClubSelect } from '@/components/clubs/club-select';
 import { GenericSelect } from '@/components/ui/generic-select';
-import { useTeamFilters } from '@/hooks/use-team-filters';
+import { useTeamFilters, TeamFilterState } from '@/hooks/use-team-filters';
 import { Filter } from '@/lib/api/types';
 import { useDebounce } from '@/hooks/use-debounce';
 
 type TeamFiltersProps = {
   onFilterChange: (filters: Filter[]) => void;
+  initialFilters?: Partial<TeamFilterState>;
 };
 
-export function TeamFilters({ onFilterChange }: TeamFiltersProps) {
+export function TeamFilters({ onFilterChange, initialFilters }: TeamFiltersProps) {
   const {
     filters,
     updateFilter,
     handleReset,
-  } = useTeamFilters(onFilterChange);
+  } = useTeamFilters(onFilterChange, initialFilters);
 
-  const [searchTermInput, setSearchTermInput] = useState(filters.searchTerm);
+  const [searchTermInput, setSearchTermInput] = useState(initialFilters?.searchTerm || filters.searchTerm);
   const debouncedSearchTerm = useDebounce(searchTermInput, 500); // 500ms debounce delay
+  const isInitialMount = useRef(true);
+  const isFirstSync = useRef(true);
 
   // Effect to update the global filter state after debounce
   useEffect(() => {
+    // Skip on initial mount to let initialFilters be applied first
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     // Only update if the debounced term is different from the current filter to prevent unnecessary updates
     if (debouncedSearchTerm !== filters.searchTerm) {
       updateFilter('searchTerm', debouncedSearchTerm);
@@ -40,6 +49,11 @@ export function TeamFilters({ onFilterChange }: TeamFiltersProps) {
 
   // Effect to synchronize local input state with global filter state (e.g., on reset)
   useEffect(() => {
+    // Skip first sync to prevent overriding initial value from initialFilters
+    if (isFirstSync.current) {
+      isFirstSync.current = false;
+      return;
+    }
     setSearchTermInput(filters.searchTerm);
   }, [filters.searchTerm]);
 
