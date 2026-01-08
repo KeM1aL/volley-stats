@@ -8,7 +8,7 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, errorMsg: string
   //   promise,
   //   new Promise<T>((_, reject) =>
   //     setTimeout(() => {
-  //       console.log('timeout ' + errorMsg)
+  //       console.debug('timeout ' + errorMsg)
   //       reject(new Error(errorMsg))
   //     }, timeoutMs)
   //   ),
@@ -42,7 +42,7 @@ const withRetry = async <T>(
 
       // Wait before retrying (exponential backoff)
       const delayMs = baseDelayMs * Math.pow(2, attempt);
-      console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delayMs}ms...`);
+      console.debug(`Retry attempt ${attempt + 1}/${maxRetries} after ${delayMs}ms...`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
@@ -56,7 +56,7 @@ export const getUser = async (
   session?: Session | null,
   onStageChange?: (stage: LoadingStage) => void
 ): Promise<User | null> => {
-  console.log('Loading user profile ...');
+  console.debug('Loading user profile ...');
   if (!session) {
     const {
       data: { session: sessionData },
@@ -67,7 +67,7 @@ export const getUser = async (
     console.warn('No session found');
     return null;
   }
-  console.log('Session found', session);
+  console.debug('Session found', session);
 
   // Wrap in retry logic for timeout errors
   return await withRetry(async () => {
@@ -82,7 +82,7 @@ export const getUser = async (
         30000,
         'Loading profile timed out after 30 seconds. Please check your connection and try again.'
       );
-      console.log('User Profile', profile);
+      console.debug('User Profile', profile);
 
       // Load memberships
       onStageChange?.('memberships');
@@ -94,7 +94,7 @@ export const getUser = async (
         30000,
         'Loading team memberships timed out after 30 seconds. Please check your connection and try again.'
       );
-      console.log('User Memberships', [teamMembers, clubMembers]);
+      console.debug('User Memberships', [teamMembers, clubMembers]);
 
       const user = {
         id: session.user.id,
@@ -104,7 +104,7 @@ export const getUser = async (
         clubMembers: clubMembers.clubs,
       };
 
-      console.log('Full User', user);
+      console.debug('Full User', user);
       return user;
     } catch (error) {
       console.error('getUser failed:', error);
