@@ -126,7 +126,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
       if (userManagedTeams.length === 1) {
         const selectedTeam = userManagedTeams[0];
         onManagedTeamSelected(userManagedTeams[0].id);
-        setIsDialogOpen(false);
+        setIsDialogOpen(true);
       } else if (userManagedTeams.length === 0) {
         toast({
           variant: "destructive",
