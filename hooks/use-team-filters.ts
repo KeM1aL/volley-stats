@@ -15,6 +15,7 @@ export type TeamFilterState = {
   championshipFormat: string;
   championshipAgeCategory: string;
   championshipGender: string;
+  status: string;
 };
 
 const initialState: TeamFilterState = {
@@ -25,6 +26,7 @@ const initialState: TeamFilterState = {
   championshipFormat: '',
   championshipAgeCategory: '',
   championshipGender: '',
+  status: '',
 };
 
 export function useTeamFilters(onFilter: (filters: Filter[]) => void, initialFilters?: Partial<TeamFilterState>) {
@@ -86,6 +88,9 @@ export function useTeamFilters(onFilter: (filters: Filter[]) => void, initialFil
     }
     if (debouncedFilters.championshipGender) {
       newFilters.push({ field: 'championships.gender', operator: 'eq', value: debouncedFilters.championshipGender });
+    }
+    if (debouncedFilters.status) {
+      newFilters.push({ field: 'status', operator: 'eq', value: debouncedFilters.status });
     }
     onFilter(newFilters);
     setAppliedFilters(debouncedFilters); // Update applied filters after debounce

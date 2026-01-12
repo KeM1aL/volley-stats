@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { PlayerTable } from "@/components/players/player-table";
 import { EditPlayerDialog } from "@/components/players/edit-player-dialog";
 import { NewPlayerDialog } from "@/components/players/new-player-dialog";
-import { useLocalDb } from "@/components/providers/local-database-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamMember, Team } from "@/lib/types";
@@ -15,7 +14,6 @@ import { TeamMember, Team } from "@/lib/types";
 export default function PlayersPage() {
   const params = useParams();
   const router = useRouter();
-  const { localDb: db } = useLocalDb();
   const [team, setTeam] = useState<Team | null>(null);
   const [players, setPlayers] = useState<TeamMember[]>([]);
   const [editingPlayer, setEditingPlayer] = useState<TeamMember | null>(null);

@@ -17,10 +17,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useTeamApi } from "@/hooks/use-team-api";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { Championship, Club, Team } from "@/lib/types";
+import { Championship, Club, Team, TeamStatus } from "@/lib/types";
 import { ChampionshipSelect } from "../championships/championship-select";
 import { createClient } from "@/lib/supabase/client";
 import { ClubSelect } from "../clubs/club-select";
+import { GenericSelect } from "../ui/generic-select";
 import { useRouter } from "next/navigation";
 
 const supabase = createClient();
@@ -29,6 +30,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Team name is required"),
   championships: z.custom<Championship | null>(() => true).nullable(),
   clubs: z.custom<Club | null>(() => true).nullable(),
+  status: z.enum(['incomplete', 'active', 'archived']),
 });
 
 type TeamFormProps = {
@@ -50,6 +52,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
       name: team?.name || "",
       championships: team?.championships || null,
       clubs: team?.clubs || null,
+      status: team?.status || 'active', // Default to 'active' for new teams created via full form
     },
   });
 
@@ -59,6 +62,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
         name: team.name,
         championships: team.championships || null,
         clubs: team.clubs || null,
+        status: team.status,
       });
     }
   }, [team, form]);
@@ -71,6 +75,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           name: values.name,
           championship_id: values.championships?.id ?? null,
           club_id: values.clubs?.id ?? null,
+          status: values.status,
         });
         toast({
           title: "Team updated",
@@ -83,9 +88,10 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
         } = await supabase.auth.getSession();
         if (!session) throw new Error("Not authenticated");
 
-        const newTeam: Omit<Team, "championships"> = {
+        const newTeam: Omit<Team, "championships" | "clubs"> = {
           id: crypto.randomUUID(),
           name: values.name,
+          status: values.status,
           championship_id: values.championships?.id ?? null,
           club_id: values.clubs?.id ?? null,
           created_at: new Date().toISOString(),
@@ -171,6 +177,29 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
                   value={field.value}
                   onChange={field.onChange}
                   isClearable
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <FormControl>
+                <GenericSelect
+                  options={[
+                    { label: 'Incomplete', value: 'incomplete' },
+                    { label: 'Active', value: 'active' },
+                    { label: 'Archived', value: 'archived' }
+                  ]}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Select status"
                 />
               </FormControl>
               <FormMessage />

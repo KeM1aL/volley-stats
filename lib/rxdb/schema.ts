@@ -126,6 +126,7 @@ export const teamSchema = toTypedRxJsonSchema({
   properties: {
     id: { type: "string", maxLength: 36 }, // UUID
     name: { type: "string" },
+    status: { type: "string", enum: ['incomplete', 'active', 'archived'], maxLength: 10 },
     user_id: { type: ["string", "null"], maxLength: 36 },
     club_id: { type: ["string", "null"], maxLength: 36 },
     championship_id: { type: ["string", "null"], maxLength: 36 }, // UUID
@@ -133,8 +134,8 @@ export const teamSchema = toTypedRxJsonSchema({
     ext_source: { type: ["string", "null"] },
     ...timestampFields,
   },
-  required: ["id", "name",  "created_at", "updated_at"],
-  indexes: ["created_at", "updated_at"],
+  required: ["id", "name", "status", "created_at", "updated_at"],
+  indexes: ["created_at", "updated_at", "status"],
 });
 
 // Club Schema

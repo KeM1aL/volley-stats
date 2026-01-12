@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -18,26 +17,19 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { Skeleton } from "../ui/skeleton";
-import { Championship, Match, MatchFormat } from "@/lib/types";
+import { Championship, Match, MatchFormat, Team } from "@/lib/types";
 import { ChampionshipSelect } from "../championships/championship-select";
 import { MatchFormatSelect } from "../match-formats/match-format-select";
+import { TeamSelectWithQuickCreate } from "../teams/team-select-with-quick-create";
 import { cn } from "@/lib/utils";
+import { useMatchApi } from "@/hooks/use-match-api";
 
 const formSchema = z.object({
   homeTeamId: z.string().min(1, "Home team is required"),
@@ -54,13 +46,13 @@ type NewMatchFormProps = {
 };
 
 export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
-  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
-  const [teams, setTeams] = useState<Array<{ id: string; name: string; championship_id: string | null }>>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const matchApi = useMatchApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedChampionship, setSelectedChampionship] = useState<Championship | null>(null);
   const [selectedMatchFormat, setSelectedMatchFormat] = useState<MatchFormat | null>(null);
+  const [selectedHomeTeam, setSelectedHomeTeam] = useState<Team | null>(null);
+  const [selectedAwayTeam, setSelectedAwayTeam] = useState<Team | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,24 +65,6 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
       location: "",
     },
   });
-
-  useEffect(() => {
-    const loadTeams = async () => {
-      if (!db) return;
-
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("teams")
-        .select("id, name, championship_id");
-      if (error) throw error;
-
-      const teamDocs = await db.teams.find().exec();
-      setTeams(teamDocs.map((doc) => doc.toJSON()));
-      setIsLoading(false);
-    };
-
-    loadTeams();
-  }, [db]);
 
   // Handle championship change - auto-populate match format from championship's default
   useEffect(() => {
@@ -127,7 +101,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
         updated_at: new Date().toISOString(),
       } as Match;
 
-      await db?.matches.insert(match);
+      await matchApi.createMatch(match);
       onMatchCreated(match.id);
 
       toast({
@@ -145,18 +119,6 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
       setIsSubmitting(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-[68px] w-full" />
-        <Skeleton className="h-[68px] w-full" />
-        <Skeleton className="h-[68px] w-full" />
-        <Skeleton className="h-[68px] w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    );
-  }
 
   return (
     <Form {...form}>
@@ -206,56 +168,6 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
 
         <FormField
           control={form.control}
-          name="homeTeamId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Home Team</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger disabled={isSubmitting}>
-                    <SelectValue placeholder="Select home team" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="awayTeamId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Away Team</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger disabled={isSubmitting}>
-                    <SelectValue placeholder="Select away team" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="championshipId"
           render={({ field }) => (
             <FormItem>
@@ -268,6 +180,50 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
                     field.onChange(championship?.id || null);
                   }}
                   isClearable
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="homeTeamId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Home Team</FormLabel>
+              <FormControl>
+                <TeamSelectWithQuickCreate
+                  value={selectedHomeTeam}
+                  onChange={(team) => {
+                    setSelectedHomeTeam(team);
+                    field.onChange(team?.id || "");
+                  }}
+                  disabled={isSubmitting}
+                  defaultChampionshipId={form.watch('championshipId')}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="awayTeamId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Away Team</FormLabel>
+              <FormControl>
+                <TeamSelectWithQuickCreate
+                  value={selectedAwayTeam}
+                  onChange={(team) => {
+                    setSelectedAwayTeam(team);
+                    field.onChange(team?.id || "");
+                  }}
+                  disabled={isSubmitting}
+                  defaultChampionshipId={form.watch('championshipId')}
                 />
               </FormControl>
               <FormMessage />

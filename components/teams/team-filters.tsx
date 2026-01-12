@@ -15,6 +15,7 @@ import { GenericSelect } from '@/components/ui/generic-select';
 import { useTeamFilters, TeamFilterState } from '@/hooks/use-team-filters';
 import { Filter } from '@/lib/api/types';
 import { useDebounce } from '@/hooks/use-debounce';
+import { TeamStatus } from '@/lib/types';
 
 type TeamFiltersProps = {
   onFilterChange: (filters: Filter[]) => void;
@@ -77,14 +78,27 @@ export function TeamFilters({ onFilterChange, initialFilters }: TeamFiltersProps
     value: value,
   }));
 
+  const statusOptions: Array<{ label: string; value: TeamStatus }> = [
+    { label: 'Incomplete', value: 'incomplete' },
+    { label: 'Active', value: 'active' },
+    { label: 'Archived', value: 'archived' },
+  ];
+
   return (
     <div className="space-y-4 p-4 border rounded-lg">
       <h2 className="text-xl font-semibold mb-4">Filter Teams</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Input
           placeholder="Search by team name..."
           value={searchTermInput}
           onChange={(e) => setSearchTermInput(e.target.value)}
+        />
+        <GenericSelect
+          options={statusOptions}
+          placeholder="Select Status"
+          value={filters.status}
+          onValueChange={(value) => updateFilter('status', value)}
+          isClearable
         />
         <ChampionshipSelect
           value={filters.selectedChampionship}

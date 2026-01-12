@@ -12,6 +12,7 @@ import { TeamMember } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";
+import { useTeamMembersApi } from "@/hooks/use-team-members-api";
 
 type NewPlayerDialogProps = {
   teamId: string;
@@ -26,8 +27,8 @@ export function NewPlayerDialog({
   onClose,
   onPlayerCreated,
 }: NewPlayerDialogProps) {
-  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
+  const teamMemberApi = useTeamMembersApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (values: any) => {
@@ -45,15 +46,7 @@ export function NewPlayerDialog({
         updated_at: new Date().toISOString(),
       } as TeamMember;
 
-      // const { data, error } = await supabase
-      //   .from("players")
-      //   .insert(player)
-      //   .select()
-      //   .single();
-
-      // if (error) throw error;
-
-      await db?.team_members.insert(player);
+      await teamMemberApi.createTeamMember(player);
 
       onPlayerCreated(player);
 

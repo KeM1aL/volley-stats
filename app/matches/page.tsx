@@ -11,7 +11,6 @@ import { MatchHistoryTable } from "@/components/matches/history/match-history-ta
 import { TeamStats } from "@/components/matches/history/team-stats";
 import { StatisticsDialog } from "@/components/matches/history/statistics-dialog";
 import { NewMatchDialog } from "@/components/matches/new-match-dialog";
-import { useLocalDb } from "@/components/providers/local-database-provider";
 import { ClubSelect } from "@/components/clubs/club-select";
 import { ChampionshipSelect } from "@/components/championships/championship-select";
 import { TeamSelect } from "@/components/teams/team-select";

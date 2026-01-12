@@ -7,9 +7,11 @@ import { createMatchFormatApi } from "./match-formats";
 import { createEventApi } from "./events";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "../supabase/client";
+import { createTeamMembersApi } from "./team-members";
 
 export const createApi = (supabaseClient: SupabaseClient) => ({
   teams: createTeamApi(supabaseClient),
+  teamMembers: createTeamMembersApi(supabaseClient),
   championships: createChampionshipApi(supabaseClient),
   clubs: createClubApi(supabaseClient),
   matches: createMatchApi(supabaseClient),

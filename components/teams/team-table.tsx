@@ -21,12 +21,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
-import { Team } from "@/lib/types";
+import { Team, TeamStatus } from "@/lib/types";
 import { useTeamApi } from "@/hooks/use-team-api";
 import { EmptyState } from "@/components/ui/empty-state";
+
+// Helper function to get badge variant based on team status
+function getTeamStatusVariant(status: TeamStatus): "default" | "secondary" | "outline" {
+  switch (status) {
+    case 'active':
+      return 'default';  // Blue badge
+    case 'incomplete':
+      return 'secondary';  // Orange/warning badge
+    case 'archived':
+      return 'outline';  // Gray badge
+    default:
+      return 'outline';
+  }
+}
 
 type TeamTableProps = {
   teams: Team[];
@@ -98,6 +113,7 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Team Name</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Championship</TableHead>
             <TableHead>Club</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
@@ -107,6 +123,11 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
           {teams.map((team) => (
             <TableRow key={team.id}>
               <TableCell className="font-medium">{team.name}</TableCell>
+              <TableCell>
+                <Badge variant={getTeamStatusVariant(team.status)}>
+                  {team.status}
+                </Badge>
+              </TableCell>
               <TableCell>{team.championships?.name}</TableCell>
               <TableCell>{team.clubs?.name}</TableCell>
               <TableCell>

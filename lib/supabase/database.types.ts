@@ -780,6 +780,7 @@ export type Database = {
           ext_source: string | null
           id: string
           name: string
+          status: Database["public"]["Enums"]["team_status"]
           updated_at: string
           user_id: string | null
         }
@@ -792,6 +793,7 @@ export type Database = {
           ext_source?: string | null
           id?: string
           name: string
+          status?: Database["public"]["Enums"]["team_status"]
           updated_at?: string
           user_id?: string | null
         }
@@ -804,6 +806,7 @@ export type Database = {
           ext_source?: string | null
           id?: string
           name?: string
+          status?: Database["public"]["Enums"]["team_status"]
           updated_at?: string
           user_id?: string | null
         }
@@ -842,6 +845,7 @@ export type Database = {
       club_member_role: "owner" | "admin" | "member"
       formatType: "6x6" | "4x4"
       status: "upcoming" | "live" | "completed"
+      team_status: "incomplete" | "active" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -976,6 +980,7 @@ export const Constants = {
       club_member_role: ["owner", "admin", "member"],
       formatType: ["6x6", "4x4"],
       status: ["upcoming", "live", "completed"],
+      team_status: ["incomplete", "active", "archived"],
     },
   },
 } as const

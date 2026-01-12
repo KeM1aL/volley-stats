@@ -55,11 +55,12 @@ export type Profile = {
   favorite_club?: Club | null;         // Joined relation
 };
 
-
+export type TeamStatus = 'incomplete' | 'active' | 'archived';
 
 export type Team = {
   id: string;
   name: string;
+  status: TeamStatus;
   club_id: string | null;
   clubs?: Club | null;
   championship_id: string | null; // UUID reference
