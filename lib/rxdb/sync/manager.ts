@@ -6,7 +6,8 @@ import { replicateSupabase } from './index';
 import { CollectionName } from '../schema';
 import { User } from '@/lib/types';
 
-const LAST_N_MATCHES = 10;
+const LAST_N_MATCHES = 5;
+const dynamicCollections: CollectionName[] = ['matches', 'sets', 'score_points', 'player_stats', 'events'];
 
 export class SyncManager {
   private db: RxDatabase<DatabaseCollections>;
@@ -44,7 +45,7 @@ export class SyncManager {
   private async stopSync() {
     console.debug('SyncManager: Stopping sync...');
     const promises: Promise<any>[] = [];
-    for(const state of this.replicationStates.values()) {
+    for (const state of this.replicationStates.values()) {
       promises.push(state.cancel());
     }
     await Promise.all(promises);
@@ -61,15 +62,15 @@ export class SyncManager {
       // await this.updateLastMatches();
       // await this.restartDynamicSync();
 
-      for(const state of this.replicationStates.values()) {
-        if(!state.isPaused()) return;
+      for (const state of this.replicationStates.values()) {
+        if (!state.isPaused()) return;
         // state.reSync(); // Trigger resync when coming back online
         promises.push(state.start());
       }
     } else {
       // When going offline, we might want to pause replications to save resources
-      for(const state of this.replicationStates.values()) {
-        if(state.isPaused()) return;
+      for (const state of this.replicationStates.values()) {
+        if (state.isPaused()) return;
         promises.push(state.pause());
       }
     }
@@ -77,13 +78,17 @@ export class SyncManager {
   }
 
   async syncMatch(matchId: string) {
-    // if (this.activeMatchIds.has(matchId)) return;
+    if (this.activeMatchIds.has(matchId)) {
+      console.log(`SyncManager: Match ${matchId} is already being synced.`);
+      // TODO force resync
+      return;
+    }
 
     this.activeMatchIds.add(matchId);
     console.log(`Force syncing match: ${matchId}`);
 
     // Restart detailed replications with new filter
-    await this.restartDynamicSync();
+    await this.startDynamicSync(matchId);
     console.log(`SyncManager: Sync for match ${matchId} finished.`);
   }
 
@@ -98,24 +103,21 @@ export class SyncManager {
 
     // Restart user-scoped collections with new user
     if (this.user.clubMembers && this.user.clubMembers.length > 0) {
-      this.startCollectionSync('club_members', ({ query }) => {
+      this.startCollectionSync('club_members', this.getReplicationIdentifier('club_members'), ({ query }) => {
         query.in('club_id', this.user.clubMembers!.map((cm: any) => cm.club_id));
         return query;
       });
     }
 
     if (this.user.teamMembers && this.user.teamMembers.length > 0) {
-      this.startCollectionSync('team_members', ({ query }) => {
+      this.startCollectionSync('team_members', this.getReplicationIdentifier('team_members'), ({ query }) => {
         query.in('team_id', this.user.teamMembers!.map((tm: any) => tm.team_id));
         return query;
       });
     }
 
-    await this.updateLastMatches();
-    this.startCollectionSync('matches', ({ query }) => {
-      query.in('id', this.activeMatchIds);
-      return query;
-    });
+    // await this.updateLastMatches();
+    // this.restartDynamicSync();
   }
 
   private async updateLastMatches() {
@@ -136,7 +138,7 @@ export class SyncManager {
         .or(`home_team_id.in.(${teamIds.join(',')}),away_team_id.in.(${teamIds.join(',')})`)
         .in('status', ['completed', 'live'])
         .order('date', { ascending: false })
-        .limit(5); // Limit to avoid fetching too many if user has many matches
+        .limit(LAST_N_MATCHES);
       if (mError) throw mError;
 
       if (matches) {
@@ -149,56 +151,97 @@ export class SyncManager {
     }
   }
 
+  private async startDynamicSync(matchId: string) {
+    // Chain the execution to prevent race conditions where multiple calls
+    // create overlapping replication states, leading to memory leaks.
+    this.dynamicSyncPromise = this.dynamicSyncPromise.then(async () => {
+      console.debug(`SyncManager: Starting dynamic sync for match: ${matchId}`);
+
+      const promises: Promise<any>[] = [];
+
+
+      const identifierSuffix = `_chunk_${matchId}`;
+
+      for (const collectionName of dynamicCollections) {
+        const replicationIdentifier = this.getReplicationIdentifier(collectionName, identifierSuffix);
+
+        // Cancel existing
+        const existing = this.replicationStates.get(replicationIdentifier);
+        if (existing) {
+          console.debug(`SyncManager: Cancelling existing sync for collection ${collectionName} and match ${matchId}.`);
+          await existing.remove();
+          this.replicationStates.delete(replicationIdentifier); // Ensure it's removed from map immediately
+        }
+
+        // Start new
+
+        if (collectionName === 'matches') {
+          console.debug(`SyncManager: Starting sync for collection ${collectionName} with match filter.`);
+          const state = this.startCollectionSync(collectionName, replicationIdentifier, ({ query }) => query.eq('id', matchId), `id=eq.${matchId}`);
+          if (state) {
+            console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${collectionName}.`);
+            promises.push(state.awaitInitialReplication());
+          }
+        } else {
+          console.debug(`SyncManager: Starting sync for collection ${collectionName} with match filter.`);
+          const state = this.startCollectionSync(collectionName, replicationIdentifier, ({ query }) => query.eq('match_id', matchId), `match_id=eq.${matchId}`);
+          if (state) {
+            console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${collectionName}.`);
+            promises.push(state.awaitInitialReplication());
+          }
+        }
+
+      }
+
+      await Promise.all(promises);
+    });
+
+    return this.dynamicSyncPromise;
+  }
+
   private dynamicSyncPromise: Promise<void> = Promise.resolve();
 
   private async restartDynamicSync() {
     // Chain the execution to prevent race conditions where multiple calls
     // create overlapping replication states, leading to memory leaks.
     this.dynamicSyncPromise = this.dynamicSyncPromise.then(async () => {
-
-      const dynamicCollections: CollectionName[] = ['matches', 'sets', 'score_points', 'player_stats', 'events'];
       const matchIds = Array.from(this.activeMatchIds);
       console.debug(`SyncManager: Restarting dynamic sync for matches: ${matchIds.join(', ')}`);
 
-
-      // Create a hash of the match IDs to ensure we reset the checkpoint when the filter changes.
-      const filterHash = matchIds.sort().join('|');
-      let hash = 0;
-      for (let i = 0; i < filterHash.length; i++) {
-        const char = filterHash.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32bit integer
-      }
-      const identifierSuffix = `_${hash}`;
-
       const promises: Promise<any>[] = [];
 
-      for (const name of dynamicCollections) {
-        // Cancel existing
-        const existing = this.replicationStates.get(name);
-        if (existing) {
-          console.debug(`SyncManager: Cancelling existing sync for collection ${name}`);
-          await existing.remove();
-          this.replicationStates.delete(name); // Ensure it's removed from map immediately
-        }
+      for (const matchId of matchIds) {
+        const identifierSuffix = `_chunk_${matchId}`;
 
-        // Start new
-        if (matchIds.length > 0) {
-          if (name === 'matches') {
-            console.debug(`SyncManager: Starting sync for collection ${name} with match filter.`);
-            const state = this.startCollectionSync(name, ({ query }) => query.in('id', matchIds), identifierSuffix);
+        for (const collectionName of dynamicCollections) {
+          const replicationIdentifier = this.getReplicationIdentifier(collectionName, identifierSuffix);
+
+          // Cancel existing
+          const existing = this.replicationStates.get(replicationIdentifier);
+          if (existing) {
+            console.debug(`SyncManager: Cancelling existing sync for collection ${collectionName} and match ${matchId}.`);
+            await existing.remove();
+            this.replicationStates.delete(replicationIdentifier); // Ensure it's removed from map immediately
+          }
+
+          // Start new
+
+          if (collectionName === 'matches') {
+            console.debug(`SyncManager: Starting sync for collection ${collectionName} with match filter.`);
+            const state = this.startCollectionSync(collectionName, replicationIdentifier, ({ query }) => query.eq('id', matchId), `id=eq.${matchId}`);
             if (state) {
-              console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${name}.`);
+              console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${collectionName}.`);
               promises.push(state.awaitInitialReplication());
             }
           } else {
-            console.debug(`SyncManager: Starting sync for collection ${name} with match filter.`);
-            const state = this.startCollectionSync(name, ({ query }) => query.in('match_id', matchIds), identifierSuffix);
+            console.debug(`SyncManager: Starting sync for collection ${collectionName} with match filter.`);
+            const state = this.startCollectionSync(collectionName, replicationIdentifier, ({ query }) => query.eq('match_id', matchId), `match_id=eq.${matchId}`);
             if (state) {
-              console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${name}.`);
+              console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${collectionName}.`);
               promises.push(state.awaitInitialReplication());
             }
           }
+
         }
       }
 
@@ -208,31 +251,40 @@ export class SyncManager {
     return this.dynamicSyncPromise;
   }
 
-  private startCollectionSync(name: string, queryBuilder?: (q: any) => any, identifierSuffix: string = ''): RxReplicationState<any, any> | undefined {
-    const collection = this.db.collections[name as CollectionName] as any;
+  private startCollectionSync(collectionName: string, replicationIdentifier: string = '', queryBuilder?: (q: any) => any, liveFilter?: string): RxReplicationState<any, any> | undefined {
+    const collection = this.db.collections[collectionName as CollectionName] as any;
     if (!collection) return undefined;
 
+    if (!replicationIdentifier) {
+      replicationIdentifier = this.getReplicationIdentifier(collectionName);
+    }
+
     const replicationState = replicateSupabase({
-      replicationIdentifier: `sync_${name}${identifierSuffix}`,
+      replicationIdentifier,
       collection: collection,
       client: this.client,
-      tableName: name,
+      tableName: collectionName,
       pull: {
-        queryBuilder: queryBuilder
+        queryBuilder: queryBuilder,
+        liveFilter: liveFilter
       },
       push: {}, // Default push
-      live: true,
+      live: false,
       autoStart: true,
       modifiedField: "updated_at",
       deletedField: "_deleted",
     });
 
-    this.replicationStates.set(name, replicationState);
+    this.replicationStates.set(replicationIdentifier, replicationState);
 
     replicationState.error$.subscribe(err => {
-      console.error(`Sync error for ${name}:`, err);
+      console.error(`Sync error for ${collectionName} (${replicationIdentifier}):`, err);
     });
 
     return replicationState;
+  }
+
+  private getReplicationIdentifier(collectionName: string, identifierSuffix: string = ''): string {
+    return `sync_${collectionName}${identifierSuffix}`;
   }
 }

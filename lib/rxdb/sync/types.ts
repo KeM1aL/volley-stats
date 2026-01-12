@@ -34,6 +34,11 @@ export type SyncOptionsSupabase<RxDocType> = Omit<
          * You can return a new builder instance or mutate the provided one.
          */
         queryBuilder?: SupabasePullQueryBuilder<RxDocType>;
+        
+        /**
+         * Allows modifying the live filter string used in the realtime subscription.
+         */
+        liveFilter?: string;
     };
     push?: Omit<ReplicationPushOptions<RxDocType>, 'handler'>;
 };

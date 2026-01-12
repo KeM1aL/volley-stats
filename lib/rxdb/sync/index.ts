@@ -155,7 +155,7 @@ export function replicateSupabase<RxDocType>(
         ) {
             async function insertOrReturnConflict(doc: WithDeleted<RxDocType>): Promise<WithDeleted<RxDocType> | undefined> {
                 const id = (doc as any)[primaryPath];
-                const { error } = await options.client.from(options.tableName).insert(doc)
+                const { error } = await options.client.from(options.tableName).upsert(doc).select()
                 if (!error) {
                     return;
                 } else if (error.code == POSTGRES_INSERT_CONFLICT_CODE) {
@@ -211,6 +211,7 @@ export function replicateSupabase<RxDocType>(
             const conflicts: WithDeleted<RxDocType>[] = [];
             await Promise.all(
                 rows.map(async (row) => {
+                    // console.log('Pushing row to supabase replication:', row);
                     const newDoc = row.newDocumentState as WithDeleted<RxDocType>;
                     if (!row.assumedMasterState) {
                         const c = await insertOrReturnConflict(newDoc);
@@ -244,11 +245,12 @@ export function replicateSupabase<RxDocType>(
         const startBefore = replicationState.start.bind(replicationState);
         const cancelBefore = replicationState.cancel.bind(replicationState);
         replicationState.start = () => {
+            
             const sub = options.client
                 .channel('realtime:' + options.tableName)
                 .on(
                     'postgres_changes',
-                    { event: '*', schema: 'public', table: options.tableName },
+                    { event: '*', schema: 'public', table: options.tableName, filter: options.pull?.liveFilter },
                     (payload) => {
                         /**
                          * We assume soft-deletes in supabase

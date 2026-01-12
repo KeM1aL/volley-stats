@@ -74,24 +74,32 @@ export default function LiveMatchPage() {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [navExpanded, setNavExpanded] = useState(false);
 
-  useEffect(() => {
-    const loadData = async () => {
-      const playerById: Map<string, TeamMember> = new Map();
-      teamPlayers.forEach((player) => {
-        playerById.set(player.id, player);
-      });
-      setTeamPlayerById(playerById);
-    };
-
-    loadData();
-  }, [teamPlayers]);
-
   // Memoized data loading function
   const loadMatchData = useCallback(async () => {
     if (!db) return;
 
     try {
       setIsLoading(true);
+      toast({
+        title: "Syncing match data...",
+        description: "Please wait while we ensure you have the latest data.",
+      });
+      try {
+        await db?.syncManager.syncMatch(matchId);
+        toast({
+          title: "Ready for offline",
+          description:
+            "Match data is synced. You can now go offline if needed.",
+        });
+      } catch (e) {
+        console.error("Sync failed", e);
+        toast({
+          variant: "destructive",
+          title: "Sync Warning",
+          description:
+            "Failed to fully sync match data. You may proceed but some data might be missing.",
+        });
+      }
 
       const [matchDoc, setDocs] = await Promise.all([
         db.matches.findOne(matchId).exec(),
@@ -151,9 +159,17 @@ export default function LiveMatchPage() {
         .findByIds(playerIds as string[])
         .exec();
       if (availablePlayerDocs) {
-        setTeamPlayers(
-          Array.from(availablePlayerDocs.values()).map((doc) => doc.toJSON())
+        const teamPlayers = Array.from(availablePlayerDocs.values()).map(
+          (doc) => doc.toJSON()
         );
+        setTeamPlayers(teamPlayers);
+        const playerById: Map<string, TeamMember> = new Map();
+        teamPlayers.forEach((player) => {
+          playerById.set(player.id, player);
+        });
+        setTeamPlayerById(playerById);
+      } else {
+        console.warn("No available players found for team:", teamId);
       }
 
       const sets = setDocs.map((doc) => doc.toJSON());
@@ -250,9 +266,10 @@ export default function LiveMatchPage() {
 
         toast({
           title: "Substitution recorded",
-          description: playerOut && playerIn
-            ? `#${playerOut.number} ${playerOut.name} replaced by #${playerIn.number} ${playerIn.name} at position ${substitution.position}`
-            : "Substitution recorded successfully",
+          description:
+            playerOut && playerIn
+              ? `#${playerOut.number} ${playerOut.name} replaced by #${playerIn.number} ${playerIn.name} at position ${substitution.position}`
+              : "Substitution recorded successfully",
         });
       } catch (error) {
         console.error("Failed to record substitution:", error);
@@ -407,7 +424,9 @@ export default function LiveMatchPage() {
           managedTeamId={managedTeam!.id}
           currentHomeScore={matchState.set?.home_score ?? 0}
           currentAwayScore={matchState.set?.away_score ?? 0}
-          currentPointNumber={matchState.points.length > 0 ? matchState.points.length : undefined}
+          currentPointNumber={
+            matchState.points.length > 0 ? matchState.points.length : undefined
+          }
           currentLineup={matchState.set?.current_lineup}
           onSubstitutionRecorded={onSubstitutionRecorded}
         />
@@ -496,11 +515,11 @@ export default function LiveMatchPage() {
       {/* Row 1: Header - Full Width */}
       <div className="w-full shrink-0">
         <MatchScoreDetails
-            match={matchState.match}
-            sets={matchState.sets}
-            homeTeam={homeTeam}
-            awayTeam={awayTeam}
-          />
+          match={matchState.match}
+          sets={matchState.sets}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+        />
       </div>
 
       {/* Row 2: Content - Responsive Layout */}
@@ -561,7 +580,10 @@ export default function LiveMatchPage() {
 
           {/* Mobile Panel: Drawer */}
           <Sheet open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
-            <SheetContent side="right" className="w-[85%] overflow-hidden flex flex-col">
+            <SheetContent
+              side="right"
+              className="w-[85%] overflow-hidden flex flex-col"
+            >
               <div className="flex-1 overflow-y-auto live-match-scroll">
                 {renderPanelContent()}
               </div>

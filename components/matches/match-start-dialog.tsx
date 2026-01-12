@@ -29,51 +29,18 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   const { user } = useAuth(); // Use the auth context
   const router = useRouter();
   const [managedTeam, setManagedTeam] = useState<Team | null>(null);
-  const [homeTeam, setHomeTeam] = useState<Team | null>(null);
-  const [awayTeam, setAwayTeam] = useState<Team | null>(null);
   const [players, setPlayers] = useState<TeamMember[] | null>(null);
   const [availablePlayers, setAvailablePlayers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
 
-  useEffect(() => {
-    if (!isDialogOpen) return;
-
-    const loadTeams = async () => {
-      if (!db) return;
-      setIsLoading(true);
-      try {
-        const teamDocs = await db.teams
-          .findByIds([match.home_team_id, match.away_team_id])
-          .exec();
-
-        if (!teamDocs || teamDocs.size !== 2) {
-          throw new Error("Teams not found");
-        }
-
-        const teams = Array.from(teamDocs.values());
-        setHomeTeam(teams.find(t => t.id === match.home_team_id)?.toJSON() || null);
-        setAwayTeam(teams.find(t => t.id === match.away_team_id)?.toJSON() || null);
-      } catch (error) {
-        console.error("Failed to load teams:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load teams",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTeams();
-  }, [db, match.id, isDialogOpen]);
-
   const userManagedTeams = useMemo(() => {
     if (!user || !user.teamMembers) return [];
     const managedTeamIds = user.teamMembers.map(member => member.team_id);
     const teams: Team[] = [];
+    const homeTeam = match.home_team;
+    const awayTeam = match.away_team;
     if (homeTeam && managedTeamIds.includes(homeTeam.id)) {
       teams.push(homeTeam);
     }
@@ -81,7 +48,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
       teams.push(awayTeam);
     }
     return teams;
-  }, [user, homeTeam, awayTeam]);
+  }, [user, match]);
 
   const loadTeamPlayers = async (team: Team) => {
     if (!db) return;
@@ -145,40 +112,21 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
 
   async function onManagedTeamSelected(teamId: string): Promise<void> {
     let selectedTeam;
-    if (teamId === awayTeam?.id) {
-      selectedTeam = awayTeam;
+    if (teamId === match.away_team?.id) {
+      selectedTeam = match.away_team;
     } else {
-      selectedTeam = homeTeam;
+      selectedTeam = match.home_team;
     }
-    setManagedTeam(selectedTeam);
+    setManagedTeam(selectedTeam!);
     await loadTeamPlayers(selectedTeam!);
   }
 
   const handleOpenChange = async (open: boolean) => {
-    if (open && !isLoading && homeTeam && awayTeam) {
+    if (open && !isLoading && match) {
       if (userManagedTeams.length === 1) {
         const selectedTeam = userManagedTeams[0];
-        // Sync Match
-        toast({
-            title: "Syncing match data...",
-            description: "Please wait while we ensure you have the latest data.",
-        });
-        try {
-            await db?.syncManager.syncMatch(match.id);
-            toast({
-                title: "Ready for offline",
-                description: "Match data is synced. You can now go offline if needed.",
-            });
-            setIsDialogOpen(true);
-        } catch (e) {
-            console.error("Sync failed", e);
-             toast({
-                variant: "destructive",
-                title: "Sync Warning",
-                description: "Failed to fully sync match data. You may proceed but some data might be missing.",
-            });
-            setIsDialogOpen(true);
-        }
+        onManagedTeamSelected(userManagedTeams[0].id);
+        setIsDialogOpen(false);
       } else if (userManagedTeams.length === 0) {
         toast({
           variant: "destructive",
@@ -187,26 +135,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
         });
         setIsDialogOpen(false);
       } else {
-        toast({
-            title: "Syncing match data...",
-            description: "Please wait while we ensure you have the latest data.",
-        });
-        try {
-            await db?.syncManager.syncMatch(match.id);
-            toast({
-                title: "Ready for offline",
-                description: "Match data is synced. You can now go offline if needed.",
-            });
-             setIsDialogOpen(true);
-        } catch (e) {
-             console.error("Sync failed", e);
-             toast({
-                variant: "destructive",
-                title: "Sync Warning",
-                description: "Failed to fully sync match data. You may proceed but some data might be missing.",
-            });
-             setIsDialogOpen(true);
-        }
+        setIsDialogOpen(true);
       }
     } else if (!open) {
       setIsDialogOpen(false);
@@ -226,8 +155,8 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <MatchManagedTeamSetup
-              homeTeam={homeTeam!}
-              awayTeam={awayTeam!}
+              homeTeam={match.home_team!}
+              awayTeam={match.away_team!}
               onTeamSelected={onManagedTeamSelected}
             />
             {managedTeam && players && (
