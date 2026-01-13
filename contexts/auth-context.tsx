@@ -176,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Log session already expired
       if (timeUntilExpiry <= 0) {
-        console.error("Session has expired");
+        console.warn("Session has expired");
       }
     };
 
