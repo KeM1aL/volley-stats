@@ -41,6 +41,7 @@ import { supabase } from '@/lib/supabase/client';
 const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 // Add plugins
 if (inDevEnvironment) {
+  console.debug('Enabling RxDB Dev Mode Plugin');
   addRxPlugin(RxDBDevModePlugin);
 }
 addRxPlugin(RxDBQueryBuilderPlugin);

@@ -82,6 +82,9 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           description: "The team has been successfully updated.",
         });
         router.refresh();
+        if (onSuccess) {
+          onSuccess(team.id);
+        }
       } else {
         const {
           data: { session },

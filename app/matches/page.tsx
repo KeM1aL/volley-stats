@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
@@ -52,6 +52,7 @@ export default function MatchPage() {
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(true);
   const [newMatchDialogOpen, setNewMatchDialogOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const matchApi = useMatchApi();
 
@@ -142,7 +143,7 @@ export default function MatchPage() {
     };
 
     loadData();
-  }, [selectedTeam, selectedClub, dateRange, toast, selectedChampionship, matchApi, user]);
+  }, [selectedTeam, selectedClub, dateRange, toast, selectedChampionship, matchApi, user, refreshKey]);
 
   const handleTeamChange = (team: Team | null) => {
     setSelectedTeam(team);
@@ -161,6 +162,10 @@ export default function MatchPage() {
   const handleChampionshipChange = (championship: Championship | null) => {
     setSelectedChampionship(championship);
   };
+
+  const handleMatchRefresh = useCallback(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -258,7 +263,7 @@ export default function MatchPage() {
         open={newMatchDialogOpen}
         onOpenChange={setNewMatchDialogOpen}
         onSuccess={(matchId) => {
-          // Match list will refresh automatically via RxDB reactivity
+          handleMatchRefresh();
           toast({
             title: "Success",
             description: "Match created successfully",

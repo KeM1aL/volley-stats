@@ -12,16 +12,17 @@ import { TeamForm } from "./team-form";
 type EditTeamDialogProps = {
   team: Team | null;
   onClose: () => void;
+  onSuccess?: (id: string) => void;
 };
 
-export function EditTeamDialog({ team, onClose }: EditTeamDialogProps) {
+export function EditTeamDialog({ team, onClose, onSuccess }: EditTeamDialogProps) {
   return (
     <Dialog open={!!team} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Team</DialogTitle>
         </DialogHeader>
-        <TeamForm team={team} onClose={onClose} />
+        <TeamForm team={team} onClose={onClose} onSuccess={onSuccess} />
       </DialogContent>
     </Dialog>
   );

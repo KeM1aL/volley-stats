@@ -22,6 +22,7 @@ export default function TeamsPage() {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<Filter[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const teamApi = useTeamApi();
   const isInitialMount = useRef(true);
 
@@ -80,10 +81,14 @@ export default function TeamsPage() {
     };
 
     loadTeams();
-  }, [filters, teamApi, user]);
+  }, [filters, teamApi, user, refreshKey]);
 
   const handleFilterChange = useCallback((newFilters: Filter[]) => {
     setFilters(newFilters);
+  }, []);
+
+  const handleTeamRefresh = useCallback(() => {
+    setRefreshKey((prev) => prev + 1);
   }, []);
 
   return (
@@ -106,11 +111,13 @@ export default function TeamsPage() {
       <EditTeamDialog
         team={editingTeam}
         onClose={() => setEditingTeam(null)}
+        onSuccess={handleTeamRefresh}
       />
 
       <NewTeamDialog
         open={newTeam}
         onClose={() => setNewTeam(false)}
+        onSuccess={handleTeamRefresh}
       />
     </div>
   );
