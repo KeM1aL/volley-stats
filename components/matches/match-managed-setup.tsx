@@ -14,18 +14,21 @@ type MatchSetupProps = {
   homeTeam: Team;
   awayTeam: Team;
   onTeamSelected: (teamId: string) => void;
+  selectedTeamId?: string;
 };
 
 export function MatchManagedTeamSetup({
   homeTeam,
   awayTeam,
   onTeamSelected,
+  selectedTeamId,
 }: MatchSetupProps) {
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-4">Managed Team</h2>
         <RadioGroup
+          value={selectedTeamId}
           onValueChange={onTeamSelected}
           className="flex flex-col space-y-1"
         >

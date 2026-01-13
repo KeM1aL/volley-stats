@@ -158,6 +158,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
               homeTeam={match.home_team!}
               awayTeam={match.away_team!}
               onTeamSelected={onManagedTeamSelected}
+              selectedTeamId={managedTeam?.id}
             />
             {managedTeam && players && (
               <MatchLineupSetup
