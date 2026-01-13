@@ -13,5 +13,14 @@ export const createChampionshipApi = (supabaseClient?: SupabaseClient) => {
       const mergedJoins = joins ? [...new Set([...defaultJoins, ...joins])] : defaultJoins;
       return dataStore.getAll(filters, sort, mergedJoins);
     },
+    createChampionship: (championship: Partial<Championship>) => {
+      return dataStore.create(championship);
+    },
+    updateChampionship: (championshipId: string, updates: Partial<Championship>) => {
+      return dataStore.update(championshipId, updates);
+    },
+    getChampionship: (championshipId: string) => {
+      return dataStore.get(championshipId);
+    },
   };
 };

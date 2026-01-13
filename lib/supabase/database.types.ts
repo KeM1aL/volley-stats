@@ -28,6 +28,7 @@ export type Database = {
           season_id: string | null
           type: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           _deleted?: boolean
@@ -42,6 +43,7 @@ export type Database = {
           season_id?: string | null
           type: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           _deleted?: boolean
@@ -56,6 +58,7 @@ export type Database = {
           season_id?: string | null
           type?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -726,7 +729,7 @@ export type Database = {
           id: string
           name: string
           number: number
-          position: string
+          position: string | null
           role: string
           team_id: string
           updated_at: string
@@ -739,8 +742,8 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          number: number
-          position: string
+          number?: number
+          position?: string | null
           role?: string
           team_id: string
           updated_at?: string
@@ -754,7 +757,7 @@ export type Database = {
           id?: string
           name?: string
           number?: number
-          position?: string
+          position?: string | null
           role?: string
           team_id?: string
           updated_at?: string
@@ -840,7 +843,7 @@ export type Database = {
     Enums: {
       age_category: "U10" | "U12" | "U14" | "U16" | "U18" | "U21" | "senior"
       championship_format: "2x2" | "3x3" | "4x4" | "6x6"
-      championship_gender: "male" | "female"
+      championship_gender: "male" | "female" | "mixte"
       championship_type: "regional" | "departmental" | "national"
       club_member_role: "owner" | "admin" | "member"
       formatType: "6x6" | "4x4"
@@ -975,7 +978,7 @@ export const Constants = {
     Enums: {
       age_category: ["U10", "U12", "U14", "U16", "U18", "U21", "senior"],
       championship_format: ["2x2", "3x3", "4x4", "6x6"],
-      championship_gender: ["male", "female"],
+      championship_gender: ["male", "female", "mixte"],
       championship_type: ["regional", "departmental", "national"],
       club_member_role: ["owner", "admin", "member"],
       formatType: ["6x6", "4x4"],

@@ -31,6 +31,7 @@ export const championshipSchema = toTypedRxJsonSchema({
     type: { type: "string" },
     season_id: { type: ["string", "null"], maxLength: 36 }, // UUID
     default_match_format: { type: "string", maxLength: 36 }, // UUID
+    user_id: { type: "string", maxLength: 36 }, // UUID
     age_category: {
       type: "string",
       enum: ["U10", "U12", "U14", "U16", "U18", "U21", "senior"],
@@ -185,8 +186,8 @@ export const playerSchema = toTypedRxJsonSchema({
     id: { type: "string", maxLength: 36 },
     team_id: { type: "string", maxLength: 36 },
     user_id: { type: ["string", "null"], maxLength: 36 },
-    name: { type: "string" },
-    number: { type: ["number", "null"] },
+    name: { type: ["string", "null"] },
+    number: { type: "number"},
     role: {
       type: "string",
       enum: ["owner", "coach", "staff", "player"],

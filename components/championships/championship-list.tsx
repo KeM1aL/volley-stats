@@ -13,7 +13,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export function ChampionshipList() {
+type ChampionshipListProps = {
+  refreshKey?: number;
+};
+
+export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const championshipApi = useChampionshipApi();
@@ -47,7 +51,7 @@ export function ChampionshipList() {
     };
 
     fetchChampionshipsAndSeasons();
-  }, [championshipApi, seasonApi, filters, router]);
+  }, [championshipApi, seasonApi, filters, router, refreshKey]);
 
   const groupedChampionships = championships.reduce((acc, championship) => {
     const season = seasons.find((s) => s.id === championship.season_id);

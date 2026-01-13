@@ -28,6 +28,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ChampionshipTeamsSummary } from "@/components/championships/championship-teams-summary";
+import { ChampionshipTeamsList } from "@/components/championships/championship-teams-list";
+import { useTeamApi } from "@/hooks/use-team-api";
 
 const lastSeptember = new Date();
 if (lastSeptember.getMonth() < 8) {
@@ -38,7 +41,7 @@ lastSeptember.setDate(1);
 
 export default function ChampionshipDetailPage() {
   const params = useParams();
-  const championshipId = Number(params.id);
+  const championshipId = params.id as string;
   const championshipApi = useChampionshipApi();
   const matchApi = useMatchApi();
   const { toast } = useToast();
@@ -56,6 +59,11 @@ export default function ChampionshipDetailPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(true);
+
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(false);
+
+  const teamApi = useTeamApi();
 
   useEffect(() => {
     const fetchChampionship = async () => {
@@ -147,6 +155,42 @@ export default function ChampionshipDetailPage() {
     selectedClub,
   ]);
 
+  useEffect(() => {
+    const fetchTeams = async () => {
+      if (!championshipId) return;
+
+      setIsLoadingTeams(true);
+      try {
+        const filters: ApiFilter[] = [
+          {
+            field: "championship_id",
+            operator: "eq",
+            value: championshipId
+          },
+          {
+            field: "status",
+            operator: "eq",
+            value: "active"
+          }
+        ];
+        const joins = ["championships", "clubs"];
+        const teamsData = await teamApi.getTeams(filters, undefined, joins);
+        setTeams(teamsData || []);
+      } catch (error) {
+        console.error("Error loading teams:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load teams.",
+        });
+      } finally {
+        setIsLoadingTeams(false);
+      }
+    };
+
+    fetchTeams();
+  }, [championshipId, teamApi, toast]);
+
   const handleTeamChange = (team: Team | null) => {
     setSelectedTeam(team);
     if (team && team.club_id) {
@@ -230,6 +274,20 @@ export default function ChampionshipDetailPage() {
             Filters
           </Button>
         </div>
+      </div>
+
+      {/* Teams Section */}
+      <div className="space-y-4">
+        <ChampionshipTeamsSummary
+          teams={teams}
+          championshipId={championship.id}
+        />
+
+        <ChampionshipTeamsList
+          teams={teams}
+          isLoading={isLoadingTeams}
+          championshipId={championship.id}
+        />
       </div>
 
       <Collapsible open={showFilters} onOpenChange={setShowFilters}>
