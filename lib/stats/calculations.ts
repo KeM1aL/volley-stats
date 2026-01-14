@@ -9,7 +9,6 @@ interface MVPStat {
 }
 
 export function calculateMVPScore(stats: PlayerStat[], players: TeamMember[], sets: Set[]): { matchMVP: MVPStat, setMVPs: MVPStat[] } {
-  console.debug("Calculating MVP Score with stats:", stats, "players:", players, "sets:", sets);
   const weights = {
     [StatType.SERVE]: 1,
     [StatType.SPIKE]: 1.2,

@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScorePoint, PlayerStat, TeamMember, Team } from "@/lib/types";
+import { ScorePoint, PlayerStat, TeamMember, Team, Set } from "@/lib/types";
 import {
   Server,
   Zap,
@@ -28,6 +28,7 @@ interface ScorePointsPanelProps {
   scorePoints: ScorePoint[];
   playerStats: PlayerStat[];
   playerById: Map<string, TeamMember>;
+  currentSet?: Set | null;
   homeTeam: Team;
   awayTeam: Team;
   managedTeamId: string;
@@ -161,6 +162,7 @@ export function ScorePointsPanel({
   scorePoints,
   playerStats,
   playerById,
+  currentSet,
   homeTeam,
   awayTeam,
   managedTeamId,
@@ -199,7 +201,11 @@ export function ScorePointsPanel({
     <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-3 space-y-3 flex-shrink-0 overflow-visible">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Score Points</CardTitle>
+          <CardTitle className="text-sm font-medium">Points History {currentSet && (
+                                <Badge variant="outline" className="ml-2">
+                                  Set {currentSet.set_number}
+                                </Badge>
+                              )}</CardTitle>
 
           {/* Team Filter */}
           <Select

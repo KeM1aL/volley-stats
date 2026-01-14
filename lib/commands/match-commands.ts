@@ -59,12 +59,7 @@ export class SubstitutionCommand implements Command {
       },
     };
     const newSet = { ...previousState.currentSet!, ...this.set };
-    this.newState = {
-      ...previousState,
-      currentSet: newSet,
-      sets: [...previousState.sets!.slice(0, -1), newSet],
-    };
-    this.db = db;
+    
 
     // Create event record
     const timestamp = new Date().toISOString();
@@ -92,6 +87,14 @@ export class SubstitutionCommand implements Command {
       created_at: timestamp,
       updated_at: timestamp,
     };
+    this.newState = {
+      ...previousState,
+      currentSet: newSet,
+      sets: [...previousState.sets!.slice(0, -1), newSet],
+      setEvents: [...previousState.setEvents, this.event],
+      events: [...previousState.events, this.event],
+    };
+    this.db = db;
   }
 
   async execute(): Promise<MatchState> {

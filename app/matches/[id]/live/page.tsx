@@ -23,6 +23,7 @@ import type {
   Substitution,
   Team,
   MatchFormat,
+  Event,
 } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { SetSetup } from "@/components/sets/set-setup";
@@ -49,6 +50,8 @@ const initialMatchState: MatchState = {
   sets: [],
   setStats: [],
   stats: [],
+  setEvents: [],
+  events: [],
   score: { home: 0, away: 0 },
 };
 
@@ -174,11 +177,8 @@ export default function LiveMatchPage() {
 
       const sets = setDocs.map((doc) => doc.toJSON());
       const currentSet = sets[sets.length - 1];
-
-      let points: ScorePoint[] = [];
-      let stats: PlayerStat[] = [];
       
-        [points, stats] = await Promise.all([
+      let [points, stats, events] = await Promise.all([
           db.score_points
             .find({
               selector: {
@@ -197,12 +197,23 @@ export default function LiveMatchPage() {
             })
             .exec()
             .then((docs) => docs.map((doc) => doc.toJSON())),
+            db.events
+            .find({
+              selector: {
+                match_id: matchId
+              },
+              sort: [{ created_at: "asc" }],
+            })
+            .exec()
+            .then((docs) => docs.map((doc) => doc.toJSON())),
         ]);
       let setPoints: ScorePoint[] = [];
       let setStats: PlayerStat[] = [];
+      let setEvents: Event[] = [];
       if(currentSet) {
         setPoints = points.filter((point) => point.set_id === currentSet.id);
         setStats = stats.filter((stat) => stat.set_id === currentSet.id);
+        setEvents = events.filter((event) => event.set_id === currentSet.id);
       }
 
       setMatchState({
@@ -213,6 +224,8 @@ export default function LiveMatchPage() {
         sets,
         setStats,
         stats,
+        events,
+        setEvents,
         score: currentSet
           ? { home: currentSet.home_score, away: currentSet.away_score }
           : { home: 0, away: 0 },
@@ -426,6 +439,7 @@ export default function LiveMatchPage() {
           players={teamPlayers}
           playerById={teamPlayerById}
           managedTeamId={managedTeam!.id}
+          currentSet={matchState.currentSet}
           currentHomeScore={matchState.currentSet?.home_score ?? 0}
           currentAwayScore={matchState.currentSet?.away_score ?? 0}
           currentPointNumber={
@@ -442,6 +456,7 @@ export default function LiveMatchPage() {
           scorePoints={matchState.setPoints}
           playerStats={matchState.setStats}
           playerById={teamPlayerById}
+          currentSet={matchState.currentSet}
           homeTeam={homeTeam}
           awayTeam={awayTeam}
           managedTeamId={managedTeam!.id}

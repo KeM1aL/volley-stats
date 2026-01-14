@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Event, TeamMember, Team } from "@/lib/types";
+import { Event, TeamMember, Team, Set } from "@/lib/types";
 import {
   EventType,
   EVENT_TYPE_LABELS,
@@ -60,6 +60,7 @@ interface EventsPanelProps {
   players: TeamMember[];
   playerById: Map<string, TeamMember>;
   managedTeamId: string;
+  currentSet?: Set | null;
   currentHomeScore?: number;
   currentAwayScore?: number;
   currentPointNumber?: number;
@@ -84,6 +85,7 @@ export function EventsPanel({
   players,
   playerById,
   managedTeamId,
+  currentSet,
   currentHomeScore,
   currentAwayScore,
   currentPointNumber,
@@ -270,7 +272,11 @@ export function EventsPanel({
     <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-3 space-y-3 flex-shrink-0 overflow-visible">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Events</CardTitle>
+          <CardTitle className="text-sm font-medium">Events {currentSet && (
+                      <Badge variant="outline" className="ml-2">
+                        Set {currentSet.set_number}
+                      </Badge>
+                    )}</CardTitle>
           <div className="flex gap-2">
             <Button
               size="sm"

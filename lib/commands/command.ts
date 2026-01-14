@@ -1,4 +1,4 @@
-import { Match, Set, PlayerStat, Substitution, ScorePoint } from "@/lib/types";
+import { Match, Set, PlayerStat, Substitution, ScorePoint, Event } from "@/lib/types";
 import { Score } from "../enums";
 
 export interface Command {
@@ -14,6 +14,8 @@ export interface MatchState {
   sets: Set[];
   setStats: PlayerStat[];
   stats: PlayerStat[];
+  setEvents: Event[];
+  events: Event[];
   score: Score;
 }
 
