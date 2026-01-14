@@ -8,7 +8,6 @@ import { ScoreBoard } from "@/components/matches/live/score-board";
 import { StatTracker } from "@/components/matches/live/stat-tracker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -79,7 +78,14 @@ export default function LiveMatchPage() {
   const [managedTeam, setManagedTeam] = useState<Team>();
   const [opponentTeam, setOpponentTeam] = useState<Team>();
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingStep, setLoadingStep] = useState(0);
   const { history, canUndo, canRedo } = useCommandHistory();
+
+  const LOADING_STEPS = [
+    { label: "Syncing match data", description: "Ensuring you have the latest data" },
+    { label: "Loading match format", description: "Getting match rules" },
+    { label: "Loading teams", description: "Fetching team information" },
+  ];
 
   // Sidebar and panel state
   const [showDesktopPanel, setShowDesktopPanel] = useState(false); // Desktop grid panel
@@ -98,10 +104,7 @@ export default function LiveMatchPage() {
         throw new Error("Please select your managed team");
       }
 
-      toast({
-        title: "Syncing match data...",
-        description: "Please wait while we ensure you have the latest data.",
-      });
+      setLoadingStep(0);
       try {
         await db?.syncManager.syncMatch(matchId);
         toast({
@@ -119,6 +122,7 @@ export default function LiveMatchPage() {
         });
       }
 
+      setLoadingStep(1);
       const [matchDoc, setDocs] = await Promise.all([
         db.matches.findOne(matchId).exec(),
         db.sets
@@ -162,6 +166,7 @@ export default function LiveMatchPage() {
       setManagedTeam(teams.find((team) => team.id === teamId));
       setOpponentTeam(teams.find((team) => team.id !== teamId));
 
+      setLoadingStep(2);
       const playerIds =
         teamId === match.home_team_id
           ? match.home_available_players
@@ -185,7 +190,6 @@ export default function LiveMatchPage() {
 
       const sets = setDocs.map((doc) => doc.toJSON());
       const currentSet = sets[sets.length - 1];
-      
       let [points, stats, events] = await Promise.all([
           db.score_points
             .find({
@@ -395,7 +399,48 @@ export default function LiveMatchPage() {
   };
 
   if (isLoading) {
-    return <Skeleton className="h-[600px] w-full" />;
+    const currentStep = LOADING_STEPS[loadingStep];
+    const progress = ((loadingStep + 1) / LOADING_STEPS.length) * 100;
+
+    return (
+      <div className="h-[600px] w-full flex items-center justify-center">
+        <Card className="p-6 w-full max-w-md">
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+              </div>
+              <h3 className="font-semibold text-lg">{currentStep.label}</h3>
+              <p className="text-sm text-muted-foreground">{currentStep.description}</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-300 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Step {loadingStep + 1} of {LOADING_STEPS.length}
+              </p>
+            </div>
+
+            <div className="flex justify-center gap-1.5">
+              {LOADING_STEPS.map((_, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "h-2 w-2 rounded-full transition-colors duration-200",
+                    index <= loadingStep ? "bg-primary" : "bg-muted"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   if (!matchState.match || !homeTeam || !awayTeam) {

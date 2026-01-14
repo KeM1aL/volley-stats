@@ -93,6 +93,12 @@ const ScoreProgression = React.forwardRef<
       away: point.away_score,
       difference: point.home_score - point.away_score,
     }));
+  progressionData.unshift({
+    point: 0,
+    home: 0,
+    away: 0,
+    difference: 0,
+  });
 
   return (
     <div ref={scoreProgressionRef} id="scores-section-content" className="space-y-6">
