@@ -9,12 +9,13 @@ interface MVPStat {
 }
 
 export function calculateMVPScore(stats: PlayerStat[], players: TeamMember[], sets: Set[]): { matchMVP: MVPStat, setMVPs: MVPStat[] } {
+  console.debug("Calculating MVP Score with stats:", stats, "players:", players, "sets:", sets);
   const weights = {
     [StatType.SERVE]: 1,
     [StatType.SPIKE]: 1.2,
     [StatType.BLOCK]: 1.5,
     [StatType.RECEPTION]: 1,
-    [StatType.DEFENSE]: 0.8,
+    [StatType.DEFENSE]: 1.2,
   };
 
   const playerScores = new Map();
@@ -81,9 +82,18 @@ export function calculateMVPScore(stats: PlayerStat[], players: TeamMember[], se
 }
 
 function calculateStatScore(stat: PlayerStat, weights: Record<string, number>): number {
-  const baseScore = stat.result === StatResult.SUCCESS ? 1 :
-    stat.result === StatResult.ERROR ? -1 :
-      0.5;
+
+  let baseScore: number;
+  switch (stat.stat_type) {
+    case StatType.BLOCK:
+      baseScore = stat.result === StatResult.SUCCESS ? 1 : stat.result === StatResult.GOOD ? 0.5 : 0;
+      break;
+    default:
+      baseScore = stat.result === StatResult.SUCCESS ? 1 :
+        stat.result === StatResult.ERROR ? -1 :
+          0.5;
+  }
+
 
   return baseScore * (weights[stat.stat_type] || 1);
 }
@@ -144,7 +154,7 @@ export function calculatePositionStats(
           positionStats[position].attackSuccess++;
           if (point.player_stat_id && playerStatsById[point.player_stat_id]) {
             const stat = playerStatsById[point.player_stat_id];
-            if(stat.position) {
+            if (stat.position) {
               positionStats[position].attackDistribution[stat.position]++;
             }
           }

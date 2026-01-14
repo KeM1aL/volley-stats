@@ -80,7 +80,7 @@ export class SyncManager {
   async syncMatch(matchId: string) {
     if (this.activeMatchIds.has(matchId)) {
       console.log(`SyncManager: Match ${matchId} is already being synced.`);
-      // TODO force resync
+      this.reSyncMatch(matchId);
       return;
     }
 
@@ -199,6 +199,20 @@ export class SyncManager {
     return this.dynamicSyncPromise;
   }
 
+  private async reSyncMatch(matchId: string) {
+    console.debug(`SyncManager: Resync for match: ${matchId}`);
+    const identifierSuffix = `_chunk_${matchId}`;
+    for (const collectionName of dynamicCollections) {
+      const replicationIdentifier = this.getReplicationIdentifier(collectionName, identifierSuffix);
+
+      const existing = this.replicationStates.get(replicationIdentifier);
+      if (existing) {
+        existing.reSync();
+        console.debug(`SyncManager: Resyncing existing sync for collection ${collectionName} and match ${matchId}.`);
+      }
+    }
+  }
+
   private dynamicSyncPromise: Promise<void> = Promise.resolve();
 
   private async restartDynamicSync() {
@@ -269,7 +283,7 @@ export class SyncManager {
         liveFilter: liveFilter
       },
       push: {}, // Default push
-      live: false,
+      live: true,
       autoStart: true,
       modifiedField: "updated_at",
       deletedField: "_deleted",

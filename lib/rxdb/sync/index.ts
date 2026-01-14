@@ -211,7 +211,7 @@ export function replicateSupabase<RxDocType>(
             const conflicts: WithDeleted<RxDocType>[] = [];
             await Promise.all(
                 rows.map(async (row) => {
-                    // console.log('Pushing row to supabase replication:', row);
+                    console.debug('Pushing row to supabase replication:', row);
                     const newDoc = row.newDocumentState as WithDeleted<RxDocType>;
                     if (!row.assumedMasterState) {
                         const c = await insertOrReturnConflict(newDoc);
@@ -242,50 +242,51 @@ export function replicateSupabase<RxDocType>(
      * Subscribe to changes for the pull.stream$
      */
     if (options.live && options.pull) {
-        const startBefore = replicationState.start.bind(replicationState);
-        const cancelBefore = replicationState.cancel.bind(replicationState);
-        replicationState.start = () => {
+        // TODO Understand why write is disabled when live is disabled
+        // const startBefore = replicationState.start.bind(replicationState);
+        // const cancelBefore = replicationState.cancel.bind(replicationState);
+        // replicationState.start = () => {
             
-            const sub = options.client
-                .channel('realtime:' + options.tableName)
-                .on(
-                    'postgres_changes',
-                    { event: '*', schema: 'public', table: options.tableName, filter: options.pull?.liveFilter },
-                    (payload) => {
-                        /**
-                         * We assume soft-deletes in supabase
-                         * and therefore cleanup-hard-deletes
-                         * are not relevant for the sync.
-                         */
-                        if (payload.eventType === 'DELETE') {
-                            return;
-                        }
+        //     const sub = options.client
+        //         .channel('realtime:' + options.tableName)
+        //         .on(
+        //             'postgres_changes',
+        //             { event: '*', schema: 'public', table: options.tableName, filter: options.pull?.liveFilter },
+        //             (payload) => {
+        //                 /**
+        //                  * We assume soft-deletes in supabase
+        //                  * and therefore cleanup-hard-deletes
+        //                  * are not relevant for the sync.
+        //                  */
+        //                 if (payload.eventType === 'DELETE') {
+        //                     return;
+        //                 }
 
-                        const row = payload.new;
-                        const doc = rowToDoc(row);
-                        pullStream$.next({
-                            checkpoint: {
-                                id: (doc as any)[primaryPath],
-                                modified: (row as any)[modifiedField]
-                            },
-                            documents: [doc as any],
-                        });
-                    }
-                )
-                .subscribe((status: string) => {
-                    /**
-                     * Trigger resync flag on reconnects
-                     */
-                    if (status === 'SUBSCRIBED') {
-                        pullStream$.next('RESYNC');
-                    }
-                });
-            replicationState.cancel = () => {
-                sub.unsubscribe();
-                return cancelBefore();
-            };
-            return startBefore();
-        };
+        //                 const row = payload.new;
+        //                 const doc = rowToDoc(row);
+        //                 pullStream$.next({
+        //                     checkpoint: {
+        //                         id: (doc as any)[primaryPath],
+        //                         modified: (row as any)[modifiedField]
+        //                     },
+        //                     documents: [doc as any],
+        //                 });
+        //             }
+        //         )
+        //         .subscribe((status: string) => {
+        //             /**
+        //              * Trigger resync flag on reconnects
+        //              */
+        //             if (status === 'SUBSCRIBED') {
+        //                 pullStream$.next('RESYNC');
+        //             }
+        //         });
+        //     replicationState.cancel = () => {
+        //         sub.unsubscribe();
+        //         return cancelBefore();
+        //     };
+        //     return startBefore();
+        // };
     }
 
 

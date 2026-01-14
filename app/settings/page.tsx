@@ -157,19 +157,27 @@ export default function SettingsPage() {
         });
       }
       const collections = new Map<CollectionName, RxCollection>([
+        ["matches", db.matches],
         ["sets", db.sets],
         ["player_stats", db.player_stats],
         ["score_points", db.score_points],
         ["events", db.events],
-        ["team_members", db.team_members],
       ]);
       const entries = Array.from(collections.entries());
       for (const [name, collection] of entries) {
+        let selector;
+        if (name === "matches") {
+          selector = {
+            id: matchId,
+          };
+        } else {
+          selector = {
+            match_id: matchId,
+          };
+        }
         const docs = await collection
           .find({
-            selector: {
-              match_id: matchId,
-            },
+            selector: selector,
             sort: [{ created_at: "asc" }],
           })
           .exec();
@@ -548,9 +556,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Favorites Card */}
-      {user && (
-        <FavoritesSection user={user} onUpdate={reloadUser} />
-      )}
+      {user && <FavoritesSection user={user} onUpdate={reloadUser} />}
 
       {/* Theme Selector - Standalone (not in form) */}
       <Card>

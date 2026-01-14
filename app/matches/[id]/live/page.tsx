@@ -80,6 +80,11 @@ export default function LiveMatchPage() {
 
     try {
       setIsLoading(true);
+      const teamId = searchParams.get("team");
+      if (!teamId) {
+        throw new Error("Please select your managed team");
+      }
+
       toast({
         title: "Syncing match data...",
         description: "Please wait while we ensure you have the latest data.",
@@ -108,7 +113,7 @@ export default function LiveMatchPage() {
             selector: {
               match_id: matchId,
             },
-            sort: [{ created_at: "asc" }],
+            sort: [{ set_number: "asc" }],
           })
           .exec(),
       ]);
@@ -136,13 +141,6 @@ export default function LiveMatchPage() {
       }
 
       const teams = Array.from(teamDocs.values()).map((doc) => doc.toJSON());
-
-      const managedTeamParam = searchParams.get("team");
-      if (!managedTeamParam) {
-        throw new Error("Please select your managed team");
-      }
-
-      const teamId = searchParams.get("team");
       if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
         throw new Error("Managed Team not found");
       }

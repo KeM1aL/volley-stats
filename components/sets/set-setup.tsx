@@ -276,9 +276,7 @@ export function SetSetup({
                     <Label>Role {selectedRole}</Label>
                     <div className="flex flex-row items-center space-x-1">
                       <Select
-                        value={
-                          selectedRole ? (selectedRole as string) : undefined
-                        }
+                        value={selectedRole ?? ""}
                         onValueChange={(value: PlayerRole) => {
                           setSelectedRole(value);
                         }}

@@ -1,7 +1,6 @@
 "use client";
 
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Match, TeamMember, Team } from "@/lib/types";
@@ -18,7 +17,6 @@ type MatchSetupProps = {
 };
 
 export function MatchLineupSetup({ match, players, availablePlayers, setAvailablePlayers }: MatchSetupProps) {
-  const { localDb: db } = useLocalDb();
   const [isLoading, setIsLoading] = useState(false);
 
   const sortPlayers = (a: TeamMember, b: TeamMember) => {
@@ -42,7 +40,7 @@ export function MatchLineupSetup({ match, players, availablePlayers, setAvailabl
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-4">Match Roster</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {[...players].sort(sortPlayers).map((player) => (
             <Toggle
               key={player.id}
