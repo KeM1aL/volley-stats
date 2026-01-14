@@ -8,9 +8,11 @@ export interface Command {
 
 export interface MatchState {
   match: Match | null;
-  set: Set | null;
+  currentSet: Set | null;
+  setPoints: ScorePoint[];
   points: ScorePoint[];
   sets: Set[];
+  setStats: PlayerStat[];
   stats: PlayerStat[];
   score: Score;
 }

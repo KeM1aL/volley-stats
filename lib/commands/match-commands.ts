@@ -17,22 +17,24 @@ export class SetSetupCommand implements Command {
     this.previousState = { ...previousState };
     this.newState = {
       ...previousState,
-      set: newSet,
+      currentSet: newSet,
       sets: [...previousState.sets!, newSet],
       score: { home: 0, away: 0 },
-      points: [],
-      stats: [],
+      setPoints: [],
+      setStats: [],
+      points: previousState.points,
+      stats: previousState.stats
     };
     this.db = db;
   }
 
   async execute(): Promise<MatchState> {
-    await this.db.sets.insert(this.newState.set!);
+    await this.db.sets.insert(this.newState.currentSet!);
     return this.newState;
   }
 
   async undo(): Promise<MatchState> {
-    await this.db.sets.findOne(this.newState.set!.id).remove();
+    await this.db.sets.findOne(this.newState.currentSet!.id).remove();
     return this.previousState;
   }
 }
@@ -52,14 +54,14 @@ export class SubstitutionCommand implements Command {
     this.previousState = { ...previousState };
     this.set = {
       current_lineup: {
-        ...previousState.set!.current_lineup,
+        ...previousState.currentSet!.current_lineup,
         [substitution.position]: substitution.player_in_id,
       },
     };
-    const newSet = { ...previousState.set!, ...this.set };
+    const newSet = { ...previousState.currentSet!, ...this.set };
     this.newState = {
       ...previousState,
-      set: newSet,
+      currentSet: newSet,
       sets: [...previousState.sets!.slice(0, -1), newSet],
     };
     this.db = db;
@@ -95,7 +97,7 @@ export class SubstitutionCommand implements Command {
   async execute(): Promise<MatchState> {
     // Write to events table only
     await this.db.events.insert(this.event);
-    await this.db.sets.findOne(this.previousState.set!!.id).update({
+    await this.db.sets.findOne(this.previousState.currentSet!!.id).update({
       $set: this.set,
     });
     return this.newState;
@@ -106,10 +108,10 @@ export class SubstitutionCommand implements Command {
     await this.db.events.findOne(this.event.id).remove();
     const oldSet: Partial<Set> = {};
     Object.keys(this.set).forEach((key) => {
-      oldSet[key as keyof Set] = this.previousState.set![key as keyof Set] as never;
+      oldSet[key as keyof Set] = this.previousState.currentSet![key as keyof Set] as never;
     });
     console.table(oldSet);
-    await this.db.sets.findOne(this.previousState.set!!.id).update({
+    await this.db.sets.findOne(this.previousState.currentSet!!.id).update({
       $set: oldSet,
     });
     return this.previousState;
@@ -132,6 +134,7 @@ export class PlayerStatCommand implements Command {
     this.stat = stat;
     this.newState = {
       ...previousState,
+      setStats: [...previousState.setStats, stat],
       stats: [...previousState.stats, stat],
     };
 
@@ -163,7 +166,7 @@ export class PlayerStatCommand implements Command {
           created_at: timestamp,
           home_score: newHomeScore,
           away_score: newAwayScore,
-          current_rotation: previousState.set!.current_lineup,
+          current_rotation: previousState.currentSet!.current_lineup,
           player_stat_id: stat.id,
           action_team_id: stat.team_id,
           result: stat.result
@@ -210,7 +213,7 @@ export class ScorePointCommand implements Command {
     this.point = point;
     this.db = db;
 
-    const setNumber = previousState.set!.set_number;
+    const setNumber = previousState.currentSet!.set_number;
     const {
       home_score: homeScore,
       away_score: awayScore,
@@ -222,10 +225,10 @@ export class ScorePointCommand implements Command {
       away_score: awayScore,
     };
     const format = previousState.match!.match_formats as MatchFormat;
-    if (previousState.set!.server_team_id !== scoringTeamId) {
+    if (previousState.currentSet!.server_team_id !== scoringTeamId) {
       this.set.server_team_id = scoringTeamId;
       if (myTeam && format.rotation) {
-        let current_lineup = { ...previousState.set!.current_lineup };
+        let current_lineup = { ...previousState.currentSet!.current_lineup };
         const p1Player = current_lineup.p1;
         switch(format.format) {
           case "2x2":
@@ -271,11 +274,12 @@ export class ScorePointCommand implements Command {
       this.set.status = "completed";
       setTerminated = true;
     }
-    const newSet = { ...previousState.set!, ...this.set };
+    const newSet = { ...previousState.currentSet!, ...this.set };
     this.newState = {
       ...previousState,
-      set: newSet,
+      currentSet: newSet,
       sets: [...previousState.sets!.slice(0, -1), newSet],
+      setPoints: [...previousState.setPoints, point],
       points: [...previousState.points, point],
       score: { home: point.home_score, away: point.away_score },
     };
@@ -309,7 +313,7 @@ export class ScorePointCommand implements Command {
   async execute(): Promise<MatchState> {
     await this.db.score_points.insert(this.point);
 
-    await this.db.sets.findOne(this.previousState.set!!.id).update({
+    await this.db.sets.findOne(this.previousState.currentSet!!.id).update({
       $set: this.set,
     });
 
@@ -325,9 +329,9 @@ export class ScorePointCommand implements Command {
     await this.db.score_points.findOne(this.point.id).remove();
     const oldSet: Partial<Set> = {};
     Object.keys(this.set).forEach((key) => {
-      oldSet[key as keyof Set] = this.previousState.set![key as keyof Set] as never;
+      oldSet[key as keyof Set] = this.previousState.currentSet![key as keyof Set] as never;
     });
-    await this.db.sets.findOne(this.previousState.set!!.id).update({
+    await this.db.sets.findOne(this.previousState.currentSet!!.id).update({
       $set: oldSet,
     });
 

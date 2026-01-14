@@ -43,9 +43,11 @@ type PanelType = "stats" | "events" | "court" | "points" | null;
 
 const initialMatchState: MatchState = {
   match: null,
-  set: null,
+  currentSet: null,
+  setPoints: [],
   points: [],
   sets: [],
+  setStats: [],
   stats: [],
   score: { home: 0, away: 0 },
 };
@@ -175,14 +177,12 @@ export default function LiveMatchPage() {
 
       let points: ScorePoint[] = [];
       let stats: PlayerStat[] = [];
-
-      if (currentSet) {
+      
         [points, stats] = await Promise.all([
           db.score_points
             .find({
               selector: {
-                match_id: matchId,
-                set_id: currentSet.id,
+                match_id: matchId
               },
               sort: [{ created_at: "asc" }],
             })
@@ -191,21 +191,27 @@ export default function LiveMatchPage() {
           db.player_stats
             .find({
               selector: {
-                match_id: matchId,
-                set_id: currentSet.id,
+                match_id: matchId
               },
               sort: [{ created_at: "asc" }],
             })
             .exec()
             .then((docs) => docs.map((doc) => doc.toJSON())),
         ]);
+      let setPoints: ScorePoint[] = [];
+      let setStats: PlayerStat[] = [];
+      if(currentSet) {
+        setPoints = points.filter((point) => point.set_id === currentSet.id);
+        setStats = stats.filter((stat) => stat.set_id === currentSet.id);
       }
 
       setMatchState({
         match,
-        set: currentSet || null,
+        currentSet: currentSet || null,
+        setPoints,
         points,
         sets,
+        setStats,
         stats,
         score: currentSet
           ? { home: currentSet.home_score, away: currentSet.away_score }
@@ -301,13 +307,13 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.score, matchState.set]
+    [db, matchState.score, matchState.currentSet]
   );
 
   const onPointRecorded = useCallback(
     async (point: ScorePoint) => {
       if (!db) return;
-      if (!matchState.set || !matchState.match) return;
+      if (!matchState.currentSet || !matchState.match) return;
 
       const myTeam = managedTeam!.id === point.scoring_team_id;
       const command = new ScorePointCommand(matchState, point, myTeam, db);
@@ -404,8 +410,8 @@ export default function LiveMatchPage() {
       return (
         <PlayerPerformancePanel
           managedTeam={managedTeam!}
-          stats={matchState.stats}
-          currentSet={matchState.set}
+          stats={matchState.setStats}
+          currentSet={matchState.currentSet}
           playerById={teamPlayerById}
         />
       );
@@ -414,18 +420,18 @@ export default function LiveMatchPage() {
       return (
         <EventsPanel
           matchId={matchId}
-          setId={matchState.set?.id || null}
+          setId={matchState.currentSet?.id || null}
           homeTeam={homeTeam}
           awayTeam={awayTeam}
           players={teamPlayers}
           playerById={teamPlayerById}
           managedTeamId={managedTeam!.id}
-          currentHomeScore={matchState.set?.home_score ?? 0}
-          currentAwayScore={matchState.set?.away_score ?? 0}
+          currentHomeScore={matchState.currentSet?.home_score ?? 0}
+          currentAwayScore={matchState.currentSet?.away_score ?? 0}
           currentPointNumber={
-            matchState.points.length > 0 ? matchState.points.length : undefined
+            matchState.setPoints.length > 0 ? matchState.setPoints.length : undefined
           }
-          currentLineup={matchState.set?.current_lineup}
+          currentLineup={matchState.currentSet?.current_lineup}
           onSubstitutionRecorded={onSubstitutionRecorded}
         />
       );
@@ -433,8 +439,8 @@ export default function LiveMatchPage() {
     if (activePanel === "points") {
       return (
         <ScorePointsPanel
-          scorePoints={matchState.points}
-          playerStats={matchState.stats}
+          scorePoints={matchState.setPoints}
+          playerStats={matchState.setStats}
           playerById={teamPlayerById}
           homeTeam={homeTeam}
           awayTeam={awayTeam}
@@ -446,7 +452,7 @@ export default function LiveMatchPage() {
       return (
         <CourtDiagramPanel
           players={teamPlayers}
-          currentSet={matchState.set}
+          currentSet={matchState.currentSet}
           matchFormat={matchState.match.match_formats}
           team={managedTeam!}
         />
@@ -459,7 +465,7 @@ export default function LiveMatchPage() {
   const renderMainContent = () => {
     if (!matchState.match) return null;
 
-    if (!matchState.set || matchState.set.status === "completed") {
+    if (!matchState.currentSet || matchState.currentSet.status === "completed") {
       return (
         <Card className="p-1 h-full">
           <SetSetup
@@ -467,7 +473,7 @@ export default function LiveMatchPage() {
             sets={matchState.sets}
             homeTeam={homeTeam}
             awayTeam={awayTeam}
-            setNumber={matchState.set ? matchState.set.set_number + 1 : 1}
+            setNumber={matchState.currentSet ? matchState.currentSet.set_number + 1 : 1}
             players={teamPlayers}
             playerById={teamPlayerById}
             onComplete={onSetSetupComplete}
@@ -486,10 +492,10 @@ export default function LiveMatchPage() {
           opponentTeam={opponentTeam!}
           managedTeam={managedTeam!}
           match={matchState.match}
-          currentSet={matchState.set}
+          currentSet={matchState.currentSet}
           sets={matchState.sets}
-          stats={matchState.stats}
-          points={matchState.points}
+          stats={matchState.setStats}
+          points={matchState.setPoints}
           score={matchState.score}
         />
       </Card>
