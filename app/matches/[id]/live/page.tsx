@@ -6,8 +6,15 @@ import { useLocalDb } from "@/components/providers/local-database-provider";
 import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { ScoreBoard } from "@/components/matches/live/score-board";
 import { StatTracker } from "@/components/matches/live/stat-tracker";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { LiveMatchSidebar } from "@/components/matches/live/live-match-sidebar";
 import { PlayerPerformancePanel } from "@/components/matches/live/panels/player-performance-panel";
@@ -38,6 +45,7 @@ import {
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
 import { cn } from "@/lib/utils";
+import { BarChart3, WifiOff } from "lucide-react";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
@@ -411,6 +419,38 @@ export default function LiveMatchPage() {
           stats={matchState.stats}
           players={teamPlayers}
         />
+
+        <div className="flex justify-center pt-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-block">
+                  <Button
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      params.set("team", managedTeam!.id);
+                      router.push(
+                        `/matches/${matchState.match!.id}/stats?${params.toString()}`
+                      );
+                    }}
+                    disabled={!isOnline}
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    View Detailed Stats
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!isOnline && (
+                <TooltipContent>
+                  <div className="flex items-center gap-2">
+                    <WifiOff className="h-4 w-4" />
+                    <span>You need an internet connection to view detailed stats</span>
+                  </div>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
     );
   }
