@@ -103,6 +103,8 @@ const TeamPerformance = React.forwardRef<
         let currentYOffset = initialYOffset;
         const margin = 20;
         const imgWidth = 595 - 2 * margin;
+        let isFirstPage = true;
+
         const tabIds = ["positions", "streaks", "patterns", "defense", "insights"];
         const tabNames = {
           positions: "Position Analysis",
@@ -112,62 +114,60 @@ const TeamPerformance = React.forwardRef<
           insights: "Tactical Insights",
         };
 
-        const setsToIterate = [null, ...allSets.map((s) => s.id)];
+        // Only export "All Sets" view, not each individual set
+        setSelectedSet("all");
 
         for (const tabId of tabIds) {
           setSelectedTab(tabId);
-          for (const setId of setsToIterate) {
-            setSelectedSet(setId === null ? "all" : setId);
-            setPdfRenderTrigger((prev) => prev + 1);
+          setPdfRenderTrigger((prev) => prev + 1);
 
-            await waitForContentToRender();
+          await waitForContentToRender();
+          await new Promise((resolve) => setTimeout(resolve, 300));
 
-            const subTitle =
-              setId === null
-                ? "All Sets Overview"
-                : `Set ${
-                    allSets.find((s) => s.id === setId)?.set_number || ""
-                  } Breakdown`;
-
+          // Only add page after first content
+          if (!isFirstPage) {
             doc.addPage();
-            currentYOffset = margin;
-            doc.setFontSize(16);
-            doc.text(
-              `${tabNames[tabId as keyof typeof tabNames]} - ${subTitle}`,
-              margin,
-              currentYOffset
-            );
-            currentYOffset += 20;
+          }
+          isFirstPage = false;
+          currentYOffset = margin;
 
-            if (teamPerformanceRef.current) {
-              const canvas = await html2canvas(teamPerformanceRef.current, {
-                scale: 2,
-                useCORS: true,
-              });
-              const imgData = canvas.toDataURL("image/jpeg", 0.9);
-              const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          doc.setFontSize(16);
+          doc.text(
+            `${tabTitle} - ${tabNames[tabId as keyof typeof tabNames]}`,
+            margin,
+            currentYOffset
+          );
+          currentYOffset += 20;
 
-              if (
-                currentYOffset + imgHeight >
-                doc.internal.pageSize.height - margin
-              ) {
-                doc.addPage();
-                currentYOffset = margin;
-              }
-              doc.addImage(
-                imgData,
-                "JPEG",
-                margin,
-                currentYOffset,
-                imgWidth,
-                imgHeight
-              );
-              currentYOffset += imgHeight + margin;
-            } else {
-              console.warn(
-                `Team Performance content element not found for PDF export.`
-              );
+          if (teamPerformanceRef.current) {
+            const canvas = await html2canvas(teamPerformanceRef.current, {
+              scale: 1.5,
+              useCORS: true,
+              logging: false,
+            });
+            const imgData = canvas.toDataURL("image/jpeg", 0.6);
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            if (
+              currentYOffset + imgHeight >
+              doc.internal.pageSize.height - margin
+            ) {
+              doc.addPage();
+              currentYOffset = margin;
             }
+            doc.addImage(
+              imgData,
+              "JPEG",
+              margin,
+              currentYOffset,
+              imgWidth,
+              imgHeight
+            );
+            currentYOffset += imgHeight + margin;
+          } else {
+            console.warn(
+              `Team Performance content element not found for PDF export.`
+            );
           }
         }
         return currentYOffset;
@@ -259,16 +259,6 @@ const TeamPerformance = React.forwardRef<
 
     return (
       <Card ref={teamPerformanceRef} id="team-section-content">
-        {isPdfGenerating && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-            <div className="text-center">
-              <p className="mb-2 text-lg font-semibold">Generating PDF...</p>
-              <p className="text-sm text-gray-500">
-                Please wait while we generate the PDF report.
-              </p>
-            </div>
-          </div>
-        )}
         <CardHeader>
           <CardTitle>Player Performance Analysis</CardTitle>
         </CardHeader>
@@ -339,7 +329,7 @@ const TeamPerformance = React.forwardRef<
                         Points scored and conceded by position
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[400px]">
+                    <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={positionPerformanceData}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -369,7 +359,7 @@ const TeamPerformance = React.forwardRef<
                         Success spiked by player position
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[800px] grid grid-cols-3 gap-4">
+                    <CardContent className={`${isPdfGenerating ? "h-[400px]" : "h-[800px]"} grid grid-cols-3 gap-4`}>
                       {positionPerformanceData.map((data, i) => (
                         <ResponsiveContainer key={i} width="100%" height="100%">
                           <RadarChart data={data.distribution}>
@@ -401,7 +391,7 @@ const TeamPerformance = React.forwardRef<
                         Winning and losing streaks by position
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[400px]">
+                    <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={streakDistributionData}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -507,7 +497,7 @@ const TeamPerformance = React.forwardRef<
                         Points and successful sequences by rotation
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[400px]">
+                    <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={scoringPatternsData}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -572,7 +562,7 @@ const TeamPerformance = React.forwardRef<
                         Points conceded and longest losing streaks by position
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[400px]">
+                    <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={defensiveData}>
                           <CartesianGrid strokeDasharray="3 3" />

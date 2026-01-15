@@ -280,3 +280,40 @@ body.keyboard-visible [data-radix-dialog-content] * {
 .live-match-scroll::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--foreground) / 0.5);
 }
+
+/* PDF Export Compatibility Styles */
+/* These styles ensure proper rendering when using html2canvas */
+[data-pdf-export="true"] [data-variant="default"],
+[data-pdf-export="true"] [data-variant="destructive"],
+[data-pdf-export="true"] [data-variant="secondary"],
+[data-pdf-export="true"] [data-variant="outline"] {
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+  padding: 0.25rem 0.625rem !important;
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+}
+
+[data-pdf-export="true"] [data-variant="default"] {
+  background-color: #171717 !important;
+  color: #fafafa !important;
+}
+
+[data-pdf-export="true"] [data-variant="destructive"] {
+  background-color: #dc2626 !important;
+  color: #fafafa !important;
+}
+
+[data-pdf-export="true"] [data-variant="secondary"] {
+  background-color: #f5f5f5 !important;
+  color: #171717 !important;
+}
+
+[data-pdf-export="true"] [data-variant="outline"] {
+  background-color: transparent !important;
+  color: #171717 !important;
+  border: 1px solid #e5e5e5 !important;
+}

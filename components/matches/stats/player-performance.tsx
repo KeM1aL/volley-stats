@@ -67,7 +67,7 @@ export const variants = {
 const PlayerPerformance = React.forwardRef<
   PdfExportHandle,
   PlayerPerformanceProps
->(({ match, managedTeam, opponentTeam, players, stats, sets }, ref) => {
+>(({ match, managedTeam, opponentTeam, players, stats, sets, isPdfGenerating }, ref) => {
   const [selectedSet, setSelectedSet] = useState<string>("all");
   const [selectedTab, setSelectedTab] = useState("overview");
   const playerPerformanceRef = useRef<HTMLDivElement>(null);
@@ -77,21 +77,18 @@ const PlayerPerformance = React.forwardRef<
       let currentYOffset = initialYOffset;
       const margin = 20;
       const imgWidth = 595 - 2 * margin;
+      let isFirstPage = true;
 
       const setsToIterate = [null, ...allSets.map((s) => s.id)];
-
       const tabsToIterate = ["overview", "details", "positions"];
-      
 
       for (const tab of tabsToIterate) {
         setSelectedTab(tab);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        doc.addPage();
-        currentYOffset = margin;
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
         for (const setId of setsToIterate) {
           setSelectedSet(setId === null ? "all" : setId);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 300));
 
           const subTitle =
             setId === null
@@ -100,18 +97,24 @@ const PlayerPerformance = React.forwardRef<
                   allSets.find((s) => s.id === setId)?.set_number || ""
                 } Breakdown`;
 
-          doc.addPage();
+          // Only add page after first content
+          if (!isFirstPage) {
+            doc.addPage();
+          }
+          isFirstPage = false;
           currentYOffset = margin;
+
           doc.setFontSize(16);
           doc.text(`${tabTitle} - ${subTitle}`, margin, currentYOffset);
           currentYOffset += 30;
 
           if (playerPerformanceRef.current) {
             const canvas = await html2canvas(playerPerformanceRef.current, {
-              scale: 2,
+              scale: 1.5,
               useCORS: true,
+              logging: false,
             });
-            const imgData = canvas.toDataURL("image/jpeg", 0.9);
+            const imgData = canvas.toDataURL("image/jpeg", 0.6);
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
             if (
@@ -368,7 +371,7 @@ const PlayerPerformance = React.forwardRef<
                     <CardTitle>Overall Performance</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-[400px]">
+                    <div className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={getPlayerPerformanceData()}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -414,7 +417,7 @@ const PlayerPerformance = React.forwardRef<
                         <CardTitle>{player.name} Performance Radar</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="h-[300px]">
+                        <div className={isPdfGenerating ? "h-[200px]" : "h-[300px]"}>
                           <ResponsiveContainer width="100%" height="100%">
                             <RadarChart data={getPlayerRadarData(player.id)}>
                               <PolarGrid />

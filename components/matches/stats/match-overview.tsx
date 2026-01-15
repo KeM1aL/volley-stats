@@ -51,15 +51,15 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
 
           currentYOffset = margin;
           doc.setFontSize(16);
-          doc.text(`${tabTitle}`, margin, currentYOffset);
-          currentYOffset += 30;
+          currentYOffset += 60;
 
           if (overviewRef.current) {
             const canvas = await html2canvas(overviewRef.current, {
-              scale: 2,
+              scale: 1.5,
               useCORS: true,
+              logging: false,
             });
-            const imgData = canvas.toDataURL("image/jpeg", 0.9);
+            const imgData = canvas.toDataURL("image/jpeg", 0.6);
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
             if (currentYOffset + imgHeight > doc.internal.pageSize.height - margin) {

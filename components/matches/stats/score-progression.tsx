@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useImperativeHandle } from "react";
-import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import {
   Card,
@@ -34,7 +33,7 @@ interface ScoreProgressionProps {
 const ScoreProgression = React.forwardRef<
   PdfExportHandle,
   ScoreProgressionProps
->(({ match, sets, points, isPdfGenerating }, ref) => {
+>(({ sets, points, isPdfGenerating }, ref) => {
   const [selectedSet, setSelectedSet] = useState<string | null>(null);
   const scoreProgressionRef = useRef<HTMLDivElement>(null);
 
@@ -43,12 +42,13 @@ const ScoreProgression = React.forwardRef<
       let currentYOffset = initialYOffset;
       const margin = 20;
       const imgWidth = 595 - 2 * margin;
+      let isFirstPage = true;
 
       const setsToIterate = [...allSets.map((s) => s.id)];
 
       for (const setId of setsToIterate) {
         setSelectedSet(setId);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
         const subTitle =
           setId === null
@@ -57,25 +57,31 @@ const ScoreProgression = React.forwardRef<
                 allSets.find((s) => s.id === setId)?.set_number || ""
               } Breakdown`;
 
-        doc.addPage();
+        // Only add page after first content
+        if (!isFirstPage) {
+          doc.addPage();
+        }
+        isFirstPage = false;
         currentYOffset = margin;
+
         doc.setFontSize(16);
         doc.text(`${tabTitle} - ${subTitle}`, margin, currentYOffset);
         currentYOffset += 30;
 
         if (scoreProgressionRef.current) {
           const canvas = await html2canvas(scoreProgressionRef.current, {
-            scale: 2,
+            scale: 1.5,
             useCORS: true,
+            logging: false,
           });
-          const imgData = canvas.toDataURL("image/png");
+          const imgData = canvas.toDataURL("image/jpeg", 0.6);
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
           if (currentYOffset + imgHeight > doc.internal.pageSize.height - margin) {
             doc.addPage();
             currentYOffset = margin;
           }
-          doc.addImage(imgData, "PNG", margin, currentYOffset, imgWidth, imgHeight);
+          doc.addImage(imgData, "JPEG", margin, currentYOffset, imgWidth, imgHeight);
           currentYOffset += imgHeight + margin;
         } else {
           console.warn(`Score Progression content element not found for PDF export.`);
@@ -108,7 +114,7 @@ const ScoreProgression = React.forwardRef<
           <CardTitle>Score Progression</CardTitle>
           <CardDescription>Point-by-point score evolution</CardDescription>
         </CardHeader>
-        <CardContent className="h-[400px]">
+        <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={progressionData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -122,7 +128,7 @@ const ScoreProgression = React.forwardRef<
                 stroke="hsl(var(--chart-1))"
                 name="Home"
                 strokeWidth={2}
-                isAnimationActive={!!!isPdfGenerating}
+                isAnimationActive={!isPdfGenerating}
               />
               <Line
                 type="monotone"
@@ -130,7 +136,7 @@ const ScoreProgression = React.forwardRef<
                 stroke="hsl(var(--chart-2))"
                 name="Away"
                 strokeWidth={2}
-                isAnimationActive={!!!isPdfGenerating}
+                isAnimationActive={!isPdfGenerating}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -142,7 +148,7 @@ const ScoreProgression = React.forwardRef<
           <CardTitle>Score Difference</CardTitle>
           <CardDescription>Point differential over time</CardDescription>
         </CardHeader>
-        <CardContent className="h-[400px]">
+        <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={progressionData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -156,7 +162,7 @@ const ScoreProgression = React.forwardRef<
                 stroke="hsl(var(--primary))"
                 name="Difference"
                 strokeWidth={2}
-                isAnimationActive={!!!isPdfGenerating}
+                isAnimationActive={!isPdfGenerating}
               />
             </LineChart>
           </ResponsiveContainer>

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Share2 } from "lucide-react";
 import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import type {
   Match,
   TeamMember,
@@ -27,6 +26,18 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { supabase } from "@/lib/supabase/client";
 import { MatchOverview } from "@/components/matches/stats/match-overview";
 import { PdfExportHandle } from "@/lib/pdf/types";
+import {
+  PdfLoadingOverlay,
+  PdfGenerationStep,
+} from "@/components/ui/pdf-loading-overlay";
+
+const PDF_STEPS: PdfGenerationStep[] = [
+  { id: "overview", label: "Match Overview", status: "pending" },
+  { id: "scores", label: "Score Progression", status: "pending" },
+  { id: "sets", label: "Set Breakdown", status: "pending" },
+  { id: "players", label: "Player Performance", status: "pending" },
+  { id: "team", label: "Team Performance", status: "pending" },
+];
 
 export default function MatchStatsPage() {
   const { id: matchId } = useParams();
@@ -42,7 +53,10 @@ export default function MatchStatsPage() {
   const [players, setPlayers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false); // State to indicate if PDF generation is in progress
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [pdfSteps, setPdfSteps] = useState<PdfGenerationStep[]>(PDF_STEPS);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const overviewRef = useRef<PdfExportHandle>(null);
   const setBreakdownRef = useRef<PdfExportHandle>(null);
@@ -240,31 +254,53 @@ export default function MatchStatsPage() {
     }
   }, [db, matchId, isOnline]);
 
+  const updateStepStatus = (
+    stepId: string,
+    status: PdfGenerationStep["status"]
+  ) => {
+    setPdfSteps((prev) =>
+      prev.map((step) => (step.id === stepId ? { ...step, status } : step))
+    );
+  };
+
+  const resetSteps = () => {
+    setPdfSteps(PDF_STEPS.map((step) => ({ ...step, status: "pending" })));
+    setCurrentStepIndex(0);
+  };
+
+  const cancelPdfGeneration = () => {
+    abortControllerRef.current?.abort();
+    setIsPdfGenerating(false);
+    resetSteps();
+    document.body.removeAttribute("data-pdf-export");
+    toast({
+      title: "PDF Generation Cancelled",
+      description: "The PDF generation was cancelled.",
+    });
+  };
+
   const exportToPDF = async () => {
     if (!match || isPdfGenerating) return;
 
     setIsPdfGenerating(true);
-    toast({
-      title: "Generating PDF...",
-      description: "Please wait while your match statistics are being compiled.",
-    });
+    resetSteps();
+    abortControllerRef.current = new AbortController();
+
+    // Enable PDF export mode for proper badge styling
+    document.body.setAttribute("data-pdf-export", "true");
 
     const doc = new jsPDF("p", "pt", "a4");
     const margin = 40;
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // --- Title Page ---
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
-    doc.text("Match Statistics", pageWidth / 2, 60, { align: "center" });
-
+    let docTitle = "Match Statistics";
     if (managedTeam && opponentTeam) {
-      doc.setFontSize(18);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${managedTeam.name} vs ${opponentTeam.name}`, pageWidth / 2, 90, {
-        align: "center",
-      });
+      docTitle += ` - ${managedTeam.name} vs ${opponentTeam.name}`;
     }
+    // --- Title Page ---
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(docTitle, pageWidth / 2, 60, { align: "center" });
 
     doc.setFontSize(12);
     doc.text(new Date(match.date).toLocaleDateString(), pageWidth / 2, 110, {
@@ -272,19 +308,38 @@ export default function MatchStatsPage() {
     });
 
     const componentsToExport = [
-      { ref: overviewRef, title: "Overview", tab : "overview" },
-      { ref: scoreProgressionRef, title: "Score Progression", tab : "scores"},
-      { ref: setBreakdownRef, title: "Set Breakdown", tab : "sets"},
-      { ref: playerPerformanceRef, title: "Player Performance", tab : "players"},
-      { ref: teamPerformanceRef, title: "Team Performance", tab : "team"},
+      { ref: overviewRef, title: "Overview", tab: "overview", stepId: "overview" },
+      { ref: scoreProgressionRef, title: "Score Progression", tab: "scores", stepId: "scores" },
+      { ref: setBreakdownRef, title: "Set Breakdown", tab: "sets", stepId: "sets" },
+      { ref: playerPerformanceRef, title: "Player Performance", tab: "players", stepId: "players" },
+      // { ref: teamPerformanceRef, title: "Team Performance", tab: "team", stepId: "team" },
     ];
 
     const initialTab = activeTab;
+    let isFirstComponent = true;
 
     try {
-      for (const { ref, title, tab } of componentsToExport) {
+      for (let i = 0; i < componentsToExport.length; i++) {
+        // Check for cancellation
+        if (abortControllerRef.current?.signal.aborted) {
+          throw new Error("Cancelled");
+        }
+
+        const { ref, title, tab, stepId } = componentsToExport[i];
+
+        // Update progress
+        setCurrentStepIndex(i);
+        updateStepStatus(stepId, "in-progress");
+
         setActiveTab(tab);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // Add page before each component except the first
+        if (!isFirstComponent) {
+          doc.addPage();
+        }
+        isFirstComponent = false;
+
         if (ref.current) {
           await ref.current.generatePdfContent(doc, margin, sets, title);
         } else {
@@ -292,6 +347,8 @@ export default function MatchStatsPage() {
             `Ref for ${title} not found. Skipping PDF generation for this component.`
           );
         }
+
+        updateStepStatus(stepId, "completed");
       }
 
       doc.save(`match-stats-${matchId}.pdf`);
@@ -300,6 +357,10 @@ export default function MatchStatsPage() {
         description: "Your match statistics PDF has been downloaded.",
       });
     } catch (error) {
+      if ((error as Error).message === "Cancelled") {
+        // Already handled by cancelPdfGeneration
+        return;
+      }
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
@@ -307,8 +368,10 @@ export default function MatchStatsPage() {
         description: "There was an error generating the PDF.",
       });
     } finally {
+      document.body.removeAttribute("data-pdf-export");
       setIsPdfGenerating(false);
       setActiveTab(initialTab);
+      abortControllerRef.current = null;
     }
   };
 
@@ -338,6 +401,12 @@ export default function MatchStatsPage() {
 
   return (
     <div className="space-y-6">
+      <PdfLoadingOverlay
+        isVisible={isPdfGenerating}
+        steps={pdfSteps}
+        currentStepIndex={currentStepIndex}
+        onCancel={cancelPdfGeneration}
+      />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Match Statistics</h1>

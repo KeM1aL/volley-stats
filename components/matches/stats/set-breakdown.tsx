@@ -33,7 +33,7 @@ interface SetBreakdownProps {
 }
 
 const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
-  ({ match, sets, points, managedTeam, opponentTeam }, ref) => {
+  ({ match, sets, points, managedTeam, opponentTeam, isPdfGenerating }, ref) => {
     const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
     const setBreakdownRef = useRef<HTMLDivElement>(null);
 
@@ -41,20 +41,23 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
       generatePdfContent: async (doc, initialYOffset, allSets, tabTitle) => {
         let currentYOffset = initialYOffset;
         const margin = 20;
-        const imgWidth = 595 - 2 * margin; // A4 width (595pt) - 2 * margin // Wait for state update and re-render
+        const imgWidth = 595 - 2 * margin;
 
-        doc.addPage();
+        // Don't add page here - the orchestrator handles page management
         currentYOffset = margin;
         doc.setFontSize(16);
         doc.text(`${tabTitle} - All Sets Overview`, margin, currentYOffset);
         currentYOffset += 30;
 
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
         if (setBreakdownRef.current) {
           const canvas = await html2canvas(setBreakdownRef.current, {
-            scale: 2,
+            scale: 1.5,
             useCORS: true,
+            logging: false,
           });
-          const imgData = canvas.toDataURL("image/jpeg", 0.9);
+          const imgData = canvas.toDataURL("image/jpeg", 0.6);
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
           if (
@@ -265,7 +268,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
               Breakdown of scoring methods in each set
             </CardDescription>
           </CardHeader>
-          <CardContent className="h-[400px]">
+          <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={setData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -308,7 +311,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
               Breakdown of scoring methods in each set
             </CardDescription>
           </CardHeader>
-          <CardContent className="h-[400px]">
+          <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={setData}>
                 <CartesianGrid strokeDasharray="3 3" />
