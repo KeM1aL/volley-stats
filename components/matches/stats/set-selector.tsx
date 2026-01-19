@@ -12,7 +12,7 @@ interface SetSelectorProps {
 
 export function SetSelector({ sets, selectedSetId, onSelectSet }: SetSelectorProps) {
   return (
-    <div className="inline-flex">
+    <div className="inline-flex pdf-hide">
         <Button
           variant={selectedSetId === null ? "default" : "outline"}
           onClick={() => onSelectSet(null)}

@@ -338,7 +338,7 @@ const PlayerPerformance = React.forwardRef<
             <TabsTrigger value="positions">Positions Stats</TabsTrigger>
           </TabsList>
           <div className="space-y-4">
-            <div className="inline-flex">
+            <div className="inline-flex pdf-hide">
               <Button
                 variant={selectedSet === "all" ? "default" : "outline"}
                 onClick={() => setSelectedSet("all")}
@@ -352,7 +352,7 @@ const PlayerPerformance = React.forwardRef<
                   key={set.id}
                   onClick={() => setSelectedSet(set.id)}
                   className={`
-                        ${index === sets.length - 1 ? "rounded-l-none" : ""} 
+                        ${index === sets.length - 1 ? "rounded-l-none" : ""}
                         ${
                           index >= 0 && index < sets.length - 1
                             ? "rounded-none border-x-0"

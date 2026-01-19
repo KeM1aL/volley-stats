@@ -287,14 +287,20 @@ body.keyboard-visible [data-radix-dialog-content] * {
 [data-pdf-export="true"] [data-variant="destructive"],
 [data-pdf-export="true"] [data-variant="secondary"],
 [data-pdf-export="true"] [data-variant="outline"] {
-  display: inline-block !important;
-  text-align: center !important;
-  line-height: 1 !important;
-  vertical-align: middle !important;
-  padding: 0.25rem 0.625rem !important;
+  /* Use flexbox for proper vertical centering in html2canvas */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  /* Fixed height with matching line-height for fallback */
+  height: 22px !important;
+  line-height: 22px !important;
+  /* Horizontal padding only, vertical handled by flexbox */
+  padding: 0 0.625rem !important;
   border-radius: 9999px !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
+  /* Ensure text doesn't wrap */
+  white-space: nowrap !important;
 }
 
 [data-pdf-export="true"] [data-variant="default"] {
@@ -316,4 +322,10 @@ body.keyboard-visible [data-radix-dialog-content] * {
   background-color: transparent !important;
   color: #171717 !important;
   border: 1px solid #e5e5e5 !important;
+}
+
+/* Hide tab controls and navigation during PDF export */
+[data-pdf-export="true"] [role="tablist"],
+[data-pdf-export="true"] .pdf-hide {
+  display: none !important;
 }

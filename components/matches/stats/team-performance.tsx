@@ -276,7 +276,7 @@ const TeamPerformance = React.forwardRef<
               <TabsTrigger value="insights">Tactical Insights</TabsTrigger>
             </TabsList>
             <div className="space-y-4">
-              <div className="inline-flex space-x-2">
+              <div className="inline-flex space-x-2 pdf-hide">
                 <Select
                   value={selectedPlayer || undefined}
                   onValueChange={setSelectedPlayer}
