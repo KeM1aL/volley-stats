@@ -68,8 +68,10 @@ export function ChampionshipTeamsList({
       <Card>
         <CardContent className="p-6">
           <p className="text-center text-muted-foreground">
-            No active teams in this championship yet. Click "New Team" above to
-            create one.
+            No active teams in this championship yet. Assign teams to this
+            championship from the{" "}
+            <Link href="/teams" className="underline hover:text-primary">Teams</Link>{" "}
+            page.
           </p>
         </CardContent>
       </Card>

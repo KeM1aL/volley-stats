@@ -153,7 +153,8 @@ export function MatchHistoryTable({
   }
 
   return (
-    <Table>
+    <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
+    <Table className="min-w-[600px]">
       <TableHeader>
         <TableRow>
           <TableHead
@@ -216,5 +217,6 @@ export function MatchHistoryTable({
         ))}
       </TableBody>
     </Table>
+    </div>
   );
 }

@@ -10,5 +10,6 @@ export const createClubApi = (supabaseClient?: SupabaseClient) => {
     getClubs: (filters?: Filter[], sort?: Sort<Club>[], joins?: string[]) =>
       dataStore.getAll(filters, sort, joins),
     getClubById: (id: string) => dataStore.get(id),
+    createClub: (club: Partial<Club>) => dataStore.create(club),
   };
 };

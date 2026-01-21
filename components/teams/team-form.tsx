@@ -18,9 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useTeamApi } from "@/hooks/use-team-api";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Championship, Club, Team, TeamStatus } from "@/lib/types";
-import { ChampionshipSelect } from "../championships/championship-select";
+import { ChampionshipSelectWithQuickCreate } from "../championships/championship-select-with-quick-create";
 import { createClient } from "@/lib/supabase/client";
-import { ClubSelect } from "../clubs/club-select";
+import { ClubSelectWithQuickCreate } from "../clubs/club-select-with-quick-create";
 import { GenericSelect } from "../ui/generic-select";
 import { useRouter } from "next/navigation";
 
@@ -158,7 +158,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
             <FormItem>
               <FormLabel>Championship</FormLabel>
               <FormControl>
-                <ChampionshipSelect
+                <ChampionshipSelectWithQuickCreate
                   value={field.value}
                   onChange={field.onChange}
                   isClearable
@@ -176,7 +176,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
             <FormItem>
               <FormLabel>Club</FormLabel>
               <FormControl>
-                <ClubSelect
+                <ClubSelectWithQuickCreate
                   value={field.value}
                   onChange={field.onChange}
                   isClearable

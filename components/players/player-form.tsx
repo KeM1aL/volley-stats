@@ -89,7 +89,7 @@ export function PlayerForm({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input autoComplete="name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

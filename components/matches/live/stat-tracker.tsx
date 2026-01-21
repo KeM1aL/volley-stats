@@ -233,7 +233,7 @@ export function StatTracker({
       </div>
 
       {/* Stat Cards Section - Scrollable on mobile only */}
-      <div className="space-y-1 overflow-y-auto md:overflow-y-hidden py-1">
+      <div className="space-y-1 overflow-y-auto md:overflow-y-hidden py-1 touch-manipulation">
         {availableStatTypes.map((type, index) => (
           <Card
             key={type}

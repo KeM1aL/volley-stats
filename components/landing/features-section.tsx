@@ -91,7 +91,7 @@ export function FeaturesSection() {
           </Card>
         ))}
       </div>
-      <div className="m-5 min-h-[480px]">
+      <div className="m-2 md:m-5 min-h-[280px] md:min-h-[480px]">
         
             <AnimatePresence mode="wait">
               <motion.div
@@ -107,7 +107,7 @@ export function FeaturesSection() {
                       alt={selectedFeature.title}
                       width={1280}
                       height={720}
-                      className="rounded-lg"
+                      className="rounded-lg w-full h-auto max-w-4xl"
                   />
                 </div>
               </motion.div>

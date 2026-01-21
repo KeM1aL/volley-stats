@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Filter as FilterIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { TeamTable } from "@/components/teams/team-table";
 import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
 import { useTeamApi } from "@/hooks/use-team-api";
@@ -23,6 +27,7 @@ export default function TeamsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showFilters, setShowFilters] = useState(true);
   const teamApi = useTeamApi();
   const isInitialMount = useRef(true);
 
@@ -95,13 +100,26 @@ export default function TeamsPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Teams</h1>
-        <Button onClick={() => setNewTeam(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Team
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <FilterIcon className="h-4 w-4 mr-2" />
+            Filters
+          </Button>
+          <Button onClick={() => setNewTeam(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Team
+          </Button>
+        </div>
       </div>
 
-      <TeamFilters onFilterChange={handleFilterChange} initialFilters={initialFilters} />
+      <Collapsible open={showFilters} onOpenChange={setShowFilters}>
+        <CollapsibleContent>
+          <TeamFilters onFilterChange={handleFilterChange} initialFilters={initialFilters} />
+        </CollapsibleContent>
+      </Collapsible>
       {isLoading ? (
         <Skeleton className="h-[600px] w-full" />
       ) : (

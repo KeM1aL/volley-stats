@@ -115,6 +115,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
                     variant="ghost"
                     size="sm"
                     onClick={() => onEdit(player)}
+                    aria-label={`Edit ${player.name}`}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -122,6 +123,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
                     variant="ghost"
                     size="sm"
                     onClick={() => setDeletePlayer(player)}
+                    aria-label={`Delete ${player.name}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
