@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamTable } from "@/components/teams/team-table";
 import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
@@ -13,6 +13,8 @@ import { Team } from "@/lib/types";
 import { Filter, Sort } from "@/lib/api/types";
 import { TeamFilters } from "@/components/teams/team-filters";
 import { NewTeamDialog } from "@/components/teams/new-team-dialog";
+import { UpgradeCard, UpgradePrompt, UsageDots } from "@/components/subscription";
+import { useCanCreateTeam } from "@/contexts/subscription-context";
 
 export default function TeamsPage() {
   const router = useRouter();
@@ -23,8 +25,10 @@ export default function TeamsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const teamApi = useTeamApi();
   const isInitialMount = useRef(true);
+  const { canCreate: canCreateTeam, isLoading: limitsLoading, teamsUsed, teamLimit } = useCanCreateTeam();
 
   // Placeholder for user permissions
   const canManage = (team: Team) => {
@@ -91,15 +95,40 @@ export default function TeamsPage() {
     setRefreshKey((prev) => prev + 1);
   }, []);
 
+  const handleNewTeamClick = () => {
+    if (canCreateTeam) {
+      setNewTeam(true);
+    } else {
+      setShowUpgradePrompt(true);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Teams</h1>
-        <Button onClick={() => setNewTeam(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">Teams</h1>
+          {!limitsLoading && (
+            <UsageDots
+              used={teamsUsed}
+              limit={teamLimit}
+            />
+          )}
+        </div>
+        <Button onClick={handleNewTeamClick} variant={canCreateTeam ? "default" : "secondary"}>
+          {canCreateTeam ? (
+            <Plus className="h-4 w-4 mr-2" />
+          ) : (
+            <Lock className="h-4 w-4 mr-2" />
+          )}
           New Team
         </Button>
       </div>
+
+      {/* Show upgrade card when at or near team limit */}
+      {!limitsLoading && !canCreateTeam && (
+        <UpgradeCard type="team" />
+      )}
 
       <TeamFilters onFilterChange={handleFilterChange} initialFilters={initialFilters} />
       {isLoading ? (
@@ -118,6 +147,12 @@ export default function TeamsPage() {
         open={newTeam}
         onClose={() => setNewTeam(false)}
         onSuccess={handleTeamRefresh}
+      />
+
+      <UpgradePrompt
+        open={showUpgradePrompt}
+        onOpenChange={setShowUpgradePrompt}
+        type="team"
       />
     </div>
   );

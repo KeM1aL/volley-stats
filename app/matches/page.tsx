@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
-import { BarChart3, Filter, Plus } from "lucide-react";
+import { BarChart3, Filter, Plus, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MatchHistoryTable } from "@/components/matches/history/match-history-table";
@@ -27,6 +27,8 @@ import { useClubApi } from "@/hooks/use-club-api";
 import { useMatchApi } from "@/hooks/use-match-api";
 import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import { Filter as ApiFilter, Sort } from "@/lib/api/types";
+import { UpgradeCard, UpgradePrompt, UsageDots } from "@/components/subscription";
+import { useCanCreateMatch, useSubscription } from "@/contexts/subscription-context";
 
 const lastSeptember = new Date();
 if (lastSeptember.getMonth() < 8) {
@@ -53,8 +55,11 @@ export default function MatchPage() {
   const [showFilters, setShowFilters] = useState(true);
   const [newMatchDialogOpen, setNewMatchDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   const matchApi = useMatchApi();
+  const { canCreate: canCreateMatch, isLoading: limitsLoading, matchesUsed, matchCredits } = useCanCreateMatch();
+  const { effectiveTier } = useSubscription();
 
   // Apply favorites on mount if no manual filters set
   useMemo(() => {
@@ -167,18 +172,45 @@ export default function MatchPage() {
     setRefreshKey((prev) => prev + 1);
   }, []);
 
+  const handleNewMatchClick = () => {
+    if (canCreateMatch) {
+      setNewMatchDialogOpen(true);
+    } else {
+      setShowUpgradePrompt(true);
+    }
+  };
+
+  // Calculate remaining credits for display
+  const matchCreditsRemaining = matchCredits - matchesUsed;
+  const isLowOnCredits = !limitsLoading && effectiveTier === 'free' && matchCreditsRemaining <= 1 && matchCreditsRemaining > 0;
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Matches</h1>
-          <p className="text-muted-foreground">
-            View and analyze match statistics
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Matches</h1>
+            <p className="text-muted-foreground">
+              View and analyze match statistics
+            </p>
+          </div>
+          {!limitsLoading && effectiveTier === 'free' && (
+            <UsageDots
+              used={matchesUsed}
+              limit={matchCredits}
+            />
+          )}
         </div>
         <div className="flex gap-4">
-          <Button onClick={() => setNewMatchDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button
+            onClick={handleNewMatchClick}
+            variant={canCreateMatch ? "default" : "secondary"}
+          >
+            {canCreateMatch ? (
+              <Plus className="h-4 w-4 mr-2" />
+            ) : (
+              <Lock className="h-4 w-4 mr-2" />
+            )}
             New Match
           </Button>
           <Button
@@ -190,6 +222,11 @@ export default function MatchPage() {
           </Button>
         </div>
       </div>
+
+      {/* Show upgrade card when low on or out of match credits */}
+      {!limitsLoading && (isLowOnCredits || !canCreateMatch) && effectiveTier === 'free' && (
+        <UpgradeCard type="match" />
+      )}
 
       <Collapsible open={showFilters} onOpenChange={setShowFilters}>
         <CollapsibleContent>
@@ -269,6 +306,12 @@ export default function MatchPage() {
             description: "Match created successfully",
           });
         }}
+      />
+
+      <UpgradePrompt
+        open={showUpgradePrompt}
+        onOpenChange={setShowUpgradePrompt}
+        type="match"
       />
     </div>
   );

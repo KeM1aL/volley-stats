@@ -230,3 +230,54 @@ export type SyncMetadata = {
   last_sync_success: boolean;
   last_sync_error: string | null;
 } & Partial<Audited>;
+
+// Subscription system types
+
+export type SubscriptionTier = 'free' | 'premium' | 'max';
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'expired';
+export type EntitlementType = 'team_slot' | 'match_pack';
+export type EntitlementStatus = 'active' | 'paused' | 'exhausted';
+
+export type Subscription = {
+  id: string;
+  user_id: string;
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  trial_start: string | null;
+  trial_end: string | null;
+  cancel_at_period_end: boolean;
+} & Partial<Audited>;
+
+export type Entitlement = {
+  id: string;
+  user_id: string;
+  type: EntitlementType;
+  quantity: number;
+  quantity_used: number;
+  status: EntitlementStatus;
+  stripe_payment_intent_id: string | null;
+} & Partial<Audited>;
+
+export type UsageTracking = {
+  id: string;
+  user_id: string;
+  active_teams_count: number;
+  total_matches_count: number;
+} & Partial<Audited>;
+
+export type UserLimits = {
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  teamLimit: number;
+  teamsUsed: number;
+  canCreateTeam: boolean;
+  matchCredits: number;
+  matchesUsed: number;
+  canCreateMatch: boolean;
+  trialEnd: string | null;
+  isTrialing: boolean;
+};

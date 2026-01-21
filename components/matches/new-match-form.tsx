@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -22,6 +22,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Championship, Match, MatchFormat, Team } from "@/lib/types";
@@ -30,6 +31,9 @@ import { MatchFormatSelect } from "../match-formats/match-format-select";
 import { TeamSelectWithQuickCreate } from "../teams/team-select-with-quick-create";
 import { cn } from "@/lib/utils";
 import { useMatchApi } from "@/hooks/use-match-api";
+import { useSubscription } from "@/contexts/subscription-context";
+import { UpgradePrompt } from "../subscription/upgrade-prompt";
+import Link from "next/link";
 
 const formSchema = z.object({
   homeTeamId: z.string().min(1, "Home team is required"),
@@ -49,10 +53,17 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
   const { toast } = useToast();
   const matchApi = useMatchApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [selectedChampionship, setSelectedChampionship] = useState<Championship | null>(null);
   const [selectedMatchFormat, setSelectedMatchFormat] = useState<MatchFormat | null>(null);
   const [selectedHomeTeam, setSelectedHomeTeam] = useState<Team | null>(null);
   const [selectedAwayTeam, setSelectedAwayTeam] = useState<Team | null>(null);
+  const { canCreateMatch, limits, refreshLimits } = useSubscription();
+
+  // Check match credits
+  const matchCredits = limits?.matchCredits ?? 0;
+  const isOutOfCredits = !canCreateMatch;
+  const isLowOnCredits = matchCredits > 0 && matchCredits <= 2;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,6 +87,12 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
   }, [selectedChampionship, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Check if user has match credits
+    if (isOutOfCredits) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+
     if (values.homeTeamId === values.awayTeamId) {
       form.setError("awayTeamId", {
         message: "Away team must be different from home team",
@@ -102,11 +119,17 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
       } as Match;
 
       await matchApi.createMatch(match);
+      // Refresh limits after creating a match
+      await refreshLimits();
       onMatchCreated(match.id);
 
+      // Show special toast if this was the last free match
+      const wasLastCredit = matchCredits === 1;
       toast({
         title: "Match created",
-        description: "Your new match has been created successfully.",
+        description: wasLastCredit
+          ? "Your new match has been created. This was your last available match!"
+          : "Your new match has been created successfully.",
       });
     } catch (error) {
       console.error("Failed to create match:", error);
@@ -121,12 +144,39 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="date"
-          render={({ field }) => (
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {isOutOfCredits && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                You&apos;ve used all your match credits. Upgrade or purchase more matches to continue.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isLowOnCredits && !isOutOfCredits && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>
+                  {matchCredits} match{matchCredits !== 1 ? "es" : ""} remaining
+                </span>
+                <Link
+                  href="/upgrade?product=match-pack-5"
+                  className="text-primary underline-offset-4 hover:underline text-sm"
+                >
+                  Buy more matches
+                </Link>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Match Date</FormLabel>
               <Popover>
@@ -271,32 +321,47 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
         />
 
         <div className="flex gap-3 justify-end pt-2">
-          {onCancel && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-          )}
-          <Button
-            type="submit"
-            className={!onCancel ? "w-full" : ""}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <LoadingSpinner size="sm" className="mr-2" />
-                Creating Match...
-              </>
-            ) : (
-              "Create Match"
+            {onCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
             )}
-          </Button>
-        </div>
-      </form>
-    </Form>
+            <Button
+              type="submit"
+              className={!onCancel ? "w-full" : ""}
+              disabled={isSubmitting || isOutOfCredits}
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Creating Match...
+                </>
+              ) : (
+                "Create Match"
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
+
+      <UpgradePrompt
+        open={showUpgradePrompt}
+        onOpenChange={setShowUpgradePrompt}
+        type="match"
+        onUpgrade={() => {
+          setShowUpgradePrompt(false);
+          window.location.href = "/upgrade";
+        }}
+        onPurchase={() => {
+          setShowUpgradePrompt(false);
+          window.location.href = "/upgrade?product=match-pack-5";
+        }}
+      />
+    </>
   );
 }

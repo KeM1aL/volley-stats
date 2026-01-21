@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
 import { LoadingBar } from '@/components/ui/loading-bar';
 import { AuthProvider } from '@/contexts/auth-context';
+import { SubscriptionProvider } from '@/contexts/subscription-context';
 import { KeyboardProvider } from '@/contexts/keyboard-context';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -72,19 +73,21 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <AuthProvider>
-              <LocalDatabaseProvider>
-                <LoadingBar />
-                <div className="keyboard-layout-grid bg-background">
-                  <header>
-                    <Navigation />
-                  </header>
-                  <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-2 py-1">
-                    {children}
-                  </main>
-                  <div className="keyboard-spacer" aria-hidden="true" />
-                </div>
-                <Toaster />
-              </LocalDatabaseProvider>
+              <SubscriptionProvider>
+                <LocalDatabaseProvider>
+                  <LoadingBar />
+                  <div className="keyboard-layout-grid bg-background">
+                    <header>
+                      <Navigation />
+                    </header>
+                    <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-2 py-1">
+                      {children}
+                    </main>
+                    <div className="keyboard-spacer" aria-hidden="true" />
+                  </div>
+                  <Toaster />
+                </LocalDatabaseProvider>
+              </SubscriptionProvider>
             </AuthProvider>
           </ThemeProvider>
         </KeyboardProvider>

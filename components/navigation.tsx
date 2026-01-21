@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { ThemeToggle } from "./theme-toggle";
 import { FullScreenToggle } from "./fullscreen-toggle";
+import { TrialBanner, SubscriptionBadge } from "./subscription";
 
 const routes = [
   {
@@ -47,8 +48,10 @@ export function Navigation() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex mx-auto h-14 items-center justify-between">
+    <>
+      {user && <TrialBanner />}
+      <header className="top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex mx-auto h-14 items-center justify-between">
         <div className="flex items-center">
           {user && (
             <div className="md:hidden">
@@ -115,7 +118,8 @@ export function Navigation() {
             </nav>
           )}
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
+          {user && <SubscriptionBadge />}
           <FullScreenToggle />
           <ThemeToggle />
           {user && (
@@ -127,5 +131,6 @@ export function Navigation() {
         </div>
       </div>
     </header>
+    </>
   );
 }

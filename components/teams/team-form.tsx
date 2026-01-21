@@ -23,6 +23,10 @@ import { createClient } from "@/lib/supabase/client";
 import { ClubSelect } from "../clubs/club-select";
 import { GenericSelect } from "../ui/generic-select";
 import { useRouter } from "next/navigation";
+import { useSubscription } from "@/contexts/subscription-context";
+import { UpgradePrompt } from "../subscription/upgrade-prompt";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const supabase = createClient();
 
@@ -42,9 +46,14 @@ type TeamFormProps = {
 export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const teamApi = useTeamApi();
   const router = useRouter();
+  const { canCreateTeam, limits, refreshLimits } = useSubscription();
   const isEditMode = !!team;
+
+  // Check if user is at their team limit (only for active teams)
+  const isAtTeamLimit = !canCreateTeam;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,6 +77,18 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
   }, [team, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Check team limit for new active teams (incomplete teams bypass the limit)
+    if (!isEditMode && values.status === "active" && isAtTeamLimit) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+
+    // When editing: check if changing status from non-active to active would exceed limit
+    if (isEditMode && team.status !== "active" && values.status === "active" && isAtTeamLimit) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (isEditMode) {
@@ -77,6 +98,10 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           club_id: values.clubs?.id ?? null,
           status: values.status,
         });
+        // Refresh limits if status changed
+        if (team.status !== values.status) {
+          await refreshLimits();
+        }
         toast({
           title: "Team updated",
           description: "The team has been successfully updated.",
@@ -105,6 +130,8 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
         };
 
         const createdTeam = await teamApi.createTeam(newTeam);
+        // Refresh limits after creating a team
+        await refreshLimits();
         if (onSuccess) {
           onSuccess(createdTeam.id);
         }
@@ -130,26 +157,41 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
     }
   };
 
+  // Watch the status field to show warning when needed
+  const watchedStatus = form.watch("status");
+  const showLimitWarning = !isEditMode && isAtTeamLimit && watchedStatus === "active";
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter team name"
-                  {...field}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {showLimitWarning && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                You&apos;ve reached your team limit ({limits?.teamsUsed}/{limits?.teamLimit}).
+                Set status to &quot;Incomplete&quot; to create this team, or upgrade your plan.
+              </AlertDescription>
+            </Alert>
           )}
-        />
+
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter team name"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
         <FormField
           control={form.control}
@@ -238,7 +280,22 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
             )}
           </Button>
         </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
+
+      <UpgradePrompt
+        open={showUpgradePrompt}
+        onOpenChange={setShowUpgradePrompt}
+        type="team"
+        onUpgrade={() => {
+          setShowUpgradePrompt(false);
+          window.location.href = "/upgrade";
+        }}
+        onPurchase={() => {
+          setShowUpgradePrompt(false);
+          window.location.href = "/upgrade?product=team-slot";
+        }}
+      />
+    </>
   );
 }
