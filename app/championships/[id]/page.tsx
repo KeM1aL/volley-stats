@@ -245,32 +245,34 @@ export default function ChampionshipDetailPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="space-y-4">
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl sm:text-3xl font-bold">
             Championship: {championship.name}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Format: {championship.match_formats?.format} | Gender: {championship.gender} | Age
             Category: {championship.age_category}
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={handleRefresh}
             disabled={isRefreshing}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
             <RefreshCw
-              className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+              className={`h-4 w-4 mr-1 sm:mr-2 ${isRefreshing ? "animate-spin" : ""}`}
             />
             {isRefreshing ? "Refreshing..." : "Refresh"}
           </Button>
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <Filter className="h-4 w-4 mr-1 sm:mr-2" />
             Filters
           </Button>
         </div>

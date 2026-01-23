@@ -46,6 +46,7 @@ import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
 import { cn } from "@/lib/utils";
 import { BarChart3, WifiOff } from "lucide-react";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
+import { useLandscape } from "@/hooks/use-landscape";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
 
@@ -92,6 +93,7 @@ export default function LiveMatchPage() {
   const [showMobileDrawer, setShowMobileDrawer] = useState(false); // Mobile Sheet drawer
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [navExpanded, setNavExpanded] = useState(false);
+  const isLandscape = useLandscape();
 
   // Memoized data loading function
   const loadMatchData = useCallback(async () => {
@@ -628,9 +630,12 @@ export default function LiveMatchPage() {
 
       {/* Row 2: Content - Responsive Layout */}
       <div className="flex-1 overflow-hidden">
-        {/* Desktop/Tablet: Grid Layout */}
+        {/* Desktop/Tablet: Grid Layout - Hidden in landscape mobile mode */}
         <div
-          className="hidden md:grid h-full gap-2 p-1 transition-all duration-300 ease-in-out"
+          className={cn(
+            "h-full gap-2 p-1 transition-all duration-300 ease-in-out",
+            isLandscape ? "hidden" : "hidden md:grid"
+          )}
           style={{ gridTemplateColumns }}
         >
           {/* Column 1: Nav - No scroll */}
@@ -662,37 +667,80 @@ export default function LiveMatchPage() {
           </main>
         </div>
 
-        {/* Mobile: Flex Layout + Drawer */}
-        <div className="md:hidden flex flex-col h-full">
-          {/* Mobile Nav: Horizontal Icons */}
-          <nav className="shrink-0 border-b">
-            <LiveMatchSidebar
-              activePanel={activePanel}
-              onPanelChange={setActivePanel}
-              showPanel={showMobileDrawer}
-              onTogglePanel={() => setShowMobileDrawer(!showMobileDrawer)}
-              isMobile={true}
-            />
-          </nav>
+        {/* Mobile: Flex Layout + Drawer - Also show in landscape mode */}
+        <div className={cn(
+          "flex flex-col h-full",
+          isLandscape ? "flex" : "md:hidden"
+        )}>
+          {/* Mobile Nav: Show horizontal icons, or vertical sidebar in landscape */}
+          {isLandscape ? (
+            <div className="flex h-full">
+              {/* Landscape: Vertical sidebar on left */}
+              <nav className="shrink-0 border-r h-full">
+                <LiveMatchSidebar
+                  activePanel={activePanel}
+                  onPanelChange={setActivePanel}
+                  showPanel={showMobileDrawer}
+                  onTogglePanel={() => setShowMobileDrawer(!showMobileDrawer)}
+                  isMobile={false}
+                  isLandscape={true}
+                />
+              </nav>
 
-          {/* Mobile Main Content */}
-          <main className="flex-1 overflow-hidden p-2">
-            <div className="h-full overflow-y-auto live-match-scroll">
-              {renderMainContent()}
+              {/* Landscape: Main Content */}
+              <main className="flex-1 overflow-hidden p-1">
+                <div className="h-full overflow-y-auto live-match-scroll">
+                  {renderMainContent()}
+                </div>
+              </main>
+
+              {/* Landscape: Panel Drawer */}
+              <Sheet open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
+                <SheetContent
+                  side="right"
+                  className="w-[70%] overflow-hidden flex flex-col"
+                  title="Match panel"
+                >
+                  <div className="flex-1 overflow-y-auto live-match-scroll">
+                    {renderPanelContent()}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
-          </main>
+          ) : (
+            <>
+              {/* Portrait: Horizontal nav */}
+              <nav className="shrink-0 border-b">
+                <LiveMatchSidebar
+                  activePanel={activePanel}
+                  onPanelChange={setActivePanel}
+                  showPanel={showMobileDrawer}
+                  onTogglePanel={() => setShowMobileDrawer(!showMobileDrawer)}
+                  isMobile={true}
+                />
+              </nav>
 
-          {/* Mobile Panel: Drawer */}
-          <Sheet open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
-            <SheetContent
-              side="right"
-              className="w-[85%] overflow-hidden flex flex-col"
-            >
-              <div className="flex-1 overflow-y-auto live-match-scroll">
-                {renderPanelContent()}
-              </div>
-            </SheetContent>
-          </Sheet>
+              {/* Portrait: Main Content */}
+              <main className="flex-1 overflow-hidden p-2">
+                <div className="h-full overflow-y-auto live-match-scroll">
+                  {renderMainContent()}
+                </div>
+              </main>
+
+              {/* Portrait: Panel Drawer */}
+              <Sheet open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
+                <SheetContent
+                  side="right"
+                  className="w-[85%] overflow-hidden flex flex-col"
+                  title="Match panel"
+                >
+                  <div className="flex-1 overflow-y-auto live-match-scroll">
+                    {renderPanelContent()}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </>
+          )}
         </div>
       </div>
     </div>

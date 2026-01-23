@@ -152,71 +152,127 @@ export function MatchHistoryTable({
     );
   }
 
+  const sortedMatches = [...matches].sort(sortMatches);
+
   return (
-    <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
-    <Table className="min-w-[600px]">
-      <TableHeader>
-        <TableRow>
-          <TableHead
-            className="cursor-pointer"
-            onClick={() => toggleSort("date")}
+    <>
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {sortedMatches.map((match) => (
+          <div
+            key={match.id}
+            className="border rounded-lg p-4 space-y-2"
           >
-            <div className="flex items-center gap-2">
-              Date
-              <SortIcon field="date" />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm text-muted-foreground">
+                {new Date(match.date).toLocaleDateString()}
+              </span>
+              <span className="text-sm capitalize px-2 py-0.5 bg-muted rounded">
+                {match.status}
+              </span>
             </div>
-          </TableHead>
-          <TableHead>Teams</TableHead>
-          <TableHead
-            className="cursor-pointer"
-            onClick={() => toggleSort("score")}
-          >
-            <div className="flex items-center gap-2">
-              Score
-              <SortIcon field="score" />
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-medium truncate flex-1">
+                  {match.home_team?.name || "Unknown"}
+                </span>
+                <span className="font-bold text-lg ml-2">{match.home_score}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium truncate flex-1">
+                  {match.away_team?.name || "Unknown"}
+                </span>
+                <span className="font-bold text-lg ml-2">{match.away_score}</span>
+              </div>
             </div>
-          </TableHead>
-          <TableHead>Status</TableHead>
-          {user && <TableHead className="w-[100px]">Actions</TableHead>}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {[...matches].sort(sortMatches).map((match) => (
-          <TableRow key={match.id}>
-            <TableCell>{new Date(match.date).toLocaleDateString()}</TableCell>
-            <TableCell>
-              {match.home_team?.name || "Unknown"} vs{" "}
-              {match.away_team?.name || "Unknown"}
-            </TableCell>
-            <TableCell>
-              {match.home_score} - {match.away_score}
-            </TableCell>
-            <TableCell>
-              <span className="capitalize">{match.status}</span>
-            </TableCell>
             {user && isMemberOfTeamOrClub(match) && (
-              <TableCell>
-                <div className="flex gap-2">
-                  {(() => {
-                    switch (match.status) {
-                      case MatchStatus.UPCOMING:
-                        return <MatchStartDialog match={match} />;
-                      case MatchStatus.COMPLETED:
-                        return <MatchStatsDialog match={match} />;
-                      case MatchStatus.LIVE:
-                        return <><MatchEditDialog match={match} /> <MatchScoreDialog match={match} /></>;
-                      default:
-                        return null;
-                    }
-                  })()}
-                  
-                </div>
-              </TableCell>
+              <div className="flex gap-2 pt-2 border-t">
+                {(() => {
+                  switch (match.status) {
+                    case MatchStatus.UPCOMING:
+                      return <MatchStartDialog match={match} />;
+                    case MatchStatus.COMPLETED:
+                      return <MatchStatsDialog match={match} />;
+                    case MatchStatus.LIVE:
+                      return <><MatchEditDialog match={match} /> <MatchScoreDialog match={match} /></>;
+                    default:
+                      return null;
+                  }
+                })()}
+              </div>
             )}
-          </TableRow>
+          </div>
         ))}
-      </TableBody>
-    </Table>
-    </div>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block w-full overflow-x-auto">
+        <div className="inline-block min-w-full">
+          <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead
+                className="cursor-pointer"
+                onClick={() => toggleSort("date")}
+              >
+                <div className="flex items-center gap-2">
+                  Date
+                  <SortIcon field="date" />
+                </div>
+              </TableHead>
+              <TableHead>Teams</TableHead>
+              <TableHead
+                className="cursor-pointer"
+                onClick={() => toggleSort("score")}
+              >
+                <div className="flex items-center gap-2">
+                  Score
+                  <SortIcon field="score" />
+                </div>
+              </TableHead>
+              <TableHead>Status</TableHead>
+              {user && <TableHead className="w-[150px]">Actions</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedMatches.map((match) => (
+              <TableRow key={match.id}>
+                <TableCell className="whitespace-nowrap">{new Date(match.date).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {match.home_team?.name || "Unknown"} vs{" "}
+                  {match.away_team?.name || "Unknown"}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {match.home_score} - {match.away_score}
+                </TableCell>
+                <TableCell>
+                  <span className="capitalize">{match.status}</span>
+                </TableCell>
+                {user && isMemberOfTeamOrClub(match) && (
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {(() => {
+                        switch (match.status) {
+                          case MatchStatus.UPCOMING:
+                            return <MatchStartDialog match={match} />;
+                          case MatchStatus.COMPLETED:
+                            return <MatchStatsDialog match={match} />;
+                          case MatchStatus.LIVE:
+                            return <><MatchEditDialog match={match} /> <MatchScoreDialog match={match} /></>;
+                          default:
+                            return null;
+                        }
+                      })()}
+
+                    </div>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        </div>
+      </div>
+    </>
   );
 }

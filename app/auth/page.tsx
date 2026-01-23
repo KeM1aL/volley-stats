@@ -20,14 +20,14 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="container max-w-md mx-auto mt-20">
+    <div className="container max-w-md mx-auto mt-8 sm:mt-12 md:mt-20 px-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="text-xl sm:text-2xl text-center">
             Welcome to VolleyStats for Dummies
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <AuthForm />
         </CardContent>
       </Card>

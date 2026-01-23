@@ -64,41 +64,47 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Win Rate</CardTitle>
-          <CardDescription>Overall performance</CardDescription>
+        <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+          <CardTitle className="text-sm sm:text-base">Win Rate</CardTitle>
+          <CardDescription className="text-xs sm:text-sm hidden sm:block">Overall performance</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
+        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+          <div className="text-lg sm:text-2xl font-bold">
             {winRate.toFixed(1)}%
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
             {wins} wins out of {totalMatches} matches
           </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Average Points</CardTitle>
-          <CardDescription>Points per match</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {averagePoints.toFixed(1)}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {totalPoints} total points
+          <p className="text-xs text-muted-foreground sm:hidden">
+            {wins}/{totalMatches}
           </p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Match History</CardTitle>
-          <CardDescription>Recent performance</CardDescription>
+        <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+          <CardTitle className="text-sm sm:text-base">Avg Points</CardTitle>
+          <CardDescription className="text-xs sm:text-sm hidden sm:block">Points per match</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+          <div className="text-lg sm:text-2xl font-bold">
+            {averagePoints.toFixed(1)}
+          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+            {totalPoints} total points
+          </p>
+          <p className="text-xs text-muted-foreground sm:hidden">
+            {totalPoints} pts
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+          <CardTitle className="text-sm sm:text-base">History</CardTitle>
+          <CardDescription className="text-xs sm:text-sm hidden sm:block">Recent performance</CardDescription>
+        </CardHeader>
+        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
           <div className="flex gap-1">
             {teamTerminatedMatches.slice(-5).map((match, index) => {
               const isWin =
@@ -109,15 +115,15 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
               return (
                 <div
                   key={index}
-                  className={`w-3 h-3 rounded-full ${
+                  className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                     isWin ? "bg-green-500" : "bg-red-500"
                   }`}
                 />
               );
             })}
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Last 5 matches
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
+            Last 5
           </p>
         </CardContent>
       </Card>

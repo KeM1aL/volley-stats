@@ -414,8 +414,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Manage your preferences and notifications
         </p>
       </div>
@@ -663,16 +663,17 @@ export default function SettingsPage() {
                 />
               </div> */}
 
-                <div className="flex justify-between">
+                <div className="flex flex-col sm:flex-row justify-between gap-3">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleResetSettings}
                     disabled={isSaving}
+                    className="w-full sm:w-auto"
                   >
                     Reset to Defaults
                   </Button>
-                  <Button type="submit" disabled={isSaving}>
+                  <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
                     {isSaving ? (
                       <>
                         <LoadingSpinner size="sm" className="mr-2" />
@@ -696,8 +697,8 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <Label>Local data</Label>
               <div className="grid grid-cols-1 gap-4">
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4 gap-3">
+                  <div className="space-y-2 flex-1">
                     <Label className="text-sm font-medium">
                       Synchronize Match
                     </Label>
@@ -712,11 +713,12 @@ export default function SettingsPage() {
                     size="sm"
                     disabled={isSyncing && !matchId}
                     onClick={() => matchId && performMatchSync()}
+                    className="w-full sm:w-auto sm:self-end"
                   >
                     Synchronize
                   </Button>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-3">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-medium">
                       Clear Local Stats
@@ -730,11 +732,12 @@ export default function SettingsPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleResetLocalStats()}
+                    className="w-full sm:w-auto"
                   >
                     Clear
                   </Button>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-3">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-medium">
                       Clear Local Matches
@@ -748,11 +751,12 @@ export default function SettingsPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleResetLocalMatches()}
+                    className="w-full sm:w-auto"
                   >
                     Clear
                   </Button>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-3">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-medium">
                       Clear Local Teams
@@ -766,6 +770,7 @@ export default function SettingsPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleResetLocalTeams()}
+                    className="w-full sm:w-auto"
                   >
                     Clear
                   </Button>

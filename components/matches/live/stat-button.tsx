@@ -11,6 +11,7 @@ interface StatButtonProps {
   disabled?: boolean;
   isLoading?: boolean;
   className?: string;
+  isLandscape?: boolean;
 }
 
 export const variants = {
@@ -26,7 +27,37 @@ export function StatButton({
   disabled,
   isLoading,
   className,
+  isLandscape = false,
 }: StatButtonProps) {
+  // Landscape compact mode
+  if (isLandscape) {
+    return (
+      <Button
+        onClick={(e) => {
+          onClick();
+          e.stopPropagation();
+        }}
+        disabled={disabled || isLoading}
+        className={cn(
+          "h-8 text-xs font-semibold transition-transform active:scale-95 px-2",
+          variants[result],
+          className
+        )}
+      >
+        {isLoading ? (
+          <LoadingSpinner size="sm" className="text-white" />
+        ) : (
+          <span>
+            {result.charAt(0).toUpperCase() + result.slice(1)}
+            {result === StatResult.SUCCESS && " +1"}
+            {result === StatResult.ERROR && " -1"}
+          </span>
+        )}
+      </Button>
+    );
+  }
+
+  // Portrait mode
   return (
     <Button
       onClick={(e) => {
@@ -35,7 +66,7 @@ export function StatButton({
       }}
       disabled={disabled || isLoading}
       className={cn(
-        "h-14 text-lg font-semibold transition-transform active:scale-95",
+        "h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg font-semibold transition-transform active:scale-95",
         variants[result],
         className
       )}
@@ -44,15 +75,15 @@ export function StatButton({
         <LoadingSpinner size="sm" className="text-white" />
       ) : (
         <div>
-          <div className="text-md font-medium">
+          <div className="text-xs sm:text-sm md:text-md font-medium">
             {result.charAt(0).toUpperCase() + result.slice(1)}
           </div>
           {(() => {
             switch (result) {
               case StatResult.SUCCESS:
-                return <div className="text-sm opacity-75">+1</div>;
+                return <div className="text-[10px] sm:text-xs md:text-sm opacity-75">+1</div>;
               case StatResult.ERROR:
-                return <div className="text-sm opacity-75">-1</div>;
+                return <div className="text-[10px] sm:text-xs md:text-sm opacity-75">-1</div>;
               default:
                 return null;
             }

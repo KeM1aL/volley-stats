@@ -4,10 +4,6 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Filter as FilterIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
 import { TeamTable } from "@/components/teams/team-table";
 import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
 import { useTeamApi } from "@/hooks/use-team-api";
@@ -27,7 +23,7 @@ export default function TeamsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const teamApi = useTeamApi();
   const isInitialMount = useRef(true);
 
@@ -98,28 +94,33 @@ export default function TeamsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Teams</h1>
+      <div className="space-y-4">
+        <div>
+        <h1 className="text-2xl sm:text-3xl font-bold">Teams</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
+            View and manage your teams
+          </p>
+        </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
-            <FilterIcon className="h-4 w-4 mr-2" />
-            Filters
+            <FilterIcon className="h-4 w-4 mr-1 sm:mr-2" />
+            <span>Filters</span>
           </Button>
-          <Button onClick={() => setNewTeam(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Team
+          <Button onClick={() => setNewTeam(true)} className="flex-1 sm:flex-none text-xs sm:text-sm">
+            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+            <span>New Team</span>
           </Button>
         </div>
       </div>
 
-      <Collapsible open={showFilters} onOpenChange={setShowFilters}>
-        <CollapsibleContent>
-          <TeamFilters onFilterChange={handleFilterChange} initialFilters={initialFilters} />
-        </CollapsibleContent>
-      </Collapsible>
+      {/* Always render TeamFilters to apply initial filters, but hide when collapsed */}
+      <div className={showFilters ? "" : "hidden"}>
+        <TeamFilters onFilterChange={handleFilterChange} initialFilters={initialFilters} />
+      </div>
       {isLoading ? (
         <Skeleton className="h-[600px] w-full" />
       ) : (

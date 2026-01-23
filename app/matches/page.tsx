@@ -50,7 +50,7 @@ export default function MatchPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [newMatchDialogOpen, setNewMatchDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -169,24 +169,25 @@ export default function MatchPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="space-y-4">
         <div>
-          <h1 className="text-3xl font-bold">Matches</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Matches</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             View and analyze match statistics
           </p>
         </div>
-        <div className="flex gap-4">
-          <Button onClick={() => setNewMatchDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Match
-          </Button>
+        <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
+            <Filter className="h-4 w-4 mr-1 sm:mr-2" />
+            <span>Filters</span>
+          </Button>
+          <Button onClick={() => setNewMatchDialogOpen(true)} className="flex-1 sm:flex-none text-xs sm:text-sm">
+            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+            <span>New Match</span>
           </Button>
         </div>
       </div>
@@ -236,7 +237,7 @@ export default function MatchPage() {
       </Collapsible>
 
       {selectedTeam && (
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-6">
           <TeamStats teamId={selectedTeam.id} matches={matches} />
         </div>
       )}

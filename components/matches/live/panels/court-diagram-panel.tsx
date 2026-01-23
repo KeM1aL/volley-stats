@@ -216,14 +216,14 @@ export function CourtDiagramPanel({
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="p-3 text-center">
-          <CardTitle className="text-sm font-medium">Court Position {currentSet && (
-          <span className="text-xs text-muted-foreground">
+      <CardHeader className="p-2 sm:p-3 text-center">
+          <CardTitle className="text-xs sm:text-sm font-medium">Court Position {currentSet && (
+          <span className="text-[10px] sm:text-xs text-muted-foreground ml-1">
             {team.name}
           </span>
         )}</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col min-h-0 p-3">
+      <CardContent className="flex-1 flex flex-col min-h-0 p-2 sm:p-3">
         {!currentSet ? (
           <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
             No active set
@@ -270,7 +270,7 @@ export function CourtDiagramPanel({
                   return (
                     <div
                       key={pos}
-                      className="absolute w-10 h-10 -translate-x-1/2 -translate-y-1/2"
+                      className="absolute w-8 h-8 sm:w-10 sm:h-10 -translate-x-1/2 -translate-y-1/2"
                       style={{
                         left: coordByPosition[netPosition][pos]?.x,
                         top: coordByPosition[netPosition][pos]?.y,
@@ -287,11 +287,11 @@ export function CourtDiagramPanel({
                         )}
                       >
                         <div className="flex flex-col items-center justify-center">
-                          <span className="text-xs font-bold leading-none">
+                          <span className="text-[10px] sm:text-xs font-bold leading-none">
                             {player ? `#${player.number}` : pos.toUpperCase()}
                           </span>
                           {isServer && (
-                            <span className="text-[8px] text-green-600 font-semibold mt-0.5">
+                            <span className="text-[6px] sm:text-[8px] text-green-600 font-semibold mt-0.5">
                               SRV
                             </span>
                           )}
@@ -305,18 +305,19 @@ export function CourtDiagramPanel({
             </div>
 
             {/* Controls */}
-            <div className="mt-3 flex justify-between items-center shrink-0">
+            <div className="mt-2 sm:mt-3 flex justify-between items-center shrink-0">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setNetPosition(rotateNetPosition(netPosition))}
+                className="h-7 sm:h-8 px-2 sm:px-3"
               >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                <span className="text-xs">Rotate</span>
+                <RotateCcw className="h-3 w-3 mr-0.5 sm:mr-1" />
+                <span className="text-[10px] sm:text-xs">Rotate</span>
               </Button>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-[10px] sm:text-xs text-muted-foreground">
                 Net:{" "}
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[10px] sm:text-xs">
                   {netPosition}
                 </Badge>
               </div>

@@ -184,44 +184,44 @@ export function PlayerPerformancePanel({
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">
+      <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
+        <CardTitle className="text-xs sm:text-sm font-medium">
           Player Performance
           {currentSet && (
-            <Badge variant="outline" className="ml-2">
+            <Badge variant="outline" className="ml-1 sm:ml-2 text-[10px] sm:text-xs">
               Set {currentSet.set_number}
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
-        <ScrollArea className="h-full px-4">
-          <div className="space-y-3 pb-4">
+        <ScrollArea className="h-full px-2 sm:px-4">
+          <div className="space-y-2 sm:space-y-3 pb-4">
             {playerStats.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">
                 No stats recorded yet
               </p>
             ) : (
               playerStats.map((player) => (
                 <div
                   key={player.playerId}
-                  className="border rounded-lg p-3 space-y-2 hover:bg-accent/50 transition-colors"
+                  className="border rounded-lg p-2 sm:p-3 space-y-1.5 sm:space-y-2 hover:bg-accent/50 transition-colors"
                 >
                   {/* Player Header */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <Badge variant="secondary" className="text-[10px] sm:text-xs">
                         #{player.playerNumber}
                       </Badge>
-                      <span className="font-medium text-sm">
+                      <span className="font-medium text-xs sm:text-sm truncate max-w-[100px] sm:max-w-none">
                         {player.playerName}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5 sm:gap-1">
                       {getEfficiencyIcon(player.efficiency)}
                       <span
                         className={cn(
-                          "text-xs font-medium",
+                          "text-[10px] sm:text-xs font-medium",
                           getEfficiencyColor(player.efficiency)
                         )}
                       >
@@ -231,15 +231,15 @@ export function PlayerPerformancePanel({
                   </div>
 
                   {/* Points */}
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-[10px] sm:text-xs">
                     <span className="text-muted-foreground">Points Scored</span>
-                    <span className="font-bold text-primary text-sm">
+                    <span className="font-bold text-primary text-xs sm:text-sm">
                       {player.totalPoints}
                     </span>
                   </div>
 
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
                     {/* Serve */}
                     {player.serve.total > 0 && (
                       <div className="flex flex-col gap-1">

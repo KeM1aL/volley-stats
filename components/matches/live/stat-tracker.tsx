@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RotateCcw } from "lucide-react";
 import { useCommandHistory } from "@/hooks/use-command-history";
+import { useLandscape } from "@/hooks/use-landscape";
 
 type StatTrackerProps = {
   match: Match;
@@ -38,19 +39,20 @@ type StatTrackerProps = {
 
 const inGameStatTypes = [StatType.SPIKE, StatType.BLOCK, StatType.DEFENSE];
 
+// Distinct colors for stat type labels - avoiding button colors (red, green, blue, yellow)
 const colorData = [
-  { color: "bg-red-500", border: "border-red-300" },
-  { color: "bg-blue-500", border: "border-blue-300" },
-  { color: "bg-green-500", border: "border-green-300" },
-  { color: "bg-yellow-500", border: "border-yellow-300" },
-  { color: "bg-purple-500", border: "border-purple-300" },
-  { color: "bg-pink-500", border: "border-pink-300" },
-  { color: "bg-indigo-500", border: "border-indigo-300" },
-  { color: "bg-teal-500", border: "border-teal-300" },
-  { color: "bg-orange-500", border: "border-orange-300" },
-  { color: "bg-cyan-500", border: "border-cyan-300" },
-  { color: "bg-lime-500", border: "border-lime-300" },
-  { color: "bg-fuchsia-500", border: "border-fuchsia-300" },
+  { color: "bg-violet-700", border: "border-violet-500" },    // SERVE/RECEPTION - violet
+  { color: "bg-slate-600", border: "border-slate-400" },       // SPIKE - slate gray
+  { color: "bg-cyan-600", border: "border-cyan-400" },        // BLOCK - cyan
+  { color: "bg-pink-500", border: "border-pink-400" },        // DEFENSE - pink
+  { color: "bg-slate-600", border: "border-slate-400" },
+  { color: "bg-amber-600", border: "border-amber-400" },
+  { color: "bg-teal-600", border: "border-teal-400" },
+  { color: "bg-indigo-600", border: "border-indigo-400" },
+  { color: "bg-fuchsia-600", border: "border-fuchsia-400" },
+  { color: "bg-lime-600", border: "border-lime-400" },
+  { color: "bg-rose-600", border: "border-rose-400" },
+  { color: "bg-sky-600", border: "border-sky-400" },
 ];
 
 export function StatTracker({
@@ -70,6 +72,7 @@ export function StatTracker({
   const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const { canUndo, canRedo } = useCommandHistory();
+  const isLandscape = useLandscape();
   const [selectedPlayer, setSelectedPlayer] = useState<TeamMember | null>(null);
   const [availableStatTypes, setAvailableStatTypes] =  useState<StatType[]>(Object.values(StatType));
   const [players, setPlayers] = useState<TeamMember[]>([]);
@@ -220,6 +223,133 @@ export function StatTracker({
     );
   }
 
+  // Landscape layout - player selection on top, stat cards + team points on right
+  if (isLandscape) {
+    return (
+      <CardContent className="flex flex-col h-full p-1 gap-1">
+        {/* Top row: Player Selector - full width with proper-sized buttons */}
+        <div className="shrink-0">
+          <PlayerSelector
+            players={players}
+            liberoPlayer={liberoPlayer}
+            selectedPlayer={selectedPlayer}
+            onPlayerSelect={setSelectedPlayer}
+            isLandscape={true}
+          />
+        </div>
+
+        {/* Bottom row: Stat Cards + Team Points/Undo */}
+        <div className="flex-1 flex gap-1 min-h-0">
+          {/* Left: Stat Cards - scrollable */}
+          <div className="flex-1 overflow-y-auto flex flex-col gap-1">
+            {availableStatTypes.map((type, index) => (
+              <div
+                key={type}
+                className={`flex items-stretch rounded-md overflow-hidden ${colorData[index].border} border`}
+              >
+                {/* Stat type label */}
+                <div
+                  className={`${colorData[index].color} text-white px-2 flex items-center justify-center min-w-[45px]`}
+                >
+                  <span className="text-[10px] font-bold whitespace-nowrap">
+                    {type.replace("_", " ").substring(0, 5).toUpperCase()}
+                  </span>
+                </div>
+                {/* Stat buttons - horizontal */}
+                <div className="flex-1 grid grid-cols-4 gap-0.5 p-0.5">
+                  {Object.values(StatResult).map((result) => (
+                    <StatButton
+                      key={result}
+                      result={result}
+                      onClick={() => recordStat(type, result)}
+                      disabled={isRecording || !selectedPlayer}
+                      isLoading={isRecording}
+                      isLandscape={true}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Right: Team Point Buttons + Undo */}
+          <div className="w-[140px] flex flex-col gap-1">
+            <Button
+              onClick={() =>
+                recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.ERROR)
+              }
+              disabled={isRecording || isLoading}
+              className={cn(
+                "flex-1 text-[10px] font-semibold transition-transform active:scale-95 px-1",
+                variants[StatResult.ERROR]
+              )}
+            >
+              <div className="text-center">
+                <div className="font-medium truncate">{managedTeam.name.substring(0, 10)}</div>
+                <div className="opacity-75">Error -1</div>
+              </div>
+            </Button>
+            <Button
+              onClick={() =>
+                recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.SUCCESS)
+              }
+              disabled={isRecording || isLoading}
+              className={cn(
+                "flex-1 text-[10px] font-semibold transition-transform active:scale-95 px-1",
+                variants[StatResult.SUCCESS]
+              )}
+            >
+              <div className="text-center">
+                <div className="font-medium truncate">{managedTeam.name.substring(0, 10)}</div>
+                <div className="opacity-75">Point +1</div>
+              </div>
+            </Button>
+            <Button
+              onClick={() =>
+                recordPoint(opponentTeam.id, PointType.UNKNOWN, StatResult.ERROR)
+              }
+              disabled={isRecording || isLoading}
+              className={cn(
+                "flex-1 text-[10px] font-semibold transition-transform active:scale-95 px-1",
+                variants[StatResult.ERROR]
+              )}
+            >
+              <div className="text-center">
+                <div className="font-medium truncate">{opponentTeam.name.substring(0, 10)}</div>
+                <div className="opacity-75">Point -1</div>
+              </div>
+            </Button>
+            <Button
+              onClick={() =>
+                recordPoint(opponentTeam.id, PointType.UNKNOWN, StatResult.SUCCESS)
+              }
+              disabled={isRecording || isLoading}
+              className={cn(
+                "flex-1 text-[10px] font-semibold transition-transform active:scale-95 px-1",
+                variants[StatResult.SUCCESS]
+              )}
+            >
+              <div className="text-center">
+                <div className="font-medium truncate">{opponentTeam.name.substring(0, 10)}</div>
+                <div className="opacity-75">Error +1</div>
+              </div>
+            </Button>
+            {/* Undo button */}
+            <Button
+              variant="outline"
+              onClick={() => onUndo()}
+              disabled={isRecording || isLoading}
+              className="h-7 text-[10px] font-semibold"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" /> Undo
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    );
+  }
+
+  // Portrait layout - original vertical design
   return (
     <CardContent className="flex flex-col max-h-[85vh] p-0">
       {/* Player Selector - Fixed at top */}
@@ -276,23 +406,23 @@ export function StatTracker({
       </div>
 
       {/* Point Buttons + Undo - Separated with margin */}
-      <div className="space-y-1 mt-2">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+      <div className="space-y-1 mt-1 sm:mt-2">
+        <div className="grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-1 sm:gap-y-2">
           <Button
             onClick={() =>
               recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.ERROR)
             }
             disabled={isRecording || isLoading}
             className={cn(
-              "min-h-14 md:min-h-16 text-base md:text-lg font-semibold transition-transform active:scale-95",
+              "min-h-10 sm:min-h-14 md:min-h-16 text-sm sm:text-base md:text-lg font-semibold transition-transform active:scale-95",
               variants[StatResult.ERROR]
             )}
           >
             <div>
-              <div className="text-sm md:text-md font-medium">
+              <div className="text-xs sm:text-sm md:text-md font-medium truncate">
                 '{managedTeam.name}' Error
               </div>
-              <div className="text-xs md:text-sm opacity-75">-1</div>
+              <div className="text-[10px] sm:text-xs md:text-sm opacity-75">-1</div>
             </div>
           </Button>
           <Button
@@ -301,15 +431,15 @@ export function StatTracker({
             }
             disabled={isRecording || isLoading}
             className={cn(
-              "min-h-14 md:min-h-16 text-base md:text-lg font-semibold transition-transform active:scale-95",
+              "min-h-10 sm:min-h-14 md:min-h-16 text-sm sm:text-base md:text-lg font-semibold transition-transform active:scale-95",
               variants[StatResult.SUCCESS]
             )}
           >
             <div>
-              <div className="text-sm md:text-md font-medium">
+              <div className="text-xs sm:text-sm md:text-md font-medium truncate">
                 '{managedTeam.name}' Point
               </div>
-              <div className="text-xs md:text-sm opacity-75">+1</div>
+              <div className="text-[10px] sm:text-xs md:text-sm opacity-75">+1</div>
             </div>
           </Button>
           <Button
@@ -318,15 +448,15 @@ export function StatTracker({
             }
             disabled={isRecording || isLoading}
             className={cn(
-              "min-h-14 md:min-h-16 text-base md:text-lg font-semibold transition-transform active:scale-95",
+              "min-h-10 sm:min-h-14 md:min-h-16 text-sm sm:text-base md:text-lg font-semibold transition-transform active:scale-95",
               variants[StatResult.ERROR]
             )}
           >
             <div>
-              <div className="text-sm md:text-md font-medium">
+              <div className="text-xs sm:text-sm md:text-md font-medium truncate">
                 '{opponentTeam.name}' Point
               </div>
-              <div className="text-xs md:text-sm opacity-75">-1</div>
+              <div className="text-[10px] sm:text-xs md:text-sm opacity-75">-1</div>
             </div>
           </Button>
           <Button
@@ -339,15 +469,15 @@ export function StatTracker({
             }
             disabled={isRecording || isLoading}
             className={cn(
-              "min-h-14 md:min-h-16 text-base md:text-lg font-semibold transition-transform active:scale-95",
+              "min-h-10 sm:min-h-14 md:min-h-16 text-sm sm:text-base md:text-lg font-semibold transition-transform active:scale-95",
               variants[StatResult.SUCCESS]
             )}
           >
             <div>
-              <div className="text-sm md:text-md font-medium">
+              <div className="text-xs sm:text-sm md:text-md font-medium truncate">
                 '{opponentTeam.name}' Error
               </div>
-              <div className="text-xs md:text-sm opacity-75">+1</div>
+              <div className="text-[10px] sm:text-xs md:text-sm opacity-75">+1</div>
             </div>
           </Button>
         </div>
@@ -357,10 +487,10 @@ export function StatTracker({
             onClick={() => onUndo()}
             disabled={isRecording || isLoading}
             className={cn(
-              "min-h-12 md:min-h-14 text-base md:text-lg font-semibold transition-transform active:scale-95"
+              "min-h-9 sm:min-h-12 md:min-h-14 text-sm sm:text-base md:text-lg font-semibold transition-transform active:scale-95"
             )}
           >
-            <RotateCcw className="h-4 w-4 mr-2" /> Cancel Last Action
+            <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Cancel Last Action
           </Button>
         </div>
       </div>

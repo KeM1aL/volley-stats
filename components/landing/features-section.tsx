@@ -71,7 +71,7 @@ export function FeaturesSection() {
 
   return (
     <section id="features" className="flex flex-col gap-8">
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {features.map((feature) => (
           <Card
             key={feature.title}
@@ -83,15 +83,15 @@ export function FeaturesSection() {
             )}
             onClick={() => handleFeatureClick(feature)}
           >
-            <CardHeader>
+            <CardHeader className="pb-3">
               <feature.icon className="h-8 w-8 mb-2 text-primary" />
-              <CardTitle>{feature.title}</CardTitle>
+              <CardTitle className="text-lg">{feature.title}</CardTitle>
             </CardHeader>
-            <CardContent>{feature.content}</CardContent>
+            <CardContent className="text-sm">{feature.content}</CardContent>
           </Card>
         ))}
       </div>
-      <div className="m-2 md:m-5 min-h-[280px] md:min-h-[480px]">
+      <div className="mt-4 md:mt-6 min-h-[200px] sm:min-h-[280px] md:min-h-[480px]">
         
             <AnimatePresence mode="wait">
               <motion.div

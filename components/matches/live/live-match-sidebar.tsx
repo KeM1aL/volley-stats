@@ -21,6 +21,7 @@ interface LiveMatchSidebarProps {
   navExpanded?: boolean;
   onToggleNav?: () => void;
   isMobile?: boolean;
+  isLandscape?: boolean;
 }
 
 export function LiveMatchSidebar({
@@ -31,6 +32,7 @@ export function LiveMatchSidebar({
   navExpanded = false,
   onToggleNav,
   isMobile = false,
+  isLandscape = false,
 }: LiveMatchSidebarProps) {
   const menuItems = [
     {
@@ -98,6 +100,29 @@ export function LiveMatchSidebar({
       isActive: activePanel === "court" && showPanel,
     },
   ];
+
+  // Landscape mobile: Compact vertical icon bar
+  if (isLandscape) {
+    return (
+      <div className="flex flex-col items-center gap-1 p-1 bg-muted/30 h-full">
+        {menuItems.map((item) => (
+          <Button
+            key={item.id}
+            variant={item.isActive ? "default" : "ghost"}
+            size="icon"
+            onClick={item.onClick}
+            className={cn(
+              "h-8 w-8",
+              item.isActive && "bg-primary text-primary-foreground"
+            )}
+          >
+            <item.icon className="h-4 w-4" />
+            <span className="sr-only">{item.title}</span>
+          </Button>
+        ))}
+      </div>
+    );
+  }
 
   // Mobile: Horizontal icon bar
   if (isMobile) {

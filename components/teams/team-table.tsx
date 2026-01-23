@@ -109,67 +109,135 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Team Name</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Championship</TableHead>
-            <TableHead>Club</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {teams.map((team) => (
-            <TableRow key={team.id}>
-              <TableCell className="font-medium">{team.name}</TableCell>
-              <TableCell>
-                <Badge variant={getTeamStatusVariant(team.status)}>
-                  {team.status}
-                </Badge>
-              </TableCell>
-              <TableCell>{team.championships?.name}</TableCell>
-              <TableCell>{team.clubs?.name}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {teams.map((team) => (
+          <div
+            key={team.id}
+            className="border rounded-lg p-4 space-y-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium truncate">{team.name}</h3>
+                <p className="text-sm text-muted-foreground truncate">
+                  {team.clubs?.name}
+                </p>
+              </div>
+              <Badge variant={getTeamStatusVariant(team.status)}>
+                {team.status}
+              </Badge>
+            </div>
+            {team.championships?.name && (
+              <p className="text-sm text-muted-foreground truncate">
+                {team.championships.name}
+              </p>
+            )}
+            <div className="flex items-center gap-1 pt-2 border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push(`/teams/${team.id}`)}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                <span className="text-xs">View</span>
+              </Button>
+              {canManage(team) && (
+                <>
                   <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push(`/teams/${team.id}`)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  {canManage(team) && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/teams/${team.id}/players`)}
-                      >
-                        <Users className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEdit(team)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeletingTeam(team)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </TableCell>
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(`/teams/${team.id}/players`)}
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    <span className="text-xs">Players</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(team)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDeletingTeam(team)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block w-full overflow-x-auto">
+        <div className="inline-block min-w-full">
+          <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Team Name</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Championship</TableHead>
+              <TableHead>Club</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {teams.map((team) => (
+              <TableRow key={team.id}>
+                <TableCell className="font-medium">{team.name}</TableCell>
+                <TableCell>
+                  <Badge variant={getTeamStatusVariant(team.status)}>
+                    {team.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{team.championships?.name}</TableCell>
+                <TableCell>{team.clubs?.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/teams/${team.id}`)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    {canManage(team) && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/teams/${team.id}/players`)}
+                        >
+                          <Users className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit(team)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeletingTeam(team)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        </div>
+      </div>
 
       <AlertDialog open={!!deletingTeam} onOpenChange={() => setDeletingTeam(null)}>
         <AlertDialogContent>

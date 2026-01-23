@@ -198,6 +198,13 @@
   );
 }
 
+/* Landscape mobile: reduce padding for more content space */
+@media (orientation: landscape) and (max-height: 500px) {
+  .keyboard-main-content {
+    padding: 2px 4px !important;
+  }
+}
+
 .keyboard-spacer {
   grid-area: keyboard;
   /* Reserve space for keyboard using CSS variables */

@@ -3,7 +3,6 @@
 import { createRxDatabase, addRxPlugin, type RxDatabase, type RxCollection, removeRxDatabase, RxStorage, RxError } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { wrappedValidateAjvStorage } from "rxdb/plugins/validate-ajv";
@@ -40,10 +39,13 @@ import { SyncManager } from './sync/manager';
 import { supabase } from '@/lib/supabase/client';
 const inDevEnvironment = !!process && process.env.NODE_ENV === 'development';
 // Add plugins
-if (inDevEnvironment) {
-  console.debug('Enabling RxDB Dev Mode Plugin');
-  addRxPlugin(RxDBDevModePlugin);
-}
+const devModePluginPromise = inDevEnvironment
+  ? import('rxdb/plugins/dev-mode').then(({ RxDBDevModePlugin }) => {
+      console.debug('Enabling RxDB Dev Mode Plugin');
+      addRxPlugin(RxDBDevModePlugin);
+    })
+  : Promise.resolve();
+
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 
@@ -112,6 +114,9 @@ export function getDatabaseName() {
 
 export const getDatabase = async (): Promise<VolleyballDatabase> => {
   if (dbPromise) return dbPromise;
+
+  // Ensure dev mode plugin is loaded before creating database
+  await devModePluginPromise;
 
   dbPromise = createRxDatabase<DatabaseCollections>({
     name: getDatabaseName(),
