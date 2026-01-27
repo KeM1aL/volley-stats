@@ -1,9 +1,13 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { MoveRight } from "lucide-react";
 import { FeaturesSection } from "@/components/landing/features-section";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
 
-export default async function Home() {
+export default function Home() {
+  const { user, isLoading } = useAuth();
 
   return (
     <div className="flex flex-col gap-8">
@@ -15,17 +19,23 @@ export default async function Home() {
           Track, analyze, and improve your team's performance with simple analytics
         </p>
         <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
-          <Button asChild size="lg" className="group w-full sm:w-auto">
-            <Link href="/auth">
-              Get Started
-              <MoveRight className="inline-block w-5 h-5 ml-2 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-            <Link href="#features">
-              Learn More
-            </Link>
-          </Button>
+          {!isLoading && !user && (
+            <Button asChild size="lg" className="group w-full sm:w-auto">
+              <Link href="/auth">
+                Get Started
+                <MoveRight className="inline-block w-5 h-5 ml-2 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
+              </Link>
+            </Button>
+          )}
+
+          {!isLoading && user && (!user.teamMembers || user.teamMembers.length === 0) && (
+            <Button asChild size="lg" className="group w-full sm:w-auto">
+              <Link href="/teams">
+                Create my team
+                <MoveRight className="inline-block w-5 h-5 ml-2 transition-transform duration-300 ease-in-out group-hover:translate-x-1" />
+              </Link>
+            </Button>
+          )}
         </div>
       </section>
 

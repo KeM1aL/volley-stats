@@ -1,6 +1,7 @@
 "use client";
 
 import { createRxDatabase, addRxPlugin, type RxDatabase, type RxCollection, removeRxDatabase, RxStorage, RxError } from 'rxdb';
+import { RxDBLocalDocumentsPlugin } from 'rxdb/plugins/local-documents';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
@@ -48,6 +49,7 @@ const devModePluginPromise = inDevEnvironment
 
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
+addRxPlugin(RxDBLocalDocumentsPlugin);
 
 export type DatabaseCollections = {
   championships: RxCollection<Championship>;
@@ -125,6 +127,7 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
     }),
     multiInstance: true,
     ignoreDuplicate: false,
+    localDocuments: true
   }).then(async (db) => {
     // Create collections
     try {

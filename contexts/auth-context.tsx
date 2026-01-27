@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           default:
             console.debug("Auth event:", event);
         }
-        if (session?.access_token === sessionRef.current?.access_token) {
+        if (session && session?.access_token === sessionRef.current?.access_token) {
           // Avoid refresh on tab refocus
           return;
         }
@@ -116,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           setError(null);
           setLoadingStage(null);
+          setIsLoading(false);
         }
 
         setIsLoading(false);

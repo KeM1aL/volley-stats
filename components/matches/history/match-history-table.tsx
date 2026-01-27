@@ -45,7 +45,7 @@ export function MatchHistoryTable({
 }: MatchHistoryTableProps) {
   const { user } = useAuth();
   const [sortField, setSortField] = useState<SortField>("date");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const isMemberOfTeamOrClub = (match: Match) => {
     if (!user) return false;
@@ -194,7 +194,7 @@ export function MatchHistoryTable({
                     case MatchStatus.COMPLETED:
                       return <MatchStatsDialog match={match} />;
                     case MatchStatus.LIVE:
-                      return <><MatchEditDialog match={match} /> <MatchScoreDialog match={match} /></>;
+                      return <MatchEditDialog match={match} />;
                     default:
                       return null;
                   }
@@ -258,7 +258,7 @@ export function MatchHistoryTable({
                           case MatchStatus.COMPLETED:
                             return <MatchStatsDialog match={match} />;
                           case MatchStatus.LIVE:
-                            return <><MatchEditDialog match={match} /> <MatchScoreDialog match={match} /></>;
+                            return <MatchEditDialog match={match} />;
                           default:
                             return null;
                         }

@@ -123,7 +123,7 @@ export default function MatchPage() {
             "home_team:teams!matches_home_team_id_fkey",
             "away_team:teams!matches_away_team_id_fkey",
           ];
-          const sort: Sort<Match>[] = [{ field: "date", direction: "asc" }];
+          const sort: Sort<Match>[] = [{ field: "date", direction: "desc" }];
           let matchesData = await matchApi.getMatchs(filters, sort, joins) as Match[];
           setMatches(matchesData);
         } catch (error) {

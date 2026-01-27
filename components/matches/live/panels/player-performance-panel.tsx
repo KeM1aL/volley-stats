@@ -123,7 +123,7 @@ export function PlayerPerformancePanel({
         total: playerStatsData.filter((s) => s.stat_type === "defense").length,
       };
 
-      const totalPoints = serve.success + spike.success + block.success;
+      const totalPoints = serve.success + spike.success + block.success + defense.success + reception.success;
 
       // Calculate efficiency (simple metric: (successes - errors) / total attempts)
       const totalAttempts =

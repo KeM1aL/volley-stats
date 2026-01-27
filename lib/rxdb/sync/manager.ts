@@ -5,9 +5,14 @@ import { RxDatabase } from 'rxdb';
 import { replicateSupabase } from './index';
 import { CollectionName } from '../schema';
 import { User } from '@/lib/types';
+import { mergeMap, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { SyncStateDocument, DynamicCollectionName } from './types';
 
 const LAST_N_MATCHES = 5;
 const dynamicCollections: CollectionName[] = ['matches', 'sets', 'score_points', 'player_stats', 'events'];
+const SYNC_TIMEOUT_MS = 30 * 1000; // 30 seconds
+const MAX_SYNC_RETRIES = 3;
 
 export class SyncManager {
   private db: RxDatabase<DatabaseCollections>;
@@ -77,19 +82,32 @@ export class SyncManager {
     await Promise.all(promises);
   }
 
-  async syncMatch(matchId: string) {
+  async syncMatch(matchId: string): Promise<boolean> {
     if (this.activeMatchIds.has(matchId)) {
       console.log(`SyncManager: Match ${matchId} is already being synced.`);
-      this.reSyncMatch(matchId);
-      return;
+
+      // Check if we need to resync (never synced or error state only)
+      const syncState = await this.getMatchSyncState(matchId);
+      if (this.isSyncStateStale(syncState)) {
+        console.debug(`SyncManager: Match ${matchId} needs sync (status: ${syncState?.status || 'none'}), resyncing`);
+        this.reSyncMatch(matchId);
+      }
+
+      // Wait for sync completion (with timeout)
+      return this.waitForMatchSync(matchId);
     }
 
     this.activeMatchIds.add(matchId);
     console.log(`Force syncing match: ${matchId}`);
 
-    // Restart detailed replications with new filter
+    // Start dynamic sync (non-blocking, uses observers)
     await this.startDynamicSync(matchId);
-    console.log(`SyncManager: Sync for match ${matchId} finished.`);
+
+    // Wait for sync completion (with timeout)
+    const synced = await this.waitForMatchSync(matchId);
+
+    console.log(`SyncManager: Sync for match ${matchId} ${synced ? 'completed' : 'timed out or failed'}.`);
+    return synced;
   }
 
   private async startSync() {
@@ -157,8 +175,18 @@ export class SyncManager {
     this.dynamicSyncPromise = this.dynamicSyncPromise.then(async () => {
       console.debug(`SyncManager: Starting dynamic sync for match: ${matchId}`);
 
-      const promises: Promise<any>[] = [];
+      // Initialize or retrieve sync state
+      let syncState = await this.getMatchSyncState(matchId);
+      if (!syncState) {
+        syncState = await this.initMatchSyncState(matchId);
+        if (!syncState) {
+          // Failed to initialize sync state
+          syncState = await this.getMatchSyncState(matchId);
+        }
+      }
 
+      // Mark as syncing
+      await this.updateMatchSyncState(matchId, { status: 'syncing' });
 
       const identifierSuffix = `_chunk_${matchId}`;
 
@@ -168,32 +196,37 @@ export class SyncManager {
         // Cancel existing
         const existing = this.replicationStates.get(replicationIdentifier);
         if (existing) {
-          console.debug(`SyncManager: Cancelling existing sync for collection ${collectionName} and match ${matchId}.`);
+          console.debug(`SyncManager: Cancelling existing sync for ${collectionName} and match ${matchId}.`);
           await existing.remove();
-          this.replicationStates.delete(replicationIdentifier); // Ensure it's removed from map immediately
+          this.replicationStates.delete(replicationIdentifier);
         }
 
-        // Start new
+        // Start new replication
+        let state: RxReplicationState<any, any> | undefined;
 
         if (collectionName === 'matches') {
-          console.debug(`SyncManager: Starting sync for collection ${collectionName} with match filter.`);
-          const state = this.startCollectionSync(collectionName, replicationIdentifier, ({ query }) => query.eq('id', matchId), `id=eq.${matchId}`);
-          if (state) {
-            console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${collectionName}.`);
-            promises.push(state.awaitInitialReplication());
-          }
+          state = this.startCollectionSync(
+            collectionName,
+            replicationIdentifier,
+            ({ query }) => query.eq('id', matchId),
+            `id=eq.${matchId}`
+          );
         } else {
-          console.debug(`SyncManager: Starting sync for collection ${collectionName} with match filter.`);
-          const state = this.startCollectionSync(collectionName, replicationIdentifier, ({ query }) => query.eq('match_id', matchId), `match_id=eq.${matchId}`);
-          if (state) {
-            console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${collectionName}.`);
-            promises.push(state.awaitInitialReplication());
-          }
+          state = this.startCollectionSync(
+            collectionName,
+            replicationIdentifier,
+            ({ query }) => query.eq('match_id', matchId),
+            `match_id=eq.${matchId}`
+          );
         }
 
+        // Setup observer instead of awaiting (NON-BLOCKING!)
+        if (state) {
+          this.setupSyncStateObserver(matchId, collectionName as DynamicCollectionName, state);
+        }
       }
 
-      await Promise.all(promises);
+      console.debug(`SyncManager: Dynamic sync initiated for match: ${matchId}`);
     });
 
     return this.dynamicSyncPromise;
@@ -222,44 +255,51 @@ export class SyncManager {
       const matchIds = Array.from(this.activeMatchIds);
       console.debug(`SyncManager: Restarting dynamic sync for matches: ${matchIds.join(', ')}`);
 
-      const promises: Promise<any>[] = [];
-
       for (const matchId of matchIds) {
+        // Initialize sync state if needed
+        let syncState = await this.getMatchSyncState(matchId);
+        if (!syncState) {
+          await this.initMatchSyncState(matchId);
+        }
+
+        await this.updateMatchSyncState(matchId, { status: 'syncing' });
+
         const identifierSuffix = `_chunk_${matchId}`;
 
         for (const collectionName of dynamicCollections) {
           const replicationIdentifier = this.getReplicationIdentifier(collectionName, identifierSuffix);
 
-          // Cancel existing
           const existing = this.replicationStates.get(replicationIdentifier);
           if (existing) {
-            console.debug(`SyncManager: Cancelling existing sync for collection ${collectionName} and match ${matchId}.`);
             await existing.remove();
-            this.replicationStates.delete(replicationIdentifier); // Ensure it's removed from map immediately
+            this.replicationStates.delete(replicationIdentifier);
           }
 
-          // Start new
+          let state: RxReplicationState<any, any> | undefined;
 
           if (collectionName === 'matches') {
-            console.debug(`SyncManager: Starting sync for collection ${collectionName} with match filter.`);
-            const state = this.startCollectionSync(collectionName, replicationIdentifier, ({ query }) => query.eq('id', matchId), `id=eq.${matchId}`);
-            if (state) {
-              console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${collectionName}.`);
-              promises.push(state.awaitInitialReplication());
-            }
+            state = this.startCollectionSync(
+              collectionName,
+              replicationIdentifier,
+              ({ query }) => query.eq('id', matchId),
+              `id=eq.${matchId}`
+            );
           } else {
-            console.debug(`SyncManager: Starting sync for collection ${collectionName} with match filter.`);
-            const state = this.startCollectionSync(collectionName, replicationIdentifier, ({ query }) => query.eq('match_id', matchId), `match_id=eq.${matchId}`);
-            if (state) {
-              console.debug(`SyncManager: (To be removed) Awaiting initial replication for collection ${collectionName}.`);
-              promises.push(state.awaitInitialReplication());
-            }
+            state = this.startCollectionSync(
+              collectionName,
+              replicationIdentifier,
+              ({ query }) => query.eq('match_id', matchId),
+              `match_id=eq.${matchId}`
+            );
           }
 
+          if (state) {
+            this.setupSyncStateObserver(matchId, collectionName as DynamicCollectionName, state);
+          }
         }
       }
 
-      await Promise.all(promises);
+      console.debug(`SyncManager: Restart initiated for all active matches`);
     });
 
     return this.dynamicSyncPromise;
@@ -272,6 +312,35 @@ export class SyncManager {
     if (!replicationIdentifier) {
       replicationIdentifier = this.getReplicationIdentifier(collectionName);
     }
+
+    // Extract matchId from replicationIdentifier if it's a chunked sync
+    const matchIdMatch = replicationIdentifier.match(/_chunk_(.+)$/);
+    const matchId = matchIdMatch ? matchIdMatch[1] : null;
+
+    // Enhanced query builder that respects last sync time
+    const enhancedQueryBuilder = matchId
+      ? async (params: any) => {
+          let query = params.query;
+
+          // Apply custom filter first
+          if (queryBuilder) {
+            const maybeNewQuery = queryBuilder({ query: params.query });
+            if (maybeNewQuery) {
+              query = maybeNewQuery;
+            }
+          }
+
+          // Optimize: only pull data updated since last sync (using server timestamp)
+          const syncState = await this.getMatchSyncState(matchId);
+          const lastUpdatedAt = syncState?.collections[collectionName as DynamicCollectionName]?.lastUpdatedAt;
+          if (lastUpdatedAt && lastUpdatedAt !== '') {
+            console.debug(`SyncManager: Optimizing pull for ${collectionName} - only fetching data newer than ${lastUpdatedAt}`);
+            query = query.gt('updated_at', lastUpdatedAt);
+          }
+
+          return query;
+        }
+      : queryBuilder;
 
     const replicationState = replicateSupabase({
       replicationIdentifier,
@@ -300,5 +369,176 @@ export class SyncManager {
 
   private getReplicationIdentifier(collectionName: string, identifierSuffix: string = ''): string {
     return `sync_${collectionName}${identifierSuffix}`;
+  }
+
+  private async getMatchSyncState(matchId: string): Promise<SyncStateDocument | null> {
+    const localDoc = await this.db.getLocal(`sync-state-${matchId}`);
+    return localDoc ? (localDoc.toMutableJSON().data as unknown as SyncStateDocument) : null;
+  }
+
+  private async initMatchSyncState(matchId: string): Promise<SyncStateDocument | null> {
+    const initialState: SyncStateDocument = {
+      matchId,
+      lastSyncTime: 0,
+      collections: {
+        matches: { lastUpdatedAt: '', hasSynced: false },
+        sets: { lastUpdatedAt: '', hasSynced: false },
+        score_points: { lastUpdatedAt: '', hasSynced: false },
+        player_stats: { lastUpdatedAt: '', hasSynced: false },
+        events: { lastUpdatedAt: '', hasSynced: false },
+      },
+      status: 'never-synced'
+    }
+    await this.db.insertLocal(`sync-state-${matchId}`, initialState).catch(() => {
+      // Already exists, ignore error
+      return null;
+    });
+    return initialState;
+  }
+
+  private async updateMatchSyncState(
+    matchId: string,
+    updates: Partial<SyncStateDocument>
+  ): Promise<void> {
+    let current = await this.getMatchSyncState(matchId);
+    if (!current) {
+      current = await this.initMatchSyncState(matchId);
+    }
+    await this.db.upsertLocal(`sync-state-${matchId}`, {
+      ...current,
+      ...updates,
+      lastSyncTime: Date.now()
+    });
+  }
+
+  private async updateCollectionSyncTime(
+    matchId: string,
+    collectionName: DynamicCollectionName
+  ): Promise<void> {
+    const state = await this.getMatchSyncState(matchId);
+    if (!state) return;
+
+    // Get the max updated_at timestamp from the synced data (server-side timestamp)
+    const collection = this.db.collections[collectionName];
+    if (!collection) return;
+
+    let maxUpdatedAt = '';
+
+    try {
+      // Query for documents matching this match
+      const selector = collectionName === 'matches'
+        ? { id: matchId }
+        : { match_id: matchId };
+
+      const docs = await collection.find({ selector }).exec();
+
+      // Find the maximum updated_at timestamp (empty if no docs, which is fine!)
+      if (docs.length > 0) {
+        maxUpdatedAt = docs.reduce((max: string, doc: any) => {
+          const docUpdatedAt = doc.get('updated_at') || '';
+          return docUpdatedAt > max ? docUpdatedAt : max;
+        }, '');
+      }
+    } catch (error) {
+      console.error(`Error getting max updated_at for ${collectionName}:`, error);
+    }
+
+    // Mark as synced regardless of data presence - replication completed!
+    state.collections[collectionName] = { lastUpdatedAt: maxUpdatedAt, hasSynced: true };
+    await this.db.upsertLocal(`sync-state-${matchId}`, state);
+
+    // Check if all collections are synced
+    await this.checkAndUpdateMatchSyncStatus(matchId);
+  }
+
+  private async checkAndUpdateMatchSyncStatus(matchId: string): Promise<void> {
+    const state = await this.getMatchSyncState(matchId);
+    if (!state) return;
+
+    // Check if all collections have completed their initial replication
+    const allSynced = dynamicCollections.every(
+      col => state.collections[col as DynamicCollectionName].hasSynced
+    );
+
+    if (allSynced && state.status !== 'synced') {
+      await this.updateMatchSyncState(matchId, { status: 'synced' });
+      console.debug(`SyncManager: All collections synced for match ${matchId}`);
+    }
+  }
+
+  private isSyncStateStale(syncState: SyncStateDocument | null): boolean {
+    // For local-first: only re-sync if never synced or in error state
+    // Once synced, live replication keeps us updated automatically
+    if (!syncState) return true;
+    return syncState.status === 'never-synced' || syncState.status === 'error';
+  }
+
+  private setupSyncStateObserver(
+    matchId: string,
+    collectionName: DynamicCollectionName,
+    replicationState: RxReplicationState<any, any>
+  ): void {
+    replicationState.active$
+      .pipe(
+        mergeMap(async (isActive) => {
+          if (isActive) {
+            await replicationState.awaitInSync();
+            await this.updateCollectionSyncTime(matchId, collectionName);
+            console.debug(`SyncManager: Collection ${collectionName} synced for match ${matchId}`);
+          }
+        })
+      )
+      .subscribe({
+        error: (err) => {
+          console.error(`Sync state observer error for ${collectionName}:`, err);
+          this.updateMatchSyncState(matchId, {
+            status: 'error',
+            lastError: err.message,
+            lastErrorTime: Date.now()
+          });
+        }
+      });
+  }
+
+  public observeMatchSyncState$(matchId: string): Observable<SyncStateDocument | null> {
+    return this.db.getLocal$(`sync-state-${matchId}`)
+      .pipe(
+        map(localDoc => localDoc ? (localDoc.toMutableJSON().data as unknown as SyncStateDocument) : null)
+      );
+  }
+
+  public async waitForMatchSync(
+    matchId: string,
+    timeoutMs: number = SYNC_TIMEOUT_MS
+  ): Promise<boolean> {
+    const syncState = await this.getMatchSyncState(matchId);
+
+    // If already synced, return immediately (live replication keeps it updated)
+    if (syncState && syncState.status === 'synced') {
+      console.debug(`SyncManager: Match ${matchId} already synced, using local data`);
+      return true;
+    }
+
+    // Wait for sync to complete with timeout
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        console.warn(`SyncManager: Sync timeout for match ${matchId}, proceeding anyway`);
+        resolve(false);
+      }, timeoutMs);
+
+      const subscription = this.observeMatchSyncState$(matchId).subscribe(state => {
+        console.debug(`SyncManager: Observing sync state for match ${matchId}:`, state);
+        if (state && state.status === 'synced') {
+          clearTimeout(timeout);
+          subscription.unsubscribe();
+          resolve(true);
+        } else if (state && state.status === 'error') {
+          clearTimeout(timeout);
+          subscription.unsubscribe();
+          console.error(`Sync error for match ${matchId}:`, state.lastError);
+          resolve(false);
+        }
+      });
+    });
   }
 }

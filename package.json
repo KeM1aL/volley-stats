@@ -5,8 +5,10 @@
   "packageManager": "pnpm@10.13.1",
   "scripts": {
     "dev": "next dev",
+    "dev:inspect": "next dev --inspect=0.0.0.0",
     "build": "next build",
     "start": "next start",
+    "start:inspect": "next start --inspect=0.0.0.0",
     "lint": "next lint",
     "supabase:types": "npx supabase gen types typescript --project-id 'gvtjccisbwrwpjtabnyd' --schema public > lib/supabase/database.types.ts",
     "email:dev": "email dev --dir emails",

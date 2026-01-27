@@ -39,7 +39,7 @@ export function addDocEqualityToQuery<RxDocType>(
         } else if (type === 'undefined') {
             query = query.is(key, null);
         } else {
-            console.warn(`[addDocEqualityToQuery] ${key} ignored, unknown how to handle type: ${type}`)
+            console.warn(`[addDocEqualityToQuery] ${key} ignored for equality, unknown how to handle type: ${type}`)
         }
     }
 

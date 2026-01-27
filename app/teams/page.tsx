@@ -15,8 +15,7 @@ import { TeamFilters } from "@/components/teams/team-filters";
 import { NewTeamDialog } from "@/components/teams/new-team-dialog";
 
 export default function TeamsPage() {
-  const router = useRouter();
-  const { user } = useAuth();
+  const { user, reloadUser } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [newTeam, setNewTeam] = useState<boolean>(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
@@ -30,7 +29,7 @@ export default function TeamsPage() {
   // Placeholder for user permissions
   const canManage = (team: Team) => {
     // Replace with actual permission check
-    return true;
+    return user?.teamMembers?.some((tm => tm.team_id === team.id && (tm.role === 'owner' || tm.role === 'coach'))) || false;
   };
 
   // Prepare initial filters from favorites
@@ -89,8 +88,11 @@ export default function TeamsPage() {
   }, []);
 
   const handleTeamRefresh = useCallback(() => {
+    if(user && (!user.teamMembers || user.teamMembers.length === 0)) {
+      reloadUser();
+    }
     setRefreshKey((prev) => prev + 1);
-  }, []);
+  }, [editingTeam]);
 
   return (
     <div className="space-y-8">

@@ -47,3 +47,20 @@ export type SupabaseCheckpoint = {
     id: string;
     modified: string;
 }
+
+export interface SyncStateDocument {
+  matchId: string;
+  lastSyncTime: number;  // Client timestamp when replication completed
+  collections: {
+    matches: { lastUpdatedAt: string; hasSynced: boolean };  // Server timestamp + sync completion flag
+    sets: { lastUpdatedAt: string; hasSynced: boolean };
+    score_points: { lastUpdatedAt: string; hasSynced: boolean };
+    player_stats: { lastUpdatedAt: string; hasSynced: boolean };
+    events: { lastUpdatedAt: string; hasSynced: boolean };
+  };
+  status: 'never-synced' | 'syncing' | 'synced' | 'error';
+  lastError?: string;
+  lastErrorTime?: number;
+}
+
+export type DynamicCollectionName = 'matches' | 'sets' | 'score_points' | 'player_stats' | 'events';

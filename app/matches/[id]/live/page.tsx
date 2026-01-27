@@ -47,6 +47,7 @@ import { cn } from "@/lib/utils";
 import { BarChart3, WifiOff } from "lucide-react";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
 import { useLandscape } from "@/hooks/use-landscape";
+import { set } from "lodash";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
 
@@ -108,19 +109,25 @@ export default function LiveMatchPage() {
 
       setLoadingStep(0);
       try {
-        await db?.syncManager.syncMatch(matchId);
-        toast({
-          title: "Ready for offline",
-          description:
-            "Match data is synced. You can now go offline if needed.",
-        });
+        const synced = await db?.syncManager.syncMatch(matchId);
+        if (synced) {
+          toast({
+            title: "Ready for offline",
+            description: "Match data is synced. You can now go offline if needed.",
+          });
+        } else {
+          toast({
+            variant: "default",
+            title: "Sync timeout",
+            description: "Sync is still in progress, but you can proceed with available data.",
+          });
+        }
       } catch (e) {
         console.error("Sync failed", e);
         toast({
           variant: "destructive",
           title: "Sync Warning",
-          description:
-            "Failed to fully sync match data. You may proceed but some data might be missing.",
+          description: "Failed to sync match data. You may proceed but some data might be missing.",
         });
       }
 
@@ -190,7 +197,7 @@ export default function LiveMatchPage() {
         console.warn("No available players found for team:", teamId);
       }
 
-      const sets = setDocs.map((doc) => doc.toJSON());
+      const sets = setDocs.map((doc) => doc.toMutableJSON());
       const currentSet = sets[sets.length - 1];
       let [points, stats, events] = await Promise.all([
           db.score_points
@@ -228,6 +235,22 @@ export default function LiveMatchPage() {
         setPoints = points.filter((point) => point.set_id === currentSet.id);
         setStats = stats.filter((stat) => stat.set_id === currentSet.id);
         setEvents = events.filter((event) => event.set_id === currentSet.id);
+
+        // Recalculate current set score from points (in case of late sync)
+        let setScore = setPoints.reduce((acc, point) => {
+          if(point.home_score > acc.home) {
+            acc.home = point.home_score;
+          }
+          if(point.away_score > acc.away) {
+            acc.away = point.away_score;
+          }
+          return acc;
+        }, { home: 0, away: 0 });
+        if(setScore.home > currentSet.home_score || setScore.away > currentSet.away_score) {
+          console.debug("Recalculating current set score from points:", setScore);
+          currentSet.home_score = setScore.home;
+          currentSet.away_score = setScore.away;
+        }
       }
 
       setMatchState({
@@ -279,7 +302,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState]
+    [db, matchState, history]
   );
 
   const onSubstitutionRecorded = useCallback(
@@ -334,7 +357,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.score, matchState.currentSet]
+    [db, matchState, history]
   );
 
   const onPointRecorded = useCallback(
@@ -359,7 +382,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, router]
+    [db, matchState, managedTeam, history]
   );
 
   const onMatchCompleted = () => {
@@ -368,11 +391,11 @@ export default function LiveMatchPage() {
         title: "Match Finished",
         description: "Let's go to the stats !",
       });
-      const searchParams = new URLSearchParams();
-      searchParams.set("team", managedTeam!.id);
-      router.push(
-        `/matches/${matchState.match!.id}/stats?${searchParams.toString()}`
-      );
+      // const searchParams = new URLSearchParams();
+      // searchParams.set("team", managedTeam!.id);
+      // router.push(
+      //   `/matches/${matchState.match!.id}/stats?${searchParams.toString()}`
+      // );
     } else {
       toast({
         title: "Match Finished",
