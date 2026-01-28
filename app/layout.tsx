@@ -8,6 +8,7 @@ import { Navigation } from '@/components/navigation';
 import { LoadingBar } from '@/components/ui/loading-bar';
 import { AuthProvider } from '@/contexts/auth-context';
 import { KeyboardProvider } from '@/contexts/keyboard-context';
+import { GoogleAnalytics } from '@next/third-parties/google'
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -87,6 +88,7 @@ export default function RootLayout({
           </ThemeProvider>
         </KeyboardProvider>
       </body>
+      {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
     </html>
   );
 }
