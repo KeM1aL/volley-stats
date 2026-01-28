@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
 import { AuthForm } from "@/components/auth/auth-form";
+import { LoadingPage } from "@/components/loading-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,15 +9,18 @@ import { useEffect } from "react";
 
 export default function AuthPage() {
   const { user } = useAuth();
-  
-  if (user) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const redirectTo = searchParams.get("redirectTo");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-    useEffect(() => {
+  useEffect(() => {
+    if (user) {
+      const redirectTo = searchParams.get("redirectTo");
       router.replace(redirectTo || "/");
-    }, [router, redirectTo]);
+    }
+  }, [user, router, searchParams]);
+
+  if (user) {
+    return <LoadingPage />;
   }
 
   return (
