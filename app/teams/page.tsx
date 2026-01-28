@@ -29,7 +29,7 @@ export default function TeamsPage() {
   // Placeholder for user permissions
   const canManage = (team: Team) => {
     // Replace with actual permission check
-    return user?.teamMembers?.some((tm => tm.team_id === team.id && (tm.role === 'owner' || tm.role === 'coach'))) || false;
+    return user?.teamMembers?.some((tm => tm.team_id === team.id && (tm.user_id === user.id || tm.role === 'owner' || tm.role === 'coach'))) || false;
   };
 
   // Prepare initial filters from favorites

@@ -224,7 +224,7 @@ export function SetSetup({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4">{`${
+        <h2 className="text-lg font-semibold mb-2 md:mb-4">{`${
           NAMES[sets.length]
         } Setup`}</h2>
         <div className="space-y-2">
@@ -246,9 +246,8 @@ export function SetSetup({
               </div>
             </div>
           )}
-          <div className="grid grid-cols-4 gap-4">
-            <div className={cn("flex justify-center items-start col-span-2", selectedPosition ? "" : "col-start-2")}>
-              <div className="w-full max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className={cn("md:col-span-2 w-full max-w-2xl", selectedPosition ? "" : "md:col-start-2")}>
                 <CourtDiagram
                   players={players}
                   playerById={playerById}
@@ -256,7 +255,6 @@ export function SetSetup({
                   matchFormat={match.match_formats!}
                   onSelect={handleSelectPosition}
                 />
-              </div>
             </div>
 
             {selectedPosition && (

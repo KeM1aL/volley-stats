@@ -124,7 +124,7 @@ export function CourtDiagram({
   }
 
   return (
-    <div className={cn("relative aspect-[3/2] bg-muted rounded-lg max-h-[400px]", className)}>
+    <div className={cn("relative aspect-[3/2] bg-muted rounded-lg min-h-[200px] max-h-[400px]", className)}>
       {/* Court outline */}
       <div className="absolute inset-4 border-2 border-primary">
         {/* 3-meter line */}
@@ -140,7 +140,7 @@ export function CourtDiagram({
           existingPositions.map((pos) => (
             <div
               key={pos}
-              className="absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 cursor-pointer"
+              className="absolute w-10 h-10 md:w-12 md:h-12 -translate-x-1/2 -translate-y-1/2 cursor-pointer"
               style={{
                 left: coordByPosition[netPosition][pos]?.x,
                 top: coordByPosition[netPosition][pos]?.y,

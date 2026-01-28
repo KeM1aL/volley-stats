@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";
 import { update } from "rxdb/plugins/update";
+import { useTeamMembersApi } from "@/hooks/use-team-members-api";
 
 type EditPlayerDialogProps = {
   player: TeamMember | null;
@@ -25,8 +26,8 @@ export function EditPlayerDialog({
   onClose,
   onPlayerUpdated,
 }: EditPlayerDialogProps) {
-  const { localDb: db } = useLocalDb();
   const { toast } = useToast();
+  const teamMemberApi = useTeamMembersApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (values: any) => {
@@ -34,29 +35,16 @@ export function EditPlayerDialog({
 
     setIsSubmitting(true);
     try {
-      // const { data, error } = await supabase
-      //   .from("players")
-      //   .update({
-      //     name: values.name,
-      //     number: values.number,
-      //     position: values.position,
-      //   })
-      //   .eq("id", player.id)
-      //   .select()
-      //   .single();
+      const player = {
+        name: values.name,
+        number: values.number,
+        avatar_url: values.avatar_url,
+        role: values.role,
+        position: values.position,
+        updated_at: new Date().toISOString(),
+      } as TeamMember;
 
-      // if (error) throw error;
-
-      await db?.team_members.findOne(player.id).update({
-        $set: {
-          name: values.name,
-          number: values.number,
-          role: values.role,
-          position: values.position,
-          avatar_url: values.avatar_url,
-          updated_at: new Date().toISOString(),
-        },
-      });
+      await teamMemberApi.createTeamMember(player);
 
       onPlayerUpdated(player);
 
