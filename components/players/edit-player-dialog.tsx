@@ -35,7 +35,7 @@ export function EditPlayerDialog({
 
     setIsSubmitting(true);
     try {
-      const player = {
+      const playerUpdated = {
         name: values.name,
         number: values.number,
         avatar_url: values.avatar_url,
@@ -44,9 +44,9 @@ export function EditPlayerDialog({
         updated_at: new Date().toISOString(),
       } as TeamMember;
 
-      await teamMemberApi.createTeamMember(player);
+      await teamMemberApi.updateTeamMember(player.id, playerUpdated);
 
-      onPlayerUpdated(player);
+      onPlayerUpdated(playerUpdated);
 
       toast({
         title: "Player updated",
