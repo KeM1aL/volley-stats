@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { NewMatchForm } from "./new-match-form";
+import { useTranslations } from "next-intl";
 
 type NewMatchDialogProps = {
   open: boolean;
@@ -19,6 +20,8 @@ export function NewMatchDialog({
   onOpenChange,
   onSuccess,
 }: NewMatchDialogProps) {
+  const t = useTranslations('matches');
+
   const handleMatchCreated = (matchId: string) => {
     onOpenChange(false);
     if (onSuccess) {
@@ -30,7 +33,7 @@ export function NewMatchDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>New Match</DialogTitle>
+          <DialogTitle>{t("dialog.newMatch")}</DialogTitle>
         </DialogHeader>
         <NewMatchForm
           onMatchCreated={handleMatchCreated}

@@ -5,8 +5,10 @@ import { Wifi, WifiOff, RefreshCw } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { useTranslations } from "next-intl";
 
 export function SyncIndicator() {
+  const t = useTranslations("common");
   const { isOnline, wasOffline } = useOnlineStatus();
   const [isSyncing, setIsSyncing] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
@@ -69,18 +71,18 @@ export function SyncIndicator() {
           isSyncing ? (
             <>
               <RefreshCw className="h-4 w-4 animate-spin" />
-              <span className="text-sm font-medium">Syncing changes...</span>
+              <span className="text-sm font-medium">{t("ui.syncing")}</span>
             </>
           ) : (
             <>
               <Wifi className="h-4 w-4" />
-              <span className="text-sm font-medium">Online</span>
+              <span className="text-sm font-medium">{t("ui.online")}</span>
             </>
           )
         ) : (
           <>
             <WifiOff className="h-4 w-4" />
-            <span className="text-sm font-medium">Offline</span>
+            <span className="text-sm font-medium">{t("ui.offline")}</span>
           </>
         )}
       </div>

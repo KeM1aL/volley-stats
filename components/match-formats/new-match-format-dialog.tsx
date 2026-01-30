@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { MatchFormatForm } from "./match-format-form";
 import { MatchFormat } from "@/lib/types";
+import { useTranslations } from "next-intl";
 
 type NewMatchFormatDialogProps = {
   open: boolean;
@@ -20,6 +21,8 @@ export function NewMatchFormatDialog({
   onOpenChange,
   onSuccess,
 }: NewMatchFormatDialogProps) {
+  const t = useTranslations("match-formats");
+
   const handleSuccess = (matchFormat: MatchFormat) => {
     onOpenChange(false);
     if (onSuccess) {
@@ -31,7 +34,7 @@ export function NewMatchFormatDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>New Match Format</DialogTitle>
+          <DialogTitle>{t("dialog.newMatchFormat")}</DialogTitle>
         </DialogHeader>
         <MatchFormatForm
           onSuccess={handleSuccess}

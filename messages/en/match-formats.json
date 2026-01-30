@@ -1,0 +1,35 @@
+{
+  "title": "Match Formats",
+  "description": "+ Create new match format...",
+  "selectPlaceholder": "Select match format...",
+  "newFormat": "New Match Format",
+  "form": {
+    "description": "Description",
+    "descriptionPlaceholder": "e.g., Standard 6x6 - Best of 5",
+    "format": "Volleyball Format",
+    "selectFormat": "Select format",
+    "setsToWin": "Sets to Win",
+    "pointsPerSet": "Points per Set",
+    "pointsFinalSet": "Points in Final Set",
+    "enableRotation": "Enable Rotation",
+    "enableRotationDesc": "Players rotate positions after winning serve",
+    "decisivePoint": "Decisive Point",
+    "decisivePointDesc": "Win by 2 points or play to decisive point",
+    "createMatchFormat": "Create Match Format",
+    "saving": "Saving...",
+    "creating": "Creating..."
+  },
+  "dialog": {
+    "newMatchFormat": "New Match Format"
+  },
+  "validation": {
+    "descriptionRequired": "Description is required",
+    "formatRequired": "Please select a volleyball format"
+  },
+  "toast": {
+    "created": "Match format created",
+    "createdDesc": "The match format has been created successfully.",
+    "error": "Error",
+    "createError": "Failed to create match format. Please try again."
+  }
+}

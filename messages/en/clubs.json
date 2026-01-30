@@ -1,0 +1,36 @@
+{
+  "title": "Clubs",
+  "description": "Manage volleyball clubs",
+  "newClub": "New Club",
+  "quickCreate": {
+    "title": "Quick Create Club",
+    "description": "Create a new club with just a name. You can add more details later.",
+    "creating": "Creating..."
+  },
+  "form": {
+    "name": "Club Name",
+    "namePlaceholder": "Enter club name",
+    "location": "Location",
+    "locationPlaceholder": "Enter location",
+    "saveChanges": "Save Changes",
+    "createClub": "Create Club",
+    "saving": "Saving..."
+  },
+  "validation": {
+    "nameRequired": "Club name is required"
+  },
+  "selectClub": "Select a club...",
+  "quickCreateOption": "+ Create new club...",
+  "toast": {
+    "created": "Club created",
+    "createdDesc": "{name} has been created. You can add more details later.",
+    "updated": "Club updated",
+    "updatedDesc": "The club has been successfully updated.",
+    "deleted": "Club deleted",
+    "deletedDesc": "The club has been successfully deleted.",
+    "error": "Error",
+    "createError": "Failed to create club. Please try again.",
+    "updateError": "Failed to update club. Please try again.",
+    "deleteError": "Failed to delete club. Please try again."
+  }
+}

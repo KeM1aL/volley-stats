@@ -1,0 +1,145 @@
+{
+  "title": "Championships",
+  "description": "Follow your favorite championships",
+  "newChampionship": "New Championship",
+  "summary": {
+    "activeTeams": "Active Teams ({count})",
+    "teams": "Teams",
+    "clubs": "Clubs"
+  },
+  "noChampionships": "No championships found",
+  "createFirst": "Create your first championship to get started",
+  "create": {
+    "title": "Create New Championship",
+    "newChampionship": "Create New Championship",
+    "description": "Add a new championship with all required details.",
+    "creating": "Creating..."
+  },
+  "quickCreate": {
+    "title": "Quick Create Championship",
+    "description": "Create a new championship with just a name. You can add more details later.",
+    "creating": "Creating..."
+  },
+  "form": {
+    "title": "Championship Information",
+    "name": "Name *",
+    "namePlaceholder": "Enter championship name",
+    "type": "Type *",
+    "typePlaceholder": "Select or create a type...",
+    "format": "Match Format *",
+    "formatPlaceholder": "Select format",
+    "ageCategory": "Age Category *",
+    "ageCategoryPlaceholder": "Select age category",
+    "gender": "Gender *",
+    "genderPlaceholder": "Select gender",
+    "season": "Season (Optional)",
+    "seasonPlaceholder": "e.g., 2023-2024",
+    "saveChanges": "Save Changes",
+    "createChampionship": "Create Championship",
+    "saving": "Saving..."
+  },
+  "gender": {
+    "female": "Female",
+    "male": "Male",
+    "mixte": "Mixte"
+  },
+  "ageCategory": {
+    "u10": "U10",
+    "u12": "U12",
+    "u14": "U14",
+    "u16": "U16",
+    "u18": "U18",
+    "u21": "U21",
+    "senior": "Senior"
+  },
+  "filters": {
+    "title": "Filters",
+    "season": "Season",
+    "format": "Format",
+    "gender": "Gender",
+    "ageCategory": "Age Category",
+    "selectSeason": "Select a season",
+    "selectFormat": "Select a format",
+    "selectGender": "Select a gender",
+    "selectAgeCategory": "Select an age category",
+    "noChampionshipsMatching": "No championships found matching the current filters."
+  },
+  "details": {
+    "information": "Championship Information",
+    "teams": "Teams",
+    "matches": "Matches",
+    "standings": "Standings",
+    "club": "Club",
+    "team": "Team",
+    "dateRange": "Date range",
+    "notFound": "Championship Not Found",
+    "notFoundDesc": "The requested championship could not be found."
+  },
+  "errors": {
+    "loadMatches": "Failed to load matches",
+    "loadMatchesDesc": "Failed to load matches. Please try refreshing the page.",
+    "loadTeams": "Failed to load teams",
+    "loadTeamsDesc": "Failed to load teams.",
+    "refreshFailed": "Failed to refresh matches"
+  },
+  "labels": {
+    "format": "Format",
+    "gender": "Gender",
+    "ageCategory": "Age Category",
+    "club": "Club",
+    "team": "Team",
+    "dateRange": "Date range",
+    "matches": "Matches"
+  },
+  "actions": {
+    "refresh": "Refresh",
+    "refreshing": "Refreshing..."
+  },
+  "validation": {
+    "nameRequired": "Championship name is required",
+    "nameRequired2": "Name is required",
+    "typeRequired": "Type is required",
+    "formatRequired": "Match format is required",
+    "genderRequired": "Gender is required",
+    "ageCategoryRequired": "Age category is required",
+    "genderRequired2": "Gender is required",
+    "ageCategoryRequired2": "Age category is required"
+  },
+  "toast": {
+    "created": "Championship created",
+    "createdDesc": "{name} has been created successfully.",
+    "updated": "Championship updated",
+    "updatedDesc": "The championship has been successfully updated.",
+    "deleted": "Championship deleted",
+    "deletedDesc": "The championship has been successfully deleted.",
+    "error": "Error",
+    "createError": "Failed to create championship. Please try again.",
+    "updateError": "Failed to update championship. Please try again.",
+    "deleteError": "Failed to delete championship. Please try again.",
+    "success": "Success",
+    "matchesRefreshedSuccess": "Matches have been refreshed successfully."
+  },
+  "typeOptions": {
+    "regional": "Regional",
+    "national": "National",
+    "international": "International",
+    "club": "Club",
+    "other": "Other"
+  },
+  "table": {
+    "teamName": "Team Name",
+    "club": "Club",
+    "actions": "Actions"
+  },
+  "teamsList": {
+    "page": "page",
+    "noClub": "No club",
+    "goTo": "Go to",
+    "loading": "Loading teams...",
+    "noTeamsYet": "No active teams in this championship yet. Assign teams to this championship from the",
+    "teamsList": "Teams List",
+    "hide": "Hide",
+    "show": "Show",
+    "players": "Players"
+  }
+}

@@ -12,12 +12,14 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 type ChampionshipListProps = {
   refreshKey?: number;
 };
 
 export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
+  const t = useTranslations("championships");
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const championshipApi = useChampionshipApi();
@@ -84,7 +86,7 @@ export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
   return (
     <div className="space-y-8">
       {Object.keys(groupedChampionships).length === 0 ? (
-        <p className="text-center text-muted-foreground">No championships found matching the current filters.</p>
+        <p className="text-center text-muted-foreground">{t("filters.noChampionshipsMatching")}</p>
       ) : (
         Object.entries(groupedChampionships).map(([seasonName, formats]) => (
           <div key={seasonName}>
