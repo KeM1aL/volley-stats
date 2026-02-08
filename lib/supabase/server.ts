@@ -5,8 +5,13 @@ import { Database } from './types'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+// Configuration error messages
+const CONFIG_ERROR_MESSAGES = {
+  missingSupabaseVariablesServer: 'Missing Supabase environment variables for server',
+} as const;
+
 if (!supabaseUrl || !serviceKey) {
-  throw new Error('Missing Supabase environment variables for server')
+  throw new Error(CONFIG_ERROR_MESSAGES.missingSupabaseVariablesServer)
 }
 
 export async function createClient() {

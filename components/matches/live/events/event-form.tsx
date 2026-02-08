@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -161,6 +162,7 @@ export function EventForm({
   onSuccess,
   onCancel,
 }: EventFormProps) {
+  const t = useTranslations("matches");
   const { toast } = useToast();
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(
     preSelectedType || null
@@ -212,8 +214,8 @@ export function EventForm({
     if (!db) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Database not available",
+        title: t("toast.error"),
+        description: t("live.databaseNotAvailable"),
       });
       return;
     }
@@ -226,8 +228,8 @@ export function EventForm({
         if (!setId) {
           toast({
             variant: "destructive",
-            title: "Error",
-            description: "Cannot record substitution without an active set",
+            title: t("toast.error"),
+            description: t("live.cannotRecordSubstitution"),
           });
           return;
         }
@@ -235,8 +237,8 @@ export function EventForm({
         if (!onSubstitutionRecorded) {
           toast({
             variant: "destructive",
-            title: "Error",
-            description: "Substitution handler not available",
+            title: t("toast.error"),
+            description: t("live.substitutionHandlerNotAvailable"),
           });
           return;
         }
@@ -293,10 +295,8 @@ export function EventForm({
       await db.events.insert(event);
 
       toast({
-        title: "Event created",
-        description: `${
-          EVENT_TYPE_LABELS[values.event_type]
-        } event has been recorded.`,
+        title: t("events.eventCreated"),
+        description: t("events.eventCreatedDesc"),
       });
 
       form.reset();
@@ -305,8 +305,8 @@ export function EventForm({
       console.error("Failed to create event:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to create event. Please try again.",
+        title: t("toast.error"),
+        description: t("events.createEvent"),
       });
     }
   };
@@ -330,7 +330,7 @@ export function EventForm({
             name="event_type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Event Type</FormLabel>
+                <FormLabel>{t("events.selectType")}</FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value);
@@ -340,7 +340,7 @@ export function EventForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select event type" />
+                      <SelectValue placeholder={t("events.selectType")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -365,17 +365,17 @@ export function EventForm({
               name="player_out_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Player Out (currently in lineup)</FormLabel>
+                  <FormLabel>{t("events.form.playerOut")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select player leaving" />
+                        <SelectValue placeholder={t("events.form.selectPlayerLeaving")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {playersInLineup.length === 0 ? (
                         <SelectItem value="" disabled>
-                          No players in lineup
+                          {t("events.form.noPlayersInLineup")}
                         </SelectItem>
                       ) : (
                         playersInLineup.map((player) => (
@@ -387,7 +387,7 @@ export function EventForm({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Only players currently on the court can be substituted out
+                    {t("events.form.onlyPlayersInLineup")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -398,17 +398,17 @@ export function EventForm({
               name="player_in_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Player In (on the bench)</FormLabel>
+                  <FormLabel>{t("events.form.playerIn")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select player entering" />
+                        <SelectValue placeholder={t("events.form.selectPlayerEntering")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {playersNotInLineup.length === 0 ? (
                         <SelectItem value="" disabled>
-                          No bench players available
+                          {t("events.form.noBenchPlayers")}
                         </SelectItem>
                       ) : (
                         playersNotInLineup.map((player) => (
@@ -420,7 +420,7 @@ export function EventForm({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Only players not currently in the lineup can enter
+                    {t("events.form.onlyPlayersNotInLineup")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -431,9 +431,9 @@ export function EventForm({
               name="comments"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Comments (Optional)</FormLabel>
+                  <FormLabel>{t("events.form.comments")}</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Additional notes..." />
+                    <Textarea {...field} placeholder={t("events.form.additionalNotes")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -450,7 +450,7 @@ export function EventForm({
               name="duration"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Duration (seconds)</FormLabel>
+                  <FormLabel>{t("events.form.duration")}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -458,7 +458,7 @@ export function EventForm({
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   </FormControl>
-                  <FormDescription>Typically 30 or 60 seconds</FormDescription>
+                  <FormDescription>{t("events.form.durationDescription")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -468,16 +468,16 @@ export function EventForm({
               name="timeout_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Timeout Type</FormLabel>
+                  <FormLabel>{t("events.form.timeoutType")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
+                        <SelectValue placeholder={t("events.form.selectType")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="regular">Regular</SelectItem>
-                      <SelectItem value="technical">Technical</SelectItem>
+                      <SelectItem value="regular">{t("events.enums.timeoutType.regular")}</SelectItem>
+                      <SelectItem value="technical">{t("events.enums.timeoutType.technical")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -495,11 +495,11 @@ export function EventForm({
               name="player_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Injured Player</FormLabel>
+                  <FormLabel>{t("events.form.injuredPlayer")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select player" />
+                        <SelectValue placeholder={t("events.form.selectPlayer")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -519,17 +519,17 @@ export function EventForm({
               name="severity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Severity</FormLabel>
+                  <FormLabel>{t("events.form.severity")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select severity" />
+                        <SelectValue placeholder={t("events.form.selectSeverity")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="minor">Minor</SelectItem>
-                      <SelectItem value="moderate">Moderate</SelectItem>
-                      <SelectItem value="severe">Severe</SelectItem>
+                      <SelectItem value="minor">{t("events.enums.severity.minor")}</SelectItem>
+                      <SelectItem value="moderate">{t("events.enums.severity.moderate")}</SelectItem>
+                      <SelectItem value="severe">{t("events.enums.severity.severe")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -541,9 +541,9 @@ export function EventForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t("events.form.description")}</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Describe the injury..." />
+                    <Textarea {...field} placeholder={t("events.form.describeInjury")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -561,7 +561,7 @@ export function EventForm({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Medical intervention required</FormLabel>
+                    <FormLabel>{t("events.form.medicalInterventionRequired")}</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -578,7 +578,7 @@ export function EventForm({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Player continued playing</FormLabel>
+                    <FormLabel>{t("events.form.playerContinuedPlaying")}</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -594,19 +594,19 @@ export function EventForm({
               name="sanction_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Sanction Type</FormLabel>
+                  <FormLabel>{t("events.form.sanctionType")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select sanction type" />
+                        <SelectValue placeholder={t("events.form.selectSanctionType")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="warning">Warning</SelectItem>
-                      <SelectItem value="yellow_card">Yellow Card</SelectItem>
-                      <SelectItem value="red_card">Red Card</SelectItem>
+                      <SelectItem value="warning">{t("events.enums.sanctionType.warning")}</SelectItem>
+                      <SelectItem value="yellow_card">{t("events.enums.sanctionType.yellowCard")}</SelectItem>
+                      <SelectItem value="red_card">{t("events.enums.sanctionType.redCard")}</SelectItem>
                       <SelectItem value="disqualification">
-                        Disqualification
+                        {t("events.enums.sanctionType.disqualification")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -619,17 +619,17 @@ export function EventForm({
               name="target"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target</FormLabel>
+                  <FormLabel>{t("events.form.target")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Who received the sanction?" />
+                        <SelectValue placeholder={t("events.form.whoReceivedSanction")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="player">Player</SelectItem>
-                      <SelectItem value="coach">Coach</SelectItem>
-                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="player">{t("events.enums.sanctionTarget.player")}</SelectItem>
+                      <SelectItem value="coach">{t("events.enums.sanctionTarget.coach")}</SelectItem>
+                      <SelectItem value="staff">{t("events.enums.sanctionTarget.staff")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -641,9 +641,9 @@ export function EventForm({
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason</FormLabel>
+                  <FormLabel>{t("events.form.reason")}</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Reason for sanction..." />
+                    <Textarea {...field} placeholder={t("events.form.reasonForSanction")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -661,7 +661,7 @@ export function EventForm({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Point penalty awarded</FormLabel>
+                    <FormLabel>{t("events.form.pointPenaltyAwarded")}</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -677,20 +677,20 @@ export function EventForm({
               name="issue_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Issue Type</FormLabel>
+                  <FormLabel>{t("events.form.issueType")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select issue type" />
+                        <SelectValue placeholder={t("events.form.selectIssueType")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="equipment">Equipment</SelectItem>
-                      <SelectItem value="facility">Facility</SelectItem>
+                      <SelectItem value="equipment">{t("events.enums.issueType.equipment")}</SelectItem>
+                      <SelectItem value="facility">{t("events.enums.issueType.facility")}</SelectItem>
                       <SelectItem value="score_dispute">
-                        Score Dispute
+                        {t("events.enums.issueType.scoreDispute")}
                       </SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="other">{t("events.enums.issueType.other")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -702,11 +702,11 @@ export function EventForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t("events.form.description")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="Describe the technical issue..."
+                      placeholder={t("events.form.describeIssue")}
                     />
                   </FormControl>
                   <FormMessage />
@@ -725,7 +725,7 @@ export function EventForm({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Issue resolved</FormLabel>
+                    <FormLabel>{t("events.form.issueResolved")}</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -741,11 +741,11 @@ export function EventForm({
               name="text"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Comment</FormLabel>
+                  <FormLabel>{t("events.form.comment")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="Enter your comment..."
+                      placeholder={t("events.form.enterComment")}
                       rows={4}
                     />
                   </FormControl>
@@ -758,17 +758,17 @@ export function EventForm({
               name="importance"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Importance</FormLabel>
+                  <FormLabel>{t("events.form.importance")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select importance" />
+                        <SelectValue placeholder={t("events.form.selectImportance")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="low">{t("events.enums.eventImportance.low")}</SelectItem>
+                      <SelectItem value="medium">{t("events.enums.eventImportance.medium")}</SelectItem>
+                      <SelectItem value="high">{t("events.enums.eventImportance.high")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -782,10 +782,10 @@ export function EventForm({
         <div className="flex justify-end gap-2 pt-4">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
           )}
-          <Button type="submit">Create Event</Button>
+          <Button type="submit">{t("events.form.createEvent")}</Button>
         </div>
       </form>
     </Form>

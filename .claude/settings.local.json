@@ -4,7 +4,15 @@
       "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run dev)",
+      "Bash(pnpm run build:*)",
+      "Bash(grep:*)",
+      "Bash(git diff:*)",
+      "Bash(done)",
+      "Bash(dir:*)",
+      "Bash(wc:*)"
     ]
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ export function SetSetup({
   awayTeam,
   onComplete,
 }: SetSetupProps) {
+  const t = useTranslations("matches");
   const [selectedPosition, setSelectedPosition] =
     useState<PlayerPosition | null>(null);
   const [selectedRole, setSelectedRole] = useState<PlayerRole | null>(null);
@@ -155,8 +157,8 @@ export function SetSetup({
     if (existingPositions.some((position) => !positions[position])) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "All positions must be specified",
+        title: t("common:errors.generalError"),
+        description: t("sets.allPositionsMustBeSpecified"),
       });
       setIsLoading(false);
       return;
@@ -164,8 +166,8 @@ export function SetSetup({
     if ((sets.length === 0 || sets.length === 4) && !serverTeamId) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Serving team must be specified",
+        title: t("common:errors.generalError"),
+        description: t("sets.servingTeamMustBeSpecified"),
       });
       setIsLoading(false);
       return;
@@ -231,12 +233,12 @@ export function SetSetup({
           {(sets.length === 0 || sets.length === 4) && (
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <Label>Serving Team</Label>
+                <Label>{t("sets.selectServingTeam")}</Label>
                 <Select
                   onValueChange={(value) => setServerTeamId(value as string)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select serving team" />
+                    <SelectValue placeholder={t("sets.selectServingTeam")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={homeTeam.id}>{homeTeam.name}</SelectItem>
@@ -312,7 +314,7 @@ export function SetSetup({
           {match.match_formats?.format === "6x6" && (
             <div className="grid grid-cols-4 gap-6">
               <div className="col-span-2 col-start-2">
-                <Label>Libero</Label>
+                <Label>{t("sets.libero")}</Label>
                 <div className="flex flex-row items-center space-x-1">
                   <Select
                     defaultValue={null as unknown as string}

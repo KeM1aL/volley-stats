@@ -25,20 +25,12 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Championship, Match, MatchFormat, Team } from "@/lib/types";
+import { useTranslations } from "next-intl";
 import { ChampionshipSelect } from "../championships/championship-select";
 import { MatchFormatSelect } from "../match-formats/match-format-select";
 import { TeamSelectWithQuickCreate } from "../teams/team-select-with-quick-create";
 import { cn } from "@/lib/utils";
 import { useMatchApi } from "@/hooks/use-match-api";
-
-const formSchema = z.object({
-  homeTeamId: z.string().min(1, "Home team is required"),
-  awayTeamId: z.string().min(1, "Away team is required"),
-  date: z.date({ required_error: "Match date is required" }),
-  championshipId: z.string().nullable().optional(),
-  matchFormatId: z.string().min(1, "Match format is required"),
-  location: z.string().optional(),
-});
 
 type NewMatchFormProps = {
   onMatchCreated: (id: string) => void;
@@ -48,6 +40,17 @@ type NewMatchFormProps = {
 export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
   const { toast } = useToast();
   const matchApi = useMatchApi();
+  const t = useTranslations('matches');
+  const tc = useTranslations('common');
+
+  const formSchema = z.object({
+    homeTeamId: z.string().min(1, t('validation.homeTeamRequired')),
+    awayTeamId: z.string().min(1, t('validation.awayTeamRequired')),
+    date: z.date({ required_error: t('validation.dateRequired') }),
+    championshipId: z.string().nullable().optional(),
+    matchFormatId: z.string().min(1, t('validation.formatRequired')),
+    location: z.string().optional(),
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedChampionship, setSelectedChampionship] = useState<Championship | null>(null);
   const [selectedMatchFormat, setSelectedMatchFormat] = useState<MatchFormat | null>(null);
@@ -78,7 +81,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (values.homeTeamId === values.awayTeamId) {
       form.setError("awayTeamId", {
-        message: "Away team must be different from home team",
+        message: t('validation.teamsMustDiffer'),
       });
       return;
     }
@@ -105,15 +108,15 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
       onMatchCreated(match.id);
 
       toast({
-        title: "Match created",
-        description: "Your new match has been created successfully.",
+        title: t('toast.created'),
+        description: t('toast.createdDesc'),
       });
     } catch (error) {
       console.error("Failed to create match:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to create match. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.createError'),
       });
     } finally {
       setIsSubmitting(false);
@@ -128,7 +131,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
           name="date"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Match Date</FormLabel>
+              <FormLabel>{t('form.matchDate')}</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -143,7 +146,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
                       {field.value ? (
                         format(field.value, "PPP")
                       ) : (
-                        <span>Pick a date</span>
+                        <span>{t('form.pickDate')}</span>
                       )}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
@@ -171,7 +174,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
           name="championshipId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Championship (Optional)</FormLabel>
+              <FormLabel>{t('form.championshipOptional')}</FormLabel>
               <FormControl>
                 <ChampionshipSelect
                   value={selectedChampionship}
@@ -192,7 +195,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
           name="homeTeamId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Home Team</FormLabel>
+              <FormLabel>{t('form.homeTeam')}</FormLabel>
               <FormControl>
                 <TeamSelectWithQuickCreate
                   value={selectedHomeTeam}
@@ -214,7 +217,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
           name="awayTeamId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Away Team</FormLabel>
+              <FormLabel>{t('form.awayTeam')}</FormLabel>
               <FormControl>
                 <TeamSelectWithQuickCreate
                   value={selectedAwayTeam}
@@ -236,7 +239,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
           name="matchFormatId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Match Format</FormLabel>
+              <FormLabel>{t('form.matchFormat')}</FormLabel>
               <FormControl>
                 <MatchFormatSelect
                   value={selectedMatchFormat}
@@ -257,10 +260,10 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location (Optional)</FormLabel>
+              <FormLabel>{t('form.locationOptional')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., Main Gymnasium"
+                  placeholder={t('form.locationPlaceholder')}
                   disabled={isSubmitting}
                   {...field}
                 />
@@ -278,7 +281,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
               onClick={onCancel}
               disabled={isSubmitting}
             >
-              Cancel
+              {tc('actions.cancel')}
             </Button>
           )}
           <Button
@@ -289,10 +292,10 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
             {isSubmitting ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
-                Creating Match...
+                {t('form.creatingMatch')}
               </>
             ) : (
-              "Create Match"
+              t('form.createMatch')
             )}
           </Button>
         </div>

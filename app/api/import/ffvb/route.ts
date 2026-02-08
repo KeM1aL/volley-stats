@@ -2,15 +2,16 @@ import { createApi } from "@/lib/api";
 import { importFfvbMatches } from "@/lib/importers/ffvb";
 import { createClient } from "@/lib/supabase/server";
 import { create } from "lodash";
-
+import { getTranslations } from "next-intl/server";
 
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   const { seasonId, championshipId } = await request.json();
+  const t = await getTranslations("common");
 
   if (!seasonId || !championshipId) {
-    return NextResponse.json({ error: "Missing seasonId or championshipId" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.api.missingSeasonOrChampionship") }, { status: 400 });
   }
 
   try {

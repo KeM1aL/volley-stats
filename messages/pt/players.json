@@ -1,0 +1,64 @@
+{
+  "title": "Jogadores",
+  "newPlayer": "Novo jogador",
+  "editPlayer": "Editar jogador",
+  "deletePlayer": "Eliminar jogador",
+  "dialog": {
+    "newPlayer": "Novo jogador",
+    "editPlayer": "Editar jogador"
+  },
+  "table": {
+    "avatar": "Avatar",
+    "name": "Nome",
+    "position": "Posição",
+    "role": "Função",
+    "actions": "Ações"
+  },
+  "form": {
+    "avatar": "Avatar",
+    "name": "Nome",
+    "namePlaceholder": "Introduza o nome do jogador",
+    "role": "Função",
+    "rolePlaceholder": "Selecione uma função",
+    "number": "Número",
+    "numberPlaceholder": "Introduza o número",
+    "position": "Posição",
+    "positionPlaceholder": "Selecione uma posição",
+    "selectRole": "Selecione uma função",
+    "selectPosition": "Selecione uma posição",
+    "saveChanges": "Guardar Alterações",
+    "createPlayer": "Criar Jogador",
+    "uploading": "A carregar..."
+  },
+  "positions": {
+    "setter": "Levantador",
+    "opposite": "Oposto",
+    "outsideHitter": "Ponta",
+    "middleHitter": "Central",
+    "libero": "Líbero"
+  },
+  "roles": {
+    "player": "Jogador",
+    "captain": "Capitão",
+    "coach": "Treinador"
+  },
+  "validation": {
+    "nameRequired": "O nome do jogador é obrigatório",
+    "numberPositive": "O número deve ser positivo",
+    "numberMax": "O número deve ser inferior a 100"
+  },
+  "toast": {
+    "created": "Jogador criado",
+    "createdDesc": "O jogador foi criado com sucesso.",
+    "updated": "Jogador atualizado",
+    "updatedDesc": "O jogador foi atualizado com sucesso.",
+    "deleted": "Jogador eliminado",
+    "deletedDesc": "O jogador foi eliminado com sucesso.",
+    "error": "Erro",
+    "createError": "Falha ao criar o jogador. Tente novamente.",
+    "updateError": "Falha ao atualizar o jogador. Tente novamente.",
+    "deleteError": "Falha ao eliminar o jogador. Tente novamente."
+  },
+  "confirmDelete": "Tem a certeza?",
+  "confirmDeleteDesc": "Esta ação não pode ser desfeita. Isto eliminará permanentemente o jogador e todas as estatísticas associadas."
+}

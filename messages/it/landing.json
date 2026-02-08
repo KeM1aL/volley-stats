@@ -1,0 +1,30 @@
+{
+  "hero": {
+    "title": "Statistiche di Pallavolo per Principianti",
+    "subtitle": "Traccia, analizza e migliora le prestazioni della tua squadra con analisi semplici",
+    "getStarted": "Inizia",
+    "createTeam": "Crea la mia squadra"
+  },
+  "features": {
+    "matchTracking": {
+      "title": "Monitoraggio delle Partite",
+      "description": "Statistiche e punteggio in tempo reale",
+      "content": "Traccia servizi, attacchi, blocchi e molto altro durante le partite in diretta con la nostra interfaccia intuitiva."
+    },
+    "teamManagement": {
+      "title": "Gestione della Squadra",
+      "description": "Organizza i giocatori e le squadre",
+      "content": "Gestisci più squadre, gli organici dei giocatori e traccia le metriche di prestazione individuali."
+    },
+    "analytics": {
+      "title": "Analisi Avanzata",
+      "description": "Informazioni dettagliate sulle prestazioni",
+      "content": "Analizza le statistiche di squadra e giocatore con grafici e rapporti completi."
+    },
+    "collaboration": {
+      "title": "Collaborazione",
+      "description": "Condividi ed esporta i dati",
+      "content": "Esporta le statistiche in CSV/PDF e condividi i risultati delle partite con i membri della squadra."
+    }
+  }
+}

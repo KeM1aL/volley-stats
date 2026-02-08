@@ -57,6 +57,7 @@ type MatchFormatFormProps = {
 
 export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
   const t = useTranslations("match-formats");
+  const te = useTranslations("enums");
   const { toast } = useToast();
   const matchFormatApi = useMatchFormatApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -142,10 +143,10 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="2x2">2x2</SelectItem>
-                  <SelectItem value="3x3">3x3</SelectItem>
-                  <SelectItem value="4x4">4x4</SelectItem>
-                  <SelectItem value="6x6">6x6</SelectItem>
+                  <SelectItem value="2x2">{te("championshipFormat.2x2")}</SelectItem>
+                  <SelectItem value="3x3">{te("championshipFormat.3x3")}</SelectItem>
+                  <SelectItem value="4x4">{te("championshipFormat.4x4")}</SelectItem>
+                  <SelectItem value="6x6">{te("championshipFormat.6x6")}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

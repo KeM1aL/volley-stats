@@ -1,0 +1,36 @@
+{
+  "title": "Clubes",
+  "description": "Gerir clubes de voleibol",
+  "newClub": "Novo clube",
+  "quickCreate": {
+    "title": "Criação rápida de clube",
+    "description": "Crie um novo clube com apenas um nome. Pode adicionar mais detalhes mais tarde.",
+    "creating": "A criar..."
+  },
+  "form": {
+    "name": "Nome do clube",
+    "namePlaceholder": "Introduza o nome do clube",
+    "location": "Localização",
+    "locationPlaceholder": "Introduza a localização",
+    "saveChanges": "Guardar alterações",
+    "createClub": "Criar clube",
+    "saving": "A guardar..."
+  },
+  "validation": {
+    "nameRequired": "O nome do clube é obrigatório"
+  },
+  "selectClub": "Selecione um clube...",
+  "quickCreateOption": "+ Criar novo clube...",
+  "toast": {
+    "created": "Clube criado",
+    "createdDesc": "{name} foi criado. Pode adicionar mais detalhes mais tarde.",
+    "updated": "Clube atualizado",
+    "updatedDesc": "O clube foi atualizado com sucesso.",
+    "deleted": "Clube eliminado",
+    "deletedDesc": "O clube foi eliminado com sucesso.",
+    "error": "Erro",
+    "createError": "Falha ao criar o clube. Tente novamente.",
+    "updateError": "Falha ao atualizar o clube. Tente novamente.",
+    "deleteError": "Falha ao eliminar o clube. Tente novamente."
+  }
+}

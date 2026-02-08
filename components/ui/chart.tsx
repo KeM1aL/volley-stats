@@ -28,6 +28,8 @@ function useChart() {
   const context = React.useContext(ChartContext)
 
   if (!context) {
+    // Development-only error: indicates incorrect hook usage
+    // Not translated as this is a developer-facing error message
     throw new Error("useChart must be used within a <ChartContainer />")
   }
 

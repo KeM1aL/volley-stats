@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ export function CourtDiagram({
   className,
   onSelect,
 }: CourtDiagramProps) {
+  const t = useTranslations("matches");
   const [selectedPosition, setSelectedPosition] =
     useState<PlayerPosition | null>(null);
   const [netPosition, setNetPosition] = useState<"right" | "left">("right");
@@ -183,7 +185,7 @@ export function CourtDiagram({
         }
       >
         <RotateCcw className="h-4 w-4 mr-2" />
-        Rotate Court
+        {t("court.rotateCourt")}
       </Button>
     </div>
   );

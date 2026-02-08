@@ -1,0 +1,12 @@
+{
+  "menu": {
+    "championships": "Campionati",
+    "matches": "Partite",
+    "teams": "Squadre",
+    "settings": "Impostazioni"
+  },
+  "actions": {
+    "signOut": "Esci",
+    "openMenu": "Apri menu"
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Team } from "@/lib/types";
 import AsyncSelect from "react-select/async";
 import { useTeamApi } from "@/hooks/use-team-api";
@@ -80,6 +81,7 @@ export function TeamSelectWithQuickCreate({
   disabled = false,
   defaultChampionshipId,
 }: TeamSelectWithQuickCreateProps) {
+  const t = useTranslations("teams");
   const teamApi = useTeamApi();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -126,7 +128,7 @@ export function TeamSelectWithQuickCreate({
         formatOptionLabel={formatOptionLabel}
         isClearable={isClearable}
         isDisabled={disabled}
-        placeholder="Select team..."
+        placeholder={t("selectPlaceholder")}
         styles={{
           option: (provided, state) => ({
             ...provided,

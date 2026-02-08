@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,7 @@ export function EventsPanel({
   currentLineup,
   onSubstitutionRecorded,
 }: EventsPanelProps) {
+  const t = useTranslations("matches");
   const { localDb: db } = useLocalDb();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
@@ -152,11 +154,11 @@ export function EventsPanel({
       return (
         <div className="text-xs text-muted-foreground space-y-1">
           <div className="flex items-center justify-between">
-            <span>Out:</span>
+            <span>{t("events.playerOutRequired")}:</span>
             <span className="font-medium">{getPlayerName(details.player_out_id)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span>In:</span>
+            <span>{t("events.playerInRequired")}:</span>
             <span className="font-medium">{getPlayerName(details.player_in_id)}</span>
           </div>
           {details.comments && (
@@ -170,8 +172,8 @@ export function EventsPanel({
       const details = event.details as TimeoutDetails;
       return (
         <div className="text-xs text-muted-foreground">
-          <div>Duration: {details.duration}s</div>
-          {details.timeout_type && <div>Type: {details.timeout_type}</div>}
+          <div>{t("live.timeout")}: {details.duration}s</div>
+          {details.timeout_type && <div>{t("events.timeoutType")}: {details.timeout_type}</div>}
           {details.requested_by && <div>Requested by: {details.requested_by}</div>}
         </div>
       );
@@ -181,10 +183,10 @@ export function EventsPanel({
       const details = event.details as InjuryDetails;
       return (
         <div className="text-xs text-muted-foreground space-y-1">
-          <div>Player: {event.player_id ? getPlayerName(event.player_id) : "Unknown"}</div>
-          <div>Severity: <Badge variant="outline" className="text-xs">{details.severity}</Badge></div>
+          <div>{t("events.injuredPlayer")}: {event.player_id ? getPlayerName(event.player_id) : "Unknown"}</div>
+          <div>{t("events.severity")}: <Badge variant="outline" className="text-xs">{details.severity}</Badge></div>
           <div>{details.description}</div>
-          {details.medical_intervention && <div className="text-red-600">Medical intervention required</div>}
+          {details.medical_intervention && <div className="text-red-600">{t("events.medicalInterventionRequired")}</div>}
         </div>
       );
     }
@@ -193,10 +195,10 @@ export function EventsPanel({
       const details = event.details as SanctionDetails;
       return (
         <div className="text-xs text-muted-foreground space-y-1">
-          <div>Type: <Badge variant="destructive" className="text-xs">{details.sanction_type.replace("_", " ")}</Badge></div>
-          <div>Target: {details.target} {details.target_name && `(${details.target_name})`}</div>
-          <div>Reason: {details.reason}</div>
-          {details.point_penalty && <div className="text-red-600">Point penalty awarded</div>}
+          <div>{t("events.sanction")}: <Badge variant="destructive" className="text-xs">{details.sanction_type.replace("_", " ")}</Badge></div>
+          <div>{t("events.selectSanctionType")}: {details.target} {details.target_name && `(${details.target_name})`}</div>
+          <div>{t("events.reasonRequired")}: {details.reason}</div>
+          {details.point_penalty && <div className="text-red-600">{t("events.severity")}</div>}
         </div>
       );
     }
@@ -205,9 +207,9 @@ export function EventsPanel({
       const details = event.details as TechnicalDetails;
       return (
         <div className="text-xs text-muted-foreground space-y-1">
-          <div>Issue: {details.issue_type.replace("_", " ")}</div>
+          <div>{t("events.selectIssueType")}: {details.issue_type.replace("_", " ")}</div>
           <div>{details.description}</div>
-          <div>Status: <Badge variant={details.resolved ? "default" : "outline"} className="text-xs">
+          <div>{t("events.severity")}: <Badge variant={details.resolved ? "default" : "outline"} className="text-xs">
             {details.resolved ? "Resolved" : "Ongoing"}
           </Badge></div>
         </div>
@@ -238,7 +240,7 @@ export function EventsPanel({
       );
     }
 
-    return <div className="text-xs text-muted-foreground">No details available</div>;
+    return <div className="text-xs text-muted-foreground">{t("noDetailsAvailable")}</div>;
   };
 
   const getEventColorClass = (eventType: EventType) => {
@@ -285,8 +287,8 @@ export function EventsPanel({
               className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
             >
               <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-              <span className="hidden xs:inline">Substitution</span>
-              <span className="xs:hidden">Sub</span>
+              <span className="hidden xs:inline">{t("live.substitution")}</span>
+              <span className="xs:hidden">{t("stats.eventShort")}</span>
             </Button>
             <Button
               size="sm"
@@ -295,7 +297,7 @@ export function EventsPanel({
               className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
             >
               <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-              Timeout
+              {t("live.timeout")}
             </Button>
             <Button
               size="sm"
@@ -347,10 +349,10 @@ export function EventsPanel({
             onValueChange={(value) => setSelectedFilter(value as EventType | "all")}
           >
             <SelectTrigger className="h-7 sm:h-8 text-[10px] sm:text-xs">
-              <SelectValue placeholder="All events" />
+              <SelectValue placeholder={t("events.allEvents")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Events</SelectItem>
+              <SelectItem value="all">{t("events.allEvents")}</SelectItem>
               {Object.entries(EVENT_TYPE_LABELS).map(([key, label]) => (
                 <SelectItem key={key} value={key}>
                   {label}
@@ -365,10 +367,10 @@ export function EventsPanel({
         <div className="flex-1 overflow-y-auto px-2 sm:px-4">
           <div className="space-y-1.5 sm:space-y-2 pb-4 pt-2">
             {isLoading ? (
-              <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">Loading events...</p>
+              <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">{t("events.selectSanctionType")}</p>
             ) : filteredEvents.length === 0 ? (
               <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">
-                {selectedFilter === "all" ? "No events recorded yet" : `No ${selectedFilter} events`}
+                {selectedFilter === "all" ? t("events.noEventsRecorded") : t("events.noEventsOfType", { type: selectedFilter })}
               </p>
             ) : (
               filteredEvents.map((event) => {

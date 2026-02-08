@@ -26,12 +26,9 @@ import { useTeamApi } from "@/hooks/use-team-api";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Team } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 const supabase = createClient();
-
-const formSchema = z.object({
-  name: z.string().min(1, "Team name is required"),
-});
 
 type QuickCreateTeamDialogProps = {
   open: boolean;
@@ -48,9 +45,15 @@ export function QuickCreateTeamDialog({
   defaultChampionshipId,
   defaultName,
 }: QuickCreateTeamDialogProps) {
+  const t = useTranslations('teams');
+  const tc = useTranslations('common');
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const teamApi = useTeamApi();
+
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -72,7 +75,7 @@ export function QuickCreateTeamDialog({
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      if (!session) throw new Error(tc('errors.notAuthenticated'));
 
       const newTeam: Omit<Team, "championships" | "clubs"> = {
         id: crypto.randomUUID(),
@@ -90,8 +93,8 @@ export function QuickCreateTeamDialog({
       const createdTeam = await teamApi.createTeam(newTeam);
 
       toast({
-        title: "Team created",
-        description: `${values.name} has been created. You can complete the team details later.`,
+        title: t('toast.created'),
+        description: t('quickCreate.completeDesc', { name: values.name }),
       });
 
       form.reset();
@@ -100,8 +103,8 @@ export function QuickCreateTeamDialog({
     } catch (error) {
       console.error("Error creating team:", error);
       toast({
-        title: "Error",
-        description: "Failed to create team. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.createError'),
         variant: "destructive",
       });
     } finally {
@@ -118,9 +121,9 @@ export function QuickCreateTeamDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Quick Create Team</DialogTitle>
+          <DialogTitle>{t('quickCreate.title')}</DialogTitle>
           <DialogDescription>
-            Create a new team with just a name. You can add more details later.
+            {t('quickCreate.description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -130,10 +133,10 @@ export function QuickCreateTeamDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Team Name</FormLabel>
+                  <FormLabel>{t('form.name')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter team name"
+                      placeholder={t('form.namePlaceholder')}
                       {...field}
                       disabled={isLoading}
                     />
@@ -149,16 +152,16 @@ export function QuickCreateTeamDialog({
                 onClick={handleClose}
                 disabled={isLoading}
               >
-                Cancel
+                {tc('actions.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <LoadingSpinner size="sm" className="mr-2" />
-                    Creating...
+                    {t('quickCreate.creating')}
                   </>
                 ) : (
-                  "Create Team"
+                  t('form.createTeam')
                 )}
               </Button>
             </div>

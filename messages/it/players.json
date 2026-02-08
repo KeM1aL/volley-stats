@@ -1,0 +1,64 @@
+{
+  "title": "Giocatori",
+  "newPlayer": "Nuovo giocatore",
+  "editPlayer": "Modifica giocatore",
+  "deletePlayer": "Elimina giocatore",
+  "dialog": {
+    "newPlayer": "Nuovo giocatore",
+    "editPlayer": "Modifica giocatore"
+  },
+  "table": {
+    "avatar": "Avatar",
+    "name": "Nome",
+    "position": "Posizione",
+    "role": "Ruolo",
+    "actions": "Azioni"
+  },
+  "form": {
+    "avatar": "Avatar",
+    "name": "Nome",
+    "namePlaceholder": "Inserisci il nome del giocatore",
+    "role": "Ruolo",
+    "rolePlaceholder": "Seleziona un ruolo",
+    "number": "Numero",
+    "numberPlaceholder": "Inserisci il numero",
+    "position": "Posizione",
+    "positionPlaceholder": "Seleziona una posizione",
+    "selectRole": "Seleziona un ruolo",
+    "selectPosition": "Seleziona una posizione",
+    "saveChanges": "Salva Modifiche",
+    "createPlayer": "Crea Giocatore",
+    "uploading": "Caricamento..."
+  },
+  "positions": {
+    "setter": "Palleggiatore",
+    "opposite": "Opposto",
+    "outsideHitter": "Schiacciatore",
+    "middleHitter": "Centrale",
+    "libero": "Libero"
+  },
+  "roles": {
+    "player": "Giocatore",
+    "captain": "Capitano",
+    "coach": "Allenatore"
+  },
+  "validation": {
+    "nameRequired": "Il nome del giocatore è obbligatorio",
+    "numberPositive": "Il numero deve essere positivo",
+    "numberMax": "Il numero deve essere inferiore a 100"
+  },
+  "toast": {
+    "created": "Giocatore creato",
+    "createdDesc": "Il giocatore è stato creato con successo.",
+    "updated": "Giocatore aggiornato",
+    "updatedDesc": "Il giocatore è stato aggiornato con successo.",
+    "deleted": "Giocatore eliminato",
+    "deletedDesc": "Il giocatore è stato eliminato con successo.",
+    "error": "Errore",
+    "createError": "Impossibile creare il giocatore. Riprova.",
+    "updateError": "Impossibile aggiornare il giocatore. Riprova.",
+    "deleteError": "Impossibile eliminare il giocatore. Riprova."
+  },
+  "confirmDelete": "Sei sicuro?",
+  "confirmDeleteDesc": "Questa azione non può essere annullata. Questo eliminerà definitivamente il giocatore e tutte le statistiche associate."
+}

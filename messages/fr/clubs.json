@@ -1,0 +1,36 @@
+{
+  "title": "Clubs",
+  "description": "Gérer les clubs de volleyball",
+  "newClub": "Nouveau club",
+  "quickCreate": {
+    "title": "Création rapide de club",
+    "description": "Créez un nouveau club avec juste un nom. Vous pourrez ajouter plus de détails plus tard.",
+    "creating": "Création..."
+  },
+  "form": {
+    "name": "Nom du club",
+    "namePlaceholder": "Entrez le nom du club",
+    "location": "Lieu",
+    "locationPlaceholder": "Entrez le lieu",
+    "saveChanges": "Enregistrer les modifications",
+    "createClub": "Créer le club",
+    "saving": "Enregistrement..."
+  },
+  "validation": {
+    "nameRequired": "Le nom du club est obligatoire"
+  },
+  "selectClub": "Sélectionnez un club...",
+  "quickCreateOption": "+ Créer un nouveau club...",
+  "toast": {
+    "created": "Club créé",
+    "createdDesc": "{name} a été créé. Vous pouvez ajouter plus de détails plus tard.",
+    "updated": "Club mis à jour",
+    "updatedDesc": "Le club a été mis à jour avec succès.",
+    "deleted": "Club supprimé",
+    "deletedDesc": "Le club a été supprimé avec succès.",
+    "error": "Erreur",
+    "createError": "Échec de la création du club. Veuillez réessayer.",
+    "updateError": "Échec de la mise à jour du club. Veuillez réessayer.",
+    "deleteError": "Échec de la suppression du club. Veuillez réessayer."
+  }
+}

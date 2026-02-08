@@ -1,0 +1,154 @@
+{
+  "title": "Campeonatos",
+  "description": "Siga sus campeonatos favoritos",
+  "newChampionship": "Nuevo campeonato",
+  "summary": {
+    "activeTeams": "Equipos activos ({count})",
+    "teams": "Equipos",
+    "clubs": "Clubes"
+  },
+  "noChampionships": "No se encontraron campeonatos",
+  "createFirst": "Cree su primer campeonato para comenzar",
+  "create": {
+    "title": "Crear nuevo campeonato",
+    "newChampionship": "Crear nuevo campeonato",
+    "description": "Añada un nuevo campeonato con todos los detalles necesarios.",
+    "creating": "Creando..."
+  },
+  "quickCreate": {
+    "title": "Creación rápida de campeonato",
+    "description": "Cree un nuevo campeonato con solo un nombre. Puede añadir más detalles más tarde.",
+    "creating": "Creando..."
+  },
+  "form": {
+    "title": "Información del campeonato",
+    "name": "Nombre *",
+    "namePlaceholder": "Introduzca el nombre del campeonato",
+    "type": "Tipo *",
+    "typePlaceholder": "Seleccione o cree un tipo...",
+    "format": "Formato de partido *",
+    "formatPlaceholder": "Seleccione un formato",
+    "ageCategory": "Categoría de edad *",
+    "ageCategoryPlaceholder": "Seleccione categoría de edad",
+    "gender": "Género *",
+    "genderPlaceholder": "Seleccione género",
+    "season": "Temporada (Opcional)",
+    "seasonPlaceholder": "ej: 2023-2024",
+    "saveChanges": "Guardar cambios",
+    "createChampionship": "Crear campeonato",
+    "saving": "Guardando..."
+  },
+  "gender": {
+    "female": "Femenino",
+    "male": "Masculino",
+    "mixte": "Mixto"
+  },
+  "ageCategory": {
+    "u10": "U10",
+    "u12": "U12",
+    "u14": "U14",
+    "u16": "U16",
+    "u18": "U18",
+    "u21": "U21",
+    "senior": "Senior"
+  },
+  "filters": {
+    "title": "Filtros",
+    "season": "Temporada",
+    "format": "Formato",
+    "gender": "Género",
+    "ageCategory": "Categoría de edad",
+    "selectSeason": "Seleccione una temporada",
+    "selectFormat": "Seleccione un formato",
+    "selectGender": "Seleccione un género",
+    "selectAgeCategory": "Seleccione una categoría de edad",
+    "noChampionshipsMatching": "No se encontraron campeonatos que coincidan con los filtros actuales."
+  },
+  "details": {
+    "information": "Información del campeonato",
+    "teams": "Equipos",
+    "matches": "Partidos",
+    "standings": "Clasificación",
+    "club": "Club",
+    "team": "Equipo",
+    "dateRange": "Rango de fechas",
+    "notFound": "Campeonato no encontrado",
+    "notFoundDesc": "No se pudo encontrar el campeonato solicitado."
+  },
+  "errors": {
+    "loadMatches": "Error al cargar partidos",
+    "loadMatchesDesc": "Error al cargar partidos. Por favor, recargue la página.",
+    "loadTeams": "Error al cargar equipos",
+    "loadTeamsDesc": "Error al cargar equipos.",
+    "refreshFailed": "Error al actualizar partidos"
+  },
+  "labels": {
+    "format": "Formato",
+    "gender": "Género",
+    "ageCategory": "Categoría de edad",
+    "club": "Club",
+    "team": "Equipo",
+    "dateRange": "Rango de fechas",
+    "matches": "Partidos"
+  },
+  "actions": {
+    "refresh": "Actualizar",
+    "refreshing": "Actualizando..."
+  },
+  "validation": {
+    "nameRequired": "El nombre del campeonato es obligatorio",
+    "nameRequired2": "El nombre es obligatorio",
+    "typeRequired": "El tipo es obligatorio",
+    "formatRequired": "El formato del partido es obligatorio",
+    "genderRequired": "El género es obligatorio",
+    "ageCategoryRequired": "La categoría de edad es obligatoria",
+    "genderRequired2": "El género es obligatorio",
+    "ageCategoryRequired2": "La categoría de edad es obligatoria"
+  },
+  "toast": {
+    "created": "Campeonato creado",
+    "createdDesc": "{name} ha sido creado con éxito.",
+    "updated": "Campeonato actualizado",
+    "updatedDesc": "El campeonato ha sido actualizado con éxito.",
+    "deleted": "Campeonato eliminado",
+    "deletedDesc": "El campeonato ha sido eliminado con éxito.",
+    "error": "Error",
+    "createError": "Error al crear el campeonato. Inténtelo de nuevo.",
+    "updateError": "Error al actualizar el campeonato. Inténtelo de nuevo.",
+    "deleteError": "Error al eliminar el campeonato. Inténtelo de nuevo.",
+    "success": "Éxito",
+    "matchesRefreshedSuccess": "Los partidos han sido actualizados con éxito."
+  },
+  "typeOptions": {
+    "regional": "Regional",
+    "national": "Nacional",
+    "international": "Internacional",
+    "club": "Club",
+    "other": "Otro"
+  },
+  "table": {
+    "teamName": "Nombre del equipo",
+    "club": "Club",
+    "actions": "Acciones"
+  },
+  "teamsList": {
+    "page": "página",
+    "noClub": "Sin club",
+    "goTo": "Ir a",
+    "loading": "Cargando equipos...",
+    "noTeamsYet": "No hay equipos activos en este campeonato todavía. Asigne equipos a este campeonato desde",
+    "teamsList": "Lista de equipos",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "players": "Jugadores"
+  },
+  "list": {
+    "seasonPrefix": "Temporada",
+    "unknownSeason": "Temporada desconocida",
+    "unknownFormat": "Formato desconocido",
+    "formatLabel": "Formato:",
+    "genderLabel": "Género:",
+    "ageCategoryLabel": "Categoría de edad:",
+    "viewDetails": "Ver detalles"
+  }
+}

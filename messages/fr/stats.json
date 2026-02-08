@@ -1,0 +1,34 @@
+{
+  "abbreviations": {
+    "good": "B",
+    "bad": "M",
+    "error": "E"
+  },
+  "playerPerformance": {
+    "tableHeaders": {
+      "player": "Joueur",
+      "pointParticipation": "Participation aux Points",
+      "errorParticipation": "Participation aux Erreurs",
+      "favoritePosition": "Pos. Favorite",
+      "worstPosition": "Pire Position"
+    },
+    "stats": {
+      "good": "Bon",
+      "bad": "Mauvais",
+      "error": "Erreur"
+    }
+  },
+  "sidebar": {
+    "stats": "Statistiques",
+    "events": "Événements",
+    "points": "Points",
+    "court": "Terrain"
+  },
+  "live": {
+    "errorMinus": "Erreur -1",
+    "pointPlus": "Point +1",
+    "pointMinus": "Point -1",
+    "errorPlus": "Erreur +1"
+  },
+  "noDetailsAvailable": "Aucun détail disponible"
+}

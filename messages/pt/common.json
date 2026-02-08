@@ -1,0 +1,136 @@
+{
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Criar",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "close": "Fechar",
+    "add": "Adicionar",
+    "remove": "Remover",
+    "update": "Atualizar",
+    "view": "Ver",
+    "download": "Descarregar",
+    "upload": "Carregar",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "reset": "Repor",
+    "apply": "Aplicar",
+    "clear": "Limpar",
+    "select": "Selecionar",
+    "next": "Seguinte",
+    "previous": "Anterior",
+    "finish": "Concluir",
+    "skip": "Saltar",
+    "goToSettings": "Ir para Definições",
+    "resetToDefaults": "Repor para Predefinições",
+    "saveChanges": "Guardar Alterações"
+  },
+  "status": {
+    "loading": "A carregar...",
+    "success": "Sucesso",
+    "error": "Erro",
+    "warning": "Aviso",
+    "info": "Info",
+    "saving": "A guardar...",
+    "deleting": "A eliminar...",
+    "updating": "A atualizar...",
+    "processing": "A processar...",
+    "creating": "A criar..."
+  },
+  "toast": {
+    "saveSuccess": "Alterações guardadas com sucesso",
+    "saveError": "Erro ao guardar alterações",
+    "deleteSuccess": "{item} eliminado com sucesso",
+    "deleteError": "Erro ao eliminar {item}",
+    "updateSuccess": "{item} atualizado com sucesso",
+    "updateError": "Erro ao atualizar {item}",
+    "createSuccess": "{item} criado com sucesso",
+    "createError": "Erro ao criar {item}",
+    "languageChanged": "Idioma alterado com sucesso",
+    "languageChangeError": "Erro ao alterar idioma"
+  },
+  "messages": {
+    "noData": "Sem dados disponíveis",
+    "noResults": "Nenhum resultado encontrado",
+    "confirmDelete": "Tem a certeza que deseja eliminar isto?",
+    "unsavedChanges": "Tem alterações não guardadas",
+    "required": "Este campo é obrigatório"
+  },
+  "table": {
+    "actions": "Ações",
+    "date": "Data",
+    "name": "Nome",
+    "status": "Estado"
+  },
+  "ui": {
+    "toggleTheme": "Alternar tema",
+    "changeLanguage": "Mudar idioma",
+    "toggleFullscreen": "Alternar ecrã inteiro",
+    "more": "Mais",
+    "previousSlide": "Ir para diapositivo anterior",
+    "nextSlide": "Ir para próximo diapositivo",
+    "online": "Online",
+    "offline": "Offline",
+    "syncing": "A sincronizar alterações...",
+    "breadcrumb": "breadcrumb",
+    "breadcrumbNav": "Navegação por breadcrumb",
+    "pagination": "paginação",
+    "paginationNav": "Navegação por paginação",
+    "goToPreviousPage": "Ir para página anterior",
+    "goToNextPage": "Ir para próxima página",
+    "goToPreviousPageAria": "Ir para página anterior",
+    "goToNextPageAria": "Ir para próxima página",
+    "morePages": "Mais páginas",
+    "pickADate": "Escolha uma data",
+    "closeButton": "Fechar",
+    "toggleSidebar": "Alternar Barra Lateral",
+    "togglePlayerAvailability": "Alternar disponibilidade do jogador",
+    "avatarPreview": "Pré-visualização do avatar",
+    "selectChampionship": "Selecione um campeonato...",
+    "panel": "Painel",
+    "generatingPdfReport": "A Gerar Relatório PDF",
+    "pleaseWaitWhileCompiling": "Aguarde enquanto as suas estatísticas de jogo são compiladas",
+    "step": "Passo",
+    "of": "de",
+    "cancel": "Cancelar",
+    "clearLocalDatabase": "Limpar Base de Dados Local",
+    "previous": "Anterior",
+    "next": "Seguinte"
+  },
+  "app": {
+    "title": "VolleyStats para Iniciantes",
+    "titleLong": "VolleyStats para Iniciantes",
+    "shortTitle": "VolleyStats",
+    "description": "Rastreamento e análise profissional de estatísticas de voleibol"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Página não encontrada",
+      "description": "A página que procura não existe ou foi eliminada. Vamos voltar ao caminho certo.",
+      "goHome": "Ir para Home"
+    },
+    "notAuthenticated": "Não autenticado",
+    "failedLoadData": "Erro ao carregar dados",
+    "missingSeasonOrChampionship": "seasonId ou championshipId em falta",
+    "hookContextError": "Hook deve ser utilizado dentro do provedor de contexto correto",
+    "useLocalDbError": "useLocalDb deve ser utilizado dentro de um DatabaseProvider",
+    "useCarouselError": "useCarousel deve ser utilizado dentro de um <Carousel />",
+    "useChartError": "useChart deve ser utilizado dentro de um <ChartContainer />",
+    "generalError": "Erro",
+    "api": {
+      "missingSeasonOrChampionship": "seasonId ou championshipId em falta"
+    },
+    "config": {
+      "missingSupabaseVariables": "Variáveis de ambiente Supabase em falta",
+      "missingSupabaseVariablesServer": "Variáveis de ambiente Supabase em falta para servidor"
+    },
+    "database": {
+      "initFailed": "Falha ao inicializar o banco de dados local",
+      "schemaIncompatible": "O esquema do banco de dados foi atualizado e é incompatível com os dados existentes.",
+      "resyncInstructions": "Clique abaixo para limpar o banco de dados local. Seus dados serão ressincronizados do servidor no próximo login."
+    }
+  }
+}

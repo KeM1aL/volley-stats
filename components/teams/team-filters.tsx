@@ -16,6 +16,7 @@ import { useTeamFilters, TeamFilterState } from '@/hooks/use-team-filters';
 import { Filter } from '@/lib/api/types';
 import { useDebounce } from '@/hooks/use-debounce';
 import { TeamStatus } from '@/lib/types';
+import { useTranslations } from 'next-intl';
 
 type TeamFiltersProps = {
   onFilterChange: (filters: Filter[]) => void;
@@ -23,6 +24,9 @@ type TeamFiltersProps = {
 };
 
 export function TeamFilters({ onFilterChange, initialFilters }: TeamFiltersProps) {
+  const t = useTranslations('teams');
+  const te = useTranslations('enums');
+  const tc = useTranslations('common');
   const {
     filters,
     updateFilter,
@@ -59,43 +63,43 @@ export function TeamFilters({ onFilterChange, initialFilters }: TeamFiltersProps
   }, [filters.searchTerm]);
 
   const championshipTypeOptions = Object.values(ChampionshipType).map((value) => ({
-    label: value,
+    label: te(`championshipType.${value}`),
     value: value,
   }));
 
   const championshipFormatOptions = Object.values(ChampionshipFormat).map((value) => ({
-    label: value,
+    label: te(`championshipFormat.${value}`),
     value: value,
   }));
 
   const championshipAgeCategoryOptions = Object.values(ChampionshipAgeCategory).map((value) => ({
-    label: value,
+    label: te(`championshipAgeCategory.${value}`),
     value: value,
   }));
 
   const championshipGenderOptions = Object.values(ChampionshipGender).map((value) => ({
-    label: value,
+    label: te(`championshipGender.${value}`),
     value: value,
   }));
 
   const statusOptions: Array<{ label: string; value: TeamStatus }> = [
-    { label: 'Incomplete', value: 'incomplete' },
-    { label: 'Active', value: 'active' },
-    { label: 'Archived', value: 'archived' },
+    { label: t('status.incomplete'), value: 'incomplete' },
+    { label: t('status.active'), value: 'active' },
+    { label: t('status.archived'), value: 'archived' },
   ];
 
   return (
     <div className="space-y-4 p-4 border rounded-lg">
-      <h2 className="text-xl font-semibold mb-4">Filter Teams</h2>
+      <h2 className="text-xl font-semibold mb-4">{t('filters.filterTeams')}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Input
-          placeholder="Search by team name..."
+          placeholder={t('filters.searchPlaceholder')}
           value={searchTermInput}
           onChange={(e) => setSearchTermInput(e.target.value)}
         />
         <GenericSelect
           options={statusOptions}
-          placeholder="Select Status"
+          placeholder={t('filters.selectStatus')}
           value={filters.status}
           onValueChange={(value) => updateFilter('status', value)}
           isClearable
@@ -113,28 +117,28 @@ export function TeamFilters({ onFilterChange, initialFilters }: TeamFiltersProps
         <div className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <GenericSelect
             options={championshipTypeOptions}
-            placeholder="Select Championship Type"
+            placeholder={t('filters.selectChampionshipType')}
             value={filters.championshipType}
             onValueChange={(value) => updateFilter('championshipType', value)}
             isClearable
           />
           <GenericSelect
             options={championshipFormatOptions}
-            placeholder="Select Championship Format"
+            placeholder={t('filters.selectChampionshipFormat')}
             value={filters.championshipFormat}
             onValueChange={(value) => updateFilter('championshipFormat', value)}
             isClearable
           />
           <GenericSelect
             options={championshipAgeCategoryOptions}
-            placeholder="Select Age Category"
+            placeholder={t('filters.selectAgeCategory')}
             value={filters.championshipAgeCategory}
             onValueChange={(value) => updateFilter('championshipAgeCategory', value)}
             isClearable
           />
           <GenericSelect
             options={championshipGenderOptions}
-            placeholder="Select Gender"
+            placeholder={t('filters.selectGender')}
             value={filters.championshipGender}
             onValueChange={(value) => updateFilter('championshipGender', value)}
             isClearable
@@ -143,7 +147,7 @@ export function TeamFilters({ onFilterChange, initialFilters }: TeamFiltersProps
       </div>
       <div className="flex justify-end gap-4">
         <Button onClick={handleReset} variant="outline">
-          Reset
+          {tc('actions.reset')}
         </Button>
       </div>
     </div>

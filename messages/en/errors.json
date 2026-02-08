@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "useLocalDb": "useLocalDb must be used within a DatabaseProvider",
+    "useCarousel": "useCarousel must be used within a <Carousel />",
+    "useChart": "useChart must be used within a <ChartContainer />",
+    "useFormField": "useFormField should be used within <FormField />",
+    "useSidebar": "useSidebar must be used within a SidebarProvider."
+  },
+  "api": {
+    "unknown": "Unknown error",
+    "retryFailed": "Retry failed",
+    "noUserInSession": "No user found in session",
+    "userProfileNotFound": "User profile not found. Please complete your profile setup."
+  },
+  "commands": {
+    "noUndo": "No command to undo",
+    "noRedo": "No command to redo"
+  },
+  "importer": {
+    "championshipNotFound": "Championship not found",
+    "championshipReferenceNotFound": "Championship reference not found",
+    "seasonNotFound": "Season not found"
+  },
+  "keyboard": {
+    "virtualKeyboardNotAvailable": "VirtualKeyboard API not available",
+    "visualViewportNotAvailable": "Visual Viewport API not available"
+  },
+  "database": {
+    "storageKeyNotDefined": "storage key not defined",
+    "documentNotFound": "doc not found"
+  }
+}

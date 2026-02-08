@@ -1,0 +1,120 @@
+{
+  "title": "Definições",
+  "description": "Gerir as suas preferências e notificações",
+  "account": {
+    "title": "Segurança da conta",
+    "description": "Gerir a sua palavra-passe e endereço de email",
+    "changePassword": "Alterar palavra-passe",
+    "changePasswordDesc": "Atualize a sua palavra-passe para manter a sua conta segura",
+    "newPassword": "Nova palavra-passe",
+    "confirmPassword": "Confirmar nova palavra-passe",
+    "updatePassword": "Atualizar palavra-passe",
+    "updating": "A atualizar...",
+    "passwordUpdated": "Palavra-passe atualizada",
+    "passwordUpdatedDesc": "A sua palavra-passe foi alterada com sucesso.",
+    "emailAddress": "Endereço de email",
+    "emailAddressDesc": "Atualize o seu endereço de email",
+    "currentEmail": "Email atual",
+    "newEmail": "Novo endereço de email",
+    "updateEmail": "Atualizar email",
+    "sending": "A enviar...",
+    "confirmEmailsSent": "Emails de confirmação enviados",
+    "confirmEmailsDesc": "Verifique o seu email antigo e novo para confirmar a alteração.",
+    "emailChangePending": "Alteração de email pendente - Verifique {oldEmail} e {newEmail} para confirmar.",
+    "confirmEmailDesc": "Terá de confirmar esta alteração nos seus endereços de email antigo e novo"
+  },
+  "preferences": {
+    "title": "Preferências",
+    "description": "Selecione as suas preferências",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Escuro",
+    "themeSystem": "Sistema",
+    "language": "Idioma",
+    "languagePlaceholder": "Selecione um idioma",
+    "notifications": "Notificações",
+    "matchReminders": "Lembretes de jogo",
+    "scoreUpdates": "Atualizações de pontuação"
+  },
+  "validation": {
+    "passwordsMatch": "As palavra-passes não correspondem",
+    "passwordTooWeak": "Palavra-passe muito fraca"
+  },
+  "languages": {
+    "en": "English",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português"
+  },
+  "localData": {
+    "title": "Dados locais",
+    "syncMatch": "Sincronizar jogo",
+    "matchId": "ID do jogo",
+    "synchronize": "Sincronizar",
+    "matchSynchronization": "Sincronização de jogo",
+    "matchesDataSynchronized": "Os dados do jogo foram sincronizados",
+    "allDataSynchronized": "Todos os dados foram sincronizados",
+    "clearLocalStats": "Limpar estatísticas locais",
+    "clearLocalStatsDesc": "Limpar a cache de estatísticas locais",
+    "clearLocalMatches": "Limpar jogos locais",
+    "clearLocalMatchesDesc": "Limpar a cache de jogos locais",
+    "clearLocalTeams": "Limpar equipas locais",
+    "clearLocalTeamsDesc": "Limpar a cache de equipas locais",
+    "clearAll": "Limpar tudo",
+    "deleting": "A eliminar...",
+    "clear": "Limpar"
+  },
+  "actions": {
+    "resetToDefaults": "Repor valores predefinidos",
+    "saveChanges": "Guardar alterações",
+    "saving": "A guardar..."
+  },
+  "toast": {
+    "saved": "Definições guardadas",
+    "savedDesc": "As suas preferências foram atualizadas.",
+    "reset": "Definições repostas",
+    "resetDesc": "As suas preferências foram repostas para os valores predefinidos.",
+    "cacheCleared": "Cache limpa",
+    "cacheDesc": "A sua cache local foi limpa",
+    "error": "Erro",
+    "failedSaveSettings": "Falha ao guardar definições",
+    "failedChangePassword": "Falha ao alterar palavra-passe",
+    "failedChangeEmail": "Falha ao alterar email",
+    "favoritesUpdated": "Favoritos atualizados",
+    "favoritesUpdatedDesc": "Os seus favoritos foram atualizados.",
+    "favoritesUpdateError": "Falha ao atualizar favoritos"
+  },
+  "favorites": {
+    "title": "Favoritos",
+    "description": "Defina a sua equipa ou clube favorito para filtragem rápida nas páginas de jogos e equipas",
+    "favoriteTeam": "Equipa favorita",
+    "favoriteClub": "Clube favorito",
+    "selectTeam": "Selecionar equipa",
+    "selectClub": "Selecionar clube",
+    "favoriteType": "Tipo de favorito",
+    "none": "Nenhum (sem filtro padrão)",
+    "noMemberships": "Precisa ser membro de pelo menos uma equipa ou clube para definir um favorito. Junte-se a uma equipa ou clube primeiro.",
+    "noAccess": "Aviso: Já não tem acesso a este {type}",
+    "saveFavorite": "Guardar favorito",
+    "favoritesSaved": "O seu favorito foi guardado.",
+    "validation": {
+      "noTeamAccess": "Não tem acesso à equipa selecionada",
+      "noClubAccess": "Não tem acesso ao clube selecionado",
+      "selectTeam": "Por favor, selecione uma equipa",
+      "selectClub": "Por favor, selecione um clube"
+    }
+  },
+  "sync": {
+    "title": "Sincronização de jogo",
+    "matchSynced": "Os dados do jogo foram sincronizados",
+    "dataToSync": "{name} {count} dados a sincronizar",
+    "dataSynced": "{name} {index}/{chunkSize} dados foram sincronizados",
+    "allDataSynced": "Todos os dados foram sincronizados",
+    "error": "Falha ao sincronizar jogo. Por favor, tente novamente.",
+    "failedUpdateLanguage": "Falha ao atualizar idioma"
+  },
+  "errors": {
+    "generic": "Erro"
+  }
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Team } from "@/lib/types";
 import AsyncSelect from "react-select/async";
 import { useTeamApi } from "@/hooks/use-team-api";
@@ -59,6 +60,7 @@ export function TeamSelect({
   clubId,
   championshipId,
 }: TeamSelectProps) {
+  const t = useTranslations("teams");
   const teamApi = useTeamApi();
 
   return (
@@ -74,7 +76,7 @@ export function TeamSelect({
       getOptionValue={(option) => option.id.toString()}
       getOptionLabel={(option) => option.name}
       isClearable={isClearable}
-      placeholder="Select a Team ..."
+      placeholder={t("selectPlaceholder")}
     />
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useRef, useImperativeHandle } from "react";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -41,6 +42,7 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
     },
     ref
   ) => {
+    const t = useTranslations("matches");
     const overviewRef = useRef<HTMLDivElement>(null);
 
     useImperativeHandle(ref, () => ({
@@ -81,7 +83,7 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Final Score</CardTitle>
+              <CardTitle>{t("stats.matchOverview")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="w-full">
@@ -106,7 +108,7 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
 
           <Card>
             <CardHeader>
-              <CardTitle>Match Summary</CardTitle>
+              <CardTitle>{t("stats.scoreProgression")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">

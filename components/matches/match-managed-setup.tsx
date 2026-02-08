@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -23,10 +24,11 @@ export function MatchManagedTeamSetup({
   onTeamSelected,
   selectedTeamId,
 }: MatchSetupProps) {
+  const t = useTranslations("matches");
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4">Managed Team</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("matchManaged.heading")}</h2>
         <RadioGroup
           value={selectedTeamId}
           onValueChange={onTeamSelected}

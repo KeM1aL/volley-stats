@@ -1,6 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Match, TeamMember, Team } from "@/lib/types";
@@ -17,6 +18,7 @@ type MatchSetupProps = {
 };
 
 export function MatchLineupSetup({ match, players, availablePlayers, setAvailablePlayers }: MatchSetupProps) {
+  const t = useTranslations("matches");
   const [isLoading, setIsLoading] = useState(false);
 
   const sortPlayers = (a: TeamMember, b: TeamMember) => {
@@ -39,13 +41,13 @@ export function MatchLineupSetup({ match, players, availablePlayers, setAvailabl
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4">Match Roster</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("matchLineup.heading")}</h2>
         <div className="grid grid-cols-4 gap-4">
           {[...players].sort(sortPlayers).map((player) => (
             <Toggle
               key={player.id}
               variant="outline"
-              aria-label="Toggle player availability"
+              aria-label={t("ui.togglePlayerAvailability")}
               className="gap-4"
               onClick={() => togglePlayerAvailability(player)}
             >

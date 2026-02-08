@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useImperativeHandle } from "react";
+import { useTranslations } from "next-intl";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import {
@@ -34,6 +35,7 @@ interface SetBreakdownProps {
 
 const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
   ({ match, sets, points, managedTeam, opponentTeam, isPdfGenerating }, ref) => {
+    const t = useTranslations("matches");
     const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
     const setBreakdownRef = useRef<HTMLDivElement>(null);
 
@@ -161,7 +163,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                     {Math.round(set.home_score + set.away_score * 0.75)} minutes
                   </p>
                   <p>Points Played: {set.home_score + set.away_score}</p>
-                  <p>Point Distribution:</p>
+                  <p>{t("stats.pointDistribution")}:</p>
                   <div className="pl-4 space-y-1 text-sm">
                     <p>
                       Serves:{" "}
@@ -208,7 +210,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                       }
                     </p>
                   </div>
-                  <p>Error Distribution:</p>
+                  <p>{t("stats.errorDistribution")}:</p>
                   <div className="pl-4 space-y-1 text-sm">
                     <p>
                       Serves:{" "}
@@ -263,7 +265,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
 
         <Card>
           <CardHeader>
-            <CardTitle>Point Distribution by Set</CardTitle>
+            <CardTitle>{t("stats.pointDistributionBySet")}</CardTitle>
             <CardDescription>
               Breakdown of scoring methods in each set
             </CardDescription>
@@ -306,7 +308,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Error Distribution by Set</CardTitle>
+            <CardTitle>{t("stats.errorDistributionBySet")}</CardTitle>
             <CardDescription>
               Breakdown of scoring methods in each set
             </CardDescription>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useEffect } from "react";
 import { PlayerStat, Team, TeamMember, Set } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,7 @@ export function PlayerPerformancePanel({
   currentSet,
   playerById,
 }: PlayerPerformancePanelProps) {
+  const t = useTranslations("matches");
   const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);
 
   useEffect(() => {
@@ -232,7 +234,7 @@ export function PlayerPerformancePanel({
 
                   {/* Points */}
                   <div className="flex items-center justify-between text-[10px] sm:text-xs">
-                    <span className="text-muted-foreground">Points Scored</span>
+                    <span className="text-muted-foreground">{t("stats.pointsScored")}</span>
                     <span className="font-bold text-primary text-xs sm:text-sm">
                       {player.totalPoints}
                     </span>

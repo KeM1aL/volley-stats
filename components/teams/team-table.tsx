@@ -28,6 +28,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Team, TeamStatus } from "@/lib/types";
 import { useTeamApi } from "@/hooks/use-team-api";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useTranslations } from "next-intl";
 
 // Helper function to get badge variant based on team status
 function getTeamStatusVariant(status: TeamStatus): "default" | "secondary" | "outline" {
@@ -50,6 +51,8 @@ type TeamTableProps = {
 };
 
 export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
+  const t = useTranslations('teams');
+  const tc = useTranslations('common');
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -65,8 +68,8 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
       await teamApi.deleteTeam(deletingTeam.id);
 
       toast({
-        title: "Team deleted",
-        description: "The team has been successfully deleted.",
+        title: t('toast.deleted'),
+        description: t('toast.deletedDesc'),
       });
 
       router.refresh();
@@ -74,8 +77,8 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
       console.error("Failed to delete team:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to delete team. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.deleteError'),
       });
     } finally {
       setIsDeleting(false);
@@ -89,16 +92,16 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
     return (
       <EmptyState
         icon={<Search className="h-12 w-12" />}
-        title="No teams found"
+        title={t('empty.noTeams')}
         description={
           hasFavorite
-            ? "No teams found with current filters. Try adjusting your search criteria."
-            : "Set your favorite team or club in settings to see teams by default, or use the filters above to find teams."
+            ? t('empty.noTeamsWithFilters')
+            : t('empty.noTeamsNoFavorite')
         }
         action={
           !hasFavorite
             ? {
-                label: "Go to Settings",
+                label: t('empty.goToSettings'),
                 href: "/settings"
               }
             : undefined
@@ -124,7 +127,7 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
                 </p>
               </div>
               <Badge variant={getTeamStatusVariant(team.status)}>
-                {team.status}
+                {t(`status.${team.status}`)}
               </Badge>
             </div>
             {team.championships?.name && (
@@ -139,7 +142,7 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
                 onClick={() => router.push(`/teams/${team.id}`)}
               >
                 <Eye className="h-4 w-4 mr-1" />
-                <span className="text-xs">View</span>
+                <span className="text-xs">{t('table.view')}</span>
               </Button>
               {canManage(team) && (
                 <>
@@ -149,7 +152,7 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
                     onClick={() => router.push(`/teams/${team.id}/players`)}
                   >
                     <Users className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Players</span>
+                    <span className="text-xs">{t('table.players')}</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -178,11 +181,11 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
           <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Team Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Championship</TableHead>
-              <TableHead>Club</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead>{t('table.teamName')}</TableHead>
+              <TableHead>{t('table.status')}</TableHead>
+              <TableHead>{t('table.championship')}</TableHead>
+              <TableHead>{t('table.club')}</TableHead>
+              <TableHead className="w-[100px]">{t('table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -191,7 +194,7 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
                 <TableCell className="font-medium">{team.name}</TableCell>
                 <TableCell>
                   <Badge variant={getTeamStatusVariant(team.status)}>
-                    {team.status}
+                    {t(`status.${team.status}`)}
                   </Badge>
                 </TableCell>
                 <TableCell>{team.championships?.name}</TableCell>
@@ -242,20 +245,19 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
       <AlertDialog open={!!deletingTeam} onOpenChange={() => setDeletingTeam(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the team
-              and all associated data.
+              {t('confirmDeleteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tc('actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {tc('actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

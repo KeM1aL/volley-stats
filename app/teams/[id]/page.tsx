@@ -24,8 +24,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
+import { useTranslations } from "next-intl";
 
 export default function TeamDetailsPage() {
+  const t = useTranslations('teams');
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -146,7 +148,7 @@ export default function TeamDetailsPage() {
     };
     return (
       <Badge variant={variants[status] || "default"}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {t(`status.${status}` as any)}
       </Badge>
     );
   };
@@ -179,13 +181,13 @@ export default function TeamDetailsPage() {
           variant="ghost"
           size="icon"
           onClick={() => router.push("/teams")}
-          aria-label="Back to teams"
+          aria-label={t('details.backToTeams')}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-bold">Team not found</h1>
+        <h1 className="text-2xl font-bold">{t('details.teamNotFound')}</h1>
         <p className="text-muted-foreground">
-          The requested team could not be found.
+          {t('details.teamNotFoundDesc')}
         </p>
       </div>
     );
@@ -200,7 +202,7 @@ export default function TeamDetailsPage() {
             variant="ghost"
             size="icon"
             onClick={() => router.push("/teams")}
-            aria-label="Back to teams"
+            aria-label={t('details.backToTeams')}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -214,7 +216,7 @@ export default function TeamDetailsPage() {
         {canManageTeam && (
           <Button variant="outline" onClick={() => setEditingTeam(team)}>
             <Pencil className="h-4 w-4 mr-2" />
-            Edit Team
+            {t('details.editTeam')}
           </Button>
         )}
       </div>
@@ -224,14 +226,14 @@ export default function TeamDetailsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
-            Team Information
+            {t('details.information')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Championship</p>
+                <p className="text-sm text-muted-foreground">{t('details.championship')}</p>
                 {team.championships ? (
                   <Link
                     href={`/championships/${team.championships.id}`}
@@ -240,20 +242,20 @@ export default function TeamDetailsPage() {
                     {team.championships.name}
                   </Link>
                 ) : (
-                  <p className="text-muted-foreground">Not assigned</p>
+                  <p className="text-muted-foreground">{t('details.notAssigned')}</p>
                 )}
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Club</p>
+                <p className="text-sm text-muted-foreground">{t('details.club')}</p>
                 {team.clubs ? (
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{team.clubs.name}</span>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">No club</p>
+                  <p className="text-muted-foreground">{t('details.noClub')}</p>
                 )}
               </div>
             </div>
@@ -268,7 +270,7 @@ export default function TeamDetailsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Recent Matches
+              {t('details.recentMatches')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -276,9 +278,9 @@ export default function TeamDetailsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Opponent</TableHead>
-                    <TableHead className="text-center">Result</TableHead>
+                    <TableHead>{t('table.date')}</TableHead>
+                    <TableHead>{t('details.opponent')}</TableHead>
+                    <TableHead className="text-center">{t('details.result')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -293,8 +295,8 @@ export default function TeamDetailsPage() {
                             : "-"}
                         </TableCell>
                         <TableCell>
-                          {isHome ? "vs " : "@ "}
-                          {opponent?.name || "Unknown"}
+                          {isHome ? t('details.vs') + " " : t('details.at') + " "}
+                          {opponent?.name || t('details.unknown')}
                         </TableCell>
                         <TableCell className="text-center font-medium">
                           {formatMatchResult(match)}
@@ -306,7 +308,7 @@ export default function TeamDetailsPage() {
               </Table>
             ) : (
               <p className="text-muted-foreground text-center py-8">
-                No recent matches
+                {t('details.noRecentMatches')}
               </p>
             )}
           </CardContent>
@@ -317,7 +319,7 @@ export default function TeamDetailsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Upcoming Matches
+              {t('details.upcomingMatches')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -325,9 +327,9 @@ export default function TeamDetailsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Opponent</TableHead>
-                    <TableHead className="text-center">Location</TableHead>
+                    <TableHead>{t('table.date')}</TableHead>
+                    <TableHead>{t('details.opponent')}</TableHead>
+                    <TableHead className="text-center">{t('details.location')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -341,9 +343,9 @@ export default function TeamDetailsPage() {
                             ? format(new Date(match.date), "MMM d, yyyy")
                             : "-"}
                         </TableCell>
-                        <TableCell>{opponent?.name || "Unknown"}</TableCell>
+                        <TableCell>{opponent?.name || t('details.unknown')}</TableCell>
                         <TableCell className="text-center">
-                          {isHome ? "Home" : "Away"}
+                          {isHome ? t('details.home') : t('details.away')}
                         </TableCell>
                       </TableRow>
                     );
@@ -352,7 +354,7 @@ export default function TeamDetailsPage() {
               </Table>
             ) : (
               <p className="text-muted-foreground text-center py-8">
-                No upcoming matches
+                {t('details.noUpcomingMatches')}
               </p>
             )}
           </CardContent>
@@ -364,7 +366,7 @@ export default function TeamDetailsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Team Members ({teamMembers.length})
+            {t('details.teamMembers', { count: teamMembers.length })}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -373,9 +375,9 @@ export default function TeamDetailsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-16">#</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>{t('table.name')}</TableHead>
+                  <TableHead>{t('table.position')}</TableHead>
+                  <TableHead>{t('table.role')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -393,7 +395,7 @@ export default function TeamDetailsPage() {
             </Table>
           ) : (
             <p className="text-muted-foreground text-center py-8">
-              No team members yet
+              {t('details.noTeamMembers')}
             </p>
           )}
         </CardContent>

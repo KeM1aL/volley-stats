@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Match, TeamMember, PlayerStat, ScorePoint, Set, Team } from "@/lib/types";
 import { useLocalDb } from "@/components/providers/local-database-provider";
@@ -69,6 +70,7 @@ export function StatTracker({
   onStat,
   onUndo,
 }: StatTrackerProps) {
+  const t = useTranslations("matches");
   const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const { canUndo, canRedo } = useCommandHistory();
@@ -129,8 +131,8 @@ export function StatTracker({
   const recordStat = async (type: StatType, result: StatResult) => {
     if (!selectedPlayer) {
       toast({
-        title: "Select a player",
-        description: "Please select a player before recording a stat",
+        title: t("live.selectAPlayer"),
+        description: t("live.selectPlayerBeforeRecordingStat"),
         variant: "destructive",
       });
       return;
@@ -286,7 +288,7 @@ export function StatTracker({
             >
               <div className="text-center">
                 <div className="font-medium truncate">{managedTeam.name.substring(0, 10)}</div>
-                <div className="opacity-75">Error -1</div>
+                <div className="opacity-75">{t("common:status.error")} -1</div>
               </div>
             </Button>
             <Button
@@ -301,7 +303,7 @@ export function StatTracker({
             >
               <div className="text-center">
                 <div className="font-medium truncate">{managedTeam.name.substring(0, 10)}</div>
-                <div className="opacity-75">Point +1</div>
+                <div className="opacity-75">{t("live.points")} +1</div>
               </div>
             </Button>
             <Button
@@ -316,7 +318,7 @@ export function StatTracker({
             >
               <div className="text-center">
                 <div className="font-medium truncate">{opponentTeam.name.substring(0, 10)}</div>
-                <div className="opacity-75">Point -1</div>
+                <div className="opacity-75">{t("live.points")} -1</div>
               </div>
             </Button>
             <Button
@@ -331,7 +333,7 @@ export function StatTracker({
             >
               <div className="text-center">
                 <div className="font-medium truncate">{opponentTeam.name.substring(0, 10)}</div>
-                <div className="opacity-75">Error +1</div>
+                <div className="opacity-75">{t("common:status.error")} +1</div>
               </div>
             </Button>
             {/* Undo button */}

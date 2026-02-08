@@ -1,0 +1,12 @@
+{
+  "menu": {
+    "championships": "Championships",
+    "matches": "Matches",
+    "teams": "Teams",
+    "settings": "Settings"
+  },
+  "actions": {
+    "signOut": "Sign Out",
+    "openMenu": "Open menu"
+  }
+}

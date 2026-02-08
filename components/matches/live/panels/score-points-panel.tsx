@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -164,6 +165,7 @@ export function ScorePointsPanel({
   awayTeam,
   managedTeamId,
 }: ScorePointsPanelProps) {
+  const t = useTranslations("matches");
   const [scoringTeamFilter, setScoringTeamFilter] = useState<string>("all");
 
   // Create lookup map for player stats
@@ -210,12 +212,12 @@ export function ScorePointsPanel({
             onValueChange={setScoringTeamFilter}
           >
             <SelectTrigger className="h-7 sm:h-8 text-[10px] sm:text-xs w-[100px] sm:w-[140px]">
-              <SelectValue placeholder="Scoring Team" />
+              <SelectValue placeholder={t("live.scoringTeam")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Teams</SelectItem>
-              <SelectItem value="home">Home Team</SelectItem>
-              <SelectItem value="away">Away Team</SelectItem>
+              <SelectItem value="all">{t("live.scoringTeam")}</SelectItem>
+              <SelectItem value="home">{t("scoreboard.home")} Team</SelectItem>
+              <SelectItem value="away">{t("scoreboard.away")} Team</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -227,8 +229,8 @@ export function ScorePointsPanel({
             {filteredPoints.length === 0 ? (
               <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">
                 {scoringTeamFilter === "all"
-                  ? "No points recorded yet"
-                  : "No points found for this team"}
+                  ? t("live.noPointsRecorded")
+                  : t("live.noPointsForTeam")}
               </p>
             ) : (
               filteredPoints.map((point) => (

@@ -1,0 +1,34 @@
+{
+  "abbreviations": {
+    "good": "G",
+    "bad": "B",
+    "error": "E"
+  },
+  "playerPerformance": {
+    "tableHeaders": {
+      "player": "Player",
+      "pointParticipation": "Point Participation",
+      "errorParticipation": "Error Participation",
+      "favoritePosition": "Fav.Position",
+      "worstPosition": "Worst Position"
+    },
+    "stats": {
+      "good": "Good",
+      "bad": "Bad",
+      "error": "Error"
+    }
+  },
+  "sidebar": {
+    "stats": "Stats",
+    "events": "Events",
+    "points": "Points",
+    "court": "Court"
+  },
+  "live": {
+    "errorMinus": "Error -1",
+    "pointPlus": "Point +1",
+    "pointMinus": "Point -1",
+    "errorPlus": "Error +1"
+  },
+  "noDetailsAvailable": "No details available"
+}

@@ -141,5 +141,14 @@
     "hide": "Hide",
     "show": "Show",
     "players": "Players"
+  },
+  "list": {
+    "seasonPrefix": "Season",
+    "unknownSeason": "Unknown Season",
+    "unknownFormat": "Unknown Format",
+    "formatLabel": "Format:",
+    "genderLabel": "Gender:",
+    "ageCategoryLabel": "Age Category:",
+    "viewDetails": "View Details"
   }
 }

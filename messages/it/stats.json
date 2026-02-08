@@ -1,0 +1,34 @@
+{
+  "abbreviations": {
+    "good": "B",
+    "bad": "C",
+    "error": "E"
+  },
+  "playerPerformance": {
+    "tableHeaders": {
+      "player": "Giocatore",
+      "pointParticipation": "Partecipazione ai Punti",
+      "errorParticipation": "Partecipazione agli Errori",
+      "favoritePosition": "Pos. Preferita",
+      "worstPosition": "Peggior Posizione"
+    },
+    "stats": {
+      "good": "Buono",
+      "bad": "Cattivo",
+      "error": "Errore"
+    }
+  },
+  "sidebar": {
+    "stats": "Statistiche",
+    "events": "Eventi",
+    "points": "Punti",
+    "court": "Campo"
+  },
+  "live": {
+    "errorMinus": "Errore -1",
+    "pointPlus": "Punto +1",
+    "pointMinus": "Punto -1",
+    "errorPlus": "Errore +1"
+  },
+  "noDetailsAvailable": "Nessun dettaglio disponibile"
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ type TeamStatsProps = {
 };
 
 export function TeamStats({ teamId, matches }: TeamStatsProps) {
+  const t = useTranslations("matches");
   const teamMatches = matches.filter(
     (match) =>
       match.home_team_id === teamId || match.away_team_id === teamId
@@ -65,8 +67,8 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
     <>
       <Card>
         <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
-          <CardTitle className="text-sm sm:text-base">Win Rate</CardTitle>
-          <CardDescription className="text-xs sm:text-sm hidden sm:block">Overall performance</CardDescription>
+          <CardTitle className="text-sm sm:text-base">{t("history.winRate")}</CardTitle>
+          <CardDescription className="text-xs sm:text-sm hidden sm:block">{t("history.overallPerformance")}</CardDescription>
         </CardHeader>
         <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
           <div className="text-lg sm:text-2xl font-bold">
@@ -83,8 +85,8 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
 
       <Card>
         <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
-          <CardTitle className="text-sm sm:text-base">Avg Points</CardTitle>
-          <CardDescription className="text-xs sm:text-sm hidden sm:block">Points per match</CardDescription>
+          <CardTitle className="text-sm sm:text-base">{t("history.avgPoints")}</CardTitle>
+          <CardDescription className="text-xs sm:text-sm hidden sm:block">{t("history.pointsPerMatch")}</CardDescription>
         </CardHeader>
         <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
           <div className="text-lg sm:text-2xl font-bold">
@@ -101,8 +103,8 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
 
       <Card>
         <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
-          <CardTitle className="text-sm sm:text-base">History</CardTitle>
-          <CardDescription className="text-xs sm:text-sm hidden sm:block">Recent performance</CardDescription>
+          <CardTitle className="text-sm sm:text-base">{t("history.history")}</CardTitle>
+          <CardDescription className="text-xs sm:text-sm hidden sm:block">{t("history.recentPerformance")}</CardDescription>
         </CardHeader>
         <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
           <div className="flex gap-1">

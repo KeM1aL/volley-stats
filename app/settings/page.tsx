@@ -49,34 +49,32 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import * as z from "zod";
 import { FavoritesSection } from "@/components/settings/favorites-section";
+import { updateLocale } from "@/lib/i18n/actions";
+import { Locale } from "@/lib/i18n/config";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
-const languages = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Español" },
-  { value: "fr", label: "Français" },
-  { value: "de", label: "Deutsch" },
-];
-
-// Password change schema
-const passwordChangeSchema = z
-  .object({
-    newPassword: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  })
-  .refine(
-    (data) => {
-      const { strength } = calculatePasswordStrength(data.newPassword);
-      return strength !== "weak";
-    },
-    {
-      message: "Password is too weak",
-      path: ["newPassword"],
-    }
-  );
+// Password change schema - Messages will be updated with translations in the component
+const createPasswordChangeSchema = (t: any) =>
+  z
+    .object({
+      newPassword: z.string().min(6, "Password must be at least 6 characters"),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: t("validation.passwordsMatch"),
+      path: ["confirmPassword"],
+    })
+    .refine(
+      (data) => {
+        const { strength } = calculatePasswordStrength(data.newPassword);
+        return strength !== "weak";
+      },
+      {
+        message: t("validation.passwordTooWeak"),
+        path: ["newPassword"],
+      }
+    );
 
 // Email change schema
 const emailChangeSchema = z.object({
@@ -84,9 +82,11 @@ const emailChangeSchema = z.object({
 });
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
   const { localDb: db } = useLocalDb();
   const { theme, setTheme } = useTheme();
   const { session, reloadUser, user } = useAuth();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -94,6 +94,15 @@ export default function SettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isChangingEmail, setIsChangingEmail] = useState(false);
+
+  // Language options with translated labels
+  const languages = [
+    { value: "en", label: t('languages.en') },
+    { value: "fr", label: t('languages.fr') },
+    { value: "es", label: t('languages.es') },
+    { value: "it", label: t('languages.it') },
+    { value: "pt", label: t('languages.pt') },
+  ];
 
   const {
     settings,
@@ -103,6 +112,7 @@ export default function SettingsPage() {
   } = useSettings();
 
   // Password change form
+  const passwordChangeSchema = createPasswordChangeSchema(t);
   const passwordForm = useForm<z.infer<typeof passwordChangeSchema>>({
     resolver: zodResolver(passwordChangeSchema),
     defaultValues: {
@@ -152,8 +162,8 @@ export default function SettingsPage() {
           .eq("id", doc.id);
         if (updateError) throw updateError;
         toast({
-          title: "Match synchronization",
-          description: "Matches data has been synchronized",
+          title: t("sync.title"),
+          description: t("sync.matchSynced"),
         });
       }
       const collections = new Map<CollectionName, RxCollection>([
@@ -182,8 +192,8 @@ export default function SettingsPage() {
           })
           .exec();
         toast({
-          title: "Match synchronization",
-          description: `${name} ${docs.length} data to be synchronized`,
+          title: t("sync.title"),
+          description: t("sync.dataToSync", { name, count: docs.length }),
         });
         if (docs) {
           const data = Array.from(docs.values()).map((doc) => doc.toJSON());
@@ -199,25 +209,25 @@ export default function SettingsPage() {
               .select();
             if (updateError) throw updateError;
             toast({
-              title: "Match synchronization",
-              description: `${name} ${index}/${chunkSize} data has been synchronized`,
+              title: t("sync.title"),
+              description: t("sync.dataSynced", { name, index, chunkSize }),
             });
             await delay(1000);
           }
           await delay(1000);
         }
         toast({
-          title: "Match synchronization",
-          description: "All data has been synchronized",
+          title: t("sync.title"),
+          description: t("sync.allDataSynced"),
         });
       }
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("errors.generic"),
         description:
-          "Failed to sync match. Please try again." + JSON.stringify(error),
+          t("sync.error"),
       });
     } finally {
       setMatchId(null);
@@ -228,21 +238,35 @@ export default function SettingsPage() {
   const onSubmit = async (values: Settings) => {
     setIsSaving(true);
     try {
+      // Update language via i18n system if changed
+      if (values.language !== settings.language) {
+        const localeResult = await updateLocale(values.language as Locale);
+        if (!localeResult.success) {
+          throw new Error(t('sync.failedUpdateLanguage'));
+        }
+      }
+
+      // Update other settings via existing system
       const result = await updateSettings(values);
       if (!result.success) {
         throw new Error(result.error);
       }
 
       toast({
-        title: "Settings saved",
-        description: "Your preferences have been updated.",
+        title: t('toast.saved'),
+        description: t('toast.savedDesc'),
       });
+
+      // Refresh to apply new locale if language changed
+      if (values.language !== settings.language) {
+        router.refresh();
+      }
     } catch (error) {
       console.error("Failed to save settings:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to save settings",
+        title: t("errors.generic"),
+        description: t("toast.failedSaveSettings"),
       });
     } finally {
       setIsSaving(false);
@@ -257,8 +281,8 @@ export default function SettingsPage() {
       db!.player_stats?.remove();
       if (loadingIndicator) {
         toast({
-          title: "Cache cleared",
-          description: "Your local statistics cache has been cleared",
+          title: t('toast.cacheCleared'),
+          description: t('localData.clearLocalStatsDesc'),
         });
       }
     } catch (error) {
@@ -276,8 +300,8 @@ export default function SettingsPage() {
       db!.sets?.remove();
       if (loadingIndicator) {
         toast({
-          title: "Cache cleared",
-          description: "Your local matches cache has been cleared",
+          title: t('toast.cacheCleared'),
+          description: t('localData.clearLocalMatchesDesc'),
         });
       }
     } catch (error) {
@@ -295,8 +319,8 @@ export default function SettingsPage() {
       db!.team_members?.remove();
       if (loadingIndicator) {
         toast({
-          title: "Cache cleared",
-          description: "Your local teams cache has been cleared",
+          title: t('toast.cacheCleared'),
+          description: t('localData.clearLocalTeamsDesc'),
         });
       }
     } catch (error) {
@@ -312,8 +336,8 @@ export default function SettingsPage() {
       removeRxDatabase(getDatabaseName(), getStorage());
 
       toast({
-        title: "Cache cleared",
-        description: "Your local cache has been cleared",
+        title: t('toast.cacheCleared'),
+        description: t('toast.cacheDesc'),
       });
     } catch (error) {
       console.error("Error resetting local cache:", error);
@@ -326,8 +350,8 @@ export default function SettingsPage() {
     const defaults = resetSettings();
     form.reset(defaults);
     toast({
-      title: "Settings reset",
-      description: "Your preferences have been reset to default values.",
+      title: t('toast.reset'),
+      description: t('toast.resetDesc'),
     });
   };
 
@@ -344,17 +368,17 @@ export default function SettingsPage() {
       if (error) throw error;
 
       toast({
-        title: "Password updated",
-        description: "Your password has been successfully changed.",
+        title: t('account.passwordUpdated'),
+        description: t('account.passwordUpdatedDesc'),
       });
       passwordForm.reset();
     } catch (error) {
       console.error("Failed to change password:", error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("errors.generic"),
         description:
-          error instanceof Error ? error.message : "Failed to change password",
+          error instanceof Error ? error.message : t("toast.failedChangePassword"),
       });
     } finally {
       setIsChangingPassword(false);
@@ -374,8 +398,8 @@ export default function SettingsPage() {
       if (error) throw error;
 
       toast({
-        title: "Confirmation emails sent",
-        description: "Check both your old and new email to confirm the change.",
+        title: t('account.confirmEmailsSent'),
+        description: t('account.confirmEmailsDesc'),
       });
       emailForm.reset();
 
@@ -385,9 +409,9 @@ export default function SettingsPage() {
       console.error("Failed to change email:", error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("errors.generic"),
         description:
-          error instanceof Error ? error.message : "Failed to change email",
+          error instanceof Error ? error.message : t("toast.failedChangeEmail"),
       });
     } finally {
       setIsChangingEmail(false);
@@ -414,9 +438,9 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">{t('title')}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Manage your preferences and notifications
+          {t('description')}
         </p>
       </div>
 
@@ -425,18 +449,18 @@ export default function SettingsPage() {
         <CardContent className="p-6">
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-1">Account Security</h3>
+              <h3 className="text-lg font-semibold mb-1">{t('account.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Manage your password and email address
+                {t('account.description')}
               </p>
             </div>
 
             {/* Change Password Section */}
             <div className="space-y-4 pt-4 border-t">
               <div>
-                <h4 className="font-medium">Change Password</h4>
+                <h4 className="font-medium">{t('account.changePassword')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Update your password to keep your account secure
+                  {t('account.changePasswordDesc')}
                 </p>
               </div>
               <Form {...passwordForm}>
@@ -449,7 +473,7 @@ export default function SettingsPage() {
                     name="newPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>New Password</FormLabel>
+                        <FormLabel>{t('account.newPassword')}</FormLabel>
                         <FormControl>
                           <Input type="password" {...field} />
                         </FormControl>
@@ -463,7 +487,7 @@ export default function SettingsPage() {
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormLabel>{t('account.confirmPassword')}</FormLabel>
                         <FormControl>
                           <Input type="password" {...field} />
                         </FormControl>
@@ -475,10 +499,10 @@ export default function SettingsPage() {
                     {isChangingPassword ? (
                       <>
                         <LoadingSpinner size="sm" className="mr-2" />
-                        Updating...
+                        {t('account.updating')}
                       </>
                     ) : (
-                      "Update Password"
+                      t('account.updatePassword')
                     )}
                   </Button>
                 </form>
@@ -488,9 +512,9 @@ export default function SettingsPage() {
             {/* Change Email Section */}
             <div className="space-y-4 pt-4 border-t">
               <div>
-                <h4 className="font-medium">Email Address</h4>
+                <h4 className="font-medium">{t('account.emailAddress')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Update your email address
+                  {t('account.emailAddressDesc')}
                 </p>
               </div>
 
@@ -498,14 +522,16 @@ export default function SettingsPage() {
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    Email change pending - Check both {session?.user?.email} and{" "}
-                    {pendingEmail} to confirm the change.
+                    {t('account.emailChangePending', {
+                      oldEmail: session?.user?.email || '',
+                      newEmail: pendingEmail
+                    })}
                   </AlertDescription>
                 </Alert>
               )}
 
               <div className="space-y-2">
-                <Label>Current Email</Label>
+                <Label>{t('account.currentEmail')}</Label>
                 <Input
                   type="email"
                   value={session?.user?.email || ""}
@@ -525,14 +551,13 @@ export default function SettingsPage() {
                       name="newEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>New Email Address</FormLabel>
+                          <FormLabel>{t('account.newEmail')}</FormLabel>
                           <FormControl>
                             <Input type="email" {...field} />
                           </FormControl>
                           <FormMessage />
                           <FormDescription>
-                            You will need to confirm this change on both your
-                            old and new email addresses
+                            {t('account.confirmEmailDesc')}
                           </FormDescription>
                         </FormItem>
                       )}
@@ -541,10 +566,10 @@ export default function SettingsPage() {
                       {isChangingEmail ? (
                         <>
                           <LoadingSpinner size="sm" className="mr-2" />
-                          Sending...
+                          {t('account.sending')}
                         </>
                       ) : (
-                        "Update Email"
+                        t('account.updateEmail')
                       )}
                     </Button>
                   </form>
@@ -563,22 +588,22 @@ export default function SettingsPage() {
         <CardContent className="p-6">
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold mb-1">Preferences</h3>
+              <h3 className="text-lg font-semibold mb-1">{t('preferences.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Select your preferences
+                {t('preferences.description')}
               </p>
             </div>
             {mounted && (
               <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Theme</Label>
+                <Label className="text-sm font-medium">{t('preferences.theme')}</Label>
                 <Select value={theme} onValueChange={setTheme}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
+                    <SelectItem value="light">{t('preferences.themeLight')}</SelectItem>
+                    <SelectItem value="dark">{t('preferences.themeDark')}</SelectItem>
+                    <SelectItem value="system">{t('preferences.themeSystem')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -593,14 +618,14 @@ export default function SettingsPage() {
                   name="language"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Language</FormLabel>
+                      <FormLabel>{t('preferences.language')}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a language" />
+                            <SelectValue placeholder={t('preferences.languagePlaceholder')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -620,14 +645,14 @@ export default function SettingsPage() {
                 />
 
                 {/* <div className="space-y-4">
-                <FormLabel>Notifications</FormLabel>
+                <FormLabel>{t('preferences.notifications')}</FormLabel>
                 <FormField
                   control={form.control}
                   name="notifications.matchReminders"
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel>Match Reminders</FormLabel>
+                        <FormLabel>{t('preferences.matchReminders')}</FormLabel>
                         <FormDescription>
                           Receive notifications before your matches
                         </FormDescription>
@@ -647,7 +672,7 @@ export default function SettingsPage() {
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel>Score Updates</FormLabel>
+                        <FormLabel>{t('preferences.scoreUpdates')}</FormLabel>
                         <FormDescription>
                           Get notified about score changes during matches
                         </FormDescription>
@@ -671,16 +696,16 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="w-full sm:w-auto"
                   >
-                    Reset to Defaults
+                    {t('actions.resetToDefaults')}
                   </Button>
                   <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
                     {isSaving ? (
                       <>
                         <LoadingSpinner size="sm" className="mr-2" />
-                        Saving...
+                        {t('actions.saving')}
                       </>
                     ) : (
-                      "Save Changes"
+                      t('actions.saveChanges')
                     )}
                   </Button>
                 </div>
@@ -695,17 +720,17 @@ export default function SettingsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="space-y-4">
-              <Label>Local data</Label>
+              <Label>{t('localData.title')}</Label>
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4 gap-3">
                   <div className="space-y-2 flex-1">
                     <Label className="text-sm font-medium">
-                      Synchronize Match
+                      {t('localData.syncMatch')}
                     </Label>
                     <Input
                       type="text"
                       onChange={(e) => setMatchId(e.target.value)}
-                      placeholder="Match ID"
+                      placeholder={t('localData.matchId')}
                     />
                   </div>
                   <Button
@@ -715,16 +740,16 @@ export default function SettingsPage() {
                     onClick={() => matchId && performMatchSync()}
                     className="w-full sm:w-auto sm:self-end"
                   >
-                    Synchronize
+                    {t('localData.synchronize')}
                   </Button>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-3">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-medium">
-                      Clear Local Stats
+                      {t('localData.clearLocalStats')}
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Clear the local stats cache
+                      {t('localData.clearLocalStatsDesc')}
                     </p>
                   </div>
                   <Button
@@ -734,16 +759,16 @@ export default function SettingsPage() {
                     onClick={() => handleResetLocalStats()}
                     className="w-full sm:w-auto"
                   >
-                    Clear
+                    {t('localData.clear')}
                   </Button>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-3">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-medium">
-                      Clear Local Matches
+                      {t('localData.clearLocalMatches')}
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Clear the local matches cache
+                      {t('localData.clearLocalMatchesDesc')}
                     </p>
                   </div>
                   <Button
@@ -753,16 +778,16 @@ export default function SettingsPage() {
                     onClick={() => handleResetLocalMatches()}
                     className="w-full sm:w-auto"
                   >
-                    Clear
+                    {t('localData.clear')}
                   </Button>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-3">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-medium">
-                      Clear Local Teams
+                      {t('localData.clearLocalTeams')}
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Clear the local teams cache
+                      {t('localData.clearLocalTeamsDesc')}
                     </p>
                   </div>
                   <Button
@@ -772,7 +797,7 @@ export default function SettingsPage() {
                     onClick={() => handleResetLocalTeams()}
                     className="w-full sm:w-auto"
                   >
-                    Clear
+                    {t('localData.clear')}
                   </Button>
                 </div>
               </div>
@@ -786,10 +811,10 @@ export default function SettingsPage() {
                   {isDeletingCache ? (
                     <>
                       <LoadingSpinner size="sm" className="mr-2" />
-                      Deleting...
+                      {t('localData.deleting')}
                     </>
                   ) : (
-                    "Clear All"
+                    t('localData.clearAll')
                   )}
                 </Button>
               </div>

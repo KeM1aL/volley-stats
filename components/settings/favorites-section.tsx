@@ -13,6 +13,7 @@ import { toast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type FavoritesSectionProps = {
   user: User;
@@ -22,6 +23,9 @@ type FavoritesSectionProps = {
 type FavoriteType = 'team' | 'club' | 'none';
 
 export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
+  const t = useTranslations('settings');
+  const tc = useTranslations('common');
+
   // Determine initial favorite type
   const getInitialFavoriteType = (): FavoriteType => {
     if (user.profile.favorite_team_id) return 'team';
@@ -68,17 +72,17 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
       // Validate access before saving
       if (favoriteType === 'team') {
         if (favoriteTeam && !userTeamIds.has(favoriteTeam.id)) {
-          throw new Error('You do not have access to the selected team');
+          throw new Error(t('favorites.validation.noTeamAccess'));
         }
         if (!favoriteTeam) {
-          throw new Error('Please select a team');
+          throw new Error(t('favorites.validation.selectTeam'));
         }
       } else if (favoriteType === 'club') {
         if (favoriteClub && !userClubIds.has(favoriteClub.id)) {
-          throw new Error('You do not have access to the selected club');
+          throw new Error(t('favorites.validation.noClubAccess'));
         }
         if (!favoriteClub) {
-          throw new Error('Please select a club');
+          throw new Error(t('favorites.validation.selectClub'));
         }
       }
 
@@ -90,15 +94,15 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
       await onUpdate(); // Reload user to get updated profile
 
       toast({
-        title: 'Favorites updated',
-        description: 'Your favorite has been saved.',
+        title: t('toast.favoritesUpdated'),
+        description: t('favorites.favoritesSaved'),
       });
     } catch (error) {
       console.error('Failed to save favorites:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to save favorites',
+        title: t('toast.error'),
+        description: error instanceof Error ? error.message : t('toast.favoritesUpdateError'),
       });
     } finally {
       setIsSaving(false);
@@ -110,9 +114,9 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
       <CardContent className="p-6">
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold mb-1">Favorites</h3>
+            <h3 className="text-lg font-semibold mb-1">{t('favorites.title')}</h3>
             <p className="text-sm text-muted-foreground">
-              Set your default team or club for quick filtering on matches and teams pages
+              {t('favorites.description')}
             </p>
           </div>
 
@@ -120,27 +124,26 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                You need to be a member of at least one team or club to set a favorite.
-                Join a team or club first.
+                {t('favorites.noMemberships')}
               </AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-4">
             <div className="space-y-3">
-              <Label>Favorite Type</Label>
+              <Label>{t('favorites.favoriteType')}</Label>
               <RadioGroup value={favoriteType} onValueChange={handleFavoriteTypeChange}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="none" id="none" />
                   <Label htmlFor="none" className="font-normal cursor-pointer">
-                    None (no default filter)
+                    {t('favorites.none')}
                   </Label>
                 </div>
                 {user.clubMembers && user.clubMembers.length > 0 && (
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="club" id="club" />
                     <Label htmlFor="club" className="font-normal cursor-pointer">
-                      Favorite Club
+                      {t('favorites.favoriteClub')}
                     </Label>
                   </div>
                 )}
@@ -148,7 +151,7 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="team" id="team" />
                     <Label htmlFor="team" className="font-normal cursor-pointer">
-                      Favorite Team
+                      {t('favorites.favoriteTeam')}
                     </Label>
                   </div>
                 )}
@@ -157,7 +160,7 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
 
             {favoriteType === 'club' && (
               <div className="space-y-2">
-                <Label>Select Club</Label>
+                <Label>{t('favorites.selectClub')}</Label>
                 <ClubSelect
                   value={favoriteClub}
                   onChange={setFavoriteClub}
@@ -165,7 +168,7 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
                 />
                 {favoriteClub && !hasClubAccess && (
                   <p className="text-sm text-destructive">
-                    Warning: You no longer have access to this club
+                    {t('favorites.noAccess', { type: 'club' })}
                   </p>
                 )}
               </div>
@@ -173,7 +176,7 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
 
             {favoriteType === 'team' && (
               <div className="space-y-2">
-                <Label>Select Team</Label>
+                <Label>{t('favorites.selectTeam')}</Label>
                 <TeamSelect
                   value={favoriteTeam}
                   onChange={setFavoriteTeam}
@@ -181,7 +184,7 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
                 />
                 {favoriteTeam && !hasTeamAccess && (
                   <p className="text-sm text-destructive">
-                    Warning: You no longer have access to this team
+                    {t('favorites.noAccess', { type: 'team' })}
                   </p>
                 )}
               </div>
@@ -196,10 +199,10 @@ export function FavoritesSection({ user, onUpdate }: FavoritesSectionProps) {
               {isSaving ? (
                 <>
                   <LoadingSpinner size="sm" className="mr-2" />
-                  Saving...
+                  {tc('status.saving')}
                 </>
               ) : (
-                'Save Favorite'
+                t('favorites.saveFavorite')
               )}
             </Button>
           </div>

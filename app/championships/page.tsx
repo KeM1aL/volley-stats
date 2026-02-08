@@ -9,8 +9,10 @@ import { FilterIcon, Plus } from "lucide-react";
 import { NewChampionshipDialog } from "@/components/championships/new-championship-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent } from "@radix-ui/react-collapsible";
+import { useTranslations } from "next-intl";
 
 export default function ChampionshipsPage() {
+  const t = useTranslations('championships');
   const [newChampionship, setNewChampionship] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -24,9 +26,9 @@ export default function ChampionshipsPage() {
 <div className="space-y-8">
       <div className="space-y-4">
         <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Championships</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">{t('title')}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-            Follow your favorite championships
+            {t('description')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -36,11 +38,11 @@ export default function ChampionshipsPage() {
             className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
             <FilterIcon className="h-4 w-4 mr-1 sm:mr-2" />
-            <span>Filters</span>
+            <span>{t('filters')}</span>
           </Button>
           <Button onClick={() => setNewChampionship(true)} className="flex-1 sm:flex-none text-xs sm:text-sm">
             <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-            <span>New Championship</span>
+            <span>{t('newChampionship')}</span>
           </Button>
         </div>
       </div>

@@ -1,0 +1,30 @@
+{
+  "hero": {
+    "title": "Estatísticas de Voleibol para Iniciantes",
+    "subtitle": "Acompanhe, analise e melhore o desempenho da sua equipa com análises simples",
+    "getStarted": "Começar",
+    "createTeam": "Criar a minha equipa"
+  },
+  "features": {
+    "matchTracking": {
+      "title": "Rastreamento de Jogos",
+      "description": "Estatísticas e pontuação em tempo real",
+      "content": "Acompanhe saques, ataques, bloqueios e muito mais durante os jogos ao vivo com nossa interface intuitiva."
+    },
+    "teamManagement": {
+      "title": "Gestão de Equipas",
+      "description": "Organize jogadores e equipas",
+      "content": "Gerencie múltiplas equipas, escalações de jogadores e acompanhe métricas de desempenho individual."
+    },
+    "analytics": {
+      "title": "Análises Avançadas",
+      "description": "Informações detalhadas de desempenho",
+      "content": "Analise estatísticas de equipas e jogadores com gráficos e relatórios abrangentes."
+    },
+    "collaboration": {
+      "title": "Colaboração",
+      "description": "Partilhe e exporte dados",
+      "content": "Exporte estatísticas para CSV/PDF e partilhe resultados de jogos com membros da equipa."
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "title": "Formati di Partita",
+  "description": "+ Crea nuovo formato di partita...",
+  "selectPlaceholder": "Seleziona formato di partita...",
+  "newFormat": "Nuovo Formato di Partita",
+  "form": {
+    "description": "Descrizione",
+    "descriptionPlaceholder": "es: Standard 6x6 - Miglior di 5",
+    "format": "Formato Pallavolo",
+    "selectFormat": "Seleziona formato",
+    "setsToWin": "Set per Vincere",
+    "pointsPerSet": "Punti per Set",
+    "pointsFinalSet": "Punti nel Set Finale",
+    "enableRotation": "Abilita Rotazione",
+    "enableRotationDesc": "I giocatori ruotano posizione dopo aver vinto il servizio",
+    "decisivePoint": "Punto Decisivo",
+    "decisivePointDesc": "Vinci per 2 punti o gioca fino al punto decisivo",
+    "createMatchFormat": "Crea Formato di Partita",
+    "saving": "Salvataggio...",
+    "creating": "Creazione..."
+  },
+  "dialog": {
+    "newMatchFormat": "Nuovo Formato di Partita"
+  },
+  "validation": {
+    "descriptionRequired": "La descrizione è obbligatoria",
+    "formatRequired": "Selezionare un formato pallavolo"
+  },
+  "toast": {
+    "created": "Formato di partita creato",
+    "createdDesc": "Il formato di partita è stato creato con successo.",
+    "error": "Errore",
+    "createError": "Impossibile creare formato di partita. Riprova."
+  }
+}

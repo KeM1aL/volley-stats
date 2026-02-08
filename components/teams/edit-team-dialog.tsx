@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Team } from "@/lib/types";
 import { TeamForm } from "./team-form";
+import { useTranslations } from "next-intl";
 
 type EditTeamDialogProps = {
   team: Team | null;
@@ -16,11 +17,13 @@ type EditTeamDialogProps = {
 };
 
 export function EditTeamDialog({ team, onClose, onSuccess }: EditTeamDialogProps) {
+  const t = useTranslations('teams');
+
   return (
     <Dialog open={!!team} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Team</DialogTitle>
+          <DialogTitle>{t('details.editTeam')}</DialogTitle>
         </DialogHeader>
         <TeamForm team={team} onClose={onClose} onSuccess={onSuccess} />
       </DialogContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useLocalDatabase } from "@/hooks/use-local-database";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
@@ -18,6 +19,8 @@ export function LocalDatabaseProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const tUi = useTranslations("common.ui");
+  const tErrors = useTranslations("common.errors.database");
   const { user, isLoading: authLoading } = useAuth();
   const database = useLocalDatabase(!!user && !authLoading);
   const router = useRouter();
@@ -94,24 +97,22 @@ export function LocalDatabaseProvider({
     return (
       <div className="flex h-screen items-center justify-center flex-col gap-4 p-8">
         <p className="text-destructive font-semibold">
-          Failed to initialize local database
+          {tErrors("initFailed")}
         </p>
         {isSchemaError && (
           <div className="text-sm text-muted-foreground max-w-md text-center">
             <p>
-              The database schema has been updated and is incompatible with
-              existing data.
+              {tErrors("schemaIncompatible")}
             </p>
             <p className="mt-2">
-              Click below to clear the local database. Your data will be
-              re-synced from the server on next login.
+              {tErrors("resyncInstructions")}
             </p>
           </div>
         )}
         {inDevEnvironment && (
           <pre className="text-xs max-w-2xl overflow-auto">{errorString}</pre>
         )}
-        <Button onClick={clearLocalDatabase}>Clear Local Database</Button>
+        <Button onClick={clearLocalDatabase}>{tUi("clearLocalDatabase")}</Button>
       </div>
     );
   }
@@ -127,6 +128,8 @@ export function LocalDatabaseProvider({
 export function useLocalDb() {
   const context = useContext(LocalDatabaseContext);
   if (!context) {
+    // Development-only error: indicates incorrect hook usage
+    // Not translated as this is a developer-facing error message
     throw new Error("useLocalDb must be used within a DatabaseProvider");
   }
   return context;

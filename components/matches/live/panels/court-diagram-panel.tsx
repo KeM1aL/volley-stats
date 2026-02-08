@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,7 @@ export function CourtDiagramPanel({
   matchFormat,
   team,
 }: CourtDiagramPanelProps) {
+  const t = useTranslations("matches");
   const [netPosition, setNetPosition] = useState<
     NetPosition
   >("top");
@@ -226,7 +228,7 @@ export function CourtDiagramPanel({
       <CardContent className="flex-1 flex flex-col min-h-0 p-2 sm:p-3">
         {!currentSet ? (
           <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-            No active set
+            {t("court.noActiveSet")}
           </div>
         ) : (
           <>
@@ -313,7 +315,7 @@ export function CourtDiagramPanel({
                 className="h-7 sm:h-8 px-2 sm:px-3"
               >
                 <RotateCcw className="h-3 w-3 mr-0.5 sm:mr-1" />
-                <span className="text-[10px] sm:text-xs">Rotate</span>
+                <span className="text-[10px] sm:text-xs">{t("court.rotate")}</span>
               </Button>
               <div className="text-[10px] sm:text-xs text-muted-foreground">
                 Net:{" "}

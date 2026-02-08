@@ -27,6 +27,7 @@ import { useClubApi } from "@/hooks/use-club-api";
 import { useMatchApi } from "@/hooks/use-match-api";
 import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import { Filter as ApiFilter, Sort } from "@/lib/api/types";
+import { useTranslations } from "next-intl";
 
 const lastSeptember = new Date();
 if (lastSeptember.getMonth() < 8) {
@@ -36,6 +37,8 @@ lastSeptember.setMonth(8);
 lastSeptember.setDate(1);
 
 export default function MatchPage() {
+  const t = useTranslations('matches');
+  const tc = useTranslations('common');
   const { toast } = useToast();
   const { user } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
@@ -129,13 +132,12 @@ export default function MatchPage() {
         } catch (error) {
           console.error("Error loading data:", error);
           setError(
-            error instanceof Error ? error : new Error("Failed to load data")
+            error instanceof Error ? error : new Error(tc('errors.failedLoadData'))
           );
           toast({
             variant: "destructive",
-            title: "Error",
-            description:
-              "Failed to load matches. Please try refreshing the page.",
+            title: t('toast.error'),
+            description: t('toast.loadError'),
           });
         } finally {
           setIsLoading(false);
@@ -171,9 +173,9 @@ export default function MatchPage() {
     <div className="space-y-8">
       <div className="space-y-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Matches</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t('title')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            View and analyze match statistics
+            {t('description')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -183,11 +185,11 @@ export default function MatchPage() {
             className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
             <Filter className="h-4 w-4 mr-1 sm:mr-2" />
-            <span>Filters</span>
+            <span>{t('filters')}</span>
           </Button>
           <Button onClick={() => setNewMatchDialogOpen(true)} className="flex-1 sm:flex-none text-xs sm:text-sm">
             <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-            <span>New Match</span>
+            <span>{t('newMatch')}</span>
           </Button>
         </div>
       </div>
@@ -198,7 +200,7 @@ export default function MatchPage() {
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
-                  <Label>Championship</Label>
+                  <Label>{t('filterLabels.championship')}</Label>
                   <ChampionshipSelect
                     value={selectedChampionship}
                     onChange={handleChampionshipChange}
@@ -206,7 +208,7 @@ export default function MatchPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Club</Label>
+                  <Label>{t('filterLabels.club')}</Label>
                   <ClubSelect
                     value={selectedClub}
                     onChange={handleClubChange}
@@ -214,7 +216,7 @@ export default function MatchPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Team</Label>
+                  <Label>{t('filterLabels.team')}</Label>
                   <TeamSelect
                     value={selectedTeam}
                     onChange={handleTeamChange}
@@ -224,7 +226,7 @@ export default function MatchPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Date range</Label>
+                  <Label>{t('filterLabels.dateRange')}</Label>
                   <DatePickerWithRange
                     date={dateRange}
                     onDateChange={setDateRange}
@@ -244,7 +246,7 @@ export default function MatchPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Matches</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <MatchHistoryTable
@@ -266,8 +268,8 @@ export default function MatchPage() {
         onSuccess={(matchId) => {
           handleMatchRefresh();
           toast({
-            title: "Success",
-            description: "Match created successfully",
+            title: t('toast.success'),
+            description: t('toast.matchCreated'),
           });
         }}
       />
