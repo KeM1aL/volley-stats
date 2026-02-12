@@ -28,6 +28,7 @@ import { TeamMember } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { deleteAvatar } from "@/lib/supabase/storage";
+import { useTeamMembersApi } from "@/hooks/use-team-members-api";
 
 type PlayerTableProps = {
   players: TeamMember[];
@@ -36,7 +37,7 @@ type PlayerTableProps = {
 };
 
 export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTableProps) {
-  const { localDb: db } = useLocalDb();
+  const teamMemberApi = useTeamMembersApi();
   const { toast } = useToast();
   const [deletePlayer, setDeletePlayer] = useState<TeamMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,7 +58,7 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
 
       // if (error) throw error;
 
-      await db?.team_members.findOne(deletePlayer.id).remove();
+      await teamMemberApi.deleteTeamMember(deletePlayer.id);
 
       onPlayersChange(players.filter(p => p.id !== deletePlayer.id));
 
