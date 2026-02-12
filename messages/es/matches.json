@@ -48,6 +48,10 @@
     "thirdSet": "Tercer set",
     "fourthSet": "Cuarto set",
     "tieBreak": "Tie-Break",
+    "setupTitle": "Configuración — {name}",
+    "none": "Ninguno",
+    "startSet": "Iniciar Set",
+    "selectPlayer": "Seleccionar jugador",
     "selectServingTeam": "Seleccione el equipo al saque",
     "allPositionsMustBeSpecified": "Todas las posiciones deben ser especificadas",
     "servingTeamMustBeSpecified": "El equipo al saque debe ser especificado",
@@ -81,8 +85,23 @@
     "noEventsOfType": "Sin eventos de {type}",
     "addTimeout": "Añadir Tiempo Muerto",
     "addSubstitution": "Añadir Sustitución",
+    "addInjury": "Añadir Lesión",
+    "addSanction": "Añadir Sanción",
+    "addTechnical": "Añadir Problema Técnico",
     "addComment": "Añadir Comentario",
     "addEvent": "Añadir Evento",
+    "types": {
+      "substitution": "Sustitución",
+      "timeout": "Tiempo muerto",
+      "injury": "Lesión",
+      "sanction": "Sanción/Tarjeta",
+      "technical": "Problema técnico",
+      "comment": "Comentario/Nota"
+    },
+    "requestedBy": "Solicitado por",
+    "unknownPlayer": "Jugador desconocido",
+    "resolved": "Resuelto",
+    "ongoing": "En curso",
     "timeoutType": "Tipo de Tiempo Muerto",
     "selectTimeoutType": "Seleccione el tipo",
     "regular": "Regular",
@@ -136,7 +155,9 @@
       "onlyPlayersInLineup": "Solo los jugadores actualmente en cancha pueden ser sustituidos",
       "onlyPlayersNotInLineup": "Solo los jugadores no en la alineación pueden entrar",
       "noBenchPlayers": "No hay jugadores en el banco",
-      "noPlayersInLineup": "No hay jugadores en la alineación"
+      "noPlayersInLineup": "No hay jugadores en la alineación",
+      "createEvent": "Crear Evento",
+      "comments": "Comentarios"
     },
     "enums": {
       "timeoutType": {
@@ -176,7 +197,9 @@
     "home": "Local",
     "away": "Visitante",
     "serving": "Al saque",
-    "setNumber": "Set {number}"
+    "setNumber": "Set {number}",
+    "homeTeam": "Equipo Local",
+    "awayTeam": "Equipo Visitante"
   },
   "live": {
     "title": "Partido en vivo",
@@ -227,7 +250,12 @@
     "scoringTeam": "Equipo Anotador",
     "noPointsRecorded": "Ningún punto registrado aún",
     "noPointsForTeam": "Ningún punto encontrado para este equipo",
-    "needInternetForStats": "Necesita conexión a Internet para ver estadísticas detalladas"
+    "needInternetForStats": "Necesita conexión a Internet para ver estadísticas detalladas",
+    "error": "Error",
+    "point": "Punto",
+    "undo": "Deshacer",
+    "cancelLastAction": "Cancelar última acción",
+    "pointsHistory": "Historial de Puntos"
   },
   "stats": {
     "title": "Estadísticas del Partido",
@@ -236,7 +264,7 @@
     "setBreakdown": "Desglose de Sets",
     "playerPerformance": "Análisis de Desempeño del Jugador",
     "teamPerformance": "Desempeño del Equipo",
-    "eventShort": "Sub",
+    "eventShort": "Sus.",
     "overview": "Resumen",
     "scores": "Puntuaciones",
     "sets": "Sets",
@@ -251,6 +279,36 @@
     "setLabel": "Set",
     "breakdown": "Desglose",
     "serves": "Saques",
+    "spikes": "Remates",
+    "blocks": "Bloqueos",
+    "score": "Marcador",
+    "duration": "Duración",
+    "minutes": "minutos",
+    "pointsPlayed": "Puntos Jugados",
+    "opponentErrors": "Errores del Rival",
+    "opponentPoint": "Punto Rival",
+    "opponentPoints": "Puntos Rivales",
+    "scoringMethodsDesc": "Desglose de métodos de puntuación en cada set",
+    "allSetsOverviewTitle": "Resumen de todos los sets",
+    "totalSets": "Sets Totales",
+    "totalPoints": "Puntos Totales",
+    "spike": "Remate",
+    "serve": "Saque",
+    "block": "Bloqueo",
+    "reception": "Recepción",
+    "defense": "Defensa",
+    "receptions": "Recepciones",
+    "defenses": "Defensas",
+    "attacks": "Remates",
+    "performanceRadar": "Radar de Rendimiento",
+    "noStatsRecorded": "Sin estadísticas registradas",
+    "playerPerformancePanel": "Rendimiento de Jugadores",
+    "statResults": {
+      "success": "Éxito",
+      "error": "Error",
+      "good": "Bien",
+      "bad": "Malo"
+    },
     "selectPlayer": "Seleccione un jugador",
     "pointsScored": "Puntos Anotados",
     "pointsConceded": "Puntos Concedidos",
@@ -306,7 +364,15 @@
   "court": {
     "noActiveSet": "Sin set activo",
     "rotate": "Girar",
-    "rotateCourt": "Girar Cancha"
+    "rotateCourt": "Girar Cancha",
+    "courtPosition": "Posición en la Cancha",
+    "net": "Red",
+    "netPositions": {
+      "top": "arriba",
+      "right": "derecha",
+      "left": "izquierda",
+      "bottom": "abajo"
+    }
   },
   "pdf": {
     "steps": {
@@ -337,14 +403,20 @@
     "avgPoints": "Puntos Promedio",
     "pointsPerMatch": "Puntos por partido",
     "history": "Historial",
-    "recentPerformance": "Desempeño reciente"
+    "recentPerformance": "Desempeño reciente",
+    "winStats": "{wins} victorias de {totalMatches} partidos",
+    "totalPointsDesc": "{total} puntos en total",
+    "totalPointsShort": "{total} pts",
+    "last5": "Últimos 5"
   },
   "table": {
     "date": "Fecha",
     "teams": "Equipos",
     "score": "Puntuación",
     "status": "Estado",
-    "actions": "Acciones"
+    "actions": "Acciones",
+    "unknown": "Desconocido",
+    "vs": "vs"
   },
   "errors": {
     "loadError": "Error al cargar los partidos. Intente actualizar la página.",

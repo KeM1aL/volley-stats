@@ -150,6 +150,7 @@ export function CourtDiagram({
             >
               <Button
                 variant="ghost"
+                data-testid={`court-position-${pos}`}
                 className={`flex items-center justify-center w-full h-full rounded-full bg-background ${
                   selectedPosition === pos
                     ? "border-4 border-indigo-500/100"

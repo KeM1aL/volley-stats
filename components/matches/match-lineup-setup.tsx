@@ -46,8 +46,10 @@ export function MatchLineupSetup({ match, players, availablePlayers, setAvailabl
           {[...players].sort(sortPlayers).map((player) => (
             <Toggle
               key={player.id}
+              data-testid="lineup-player-toggle"
+              data-player-name={player.name}
               variant="outline"
-              aria-label={t("ui.togglePlayerAvailability")}
+              aria-label={t("players.togglePlayerAvailability")}
               className="gap-4"
               onClick={() => togglePlayerAvailability(player)}
             >

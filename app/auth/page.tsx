@@ -10,16 +10,15 @@ import { useTranslations } from "next-intl";
 export default function AuthPage() {
   const { user } = useAuth();
   const t = useTranslations('auth');
-  
-  if (user) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const redirectTo = searchParams.get("redirectTo");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo");
 
-    useEffect(() => {
+  useEffect(() => {
+    if (user) {
       router.replace(redirectTo || "/");
-    }, [router, redirectTo]);
-  }
+    }
+  }, [user, router, redirectTo]);
 
   return (
     <div className="container max-w-md mx-auto mt-8 sm:mt-12 md:mt-20 px-4">

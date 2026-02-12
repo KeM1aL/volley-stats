@@ -282,7 +282,7 @@ const PlayerPerformance = React.forwardRef<
     );
     return [
       {
-        subject: "Attacks",
+        subject: t("stats.attacks"),
         A:
           (playerStats[StatType.SPIKE][StatResult.SUCCESS] /
             (playerStats[StatType.SPIKE]["all"] || 1)) *
@@ -290,7 +290,7 @@ const PlayerPerformance = React.forwardRef<
         fullMark: 100,
       },
       {
-        subject: "Serves",
+        subject: t("stats.serves"),
         A:
           (playerStats[StatType.SERVE][StatResult.SUCCESS] /
             (playerStats[StatType.SERVE]["all"] || 1)) *
@@ -298,7 +298,7 @@ const PlayerPerformance = React.forwardRef<
         fullMark: 100,
       },
       {
-        subject: "Blocks",
+        subject: t("stats.blocks"),
         A:
           (playerStats[StatType.BLOCK][StatResult.SUCCESS] /
             (playerStats[StatType.BLOCK]["all"] || 1)) *
@@ -306,7 +306,7 @@ const PlayerPerformance = React.forwardRef<
         fullMark: 10,
       },
       {
-        subject: "Reception",
+        subject: t("stats.reception"),
         A:
           (playerStats[StatType.RECEPTION][StatResult.SUCCESS] /
             (playerStats[StatType.RECEPTION]["all"] || 1)) *
@@ -314,7 +314,7 @@ const PlayerPerformance = React.forwardRef<
         fullMark: 100,
       },
       {
-        subject: "Defense",
+        subject: t("stats.defense"),
         A:
           (playerStats[StatType.DEFENSE][StatResult.SUCCESS] /
             (playerStats[StatType.DEFENSE]["all"] || 1)) *
@@ -322,6 +322,14 @@ const PlayerPerformance = React.forwardRef<
         fullMark: 100,
       },
     ];
+  };
+
+  const statTypeLabel: Record<StatType, string> = {
+    [StatType.SPIKE]: t("stats.spike"),
+    [StatType.SERVE]: t("stats.serve"),
+    [StatType.BLOCK]: t("stats.block"),
+    [StatType.RECEPTION]: t("stats.reception"),
+    [StatType.DEFENSE]: t("stats.defense"),
   };
 
   return (
@@ -385,27 +393,27 @@ const PlayerPerformance = React.forwardRef<
                           <Bar
                             dataKey="attacks"
                             fill="hsl(var(--chart-1))"
-                            name="Attacks"
+                            name={t("stats.attacks")}
                           />
                           <Bar
                             dataKey="serves"
                             fill="hsl(var(--chart-2))"
-                            name="Serves"
+                            name={t("stats.serves")}
                           />
                           <Bar
                             dataKey="blocks"
                             fill="hsl(var(--chart-3))"
-                            name="Blocks"
+                            name={t("stats.blocks")}
                           />
                           <Bar
                             dataKey="receptions"
                             fill="hsl(var(--chart-4))"
-                            name="Receptions"
+                            name={t("stats.receptions")}
                           />
                           <Bar
                             dataKey="defenses"
                             fill="hsl(var(--chart-5))"
-                            name="Defenses"
+                            name={t("stats.defenses")}
                           />
                         </BarChart>
                       </ResponsiveContainer>
@@ -417,7 +425,7 @@ const PlayerPerformance = React.forwardRef<
                   {players.map((player) => (
                     <Card key={player.id}>
                       <CardHeader>
-                        <CardTitle>{player.name} Performance Radar</CardTitle>
+                        <CardTitle>{player.name} {t("stats.performanceRadar")}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className={isPdfGenerating ? "h-[200px]" : "h-[300px]"}>
@@ -451,9 +459,9 @@ const PlayerPerformance = React.forwardRef<
                       <TableHead>{tStats("playerPerformance.tableHeaders.player")}</TableHead>
                       {Object.values(StatType).map((type) => (
                         <TableHead key={type}>
-                          {type.substring(0, 1).toUpperCase() + type.slice(1)} (
+                          {statTypeLabel[type]} (
                           <span className={variants[StatResult.SUCCESS]}>
-                            P
+                            {tStats("abbreviations.success")}
                           </span>
                           /<span className={variants[StatResult.GOOD]}>{tStats("abbreviations.good")}</span>/
                           <span className={variants[StatResult.BAD]}>{tStats("abbreviations.bad")}</span>/
@@ -542,7 +550,7 @@ const PlayerPerformance = React.forwardRef<
                     <TableRow>
                       <TableHead></TableHead>
                       <TableHead colSpan={8} className="text-center border-r-2">
-                        Spikes
+                        {t("stats.spikes")}
                       </TableHead>
                     </TableRow>
                     <TableRow>
@@ -551,7 +559,7 @@ const PlayerPerformance = React.forwardRef<
                         <TableHead key={`${position}-spike`}>
                           {position.toUpperCase()}(
                           <span className={variants[StatResult.SUCCESS]}>
-                            P
+                            {tStats("abbreviations.success")}
                           </span>
                           /<span className={variants[StatResult.GOOD]}>{tStats("abbreviations.good")}</span>/
                           <span className={variants[StatResult.BAD]}>{tStats("abbreviations.bad")}</span>/
@@ -640,7 +648,7 @@ const PlayerPerformance = React.forwardRef<
                     <TableRow>
                       <TableHead></TableHead>
                       <TableHead colSpan={8} className="text-center">
-                        Receptions
+                        {t("stats.receptions")}
                       </TableHead>
                     </TableRow>
                     <TableRow>
@@ -649,7 +657,7 @@ const PlayerPerformance = React.forwardRef<
                         <TableHead key={`${position}-reception`}>
                           {position.toUpperCase()}(
                           <span className={variants[StatResult.SUCCESS]}>
-                            P
+                            {tStats("abbreviations.success")}
                           </span>
                           /<span className={variants[StatResult.GOOD]}>{tStats("abbreviations.good")}</span>/
                           <span className={variants[StatResult.BAD]}>{tStats("abbreviations.bad")}</span>/

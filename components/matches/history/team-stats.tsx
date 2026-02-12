@@ -75,7 +75,7 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
             {winRate.toFixed(1)}%
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-            {wins} wins out of {totalMatches} matches
+            {t("history.winStats", { wins, totalMatches })}
           </p>
           <p className="text-xs text-muted-foreground sm:hidden">
             {wins}/{totalMatches}
@@ -93,10 +93,10 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
             {averagePoints.toFixed(1)}
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-            {totalPoints} total points
+            {t("history.totalPointsDesc", { total: totalPoints })}
           </p>
           <p className="text-xs text-muted-foreground sm:hidden">
-            {totalPoints} pts
+            {t("history.totalPointsShort", { total: totalPoints })}
           </p>
         </CardContent>
       </Card>
@@ -125,7 +125,7 @@ export function TeamStats({ teamId, matches }: TeamStatsProps) {
             })}
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
-            Last 5
+            {t("history.last5")}
           </p>
         </CardContent>
       </Card>

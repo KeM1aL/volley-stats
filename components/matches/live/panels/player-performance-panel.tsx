@@ -188,10 +188,10 @@ export function PlayerPerformancePanel({
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
         <CardTitle className="text-xs sm:text-sm font-medium">
-          Player Performance
+          {t("stats.playerPerformancePanel")}
           {currentSet && (
             <Badge variant="outline" className="ml-1 sm:ml-2 text-[10px] sm:text-xs">
-              Set {currentSet.set_number}
+              {t("scoreboard.setNumber", { number: currentSet.set_number })}
             </Badge>
           )}
         </CardTitle>
@@ -201,7 +201,7 @@ export function PlayerPerformancePanel({
           <div className="space-y-2 sm:space-y-3 pb-4">
             {playerStats.length === 0 ? (
               <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">
-                No stats recorded yet
+                {t("stats.noStatsRecorded")}
               </p>
             ) : (
               playerStats.map((player) => (
@@ -246,7 +246,7 @@ export function PlayerPerformancePanel({
                     {player.serve.total > 0 && (
                       <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground font-medium">
-                          Serve
+                          {t("stats.serve")}
                         </span>
                         <div className="flex gap-1">
                           <span className="text-green-600">
@@ -267,7 +267,7 @@ export function PlayerPerformancePanel({
                     {player.spike.total > 0 && (
                       <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground font-medium">
-                          Spike
+                          {t("stats.spike")}
                         </span>
                         <div className="flex gap-1">
                           <span className="text-green-600">
@@ -288,7 +288,7 @@ export function PlayerPerformancePanel({
                     {player.block.total > 0 && (
                       <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground font-medium">
-                          Block
+                          {t("stats.block")}
                         </span>
                         <div className="flex gap-1">
                           <span className="text-green-600">
@@ -309,7 +309,7 @@ export function PlayerPerformancePanel({
                     {player.reception.total > 0 && (
                       <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground font-medium">
-                          Reception
+                          {t("stats.reception")}
                         </span>
                         <div className="flex gap-1">
                           <span className="text-green-600">
@@ -330,7 +330,7 @@ export function PlayerPerformancePanel({
                     {player.defense.total > 0 && (
                       <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground font-medium">
-                          Defense
+                          {t("stats.defense")}
                         </span>
                         <div className="flex gap-1">
                           <span className="text-green-600">

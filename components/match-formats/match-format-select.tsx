@@ -80,7 +80,7 @@ export function MatchFormatSelect({
   isClearable = false,
   disabled = false,
 }: MatchFormatSelectProps) {
-  const t = useTranslations("match-formats");
+  const t = useTranslations("matchFormats");
   const matchFormatApi = useMatchFormatApi();
   const [dialogOpen, setDialogOpen] = useState(false);
 

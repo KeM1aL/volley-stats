@@ -111,6 +111,7 @@ export function LiveMatchSidebar({
         {menuItems.map((item) => (
           <Button
             key={item.id}
+            data-testid={`sidebar-btn-${item.id}`}
             variant={item.isActive ? "default" : "ghost"}
             size="icon"
             onClick={item.onClick}
@@ -134,6 +135,7 @@ export function LiveMatchSidebar({
         {menuItems.map((item) => (
           <Button
             key={item.id}
+            data-testid={`sidebar-btn-${item.id}`}
             variant={item.isActive ? "default" : "ghost"}
             size="icon"
             onClick={item.onClick}
@@ -168,7 +170,7 @@ export function LiveMatchSidebar({
               <ChevronRight className="h-4 w-4" />
             )}
             <span className="sr-only">
-              {navExpanded ? "Collapse" : "Expand"} navigation
+              {navExpanded ? t("collapse") : t("expand")} {t("navigation")}
             </span>
           </Button>
         </div>
@@ -179,6 +181,7 @@ export function LiveMatchSidebar({
         {menuItems.map((item) => (
           <Button
             key={item.id}
+            data-testid={`sidebar-btn-${item.id}`}
             variant={item.isActive ? "secondary" : "ghost"}
             onClick={item.onClick}
             className={cn(

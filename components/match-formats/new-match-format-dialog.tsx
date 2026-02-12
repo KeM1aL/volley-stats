@@ -21,7 +21,7 @@ export function NewMatchFormatDialog({
   onOpenChange,
   onSuccess,
 }: NewMatchFormatDialogProps) {
-  const t = useTranslations("match-formats");
+  const t = useTranslations("matchFormats");
 
   const handleSuccess = (matchFormat: MatchFormat) => {
     onOpenChange(false);

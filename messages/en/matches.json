@@ -48,6 +48,10 @@
     "thirdSet": "Third Set",
     "fourthSet": "Fourth Set",
     "tieBreak": "Tie-Break",
+    "setupTitle": "{name} Setup",
+    "none": "None",
+    "startSet": "Start Set",
+    "selectPlayer": "Select player",
     "selectServingTeam": "Select serving team",
     "allPositionsMustBeSpecified": "All positions must be specified",
     "servingTeamMustBeSpecified": "Serving team must be specified",
@@ -81,8 +85,23 @@
     "noEventsOfType": "No {type} events",
     "addTimeout": "Add Timeout",
     "addSubstitution": "Add Substitution",
+    "addInjury": "Add Injury",
+    "addSanction": "Add Sanction",
+    "addTechnical": "Add Technical Issue",
     "addComment": "Add Comment",
     "addEvent": "Add Event",
+    "types": {
+      "substitution": "Substitution",
+      "timeout": "Timeout",
+      "injury": "Injury",
+      "sanction": "Sanction/Card",
+      "technical": "Technical Issue",
+      "comment": "Comment/Note"
+    },
+    "requestedBy": "Requested by",
+    "unknownPlayer": "Unknown player",
+    "resolved": "Resolved",
+    "ongoing": "Ongoing",
     "timeoutType": "Timeout Type",
     "selectTimeoutType": "Select type",
     "regular": "Regular",
@@ -136,7 +155,9 @@
       "onlyPlayersInLineup": "Only players currently on the court can be substituted out",
       "onlyPlayersNotInLineup": "Only players not currently in the lineup can enter",
       "noBenchPlayers": "No bench players available",
-      "noPlayersInLineup": "No players in lineup"
+      "noPlayersInLineup": "No players in lineup",
+      "createEvent": "Create Event",
+      "comments": "Comments"
     },
     "enums": {
       "timeoutType": {
@@ -176,7 +197,9 @@
     "home": "Home",
     "away": "Away",
     "serving": "Serving",
-    "setNumber": "Set {number}"
+    "setNumber": "Set {number}",
+    "homeTeam": "Home Team",
+    "awayTeam": "Away Team"
   },
   "live": {
     "title": "Live Match",
@@ -227,12 +250,16 @@
     "scoringTeam": "Scoring Team",
     "noPointsRecorded": "No points recorded yet",
     "noPointsForTeam": "No points found for this team",
-    "needInternetForStats": "You need an internet connection to view detailed stats"
+    "needInternetForStats": "You need an internet connection to view detailed stats",
+    "error": "Error",
+    "point": "Point",
+    "undo": "Undo",
+    "cancelLastAction": "Cancel Last Action",
+    "pointsHistory": "Points History"
   },
   "stats": {
     "title": "Match Statistics",
     "matchOverview": "Match Overview",
-    "scoreProgression": "Score Progression",
     "setBreakdown": "Set Breakdown",
     "playerPerformance": "Player Performance Analysis",
     "teamPerformance": "Team Performance",
@@ -251,6 +278,36 @@
     "setLabel": "Set",
     "breakdown": "Breakdown",
     "serves": "Serves",
+    "spikes": "Spikes",
+    "blocks": "Blocks",
+    "score": "Score",
+    "duration": "Duration",
+    "minutes": "minutes",
+    "pointsPlayed": "Points Played",
+    "opponentErrors": "Opponent Errors",
+    "opponentPoint": "Opponent Point",
+    "opponentPoints": "Opponent Points",
+    "scoringMethodsDesc": "Breakdown of scoring methods in each set",
+    "allSetsOverviewTitle": "All Sets Overview",
+    "totalSets": "Total Sets",
+    "totalPoints": "Total Points",
+    "spike": "Spike",
+    "serve": "Serve",
+    "block": "Block",
+    "reception": "Reception",
+    "defense": "Defense",
+    "receptions": "Receptions",
+    "defenses": "Defenses",
+    "attacks": "Attacks",
+    "performanceRadar": "Performance Radar",
+    "noStatsRecorded": "No stats recorded yet",
+    "playerPerformancePanel": "Player Performance",
+    "statResults": {
+      "success": "Success",
+      "error": "Error",
+      "good": "Good",
+      "bad": "Bad"
+    },
     "selectPlayer": "Select player",
     "pointsScored": "Points Scored",
     "pointsConceded": "Points Conceded",
@@ -306,7 +363,15 @@
   "court": {
     "noActiveSet": "No active set",
     "rotate": "Rotate",
-    "rotateCourt": "Rotate Court"
+    "rotateCourt": "Rotate Court",
+    "courtPosition": "Court Position",
+    "net": "Net",
+    "netPositions": {
+      "top": "top",
+      "right": "right",
+      "left": "left",
+      "bottom": "bottom"
+    }
   },
   "pdf": {
     "steps": {
@@ -337,14 +402,20 @@
     "avgPoints": "Avg Points",
     "pointsPerMatch": "Points per match",
     "history": "History",
-    "recentPerformance": "Recent performance"
+    "recentPerformance": "Recent performance",
+    "winStats": "{wins} wins out of {totalMatches} matches",
+    "totalPointsDesc": "{total} total points",
+    "totalPointsShort": "{total} pts",
+    "last5": "Last 5"
   },
   "table": {
     "date": "Date",
     "teams": "Teams",
     "score": "Score",
     "status": "Status",
-    "actions": "Actions"
+    "actions": "Actions",
+    "unknown": "Unknown",
+    "vs": "vs"
   },
   "errors": {
     "loadError": "Failed to load matches. Please try refreshing the page.",

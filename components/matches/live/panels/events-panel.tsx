@@ -94,6 +94,7 @@ export function EventsPanel({
   onSubstitutionRecorded,
 }: EventsPanelProps) {
   const t = useTranslations("matches");
+  const tc = useTranslations("common");
   const { localDb: db } = useLocalDb();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
@@ -142,7 +143,7 @@ export function EventsPanel({
 
   const getPlayerName = (playerId: string): string => {
     const player = playerById.get(playerId);
-    return player ? `#${player.number} ${player.name}` : "Unknown Player";
+    return player ? `#${player.number} ${player.name}` : t("events.unknownPlayer");
   };
 
   const renderEventDetails = (event: Event) => {
@@ -174,7 +175,7 @@ export function EventsPanel({
         <div className="text-xs text-muted-foreground">
           <div>{t("live.timeout")}: {details.duration}s</div>
           {details.timeout_type && <div>{t("events.timeoutType")}: {details.timeout_type}</div>}
-          {details.requested_by && <div>Requested by: {details.requested_by}</div>}
+          {details.requested_by && <div>{t("events.requestedBy")}: {details.requested_by}</div>}
         </div>
       );
     }
@@ -183,8 +184,8 @@ export function EventsPanel({
       const details = event.details as InjuryDetails;
       return (
         <div className="text-xs text-muted-foreground space-y-1">
-          <div>{t("events.injuredPlayer")}: {event.player_id ? getPlayerName(event.player_id) : "Unknown"}</div>
-          <div>{t("events.severity")}: <Badge variant="outline" className="text-xs">{details.severity}</Badge></div>
+          <div>{t("events.injuredPlayer")}: {event.player_id ? getPlayerName(event.player_id) : t("events.unknownPlayer")}</div>
+          <div>{t("events.severity")}: <Badge variant="outline" className="text-xs">{t(`events.enums.severity.${details.severity}` as "events.enums.severity.minor")}</Badge></div>
           <div>{details.description}</div>
           {details.medical_intervention && <div className="text-red-600">{t("events.medicalInterventionRequired")}</div>}
         </div>
@@ -195,9 +196,9 @@ export function EventsPanel({
       const details = event.details as SanctionDetails;
       return (
         <div className="text-xs text-muted-foreground space-y-1">
-          <div>{t("events.sanction")}: <Badge variant="destructive" className="text-xs">{details.sanction_type.replace("_", " ")}</Badge></div>
-          <div>{t("events.selectSanctionType")}: {details.target} {details.target_name && `(${details.target_name})`}</div>
-          <div>{t("events.reasonRequired")}: {details.reason}</div>
+          <div>{t("events.form.sanctionType")}: <Badge variant="destructive" className="text-xs">{details.sanction_type.replace("_", " ")}</Badge></div>
+          <div>{t("events.form.target")}: {details.target} {details.target_name && `(${details.target_name})`}</div>
+          <div>{t("events.form.reason")}: {details.reason}</div>
           {details.point_penalty && <div className="text-red-600">{t("events.severity")}</div>}
         </div>
       );
@@ -207,10 +208,10 @@ export function EventsPanel({
       const details = event.details as TechnicalDetails;
       return (
         <div className="text-xs text-muted-foreground space-y-1">
-          <div>{t("events.selectIssueType")}: {details.issue_type.replace("_", " ")}</div>
+          <div>{t("events.form.issueType")}: {details.issue_type.replace("_", " ")}</div>
           <div>{details.description}</div>
           <div>{t("events.severity")}: <Badge variant={details.resolved ? "default" : "outline"} className="text-xs">
-            {details.resolved ? "Resolved" : "Ongoing"}
+            {details.resolved ? t("events.resolved") : t("events.ongoing")}
           </Badge></div>
         </div>
       );
@@ -232,7 +233,7 @@ export function EventsPanel({
               }
               className="text-xs"
             >
-              {details.importance}
+              {t(`events.enums.eventImportance.${details.importance}` as "events.enums.eventImportance.low")}
             </Badge>
           )}
           {details.author && <div className="text-xs italic">- {details.author}</div>}
@@ -273,42 +274,44 @@ export function EventsPanel({
   return (
     <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-2 sm:pb-3 space-y-2 sm:space-y-3 flex-shrink-0 overflow-visible p-3 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Events {currentSet && (
-                      <Badge variant="outline" className="ml-1 sm:ml-2 text-[10px] sm:text-xs">
-                        Set {currentSet.set_number}
-                      </Badge>
-                    )}</CardTitle>
-          <div className="flex gap-1 sm:gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuickEvent("substitution")}
-              className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
-            >
-              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-              <span className="hidden xs:inline">{t("live.substitution")}</span>
-              <span className="xs:hidden">{t("stats.eventShort")}</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuickEvent("timeout")}
-              className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
-            >
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-              {t("live.timeout")}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
-            >
-              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-              Add
-            </Button>
-          </div>
+        {/* Row 1: title + generic Add button */}
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-xs sm:text-sm font-medium">{t("live.events")} {currentSet && (
+            <Badge variant="outline" className="ml-1 sm:ml-2 text-[10px] sm:text-xs">
+              {t("scoreboard.setNumber", { number: currentSet.set_number })}
+            </Badge>
+          )}</CardTitle>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs shrink-0"
+          >
+            <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
+            {t("events.addEvent")}
+          </Button>
+        </div>
+
+        {/* Row 2: quick action buttons */}
+        <div className="flex gap-1 sm:gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleQuickEvent("substitution")}
+            className="flex-1 h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
+          >
+            <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            {t("live.substitution")}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleQuickEvent("timeout")}
+            className="flex-1 h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
+          >
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            {t("live.timeout")}
+          </Button>
         </div>
 
         {/* Event Dialog */}
@@ -316,10 +319,14 @@ export function EventsPanel({
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {selectedQuickEventType
-                  ? `Add ${EVENT_TYPE_LABELS[selectedQuickEventType]}`
-                  : "Create Event"
-                }
+                {selectedQuickEventType ? ({
+                  substitution: t("events.addSubstitution"),
+                  timeout: t("events.addTimeout"),
+                  injury: t("events.addInjury"),
+                  sanction: t("events.addSanction"),
+                  technical: t("events.addTechnical"),
+                  comment: t("events.addComment"),
+                } as Record<EventType, string>)[selectedQuickEventType] : t("events.createEvent")}
               </DialogTitle>
             </DialogHeader>
             <EventForm
@@ -353,9 +360,9 @@ export function EventsPanel({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("events.allEvents")}</SelectItem>
-              {Object.entries(EVENT_TYPE_LABELS).map(([key, label]) => (
+              {(Object.keys(EVENT_TYPE_LABELS) as EventType[]).map((key) => (
                 <SelectItem key={key} value={key}>
-                  {label}
+                  {t(`events.types.${key}` as "events.types.substitution")}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -367,7 +374,7 @@ export function EventsPanel({
         <div className="flex-1 overflow-y-auto px-2 sm:px-4">
           <div className="space-y-1.5 sm:space-y-2 pb-4 pt-2">
             {isLoading ? (
-              <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">{t("events.selectSanctionType")}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">{tc("status.loading")}</p>
             ) : filteredEvents.length === 0 ? (
               <p className="text-xs sm:text-sm text-muted-foreground text-center py-6 sm:py-8">
                 {selectedFilter === "all" ? t("events.noEventsRecorded") : t("events.noEventsOfType", { type: selectedFilter })}
@@ -389,7 +396,7 @@ export function EventsPanel({
                         <Icon className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-xs sm:text-sm truncate">
-                            {EVENT_TYPE_LABELS[event.event_type]}
+                            {t(`events.types.${event.event_type}` as "events.types.substitution")}
                           </div>
                           <div className="text-[10px] sm:text-xs text-muted-foreground">
                             {format(new Date(event.timestamp), "HH:mm:ss")}

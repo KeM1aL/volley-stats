@@ -1,4 +1,9 @@
 {
+  "common": {
+    "app": {
+      "title": "VolleyStats for Dummies"
+    }
+  },
   "menu": {
     "championships": "Championships",
     "matches": "Matches",

@@ -12,7 +12,16 @@
       "Bash(git diff:*)",
       "Bash(done)",
       "Bash(dir:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(pnpm install:*)",
+      "Skill(playwright-cli)",
+      "Skill(playwright-cli:*)",
+      "Bash(playwright-cli open:*)",
+      "Bash(playwright-cli run-code:*)",
+      "Bash(playwright-cli screenshot:*)",
+      "Bash(playwright-cli goto:*)",
+      "Bash(playwright-cli:*)",
+      "Bash(pnpm test:e2e:*)"
     ]
   }
 }

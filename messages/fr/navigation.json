@@ -1,4 +1,9 @@
 {
+  "common": {
+    "app": {
+      "title": "VolleyStats pour Débutants"
+    }
+  },
   "menu": {
     "championships": "Championnats",
     "matches": "Matchs",

@@ -48,7 +48,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
         // Don't add page here - the orchestrator handles page management
         currentYOffset = margin;
         doc.setFontSize(16);
-        doc.text(`${tabTitle} - All Sets Overview`, margin, currentYOffset);
+        doc.text(`${tabTitle} - ${t("stats.allSetsOverviewTitle")}`, margin, currentYOffset);
         currentYOffset += 30;
 
         await new Promise((resolve) => setTimeout(resolve, 300));
@@ -99,7 +99,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
       const setPoints = currentPoints.filter((p) => p.set_id === set.id);
 
       return {
-        set: `Set ${set.set_number}`,
+        set: t("scoreboard.setNumber", { number: set.set_number }),
         homeScore: set.home_score,
         awayScore: set.away_score,
         points: {
@@ -151,22 +151,23 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
           {currentSets.map((set) => (
             <Card key={set.id} className="basis-1/3">
               <CardHeader>
-                <CardTitle>Set {set.set_number}</CardTitle>
+                <CardTitle>{t("scoreboard.setNumber", { number: set.set_number })}</CardTitle>
                 <CardDescription>
-                  Score: {set.home_score} - {set.away_score}
+                  {t("stats.score")}: {set.home_score} - {set.away_score}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <p>
-                    Duration:{" "}
-                    {Math.round(set.home_score + set.away_score * 0.75)} minutes
+                    {t("stats.duration")}:{" "}
+                    {Math.round(set.home_score + set.away_score * 0.75)}{" "}
+                    {t("stats.minutes")}
                   </p>
-                  <p>Points Played: {set.home_score + set.away_score}</p>
+                  <p>{t("stats.pointsPlayed")}: {set.home_score + set.away_score}</p>
                   <p>{t("stats.pointDistribution")}:</p>
                   <div className="pl-4 space-y-1 text-sm">
                     <p>
-                      Serves:{" "}
+                      {t("stats.serves")}:{" "}
                       {
                         currentPoints.filter(
                           (p) =>
@@ -177,7 +178,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                       }
                     </p>
                     <p>
-                      Spikes:{" "}
+                      {t("stats.spikes")}:{" "}
                       {
                         currentPoints.filter(
                           (p) =>
@@ -188,7 +189,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                       }
                     </p>
                     <p>
-                      Blocks:{" "}
+                      {t("stats.blocks")}:{" "}
                       {
                         currentPoints.filter(
                           (p) =>
@@ -199,7 +200,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                       }
                     </p>
                     <p>
-                      Opponent Errors:{" "}
+                      {t("stats.opponentErrors")}:{" "}
                       {
                         currentPoints.filter(
                           (p) =>
@@ -213,7 +214,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                   <p>{t("stats.errorDistribution")}:</p>
                   <div className="pl-4 space-y-1 text-sm">
                     <p>
-                      Serves:{" "}
+                      {t("stats.serves")}:{" "}
                       {
                         currentPoints.filter(
                           (p) =>
@@ -224,7 +225,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                       }
                     </p>
                     <p>
-                      Spikes:{" "}
+                      {t("stats.spikes")}:{" "}
                       {
                         currentPoints.filter(
                           (p) =>
@@ -235,7 +236,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                       }
                     </p>
                     <p>
-                      Blocks:{" "}
+                      {t("stats.blocks")}:{" "}
                       {
                         currentPoints.filter(
                           (p) =>
@@ -246,7 +247,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                       }
                     </p>
                     <p>
-                      Opponent Point:{" "}
+                      {t("stats.opponentPoint")}:{" "}
                       {
                         currentPoints.filter(
                           (p) =>
@@ -267,7 +268,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
           <CardHeader>
             <CardTitle>{t("stats.pointDistributionBySet")}</CardTitle>
             <CardDescription>
-              Breakdown of scoring methods in each set
+              {t("stats.scoringMethodsDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
@@ -282,25 +283,25 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                   dataKey="points.serves"
                   stackId="home"
                   fill="hsl(var(--chart-1))"
-                  name="Serves"
+                  name={t("stats.serves")}
                 />
                 <Bar
                   dataKey="points.spikes"
                   stackId="home"
                   fill="hsl(var(--chart-2))"
-                  name="Spikes"
+                  name={t("stats.spikes")}
                 />
                 <Bar
                   dataKey="points.blocks"
                   stackId="home"
                   fill="hsl(var(--chart-3))"
-                  name="Blocks"
+                  name={t("stats.blocks")}
                 />
                 <Bar
                   dataKey="points.errors"
                   stackId="home"
                   fill="hsl(var(--chart-4))"
-                  name="Opponent Errors"
+                  name={t("stats.opponentErrors")}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -310,7 +311,7 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
           <CardHeader>
             <CardTitle>{t("stats.errorDistributionBySet")}</CardTitle>
             <CardDescription>
-              Breakdown of scoring methods in each set
+              {t("stats.scoringMethodsDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
@@ -325,25 +326,25 @@ const SetBreakdown = React.forwardRef<PdfExportHandle, SetBreakdownProps>(
                   dataKey="errors.serves"
                   stackId="home"
                   fill="hsl(var(--chart-1))"
-                  name="Serves"
+                  name={t("stats.serves")}
                 />
                 <Bar
                   dataKey="errors.spikes"
                   stackId="home"
                   fill="hsl(var(--chart-2))"
-                  name="Spikes"
+                  name={t("stats.spikes")}
                 />
                 <Bar
                   dataKey="errors.blocks"
                   stackId="home"
                   fill="hsl(var(--chart-3))"
-                  name="Blocks"
+                  name={t("stats.blocks")}
                 />
                 <Bar
                   dataKey="errors.points"
                   stackId="home"
                   fill="hsl(var(--chart-4))"
-                  name="Opponent Points"
+                  name={t("stats.opponentPoints")}
                 />
               </BarChart>
             </ResponsiveContainer>

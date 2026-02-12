@@ -39,6 +39,7 @@ type PlayerTableProps = {
 export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTableProps) {
   const t = useTranslations('players');
   const tc = useTranslations('common');
+  const te = useTranslations("enums");
   const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const [deletePlayer, setDeletePlayer] = useState<TeamMember | null>(null);
@@ -110,8 +111,8 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
               </TableCell>
               <TableCell>{player.number}</TableCell>
               <TableCell className="font-medium">{player.name}</TableCell>
-              <TableCell>{player.position}</TableCell>
-              <TableCell className="capitalize">{player.role}</TableCell>
+              <TableCell>{te(`playerRole.${player.position}`)}</TableCell>
+              <TableCell className="capitalize">{te(`teamMemberRole.${player.role}`)}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button

@@ -45,6 +45,7 @@ export function MatchHistoryTable({
   isLoading,
 }: MatchHistoryTableProps) {
   const t = useTranslations("matches");
+  const te = useTranslations("enums");
   const { user } = useAuth();
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -170,7 +171,7 @@ export function MatchHistoryTable({
                 {new Date(match.date).toLocaleDateString()}
               </span>
               <span className="text-sm capitalize px-2 py-0.5 bg-muted rounded">
-                {match.status}
+                {te(`matchStatus.${match.status}`)}
               </span>
             </div>
             <div className="space-y-1">
@@ -241,14 +242,14 @@ export function MatchHistoryTable({
               <TableRow key={match.id}>
                 <TableCell className="whitespace-nowrap">{new Date(match.date).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  {match.home_team?.name || "Unknown"} vs{" "}
-                  {match.away_team?.name || "Unknown"}
+                  {match.home_team?.name || t("table.unknown")} {t("table.vs")}{" "}
+                  {match.away_team?.name || t("table.unknown")}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   {match.home_score} - {match.away_score}
                 </TableCell>
                 <TableCell>
-                  <span className="capitalize">{match.status}</span>
+                  <span className="capitalize">{te(`matchStatus.${match.status}`)}</span>
                 </TableCell>
                 {user && isMemberOfTeamOrClub(match) && (
                   <TableCell>

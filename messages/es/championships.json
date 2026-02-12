@@ -119,7 +119,7 @@
     "success": "Éxito",
     "matchesRefreshedSuccess": "Los partidos han sido actualizados con éxito."
   },
-  "typeOptions": {
+  "types": {
     "regional": "Regional",
     "national": "Nacional",
     "international": "Internacional",

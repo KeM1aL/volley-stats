@@ -119,7 +119,7 @@
     "success": "Sucesso",
     "matchesRefreshedSuccess": "Os jogos foram recarregados com sucesso."
   },
-  "typeOptions": {
+  "types": {
     "regional": "Regional",
     "national": "Nacional",
     "international": "Internacional",

@@ -48,6 +48,10 @@
     "thirdSet": "Troisième set",
     "fourthSet": "Quatrième set",
     "tieBreak": "Tie-Break",
+    "setupTitle": "Configuration — {name}",
+    "none": "Aucun",
+    "startSet": "Démarrer le Set",
+    "selectPlayer": "Sélectionner un joueur",
     "selectServingTeam": "Sélectionnez l'équipe au service",
     "allPositionsMustBeSpecified": "Toutes les positions doivent être spécifiées",
     "servingTeamMustBeSpecified": "L'équipe au service doit être spécifiée",
@@ -81,8 +85,23 @@
     "noEventsOfType": "Aucun événement {type}",
     "addTimeout": "Ajouter Temps d'Arrêt",
     "addSubstitution": "Ajouter Changement",
+    "addInjury": "Ajouter Blessure",
+    "addSanction": "Ajouter Sanction",
+    "addTechnical": "Ajouter Problème Technique",
     "addComment": "Ajouter Commentaire",
     "addEvent": "Ajouter Événement",
+    "types": {
+      "substitution": "Substitution",
+      "timeout": "Temps mort",
+      "injury": "Blessure",
+      "sanction": "Sanction/Carton",
+      "technical": "Problème technique",
+      "comment": "Commentaire/Note"
+    },
+    "requestedBy": "Demandé par",
+    "unknownPlayer": "Joueur inconnu",
+    "resolved": "Résolu",
+    "ongoing": "En cours",
     "timeoutType": "Type de Temps d'Arrêt",
     "selectTimeoutType": "Sélectionnez le type",
     "regular": "Régulier",
@@ -134,9 +153,11 @@
       "importance": "Importance",
       "selectImportance": "Sélectionnez l'importance",
       "onlyPlayersInLineup": "Seuls les joueurs actuellement sur le terrain peuvent être remplacés",
-      "onlyPlayersNotInLineup": "Seuls les joueurs ne faisant pas partie de la feuille de match peuvent entrer",
+      "onlyPlayersNotInLineup": "Seuls les joueurs faisant partie de la feuille de match peuvent entrer",
       "noBenchPlayers": "Aucun joueur sur le banc",
-      "noPlayersInLineup": "Aucun joueur dans la feuille de match"
+      "noPlayersInLineup": "Aucun joueur dans la feuille de match",
+      "createEvent": "Créer Événement",
+      "comments": "Commentaires"
     },
     "enums": {
       "timeoutType": {
@@ -176,7 +197,9 @@
     "home": "Domicile",
     "away": "Extérieur",
     "serving": "Au service",
-    "setNumber": "Set {number}"
+    "setNumber": "Set {number}",
+    "homeTeam": "Équipe Domicile",
+    "awayTeam": "Équipe Extérieure"
   },
   "live": {
     "title": "Match en direct",
@@ -227,7 +250,12 @@
     "scoringTeam": "Équipe Marquante",
     "noPointsRecorded": "Aucun point enregistré pour le moment",
     "noPointsForTeam": "Aucun point trouvé pour cette équipe",
-    "needInternetForStats": "Vous avez besoin d'une connexion Internet pour voir les statistiques détaillées"
+    "needInternetForStats": "Vous avez besoin d'une connexion Internet pour voir les statistiques détaillées",
+    "error": "Erreur",
+    "point": "Point",
+    "undo": "Annuler",
+    "cancelLastAction": "Annuler la dernière action",
+    "pointsHistory": "Historique des Points"
   },
   "stats": {
     "title": "Statistiques du match",
@@ -236,7 +264,7 @@
     "setBreakdown": "Analyse des Sets",
     "playerPerformance": "Analyse des Performances du Joueur",
     "teamPerformance": "Performance de l'Équipe",
-    "eventShort": "Sub",
+    "eventShort": "Rem.",
     "overview": "Aperçu",
     "scores": "Scores",
     "sets": "Sets",
@@ -251,6 +279,36 @@
     "setLabel": "Set",
     "breakdown": "Analyse",
     "serves": "Services",
+    "spikes": "Attaques",
+    "blocks": "Contres",
+    "score": "Score",
+    "duration": "Durée",
+    "minutes": "minutes",
+    "pointsPlayed": "Points Joués",
+    "opponentErrors": "Erreurs Adverses",
+    "opponentPoint": "Point Adverse",
+    "opponentPoints": "Points Adverses",
+    "scoringMethodsDesc": "Répartition des méthodes de marquage par set",
+    "allSetsOverviewTitle": "Vue d'ensemble de tous les sets",
+    "totalSets": "Sets Totaux",
+    "totalPoints": "Points Totaux",
+    "spike": "Attaque",
+    "serve": "Service",
+    "block": "Contre",
+    "reception": "Réception",
+    "defense": "Défense",
+    "receptions": "Réceptions",
+    "defenses": "Défenses",
+    "attacks": "Attaques",
+    "performanceRadar": "Radar de Performance",
+    "noStatsRecorded": "Aucune statistique enregistrée",
+    "playerPerformancePanel": "Performance des Joueurs",
+    "statResults": {
+      "success": "Succès",
+      "error": "Erreur",
+      "good": "Bien",
+      "bad": "Mauvais"
+    },
     "selectPlayer": "Sélectionnez un joueur",
     "pointsScored": "Points Marqués",
     "pointsConceded": "Points Concédés",
@@ -306,7 +364,15 @@
   "court": {
     "noActiveSet": "Aucun set actif",
     "rotate": "Tourner",
-    "rotateCourt": "Tourner le terrain"
+    "rotateCourt": "Tourner le terrain",
+    "courtPosition": "Position sur le Terrain",
+    "net": "Filet",
+    "netPositions": {
+      "top": "haut",
+      "right": "droite",
+      "left": "gauche",
+      "bottom": "bas"
+    }
   },
   "pdf": {
     "steps": {
@@ -337,14 +403,20 @@
     "avgPoints": "Points Moyens",
     "pointsPerMatch": "Points par match",
     "history": "Historique",
-    "recentPerformance": "Performance récente"
+    "recentPerformance": "Performance récente",
+    "winStats": "{wins} victoires sur {totalMatches} matchs",
+    "totalPointsDesc": "{total} points au total",
+    "totalPointsShort": "{total} pts",
+    "last5": "5 derniers"
   },
   "table": {
     "date": "Date",
     "teams": "Équipes",
     "score": "Score",
     "status": "Statut",
-    "actions": "Actions"
+    "actions": "Actions",
+    "unknown": "Inconnu",
+    "vs": "vs"
   },
   "errors": {
     "loadError": "Échec du chargement des matchs. Veuillez rafraîchir la page.",

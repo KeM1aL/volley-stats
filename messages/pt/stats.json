@@ -1,5 +1,6 @@
 {
   "abbreviations": {
+    "success": "P",
     "good": "B",
     "bad": "M",
     "error": "E"
@@ -22,7 +23,10 @@
     "stats": "Estatísticas",
     "events": "Eventos",
     "points": "Pontos",
-    "court": "Campo"
+    "court": "Campo",
+    "collapse": "Recolher",
+    "expand": "Expandir",
+    "navigation": "navegação"
   },
   "live": {
     "errorMinus": "Erro -1",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -49,85 +49,87 @@ const baseEventSchema = z.object({
   ]),
 });
 
-// Substitution schema
-const substitutionSchema = baseEventSchema.extend({
-  event_type: z.literal("substitution"),
-  player_in_id: z.string().min(1, "Player in is required"),
-  player_out_id: z.string().min(1, "Player out is required"),
-  position: z.string().optional(),
-  comments: z.string().optional(),
-});
+type EventFormValues = z.infer<ReturnType<typeof createEventFormSchema>>;
 
-// Timeout schema
-const timeoutSchema = baseEventSchema.extend({
-  event_type: z.literal("timeout"),
-  duration: z.number().min(1).max(120),
-  timeout_type: z.enum(["regular", "technical"]).optional(),
-  requested_by: z.string().optional(),
-  comments: z.string().optional(),
-});
+function createEventFormSchema(msgs: {
+  playerInRequired: string;
+  playerOutRequired: string;
+  playerRequired: string;
+  descriptionRequired: string;
+  reasonRequired: string;
+  commentTextRequired: string;
+}) {
+  const substitutionSchema = baseEventSchema.extend({
+    event_type: z.literal("substitution"),
+    player_in_id: z.string().min(1, msgs.playerInRequired),
+    player_out_id: z.string().min(1, msgs.playerOutRequired),
+    position: z.string().optional(),
+    comments: z.string().optional(),
+  });
 
-// Injury schema
-const injurySchema = baseEventSchema.extend({
-  event_type: z.literal("injury"),
-  player_id: z.string().min(1, "Player is required"),
-  severity: z.enum(["minor", "moderate", "severe"]),
-  body_part: z.string().optional(),
-  description: z.string().min(1, "Description is required"),
-  medical_intervention: z.boolean(),
-  player_continued: z.boolean(),
-  substitution_made: z.boolean(),
-  comments: z.string().optional(),
-});
+  const timeoutSchema = baseEventSchema.extend({
+    event_type: z.literal("timeout"),
+    duration: z.number().min(1).max(120),
+    timeout_type: z.enum(["regular", "technical"]).optional(),
+    requested_by: z.string().optional(),
+    comments: z.string().optional(),
+  });
 
-// Sanction schema
-const sanctionSchema = baseEventSchema.extend({
-  event_type: z.literal("sanction"),
-  sanction_type: z.enum([
-    "warning",
-    "yellow_card",
-    "red_card",
-    "disqualification",
-  ]),
-  target: z.enum(["player", "coach", "staff"]),
-  target_id: z.string().optional(),
-  target_name: z.string().optional(),
-  reason: z.string().min(1, "Reason is required"),
-  point_penalty: z.boolean(),
-  comments: z.string().optional(),
-});
+  const injurySchema = baseEventSchema.extend({
+    event_type: z.literal("injury"),
+    player_id: z.string().min(1, msgs.playerRequired),
+    severity: z.enum(["minor", "moderate", "severe"]),
+    body_part: z.string().optional(),
+    description: z.string().min(1, msgs.descriptionRequired),
+    medical_intervention: z.boolean(),
+    player_continued: z.boolean(),
+    substitution_made: z.boolean(),
+    comments: z.string().optional(),
+  });
 
-// Technical issue schema
-const technicalSchema = baseEventSchema.extend({
-  event_type: z.literal("technical"),
-  issue_type: z.enum(["equipment", "facility", "score_dispute", "other"]),
-  description: z.string().min(1, "Description is required"),
-  affected_team: z.enum(["home", "away"]).optional(),
-  resolution_time: z.number().optional(),
-  resolved: z.boolean(),
-  comments: z.string().optional(),
-});
+  const sanctionSchema = baseEventSchema.extend({
+    event_type: z.literal("sanction"),
+    sanction_type: z.enum([
+      "warning",
+      "yellow_card",
+      "red_card",
+      "disqualification",
+    ]),
+    target: z.enum(["player", "coach", "staff"]),
+    target_id: z.string().optional(),
+    target_name: z.string().optional(),
+    reason: z.string().min(1, msgs.reasonRequired),
+    point_penalty: z.boolean(),
+    comments: z.string().optional(),
+  });
 
-// Comment schema
-const commentSchema = baseEventSchema.extend({
-  event_type: z.literal("comment"),
-  text: z.string().min(1, "Comment text is required"),
-  author: z.string().optional(),
-  importance: z.enum(["low", "medium", "high"]).optional(),
-  category: z.string().optional(),
-});
+  const technicalSchema = baseEventSchema.extend({
+    event_type: z.literal("technical"),
+    issue_type: z.enum(["equipment", "facility", "score_dispute", "other"]),
+    description: z.string().min(1, msgs.descriptionRequired),
+    affected_team: z.enum(["home", "away"]).optional(),
+    resolution_time: z.number().optional(),
+    resolved: z.boolean(),
+    comments: z.string().optional(),
+  });
 
-// Union schema
-const eventFormSchema = z.discriminatedUnion("event_type", [
-  substitutionSchema,
-  timeoutSchema,
-  injurySchema,
-  sanctionSchema,
-  technicalSchema,
-  commentSchema,
-]);
+  const commentSchema = baseEventSchema.extend({
+    event_type: z.literal("comment"),
+    text: z.string().min(1, msgs.commentTextRequired),
+    author: z.string().optional(),
+    importance: z.enum(["low", "medium", "high"]).optional(),
+    category: z.string().optional(),
+  });
 
-type EventFormValues = z.infer<typeof eventFormSchema>;
+  return z.discriminatedUnion("event_type", [
+    substitutionSchema,
+    timeoutSchema,
+    injurySchema,
+    sanctionSchema,
+    technicalSchema,
+    commentSchema,
+  ]);
+}
 
 interface EventFormProps {
   matchId: string;
@@ -163,13 +165,23 @@ export function EventForm({
   onCancel,
 }: EventFormProps) {
   const t = useTranslations("matches");
+  const tc = useTranslations("common");
   const { toast } = useToast();
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(
     preSelectedType || null
   );
 
+  const schema = useMemo(() => createEventFormSchema({
+    playerInRequired: t("events.playerInRequired"),
+    playerOutRequired: t("events.playerOutRequired"),
+    playerRequired: t("events.playerRequired"),
+    descriptionRequired: t("events.descriptionRequired"),
+    reasonRequired: t("events.reasonRequired"),
+    commentTextRequired: t("events.commentTextRequired"),
+  }), [t]);
+
   const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       event_type: preSelectedType || "",
       // Timeout defaults
@@ -223,7 +235,7 @@ export function EventForm({
     try {
       // Handle substitution via SubstitutionCommand
       if (values.event_type === "substitution") {
-        const substitutionValues = values as z.infer<typeof substitutionSchema>;
+        const substitutionValues = values as Extract<EventFormValues, { event_type: "substitution" }>;
 
         if (!setId) {
           toast({
@@ -272,7 +284,7 @@ export function EventForm({
       // Extract player_id for events that have it
       let player_id: string | null = null;
       if (values.event_type === "injury") {
-        player_id = (values as z.infer<typeof injurySchema>).player_id;
+        player_id = (values as Extract<EventFormValues, { event_type: "injury" }>).player_id;
       }
 
       const event = {
@@ -782,7 +794,7 @@ export function EventForm({
         <div className="flex justify-end gap-2 pt-4">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
-              {t("common.actions.cancel")}
+              {tc("actions.cancel")}
             </Button>
           )}
           <Button type="submit">{t("events.form.createEvent")}</Button>

@@ -93,13 +93,13 @@ export function MatchScoreDetails({
       <div className="text-primary">
         <div className="grid grid-cols-8 gap-1 sm:gap-4">
           {/* Team 1 Row */}
-          <div className="col-span-2 bg-primary/10 p-1 sm:p-2 rounded-lg flex items-center justify-center text-sm sm:text-xl font-bold truncate">
+          <div className="col-span-2 bg-primary/10 p-1 sm:p-2 rounded-lg flex items-center justify-center text-sm sm:text-md font-bold truncate">
             {homeTeam.name}
           </div>
           {sets.map((set, index) => (
             <div
               key={`home-${index}`}
-              className="col-span-1 bg-primary/10 rounded-lg flex items-center justify-center text-base sm:text-xl font-bold p-1 sm:p-2"
+              className="col-span-1 bg-primary/10 rounded-lg flex items-center justify-center text-base sm:text-md font-bold p-1 sm:p-2"
             >
               {set.home_score}
             </div>
@@ -108,12 +108,12 @@ export function MatchScoreDetails({
             new Array(maxSets - sets.length).fill(0).map((_, index) => (
               <div
                 key={`home-filler-${index}`}
-                className="col-span-1 bg-primary/10 rounded-lg flex items-center justify-center text-base sm:text-xl font-bold p-1 sm:p-2"
+                className="col-span-1 bg-primary/10 rounded-lg flex items-center justify-center text-base sm:text-md font-bold p-1 sm:p-2"
               >
                 -
               </div>
             ))}
-          <div className="col-span-1 bg-secondary rounded-lg flex items-center justify-center text-base sm:text-xl font-bold text-secondary-foreground p-1 sm:p-2">
+          <div className="col-span-1 bg-secondary rounded-lg flex items-center justify-center text-base sm:text-md font-bold text-secondary-foreground p-1 sm:p-2">
             {match.home_score}
           </div>
         </div>
@@ -135,13 +135,13 @@ export function MatchScoreDetails({
 
         {/* Team 2 Row */}
         <div className="grid grid-cols-8 gap-1 sm:gap-4">
-          <div className="col-span-2 bg-primary/10 p-1 sm:p-2 rounded-lg flex items-center justify-center text-sm sm:text-xl font-bold truncate">
+          <div className="col-span-2 bg-primary/10 p-1 sm:p-2 rounded-lg flex items-center justify-center text-sm sm:text-md font-bold truncate">
             {awayTeam.name}
           </div>
           {sets.map((set, index) => (
             <div
               key={`away-${index}`}
-              className="col-span-1 bg-primary/10 rounded-lg flex items-center justify-center text-base sm:text-xl font-bold p-1 sm:p-2"
+              className="col-span-1 bg-primary/10 rounded-lg flex items-center justify-center text-base sm:text-md font-bold p-1 sm:p-2"
             >
               {set.away_score}
             </div>
@@ -150,12 +150,12 @@ export function MatchScoreDetails({
             new Array(maxSets - sets.length).fill(0).map((_, index) => (
               <div
                 key={`away-filler-${index}`}
-                className="col-span-1 bg-primary/10 rounded-lg flex items-center justify-center text-base sm:text-xl font-bold p-1 sm:p-2"
+                className="col-span-1 bg-primary/10 rounded-lg flex items-center justify-center text-base sm:text-md font-bold p-1 sm:p-2"
               >
                 -
               </div>
             ))}
-          <div className="col-span-1 bg-secondary rounded-lg flex items-center justify-center text-base sm:text-xl font-bold text-secondary-foreground p-1 sm:p-2">
+          <div className="col-span-1 bg-secondary rounded-lg flex items-center justify-center text-base sm:text-md font-bold text-secondary-foreground p-1 sm:p-2">
             {match.away_score}
           </div>
         </div>

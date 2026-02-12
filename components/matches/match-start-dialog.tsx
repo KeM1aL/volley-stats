@@ -145,6 +145,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
+          data-testid="start-match-trigger"
           variant="ghost"
           size="sm"
           title={t("dialog.startMatch")}
@@ -175,6 +176,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
         </div>
         <DialogFooter>
           <Button
+            data-testid="start-match-confirm"
             onClick={onSetupComplete}
             className="w-full"
             disabled={isLoading}

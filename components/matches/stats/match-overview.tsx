@@ -112,9 +112,9 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <p>Total Sets: {sets.length}</p>
-                <p>Total Points: {points.length}</p>
-                <p>Duration: {sets.length * 25} minutes</p>
+                <p>{t("stats.totalSets")}: {sets.length}</p>
+                <p>{t("stats.totalPoints")}: {points.length}</p>
+                <p>{t("stats.duration")}: {sets.length * 25} {t("stats.minutes")}</p>
               </div>
             </CardContent>
           </Card>

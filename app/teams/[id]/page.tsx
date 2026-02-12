@@ -28,6 +28,7 @@ import { useTranslations } from "next-intl";
 
 export default function TeamDetailsPage() {
   const t = useTranslations('teams');
+  const te = useTranslations("enums");
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -385,9 +386,9 @@ export default function TeamDetailsPage() {
                   <TableRow key={member.id}>
                     <TableCell className="font-bold">{member.number}</TableCell>
                     <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>{member.position || "-"}</TableCell>
+                    <TableCell>{member.position ? te(`playerRole.${member.position}`) : "-"}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{member.role}</Badge>
+                      <Badge variant="outline">{te(`teamMemberRole.${member.role}`)}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -34,6 +34,7 @@ export function ChampionshipTeamsList({
   championshipId,
 }: ChampionshipTeamsListProps) {
   const t = useTranslations("championships");
+  const tc = useTranslations("common");
   const [showTeams, setShowTeams] = useState(false);
   const { user } = useAuth();
 
@@ -117,7 +118,7 @@ export function ChampionshipTeamsList({
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/teams/${team.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
-                            {t("common.actions.view")}
+                            {tc("actions.view")}
                           </Link>
                         </Button>
                         {canManage(team) && (

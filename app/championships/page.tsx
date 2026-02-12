@@ -38,7 +38,7 @@ export default function ChampionshipsPage() {
             className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
             <FilterIcon className="h-4 w-4 mr-1 sm:mr-2" />
-            <span>{t('filters')}</span>
+            <span>{t('filters.title')}</span>
           </Button>
           <Button onClick={() => setNewChampionship(true)} className="flex-1 sm:flex-none text-xs sm:text-sm">
             <Plus className="h-4 w-4 mr-1 sm:mr-2" />

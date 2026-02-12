@@ -219,7 +219,7 @@ export function CourtDiagramPanel({
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="p-2 sm:p-3 text-center">
-          <CardTitle className="text-xs sm:text-sm font-medium">Court Position {currentSet && (
+          <CardTitle className="text-xs sm:text-sm font-medium">{t("court.courtPosition")} {currentSet && (
           <span className="text-[10px] sm:text-xs text-muted-foreground ml-1">
             {team.name}
           </span>
@@ -318,9 +318,9 @@ export function CourtDiagramPanel({
                 <span className="text-[10px] sm:text-xs">{t("court.rotate")}</span>
               </Button>
               <div className="text-[10px] sm:text-xs text-muted-foreground">
-                Net:{" "}
+                {t("court.net")}:{" "}
                 <Badge variant="secondary" className="text-[10px] sm:text-xs">
-                  {netPosition}
+                  {t(`court.netPositions.${netPosition}` as "court.netPositions.top")}
                 </Badge>
               </div>
             </div>

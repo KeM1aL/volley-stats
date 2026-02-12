@@ -56,8 +56,9 @@ type MatchFormatFormProps = {
 };
 
 export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
-  const t = useTranslations("match-formats");
+  const t = useTranslations("matchFormats");
   const te = useTranslations("enums");
+  const tc = useTranslations("commons");
   const { toast } = useToast();
   const matchFormatApi = useMatchFormatApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -268,7 +269,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
               onClick={onCancel}
               disabled={isSubmitting}
             >
-              {t("common.actions.cancel")}
+              {tc("actions.cancel")}
             </Button>
           )}
           <Button type="submit" disabled={isSubmitting}>
