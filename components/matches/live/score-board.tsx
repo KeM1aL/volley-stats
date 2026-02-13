@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import {
   Match,
@@ -39,6 +40,7 @@ export function ScoreBoard({
   points,
   onSubstitution,
 }: ScoreBoardProps) {
+  const t = useTranslations("matches");
   const { toast } = useToast();
 
   return (
@@ -59,27 +61,27 @@ export function ScoreBoard({
           <CardContent className="p-2">
             <div className="flex justify-between">
               <div className="flex flex-col items-center space-y-2">
-                <h2 className="text-2xl font-bold">Home</h2>
+                <h2 className="text-2xl font-bold">{t("scoreboard.home")}</h2>
                 <div className="text-4xl font-bold">{set.home_score}</div>
                 {set.server_team_id === match.home_team_id && (
                   <Badge variant="secondary" className="mt-2">
-                    Serving
+                    {t("scoreboard.serving")}
                   </Badge>
                 )}
               </div>
               <div className="text-6xl font-bold mx-4">-</div>
               <div className="flex flex-col items-center space-y-2">
-                <h2 className="text-2xl font-bold">Ext.</h2>
+                <h2 className="text-2xl font-bold">{t("scoreboard.away")}</h2>
                 <div className="text-4xl font-bold">{set.away_score}</div>
                 {set.server_team_id === match.away_team_id && (
                   <Badge variant="secondary" className="mt-2">
-                    Serving
+                    {t("scoreboard.serving")}
                   </Badge>
                 )}
               </div>
             </div>
             <div className="text-sm text-center text-muted-foreground">
-              Set {set.set_number}
+              {t("live.set", { number: set.set_number })}
             </div>
           </CardContent>
         </Card>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { Match, TeamMember, Team } from "@/lib/types";
 import { MatchLineupSetup } from "@/components/matches/match-lineup-setup";
 import {
@@ -29,6 +30,7 @@ type MatchStartDialogProps = {
 };
 
 export default function MatchStartDialog({ match }: MatchStartDialogProps) {
+  const t = useTranslations("matches");
   const { user } = useAuth(); // Use the auth context
   const teamMemberApi = useTeamMembersApi();
   const matchApi = useMatchApi();
@@ -67,8 +69,8 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
       console.error("Failed to load players:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to load players",
+        title: t("dialog.failedLoadPlayers"),
+        description: t("dialog.failedLoadPlayers"),
       });
     } finally {
       setIsLoadingPlayers(false);
@@ -99,8 +101,8 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
       console.error("Failed to start match:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to start match",
+        title: t("toast.error"),
+        description: t("toast.error"),
       });
     } finally {
       setIsLoading(false);
@@ -127,9 +129,8 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
       } else if (userManagedTeams.length === 0) {
         toast({
           variant: "destructive",
-          title: "Permission Denied",
-          description:
-            "You do not have permission to manage either team in this match.",
+          title: t("dialog.permissionDenied"),
+          description: t("dialog.noPermissionMessage"),
         });
         setIsDialogOpen(false);
       } else {
@@ -144,9 +145,10 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
+          data-testid="start-match-trigger"
           variant="ghost"
           size="sm"
-          title="Start Match"
+          title={t("dialog.startMatch")}
           disabled={isLoading || userManagedTeams.length === 0}
         >
           <Volleyball className="h-4 w-4" />
@@ -154,7 +156,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>Match Setup</DialogTitle>
+          <DialogTitle>{t("dialog.startMatch")}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <MatchManagedTeamSetup
@@ -174,11 +176,12 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
         </div>
         <DialogFooter>
           <Button
+            data-testid="start-match-confirm"
             onClick={onSetupComplete}
             className="w-full"
             disabled={isLoading}
           >
-            Start Match
+            {t("dialog.startMatch")}
           </Button>
         </DialogFooter>
       </DialogContent>

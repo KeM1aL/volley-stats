@@ -24,33 +24,35 @@ import {
   calculatePasswordStrength,
 } from "@/components/auth/password-strength-indicator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-const formSchema = z
-  .object({
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  })
-  .refine(
-    (data) => {
-      const { strength } = calculatePasswordStrength(data.password);
-      return strength !== "weak";
-    },
-    {
-      message: "Password is too weak. Use a stronger password.",
-      path: ["password"],
-    }
-  );
+import { useTranslations } from "next-intl";
 
 export default function ResetPasswordPage() {
+  const t = useTranslations('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
   const router = useRouter();
   const { toast } = useToast();
+
+  const formSchema = z
+    .object({
+      password: z.string().min(6, t('validation.passwordMinLength')),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('validation.passwordsMustMatch'),
+      path: ["confirmPassword"],
+    })
+    .refine(
+      (data) => {
+        const { strength } = calculatePasswordStrength(data.password);
+        return strength !== "weak";
+      },
+      {
+        message: t('resetPassword.passwordWeak'),
+        path: ["password"],
+      }
+    );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,12 +71,12 @@ export default function ResetPasswordPage() {
       if (!session) {
         toast({
           variant: "destructive",
-          title: "Invalid or expired link",
-          description: "Please request a new password reset link.",
+          title: t('resetPassword.invalidOrExpiredLink'),
+          description: t('resetPassword.requestNewResetLink'),
         });
       }
     });
-  }, [toast]);
+  }, [toast, t]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -87,8 +89,8 @@ export default function ResetPasswordPage() {
 
       setIsSuccess(true);
       toast({
-        title: "Password updated",
-        description: "Your password has been successfully reset.",
+        title: t('resetPassword.passwordUpdated'),
+        description: t('resetPassword.passwordUpdatedDesc'),
       });
 
       // Redirect to login after 2 seconds
@@ -99,9 +101,9 @@ export default function ResetPasswordPage() {
       console.error("Failed to reset password:", error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t('toast.error'),
         description:
-          error instanceof Error ? error.message : "Failed to reset password",
+          error instanceof Error ? error.message : t('resetPassword.failedReset'),
       });
     } finally {
       setIsLoading(false);
@@ -127,15 +129,15 @@ export default function ResetPasswordPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-destructive" />
-              <CardTitle>Reset Link Expired</CardTitle>
+              <CardTitle>{t('resetPassword.linkExpired')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              This password reset link has expired or is invalid.
+              {t('resetPassword.linkExpiredDesc')}
             </p>
             <Button onClick={() => router.push("/auth")} className="w-full">
-              Request New Reset Link
+              {t('resetPassword.requestNewLink')}
             </Button>
           </CardContent>
         </Card>
@@ -150,12 +152,12 @@ export default function ResetPasswordPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <CardTitle>Password Reset Successful</CardTitle>
+              <CardTitle>{t('resetPassword.success')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Redirecting you to the login page...
+              {t('resetPassword.successDesc')}
             </p>
           </CardContent>
         </Card>
@@ -167,9 +169,9 @@ export default function ResetPasswordPage() {
     <div className="container max-w-md mx-auto mt-20">
       <Card>
         <CardHeader>
-          <CardTitle>Reset Your Password</CardTitle>
+          <CardTitle>{t('resetPassword.title')}</CardTitle>
           <CardDescription>
-            Enter a new password for your account
+            {t('resetPassword.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -180,7 +182,7 @@ export default function ResetPasswordPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New Password</FormLabel>
+                    <FormLabel>{t('resetPassword.newPassword')}</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
@@ -194,7 +196,7 @@ export default function ResetPasswordPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel>{t('resetPassword.confirmPassword')}</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
@@ -204,7 +206,7 @@ export default function ResetPasswordPage() {
               />
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Reset Password
+                {t('resetPassword.resetPassword')}
               </Button>
             </form>
           </Form>

@@ -19,12 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
-import Link from "next/link";
-
-const formSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().optional(),
-});
+import { useTranslations } from "next-intl";
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +29,12 @@ export function AuthForm() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { setSession } = useAuth();
+  const t = useTranslations('auth');
+
+  const formSchema = z.object({
+    email: z.string().email(t('validation.invalidEmail')),
+    password: z.string().optional(),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,8 +66,8 @@ export function AuthForm() {
 
         console.log("Reset email sent successfully");
         toast({
-          title: "Reset email sent",
-          description: "Check your email for a password reset link.",
+          title: t('toast.resetEmailSent'),
+          description: t('toast.checkEmailForReset'),
         });
         setIsForgotPassword(false);
         form.reset();
@@ -77,8 +78,8 @@ export function AuthForm() {
       if (!values.password || values.password.length < 6) {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Password must be at least 6 characters",
+          title: t('toast.error'),
+          description: t('validation.passwordMinLength'),
         });
         setIsLoading(false);
         return;
@@ -110,8 +111,8 @@ export function AuthForm() {
       console.error("Failed to sign in:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        title: t('toast.error'),
+        description: error instanceof Error ? error.message : t('toast.genericError'),
       });
     } finally {
       setIsLoading(false);
@@ -126,9 +127,9 @@ export function AuthForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t('email')}</FormLabel>
               <FormControl>
-                <Input placeholder="email@example.com" autoComplete="email" {...field} />
+                <Input placeholder={t('emailPlaceholder')} autoComplete="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -140,7 +141,7 @@ export function AuthForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>{t('password')}</FormLabel>
                 <FormControl>
                   <Input type="password" autoComplete={isSignUp ? "new-password" : "current-password"} {...field} />
                 </FormControl>
@@ -158,14 +159,14 @@ export function AuthForm() {
               onClick={() => setIsForgotPassword(true)}
               disabled={isLoading}
             >
-              Forgot password?
+              {t('forgotPassword')}
             </Button>
           </div>
         )}
         <div className="flex flex-col gap-2">
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isForgotPassword ? "Send Reset Link" : isSignUp ? "Sign Up" : "Sign In"}
+            {isForgotPassword ? t('sendResetLink') : isSignUp ? t('signUp') : t('signIn')}
           </Button>
           {isForgotPassword ? (
             <Button
@@ -174,7 +175,7 @@ export function AuthForm() {
               onClick={() => setIsForgotPassword(false)}
               disabled={isLoading}
             >
-              Back to sign in
+              {t('backToSignIn')}
             </Button>
           ) : (
             <Button
@@ -183,7 +184,7 @@ export function AuthForm() {
               onClick={() => setIsSignUp(!isSignUp)}
               disabled={isLoading}
             >
-              {isSignUp ? "Already have an account?" : "Need an account?"}
+              {isSignUp ? t('alreadyHaveAccount') : t('needAccount')}
             </Button>
           )}
         </div>

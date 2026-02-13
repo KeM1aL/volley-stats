@@ -1,0 +1,136 @@
+{
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "close": "Fermer",
+    "add": "Ajouter",
+    "remove": "Retirer",
+    "update": "Mettre à jour",
+    "view": "Voir",
+    "download": "Télécharger",
+    "upload": "Importer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "reset": "Réinitialiser",
+    "apply": "Appliquer",
+    "clear": "Effacer",
+    "select": "Sélectionner",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "finish": "Terminer",
+    "skip": "Passer",
+    "goToSettings": "Aller aux Paramètres",
+    "resetToDefaults": "Réinitialiser les Valeurs par Défaut",
+    "saveChanges": "Enregistrer les Modifications"
+  },
+  "status": {
+    "loading": "Chargement...",
+    "success": "Succès",
+    "error": "Erreur",
+    "warning": "Attention",
+    "info": "Info",
+    "saving": "Enregistrement...",
+    "deleting": "Suppression...",
+    "updating": "Mise à jour...",
+    "processing": "Traitement...",
+    "creating": "Création..."
+  },
+  "toast": {
+    "saveSuccess": "Modifications enregistrées avec succès",
+    "saveError": "Échec de l'enregistrement des modifications",
+    "deleteSuccess": "{item} supprimé avec succès",
+    "deleteError": "Échec de la suppression de {item}",
+    "updateSuccess": "{item} mis à jour avec succès",
+    "updateError": "Échec de la mise à jour de {item}",
+    "createSuccess": "{item} créé avec succès",
+    "createError": "Échec de la création de {item}",
+    "languageChanged": "Langue modifiée avec succès",
+    "languageChangeError": "Échec du changement de langue"
+  },
+  "messages": {
+    "noData": "Aucune donnée disponible",
+    "noResults": "Aucun résultat trouvé",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ceci ?",
+    "unsavedChanges": "Vous avez des modifications non enregistrées",
+    "required": "Ce champ est obligatoire"
+  },
+  "table": {
+    "actions": "Actions",
+    "date": "Date",
+    "name": "Nom",
+    "status": "État"
+  },
+  "ui": {
+    "toggleTheme": "Basculer le thème",
+    "changeLanguage": "Changer la langue",
+    "toggleFullscreen": "Basculer le mode plein écran",
+    "more": "Plus",
+    "previousSlide": "Aller à la diapositive précédente",
+    "nextSlide": "Aller à la diapositive suivante",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "syncing": "Synchronisation des modifications...",
+    "breadcrumb": "breadcrumb",
+    "breadcrumbNav": "Navigation par breadcrumb",
+    "pagination": "pagination",
+    "paginationNav": "Navigation par pagination",
+    "goToPreviousPage": "Aller à la page précédente",
+    "goToNextPage": "Aller à la page suivante",
+    "goToPreviousPageAria": "Aller à la page précédente",
+    "goToNextPageAria": "Aller à la page suivante",
+    "morePages": "Plus de pages",
+    "pickADate": "Choisir une date",
+    "closeButton": "Fermer",
+    "toggleSidebar": "Activer/désactiver la Barre Latérale",
+    "togglePlayerAvailability": "Activer/désactiver la disponibilité du joueur",
+    "avatarPreview": "Aperçu de l'avatar",
+    "selectChampionship": "Sélectionnez un championnat...",
+    "panel": "Panneau",
+    "generatingPdfReport": "Génération du Rapport PDF",
+    "pleaseWaitWhileCompiling": "Veuillez patienter pendant la compilation des statistiques du match",
+    "step": "Étape",
+    "of": "sur",
+    "cancel": "Annuler",
+    "clearLocalDatabase": "Effacer la Base de Données Locale",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
+  "app": {
+    "title": "VolleyStats pour Débutants",
+    "titleLong": "VolleyStats pour Débutants",
+    "shortTitle": "VolleyStats",
+    "description": "Suivi et analyse professionnels des statistiques de volleyball"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page non trouvée",
+      "description": "La page que vous recherchez n'existe pas ou a été supprimée. Revenons sur la bonne voie.",
+      "goHome": "Aller à l'accueil"
+    },
+    "notAuthenticated": "Non authentifié",
+    "failedLoadData": "Échec du chargement des données",
+    "missingSeasonOrChampionship": "seasonId ou championshipId manquant",
+    "hookContextError": "Le hook doit être utilisé dans le bon fournisseur de contexte",
+    "useLocalDbError": "useLocalDb doit être utilisé dans un DatabaseProvider",
+    "useCarouselError": "useCarousel doit être utilisé dans un <Carousel />",
+    "useChartError": "useChart doit être utilisé dans un <ChartContainer />",
+    "generalError": "Erreur",
+    "api": {
+      "missingSeasonOrChampionship": "seasonId ou championshipId manquant"
+    },
+    "config": {
+      "missingSupabaseVariables": "Variables d'environnement Supabase manquantes",
+      "missingSupabaseVariablesServer": "Variables d'environnement Supabase manquantes pour le serveur"
+    },
+    "database": {
+      "initFailed": "Échec de l'initialisation de la base de données locale",
+      "schemaIncompatible": "Le schéma de la base de données a été mis à jour et est incompatible avec les données existantes.",
+      "resyncInstructions": "Cliquez ci-dessous pour effacer la base de données locale. Vos données seront resynchronisées depuis le serveur lors de la prochaine connexion."
+    }
+  }
+}

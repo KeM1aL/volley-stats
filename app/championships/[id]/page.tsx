@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
 import { Championship, Season } from "@/lib/types";
 import { LoadingPage } from "@/components/loading-page";
@@ -40,6 +41,8 @@ lastSeptember.setMonth(8);
 lastSeptember.setDate(1);
 
 export default function ChampionshipDetailPage() {
+  const t = useTranslations("championships");
+  const tc = useTranslations("common");
   const params = useParams();
   const championshipId = params.id as string;
   const championshipApi = useChampionshipApi();
@@ -131,12 +134,12 @@ export default function ChampionshipDetailPage() {
       } catch (error) {
         console.error("Error loading data:", error);
         setError(
-          error instanceof Error ? error : new Error("Failed to load data")
+          error instanceof Error ? error : new Error(tc('errors.failedLoadData'))
         );
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to load matches. Please try refreshing the page.",
+          title: t("errors.loadMatches"),
+          description: t("errors.loadMatchesDesc"),
         });
       } finally {
         setIsLoading(false);
@@ -153,6 +156,7 @@ export default function ChampionshipDetailPage() {
     toast,
     matchApi,
     selectedClub,
+    t,
   ]);
 
   useEffect(() => {
@@ -180,8 +184,8 @@ export default function ChampionshipDetailPage() {
         console.error("Error loading teams:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to load teams.",
+          title: t("errors.loadTeams"),
+          description: t("errors.loadTeamsDesc"),
         });
       } finally {
         setIsLoadingTeams(false);
@@ -189,7 +193,7 @@ export default function ChampionshipDetailPage() {
     };
 
     fetchTeams();
-  }, [championshipId, teamApi, toast]);
+  }, [championshipId, teamApi, toast, t]);
 
   const handleTeamChange = (team: Team | null) => {
     setSelectedTeam(team);
@@ -221,11 +225,11 @@ export default function ChampionshipDetailPage() {
       );
       if (!response.ok) {
         const { error } = await response.json();
-        throw new Error(error || "Failed to refresh matches");
+        throw new Error(error || t("errors.refreshFailed"));
       }
-      toast({ title: "Success", description: "Matches have been refreshed successfully." });
-    } catch (error: any) { 
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("toast.success"), description: t("toast.matchesRefreshedSuccess") });
+    } catch (error: any) {
+      toast({ title: t("errors.loadMatches"), description: error.message, variant: "destructive" });
     }
     setIsRefreshing(false);
   };
@@ -237,8 +241,8 @@ export default function ChampionshipDetailPage() {
   if (!championship) {
     return (
       <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-8">Championship Not Found</h1>
-        <p>The requested championship could not be found.</p>
+        <h1 className="text-3xl font-bold mb-8">{t("details.notFound")}</h1>
+        <p>{t("details.notFoundDesc")}</p>
       </div>
     );
   }
@@ -248,11 +252,10 @@ export default function ChampionshipDetailPage() {
       <div className="space-y-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">
-            Championship: {championship.name}
+            {t("details.information")}: {championship.name}
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Format: {championship.match_formats?.format} | Gender: {championship.gender} | Age
-            Category: {championship.age_category}
+            {t("labels.format")}: {championship.match_formats?.format} | {t("labels.gender")}: {championship.gender} | {t("labels.ageCategory")}: {championship.age_category}
           </p>
         </div>
         <div className="flex gap-2">
@@ -265,7 +268,7 @@ export default function ChampionshipDetailPage() {
             <RefreshCw
               className={`h-4 w-4 mr-1 sm:mr-2 ${isRefreshing ? "animate-spin" : ""}`}
             />
-            {isRefreshing ? "Refreshing..." : "Refresh"}
+            {isRefreshing ? t("actions.refreshing") : t("actions.refresh")}
           </Button>
           <Button
             variant="outline"
@@ -273,7 +276,7 @@ export default function ChampionshipDetailPage() {
             className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
             <Filter className="h-4 w-4 mr-1 sm:mr-2" />
-            Filters
+            {t("filters.title")}
           </Button>
         </div>
       </div>
@@ -298,7 +301,7 @@ export default function ChampionshipDetailPage() {
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label>Club</Label>
+                  <Label>{t("labels.club")}</Label>
                   <ClubSelect
                     value={selectedClub}
                     onChange={setSelectedClub}
@@ -306,7 +309,7 @@ export default function ChampionshipDetailPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Team</Label>
+                  <Label>{t("labels.team")}</Label>
                   <TeamSelect
                     value={selectedTeam}
                     onChange={handleTeamChange}
@@ -316,7 +319,7 @@ export default function ChampionshipDetailPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Date range</Label>
+                  <Label>{t("labels.dateRange")}</Label>
                   <DatePickerWithRange
                     date={dateRange}
                     onDateChange={setDateRange}
@@ -336,7 +339,7 @@ export default function ChampionshipDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Matches</CardTitle>
+          <CardTitle>{t("labels.matches")}</CardTitle>
         </CardHeader>
         <CardContent>
           <MatchHistoryTable

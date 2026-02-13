@@ -1,0 +1,64 @@
+{
+  "title": "Jugadores",
+  "newPlayer": "Nuevo jugador",
+  "editPlayer": "Editar jugador",
+  "deletePlayer": "Eliminar jugador",
+  "dialog": {
+    "newPlayer": "Nuevo jugador",
+    "editPlayer": "Editar jugador"
+  },
+  "table": {
+    "avatar": "Avatar",
+    "name": "Nombre",
+    "position": "Posición",
+    "role": "Rol",
+    "actions": "Acciones"
+  },
+  "form": {
+    "avatar": "Avatar",
+    "name": "Nombre",
+    "namePlaceholder": "Introduzca el nombre del jugador",
+    "role": "Rol",
+    "rolePlaceholder": "Seleccione un rol",
+    "number": "Número",
+    "numberPlaceholder": "Introduzca el número",
+    "position": "Posición",
+    "positionPlaceholder": "Seleccione una posición",
+    "selectRole": "Seleccione un rol",
+    "selectPosition": "Seleccione una posición",
+    "saveChanges": "Guardar Cambios",
+    "createPlayer": "Crear Jugador",
+    "uploading": "Subiendo..."
+  },
+  "positions": {
+    "setter": "Colocador",
+    "opposite": "Opuesto",
+    "outsideHitter": "Receptor-Atacante",
+    "middleHitter": "Central",
+    "libero": "Líbero"
+  },
+  "roles": {
+    "player": "Jugador",
+    "captain": "Capitán",
+    "coach": "Entrenador"
+  },
+  "validation": {
+    "nameRequired": "El nombre del jugador es obligatorio",
+    "numberPositive": "El número debe ser positivo",
+    "numberMax": "El número debe ser inferior a 100"
+  },
+  "toast": {
+    "created": "Jugador creado",
+    "createdDesc": "El jugador ha sido creado con éxito.",
+    "updated": "Jugador actualizado",
+    "updatedDesc": "El jugador ha sido actualizado con éxito.",
+    "deleted": "Jugador eliminado",
+    "deletedDesc": "El jugador ha sido eliminado con éxito.",
+    "error": "Error",
+    "createError": "Error al crear el jugador. Inténtelo de nuevo.",
+    "updateError": "Error al actualizar el jugador. Inténtelo de nuevo.",
+    "deleteError": "Error al eliminar el jugador. Inténtelo de nuevo."
+  },
+  "confirmDelete": "¿Está seguro?",
+  "confirmDeleteDesc": "Esta acción no se puede deshacer. Esto eliminará permanentemente el jugador y todas las estadísticas asociadas."
+}

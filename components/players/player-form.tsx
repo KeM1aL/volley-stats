@@ -23,21 +23,11 @@ import {
 import { PlayerRole, TeamMemberRole } from "@/lib/enums";
 import { TeamMember } from "@/lib/types";
 import { AvatarUpload } from "./avatar-upload";
-
-const formSchema = z.object({
-  name: z.string().min(1, "Player name is required"),
-  number: z.coerce
-    .number()
-    .min(0, "Number must be positive")
-    .max(99, "Number must be less than 100").optional(),
-  position: z.string().optional(),
-  role: z.string().optional(),
-  avatar_url: z.string().nullable(),
-});
+import { useTranslations } from "next-intl";
 
 type PlayerFormProps = {
   defaultValues?: Partial<TeamMember>;
-  onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
+  onSubmit: (values: any) => Promise<void>;
   submitLabel: string;
   isSubmitting: boolean;
   onCancel: () => void;
@@ -50,6 +40,19 @@ export function PlayerForm({
   isSubmitting,
   onCancel,
 }: PlayerFormProps) {
+  const t = useTranslations('players');
+  const tc = useTranslations('common');
+
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    number: z.coerce
+      .number()
+      .min(0, t('validation.numberPositive'))
+      .max(99, t('validation.numberMax')).optional(),
+    position: z.string().optional(),
+    role: z.string().optional(),
+    avatar_url: z.string().nullable(),
+  });
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -69,7 +72,7 @@ export function PlayerForm({
           name="avatar_url"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Avatar</FormLabel>
+              <FormLabel>{t('form.avatar')}</FormLabel>
               <FormControl>
                 <AvatarUpload
                   playerId={defaultValues?.id}
@@ -87,7 +90,7 @@ export function PlayerForm({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>{t('form.name')}</FormLabel>
               <FormControl>
                 <Input autoComplete="name" {...field} />
               </FormControl>
@@ -101,11 +104,11 @@ export function PlayerForm({
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Role</FormLabel>
+              <FormLabel>{t('form.role')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue placeholder={t('form.selectRole')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -126,7 +129,7 @@ export function PlayerForm({
           name="number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Number</FormLabel>
+              <FormLabel>{t('form.number')}</FormLabel>
               <FormControl>
                 <Input type="number" {...field} />
               </FormControl>
@@ -140,11 +143,11 @@ export function PlayerForm({
           name="position"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Position</FormLabel>
+              <FormLabel>{t('form.position')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select position" />
+                    <SelectValue placeholder={t('form.selectPosition')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -153,15 +156,15 @@ export function PlayerForm({
                       {(() => {
                         switch (position) {
                           case PlayerRole.SETTER:
-                            return "Setter";
+                            return t('positions.setter');
                           case PlayerRole.OPPOSITE:
-                            return "Opposite";
+                            return t('positions.opposite');
                           case PlayerRole.OUTSIDE_HITTER:
-                            return "Outside Hitter";
+                            return t('positions.outsideHitter');
                           case PlayerRole.MIDDLE_HITTER:
-                            return "Middle Hitter";
+                            return t('positions.middleHitter');
                           case PlayerRole.LIBERO:
-                            return "Libero";
+                            return t('positions.libero');
                         }
                       })()}
                     </SelectItem>
@@ -180,7 +183,7 @@ export function PlayerForm({
             onClick={onCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {tc('actions.cancel')}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {submitLabel}

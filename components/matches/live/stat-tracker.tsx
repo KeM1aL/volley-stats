@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Match, TeamMember, PlayerStat, ScorePoint, Set, Team } from "@/lib/types";
 import { useLocalDb } from "@/components/providers/local-database-provider";
@@ -69,6 +70,7 @@ export function StatTracker({
   onStat,
   onUndo,
 }: StatTrackerProps) {
+  const t = useTranslations("matches");
   const { localDb: db } = useLocalDb();
   const { toast } = useToast();
   const { canUndo, canRedo } = useCommandHistory();
@@ -129,8 +131,8 @@ export function StatTracker({
   const recordStat = async (type: StatType, result: StatResult) => {
     if (!selectedPlayer) {
       toast({
-        title: "Select a player",
-        description: "Please select a player before recording a stat",
+        title: t("live.selectAPlayer"),
+        description: t("live.selectPlayerBeforeRecordingStat"),
         variant: "destructive",
       });
       return;
@@ -208,6 +210,14 @@ export function StatTracker({
     }
   };
 
+  const statTypeLabel: Record<StatType, string> = {
+    [StatType.SPIKE]: t("stats.spike"),
+    [StatType.SERVE]: t("stats.serve"),
+    [StatType.BLOCK]: t("stats.block"),
+    [StatType.RECEPTION]: t("stats.reception"),
+    [StatType.DEFENSE]: t("stats.defense"),
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -252,7 +262,7 @@ export function StatTracker({
                   className={`${colorData[index].color} text-white px-2 flex items-center justify-center min-w-[45px]`}
                 >
                   <span className="text-[10px] font-bold whitespace-nowrap">
-                    {type.replace("_", " ").substring(0, 5).toUpperCase()}
+                    {statTypeLabel[type].toUpperCase()}
                   </span>
                 </div>
                 {/* Stat buttons - horizontal */}
@@ -286,7 +296,7 @@ export function StatTracker({
             >
               <div className="text-center">
                 <div className="font-medium truncate">{managedTeam.name.substring(0, 10)}</div>
-                <div className="opacity-75">Error -1</div>
+                <div className="opacity-75">{t("live.error")} -1</div>
               </div>
             </Button>
             <Button
@@ -301,7 +311,7 @@ export function StatTracker({
             >
               <div className="text-center">
                 <div className="font-medium truncate">{managedTeam.name.substring(0, 10)}</div>
-                <div className="opacity-75">Point +1</div>
+                <div className="opacity-75">{t("live.point")} +1</div>
               </div>
             </Button>
             <Button
@@ -316,7 +326,7 @@ export function StatTracker({
             >
               <div className="text-center">
                 <div className="font-medium truncate">{opponentTeam.name.substring(0, 10)}</div>
-                <div className="opacity-75">Point -1</div>
+                <div className="opacity-75">{t("live.point")} -1</div>
               </div>
             </Button>
             <Button
@@ -331,7 +341,7 @@ export function StatTracker({
             >
               <div className="text-center">
                 <div className="font-medium truncate">{opponentTeam.name.substring(0, 10)}</div>
-                <div className="opacity-75">Error +1</div>
+                <div className="opacity-75">{t("live.error")} +1</div>
               </div>
             </Button>
             {/* Undo button */}
@@ -341,7 +351,7 @@ export function StatTracker({
               disabled={isRecording || isLoading}
               className="h-7 text-[10px] font-semibold"
             >
-              <RotateCcw className="h-3 w-3 mr-1" /> Undo
+              <RotateCcw className="h-3 w-3 mr-1" /> {t("live.undo")}
             </Button>
           </div>
         </div>
@@ -367,6 +377,7 @@ export function StatTracker({
         {availableStatTypes.map((type, index) => (
           <Card
             key={type}
+            data-testid={`stat-card-${type.toLowerCase()}`}
             className={`w-full mx-auto overflow-hidden ${colorData[index].border} border-2`}
           >
             <div className="flex">
@@ -374,8 +385,8 @@ export function StatTracker({
               <div
                 className={`text-primary-foreground p-2 md:p-4 flex items-center justify-center relative ${colorData[index].color}`}
               >
-                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-base md:text-xl font-bold origin-center">
-                  {type.replace("_", " ").substring(0, 5)}
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-base md:text-md font-bold origin-center">
+                  {statTypeLabel[type]}
                 </span>
               </div>
               <div className="flex-1">
@@ -396,8 +407,8 @@ export function StatTracker({
               <div
                 className={`text-primary-foreground p-2 md:p-4 flex items-center justify-center relative ${colorData[index].color}`}
               >
-                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-base md:text-xl font-bold origin-center">
-                  {type.replace("_", " ").substring(0, 5)}
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 whitespace-nowrap text-base md:text-md font-bold origin-center">
+                  {statTypeLabel[type]}
                 </span>
               </div>
             </div>
@@ -409,6 +420,7 @@ export function StatTracker({
       <div className="space-y-1 mt-1 sm:mt-2">
         <div className="grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-1 sm:gap-y-2">
           <Button
+            data-testid="point-btn-managed-error"
             onClick={() =>
               recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.ERROR)
             }
@@ -420,12 +432,13 @@ export function StatTracker({
           >
             <div>
               <div className="text-xs sm:text-sm md:text-md font-medium truncate">
-                '{managedTeam.name}' Error
+                '{managedTeam.name}' {t("live.error")}
               </div>
               <div className="text-[10px] sm:text-xs md:text-sm opacity-75">-1</div>
             </div>
           </Button>
           <Button
+            data-testid="point-btn-managed-point"
             onClick={() =>
               recordPoint(managedTeam.id, PointType.UNKNOWN, StatResult.SUCCESS)
             }
@@ -437,12 +450,13 @@ export function StatTracker({
           >
             <div>
               <div className="text-xs sm:text-sm md:text-md font-medium truncate">
-                '{managedTeam.name}' Point
+                '{managedTeam.name}' {t("live.point")}
               </div>
               <div className="text-[10px] sm:text-xs md:text-sm opacity-75">+1</div>
             </div>
           </Button>
           <Button
+            data-testid="point-btn-opponent-point"
             onClick={() =>
               recordPoint(opponentTeam.id, PointType.UNKNOWN, StatResult.ERROR)
             }
@@ -454,12 +468,13 @@ export function StatTracker({
           >
             <div>
               <div className="text-xs sm:text-sm md:text-md font-medium truncate">
-                '{opponentTeam.name}' Point
+                '{opponentTeam.name}' {t("live.point")}
               </div>
               <div className="text-[10px] sm:text-xs md:text-sm opacity-75">-1</div>
             </div>
           </Button>
           <Button
+            data-testid="point-btn-opponent-error"
             onClick={() =>
               recordPoint(
                 opponentTeam.id,
@@ -475,7 +490,7 @@ export function StatTracker({
           >
             <div>
               <div className="text-xs sm:text-sm md:text-md font-medium truncate">
-                '{opponentTeam.name}' Error
+                '{opponentTeam.name}' {t("live.error")}
               </div>
               <div className="text-[10px] sm:text-xs md:text-sm opacity-75">+1</div>
             </div>
@@ -490,7 +505,7 @@ export function StatTracker({
               "min-h-9 sm:min-h-12 md:min-h-14 text-sm sm:text-base md:text-lg font-semibold transition-transform active:scale-95"
             )}
           >
-            <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Cancel Last Action
+            <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> {t("live.cancelLastAction")}
           </Button>
         </div>
       </div>

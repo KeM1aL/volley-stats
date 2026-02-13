@@ -28,6 +28,7 @@ import { TeamMember } from "@/lib/types";
 import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { deleteAvatar } from "@/lib/supabase/storage";
+import { useTranslations } from "next-intl";
 import { useTeamMembersApi } from "@/hooks/use-team-members-api";
 
 type PlayerTableProps = {
@@ -37,6 +38,9 @@ type PlayerTableProps = {
 };
 
 export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTableProps) {
+  const t = useTranslations('players');
+  const tc = useTranslations('common');
+  const te = useTranslations("enums");
   const teamMemberApi = useTeamMembersApi();
   const { toast } = useToast();
   const [deletePlayer, setDeletePlayer] = useState<TeamMember | null>(null);
@@ -63,15 +67,15 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
       onPlayersChange(players.filter(p => p.id !== deletePlayer.id));
 
       toast({
-        title: "Player deleted",
-        description: "The player has been successfully deleted.",
+        title: t('toast.deleted'),
+        description: t('toast.deletedDesc'),
       });
     } catch (error) {
       console.error("Failed to delete player:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to delete player. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.deleteError'),
       });
     } finally {
       setIsDeleting(false);
@@ -84,12 +88,12 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Avatar</TableHead>
+            <TableHead>{t('table.avatar')}</TableHead>
             <TableHead>#</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Position</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
+            <TableHead>{t('table.name')}</TableHead>
+            <TableHead>{t('table.position')}</TableHead>
+            <TableHead>{t('table.role')}</TableHead>
+            <TableHead className="w-[100px]">{t('table.actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -108,8 +112,8 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
               </TableCell>
               <TableCell>{player.number}</TableCell>
               <TableCell className="font-medium">{player.name}</TableCell>
-              <TableCell>{player.position}</TableCell>
-              <TableCell className="capitalize">{player.role}</TableCell>
+              <TableCell>{te(`playerRole.${player.position}`)}</TableCell>
+              <TableCell className="capitalize">{te(`teamMemberRole.${player.role}`)}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button
@@ -138,20 +142,19 @@ export function PlayerTable({ players, onEdit, onPlayersChange }: PlayerTablePro
       <AlertDialog open={!!deletePlayer} onOpenChange={() => setDeletePlayer(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the player
-              and all associated statistics.
+              {t('confirmDeleteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tc('actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {tc('actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

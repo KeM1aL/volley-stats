@@ -26,12 +26,9 @@ import { useClubApi } from "@/hooks/use-club-api";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Club } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 const supabase = createClient();
-
-const formSchema = z.object({
-  name: z.string().min(1, "Club name is required"),
-});
 
 type QuickCreateClubDialogProps = {
   open: boolean;
@@ -47,8 +44,14 @@ export function QuickCreateClubDialog({
   defaultName,
 }: QuickCreateClubDialogProps) {
   const { toast } = useToast();
+  const t = useTranslations('clubs');
+  const tc = useTranslations('common');
   const [isLoading, setIsLoading] = useState(false);
   const clubApi = useClubApi();
+
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,7 +72,7 @@ export function QuickCreateClubDialog({
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      if (!session) throw new Error(tc('errors.notAuthenticated'));
 
       const newClub: Partial<Club> = {
         id: crypto.randomUUID(),
@@ -85,8 +88,8 @@ export function QuickCreateClubDialog({
       const createdClub = await clubApi.createClub(newClub);
 
       toast({
-        title: "Club created",
-        description: `${values.name} has been created. You can add more details later.`,
+        title: t('toast.created'),
+        description: t('toast.createdDesc', { name: values.name }),
       });
 
       form.reset();
@@ -95,8 +98,8 @@ export function QuickCreateClubDialog({
     } catch (error) {
       console.error("Error creating club:", error);
       toast({
-        title: "Error",
-        description: "Failed to create club. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.createError'),
         variant: "destructive",
       });
     } finally {
@@ -113,9 +116,9 @@ export function QuickCreateClubDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Quick Create Club</DialogTitle>
+          <DialogTitle>{t('quickCreate.title')}</DialogTitle>
           <DialogDescription>
-            Create a new club with just a name. You can add more details later.
+            {t('quickCreate.description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -125,10 +128,10 @@ export function QuickCreateClubDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Club Name</FormLabel>
+                  <FormLabel>{t('form.name')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter club name"
+                      placeholder={t('form.namePlaceholder')}
                       {...field}
                       disabled={isLoading}
                     />
@@ -144,16 +147,16 @@ export function QuickCreateClubDialog({
                 onClick={handleClose}
                 disabled={isLoading}
               >
-                Cancel
+                {tc('actions.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <LoadingSpinner size="sm" className="mr-2" />
-                    Creating...
+                    {t('quickCreate.creating')}
                   </>
                 ) : (
-                  "Create Club"
+                  t('form.createClub')
                 )}
               </Button>
             </div>

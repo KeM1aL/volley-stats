@@ -53,7 +53,8 @@ function createVirtualKeyboardDetector(
   const vk = navigator.virtualKeyboard
 
   if (!vk) {
-    throw new Error('VirtualKeyboard API not available')
+    // Error identifier maps to translation key: errors.keyboard.virtualKeyboardNotAvailable
+    throw new Error('virtualKeyboardNotAvailable')
   }
 
   // Enable manual overlay handling - keyboard won't resize viewport
@@ -99,7 +100,8 @@ function createVisualViewportDetector(
   const viewport = window.visualViewport
 
   if (!viewport) {
-    throw new Error('Visual Viewport API not available')
+    // Error identifier maps to translation key: errors.keyboard.visualViewportNotAvailable
+    throw new Error('visualViewportNotAvailable')
   }
 
   let lastHeight = viewport.height

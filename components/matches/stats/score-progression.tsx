@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useImperativeHandle } from "react";
+import { useTranslations } from "next-intl";
 import html2canvas from "html2canvas";
 import {
   Card,
@@ -34,6 +35,7 @@ const ScoreProgression = React.forwardRef<
   PdfExportHandle,
   ScoreProgressionProps
 >(({ sets, points, isPdfGenerating }, ref) => {
+  const t = useTranslations("matches");
   const [selectedSet, setSelectedSet] = useState<string | null>(null);
   const scoreProgressionRef = useRef<HTMLDivElement>(null);
 
@@ -52,10 +54,10 @@ const ScoreProgression = React.forwardRef<
 
         const subTitle =
           setId === null
-            ? "All Sets Overview"
-            : `Set ${
+            ? t("stats.allSetsOverview")
+            : `${t("stats.setLabel")} ${
                 allSets.find((s) => s.id === setId)?.set_number || ""
-              } Breakdown`;
+              } ${t("stats.breakdown")}`;
 
         // Only add page after first content
         if (!isFirstPage) {
@@ -111,8 +113,8 @@ const ScoreProgression = React.forwardRef<
       <SetSelector sets={sets} selectedSetId={selectedSet} onSelectSet={setSelectedSet} />
       <Card>
         <CardHeader>
-          <CardTitle>Score Progression</CardTitle>
-          <CardDescription>Point-by-point score evolution</CardDescription>
+          <CardTitle>{t("stats.scoreProgression")}</CardTitle>
+          <CardDescription>{t("stats.scoreProgressionDesc")}</CardDescription>
         </CardHeader>
         <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
           <ResponsiveContainer width="100%" height="100%">
@@ -145,8 +147,8 @@ const ScoreProgression = React.forwardRef<
 
       <Card>
         <CardHeader>
-          <CardTitle>Score Difference</CardTitle>
-          <CardDescription>Point differential over time</CardDescription>
+          <CardTitle>{t("stats.scoreDifference")}</CardTitle>
+          <CardDescription>{t("stats.scoreDifferenceDesc")}</CardDescription>
         </CardHeader>
         <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
           <ResponsiveContainer width="100%" height="100%">

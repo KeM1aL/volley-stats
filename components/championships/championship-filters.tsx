@@ -47,6 +47,8 @@ export function ChampionshipFilters() {
     });
   };
 
+  const te = useTranslations("enums");
+
   return (
     <Card>
       <CardHeader>
@@ -70,12 +72,12 @@ export function ChampionshipFilters() {
             <Select
               id="format"
               options={[
-                { value: "2x2", label: "2x2" },
-                { value: "3x3", label: "3x3" },
-                { value: "4x4", label: "4x4" },
-                { value: "6x6", label: "6x6" },
+                { value: "2x2", label: te("championshipFormat.2x2") },
+                { value: "3x3", label: te("championshipFormat.3x3") },
+                { value: "4x4", label: te("championshipFormat.4x4") },
+                { value: "6x6", label: te("championshipFormat.6x6") },
               ]}
-              value={filters.match_formats?.format ? { value: filters.match_formats?.format, label: filters.match_formats?.format } : null}
+              value={filters.match_formats?.format ? { value: filters.match_formats?.format, label: te(`championshipFormat.${filters.match_formats?.format}`) } : null}
               onChange={(selectedOption) => handleFormatChange(selectedOption ? selectedOption.value : undefined)}
               isClearable
               placeholder={t("filters.selectFormat")}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { PlayerStat, TeamMember, Set } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateMVPScore } from "@/lib/stats/calculations";
@@ -14,13 +15,14 @@ interface MVPCalculatorProps {
 }
 
 export function MVPAnalysis({ stats, players, sets }: MVPCalculatorProps) {
+  const t = useTranslations("matches");
   const mvpScores = calculateMVPScore(stats, players, sets);
   const matchMVP = mvpScores.matchMVP;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Match MVP Analysis</CardTitle>
+        <CardTitle>{t("stats.mvpAnalysis")}</CardTitle>
       </CardHeader>
       <CardContent>
         {matchMVP.player && (
@@ -38,7 +40,7 @@ export function MVPAnalysis({ stats, players, sets }: MVPCalculatorProps) {
                 </Avatar>
                 <h3 className="text-xl font-bold flex items-center justify-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  Match MVP
+                  {t("stats.matchMVP")}
                 </h3>
                 <p className="text-lg font-medium mt-2">
                   {matchMVP.player.name}
@@ -50,7 +52,7 @@ export function MVPAnalysis({ stats, players, sets }: MVPCalculatorProps) {
             </div>
 
             <div className="space-y-4">
-              <h3 className="font-semibold">Set MVPs</h3>
+              <h3 className="font-semibold">{t("stats.setMVPs")}</h3>
               {mvpScores.setMVPs.map((mvp) => (
                 <div
                   key={mvp.setNumber}

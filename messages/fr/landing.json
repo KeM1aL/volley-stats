@@ -1,0 +1,30 @@
+{
+  "hero": {
+    "title": "Statistiques de Volleyball pour Débutants",
+    "subtitle": "Suivez, analysez et améliorez les performances de votre équipe avec des analyses simples",
+    "getStarted": "Commencer",
+    "createTeam": "Créer mon équipe"
+  },
+  "features": {
+    "matchTracking": {
+      "title": "Suivi des Matchs",
+      "description": "Statistiques et score en temps réel",
+      "content": "Suivez les services, les attaques, les blocages et plus encore pendant les matchs en direct avec notre interface intuitive."
+    },
+    "teamManagement": {
+      "title": "Gestion d'Équipe",
+      "description": "Organisez les joueurs et les équipes",
+      "content": "Gérez plusieurs équipes, les effectifs des joueurs et suivez les mesures de performance individuelles."
+    },
+    "analytics": {
+      "title": "Analyse Avancée",
+      "description": "Informations détaillées sur les performances",
+      "content": "Analysez les statistiques des équipes et des joueurs avec des graphiques et des rapports complets."
+    },
+    "collaboration": {
+      "title": "Collaboration",
+      "description": "Partagez et exportez les données",
+      "content": "Exportez les statistiques au format CSV/PDF et partagez les résultats des matchs avec les membres de l'équipe."
+    }
+  }
+}

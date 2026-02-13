@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ type StatisticsDialogProps = {
 };
 
 export function StatisticsDialog({ match, onClose }: StatisticsDialogProps) {
+  const t = useTranslations("matches");
   const [sets, setSets] = useState<Set[]>([]);
   const [points, setPoints] = useState<ScorePoint[]>([]);
   const [players, setPlayers] = useState<TeamMember[]>([]);
@@ -89,7 +91,7 @@ export function StatisticsDialog({ match, onClose }: StatisticsDialogProps) {
     <Dialog open={!!match} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Match Statistics</DialogTitle>
+          <DialogTitle>{t("stats.title")}</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
@@ -97,16 +99,16 @@ export function StatisticsDialog({ match, onClose }: StatisticsDialogProps) {
         ) : (
           <Tabs defaultValue="overview">
             <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="sets">Sets</TabsTrigger>
-              <TabsTrigger value="players">Players</TabsTrigger>
+              <TabsTrigger value="overview">{t("stats.overview")}</TabsTrigger>
+              <TabsTrigger value="sets">{t("stats.sets")}</TabsTrigger>
+              <TabsTrigger value="players">{t("stats.players")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Points by Type</CardTitle>
+                    <CardTitle>{t("stats.pointsByType")}</CardTitle>
                   </CardHeader>
                   <CardContent className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -147,7 +149,7 @@ export function StatisticsDialog({ match, onClose }: StatisticsDialogProps) {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Player Performance</CardTitle>
+                    <CardTitle>{t("stats.playerPerformance")}</CardTitle>
                   </CardHeader>
                   <CardContent className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">

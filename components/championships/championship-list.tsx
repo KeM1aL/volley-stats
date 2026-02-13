@@ -57,8 +57,8 @@ export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
 
   const groupedChampionships = championships.reduce((acc, championship) => {
     const season = seasons.find((s) => s.id === championship.season_id);
-    const seasonName = season ? `Season ${season.name}` : "Unknown Season";
-    const format = championship.match_formats?.format || "Unknown Format";
+    const seasonName = season ? `${t("list.seasonPrefix")} ${season.name}` : t("list.unknownSeason");
+    const format = championship.match_formats?.format || t("list.unknownFormat");
 
     if (!acc[seasonName]) {
       acc[seasonName] = {};
@@ -107,15 +107,15 @@ export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
                         <CardTitle>{championship.name}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p>Format: {championship.match_formats?.format}</p>
-                        <p>Gender: {championship.gender}</p>
-                        <p>Age Category: {championship.age_category}</p>
+                        <p>{t("list.formatLabel")} {championship.match_formats?.format}</p>
+                        <p>{t("list.genderLabel")} {championship.gender}</p>
+                        <p>{t("list.ageCategoryLabel")} {championship.age_category}</p>
                         {/* Add more useful information here */}
                       </CardContent>
                       <CardFooter>
                         <Button asChild variant="outline" className="w-full">
                           <Link href={`/championships/${championship.id}`}>
-                            View Details
+                            {t("list.viewDetails")}
                           </Link>
                         </Button>
                       </CardFooter>

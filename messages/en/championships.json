@@ -119,7 +119,7 @@
     "success": "Success",
     "matchesRefreshedSuccess": "Matches have been refreshed successfully."
   },
-  "typeOptions": {
+  "types": {
     "regional": "Regional",
     "national": "National",
     "international": "International",
@@ -141,5 +141,14 @@
     "hide": "Hide",
     "show": "Show",
     "players": "Players"
+  },
+  "list": {
+    "seasonPrefix": "Season",
+    "unknownSeason": "Unknown Season",
+    "unknownFormat": "Unknown Format",
+    "formatLabel": "Format:",
+    "genderLabel": "Gender:",
+    "ageCategoryLabel": "Age Category:",
+    "viewDetails": "View Details"
   }
 }

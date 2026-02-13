@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type {
   Match,
   Team,
@@ -61,6 +62,7 @@ export default function PlayerReplacementDialog({
   playerById,
   onSubstitution,
 }: PlayerReplacementDialogProps) {
+  const t = useTranslations("matches");
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -96,13 +98,13 @@ export default function PlayerReplacementDialog({
       await onSubstitution(substitution);
 
       toast({
-        title: "Replacement Successful",
-        description: "The replacement was successful",
+        title: t("toast.replacementSuccessful"),
+        description: t("toast.replacementSuccessfulDesc"),
       });
     } catch (error) {
       toast({
-        title: "Replacement Failed",
-        description: "The replacement failed",
+        title: t("toast.replacementFailed"),
+        description: t("toast.replacementFailedDesc"),
         variant: "destructive",
       });
     } finally {
@@ -115,12 +117,12 @@ export default function PlayerReplacementDialog({
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
           <Replace className="h-6 w-6 mr-2" />
-          Replace Player
+          {t("players.replacePlayer")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Replace Player</DialogTitle>
+          <DialogTitle>{t("players.replacePlayer")}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <Form {...form}>
@@ -130,14 +132,14 @@ export default function PlayerReplacementDialog({
                 name="oldPlayerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Leaving Player</FormLabel>
+                    <FormLabel>{t("players.selectLeaving")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select Player" />
+                          <SelectValue placeholder={t("players.selectPlayer")} />
                         </SelectTrigger>
                         <SelectContent>
                           {Object.values(set.current_lineup)
@@ -159,14 +161,14 @@ export default function PlayerReplacementDialog({
                 name="newPlayerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New Player</FormLabel>
+                    <FormLabel>{t("players.selectEntering")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select Player" />
+                          <SelectValue placeholder={t("players.selectPlayer")} />
                         </SelectTrigger>
                         <SelectContent>
                           {players
@@ -192,7 +194,7 @@ export default function PlayerReplacementDialog({
                 name="comments"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Comments</FormLabel>
+                    <FormLabel>{t("events.comments")}</FormLabel>
                     <FormControl>
                       <Textarea {...field} />
                     </FormControl>

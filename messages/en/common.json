@@ -67,16 +67,42 @@
   },
   "ui": {
     "toggleTheme": "Toggle theme",
+    "changeLanguage": "Change language",
     "toggleFullscreen": "Toggle fullscreen",
     "more": "More",
-    "previousSlide": "Previous slide",
-    "nextSlide": "Next slide",
+    "previousSlide": "Go to previous slide",
+    "nextSlide": "Go to next slide",
     "online": "Online",
     "offline": "Offline",
-    "syncing": "Syncing changes..."
+    "syncing": "Syncing changes...",
+    "breadcrumb": "breadcrumb",
+    "breadcrumbNav": "Breadcrumb navigation",
+    "pagination": "pagination",
+    "paginationNav": "Pagination navigation",
+    "goToPreviousPage": "Go to previous page",
+    "goToNextPage": "Go to next page",
+    "goToPreviousPageAria": "Go to previous page",
+    "goToNextPageAria": "Go to next page",
+    "morePages": "More pages",
+    "pickADate": "Pick a date",
+    "closeButton": "Close",
+    "toggleSidebar": "Toggle Sidebar",
+    "togglePlayerAvailability": "Toggle player availability",
+    "avatarPreview": "Avatar preview",
+    "selectChampionship": "Select a championship...",
+    "panel": "Panel",
+    "generatingPdfReport": "Generating PDF Report",
+    "pleaseWaitWhileCompiling": "Please wait while your match statistics are compiled",
+    "step": "Step",
+    "of": "of",
+    "cancel": "Cancel",
+    "clearLocalDatabase": "Clear Local Database",
+    "previous": "Previous",
+    "next": "Next"
   },
   "app": {
     "title": "VolleyStats for Dummies",
+    "titleLong": "VolleyStats for Dummies",
     "shortTitle": "VolleyStats",
     "description": "Professional volleyball statistics tracking and analysis"
   },
@@ -85,6 +111,26 @@
       "title": "Page Not Found",
       "description": "The page you're looking for doesn't exist or has been moved. Let's get you back on track.",
       "goHome": "Go to Home"
+    },
+    "notAuthenticated": "Not authenticated",
+    "failedLoadData": "Failed to load data",
+    "missingSeasonOrChampionship": "Missing seasonId or championshipId",
+    "hookContextError": "Hook must be used within the correct context provider",
+    "useLocalDbError": "useLocalDb must be used within a DatabaseProvider",
+    "useCarouselError": "useCarousel must be used within a <Carousel />",
+    "useChartError": "useChart must be used within a <ChartContainer />",
+    "generalError": "Error",
+    "api": {
+      "missingSeasonOrChampionship": "Missing seasonId or championshipId"
+    },
+    "config": {
+      "missingSupabaseVariables": "Missing Supabase environment variables",
+      "missingSupabaseVariablesServer": "Missing Supabase environment variables for server"
+    },
+    "database": {
+      "initFailed": "Failed to initialize local database",
+      "schemaIncompatible": "The database schema has been updated and is incompatible with existing data.",
+      "resyncInstructions": "Click below to clear the local database. Your data will be re-synced from the server on next login."
     }
   }
 }

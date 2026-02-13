@@ -10,8 +10,10 @@ import { NewPlayerDialog } from "@/components/players/new-player-dialog";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamMember, Team } from "@/lib/types";
+import { useTranslations } from "next-intl";
 
 export default function PlayersPage() {
+  const t = useTranslations('teams');
   const params = useParams();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
@@ -47,7 +49,7 @@ export default function PlayersPage() {
   }
 
   if (!team) {
-    return <div>Team not found</div>;
+    return <div>{t('details.teamNotFound')}</div>;
   }
 
   return (
@@ -55,11 +57,11 @@ export default function PlayersPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">{team.name}</h1>
-          <p className="text-muted-foreground">Manage team players</p>
+          <p className="text-muted-foreground">{t('details.managePlayers')}</p>
         </div>
         <Button onClick={() => setIsNewPlayerOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          New Player
+          {t('details.newPlayer')}
         </Button>
       </div>
 

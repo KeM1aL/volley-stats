@@ -6,39 +6,46 @@ import { Volleyball, Trophy, BarChart3, Users } from "lucide-react";
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const features = [
-  {
-    title: "Match Tracking",
-    description: "Real-time statistics and scoring",
-    icon: Volleyball,
-    content: "Track serves, attacks, blocks, and more during live matches with our intuitive interface.",
-    image: "https://placehold.co/1280x720/E2E8F0/4A5568?text=Match+Tracking"
-  },
-  {
-    title: "Team Management",
-    description: "Organize players and teams",
-    icon: Trophy,
-    content: "Manage multiple teams, player rosters, and track individual performance metrics.",
-    image: "https://placehold.co/1280x720/E2E8F0/4A5568?text=Team+Management"
-  },
-  {
-    title: "Advanced Analytics",
-    description: "Detailed performance insights",
-    icon: BarChart3,
-    content: "Analyze team and player statistics with comprehensive charts and reports.",
-    image: "https://placehold.co/1280x720/E2E8F0/4A5568?text=Advanced+Analytics"
-  },
-  {
-    title: "Collaboration",
-    description: "Share and export data",
-    icon: Users,
-    content: "Export statistics to CSV/PDF and share match results with team members.",
-    image: "https://placehold.co/1280x720/E2E8F0/4A5568?text=Collaboration"
-  }
-];
+import { useTranslations } from 'next-intl';
 
 export function FeaturesSection() {
+  const t = useTranslations('landing');
+
+  const features = [
+    {
+      key: 'matchTracking',
+      title: t('features.matchTracking.title'),
+      description: t('features.matchTracking.description'),
+      icon: Volleyball,
+      content: t('features.matchTracking.content'),
+      image: "https://placehold.co/1280x720/E2E8F0/4A5568?text=Match+Tracking"
+    },
+    {
+      key: 'teamManagement',
+      title: t('features.teamManagement.title'),
+      description: t('features.teamManagement.description'),
+      icon: Trophy,
+      content: t('features.teamManagement.content'),
+      image: "https://placehold.co/1280x720/E2E8F0/4A5568?text=Team+Management"
+    },
+    {
+      key: 'analytics',
+      title: t('features.analytics.title'),
+      description: t('features.analytics.description'),
+      icon: BarChart3,
+      content: t('features.analytics.content'),
+      image: "https://placehold.co/1280x720/E2E8F0/4A5568?text=Advanced+Analytics"
+    },
+    {
+      key: 'collaboration',
+      title: t('features.collaboration.title'),
+      description: t('features.collaboration.description'),
+      icon: Users,
+      content: t('features.collaboration.content'),
+      image: "https://placehold.co/1280x720/E2E8F0/4A5568?text=Collaboration"
+    }
+  ];
+
   const [selectedFeature, setSelectedFeature] = useState(features[0]);
   const [userInteracted, setUserInteracted] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -47,7 +54,7 @@ export function FeaturesSection() {
     if (!userInteracted) {
       intervalRef.current = setInterval(() => {
         setSelectedFeature((prevFeature) => {
-          const currentIndex = features.findIndex(f => f.title === prevFeature.title);
+          const currentIndex = features.findIndex(f => f.key === prevFeature.key);
           const nextIndex = (currentIndex + 1) % features.length;
           return features[nextIndex];
         });
@@ -74,10 +81,10 @@ export function FeaturesSection() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {features.map((feature) => (
           <Card
-            key={feature.title}
+            key={feature.key}
             className={cn(
               "cursor-pointer transition-all duration-300",
-              selectedFeature.title === feature.title
+              selectedFeature.key === feature.key
                 ? "ring-2 ring-primary"
                 : "hover:shadow-lg"
             )}
@@ -92,10 +99,10 @@ export function FeaturesSection() {
         ))}
       </div>
       <div className="mt-4 md:mt-6 min-h-[200px] sm:min-h-[280px] md:min-h-[480px]">
-        
+
             <AnimatePresence mode="wait">
               <motion.div
-                key={selectedFeature.title}
+                key={selectedFeature.key}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -112,7 +119,7 @@ export function FeaturesSection() {
                 </div>
               </motion.div>
             </AnimatePresence>
-          
+
       </div>
     </section>
   );

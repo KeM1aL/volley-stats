@@ -1,0 +1,17 @@
+{
+  "common": {
+    "app": {
+      "title": "VolleyStats para Iniciantes"
+    }
+  },
+  "menu": {
+    "championships": "Campeonatos",
+    "matches": "Jogos",
+    "teams": "Equipas",
+    "settings": "Definições"
+  },
+  "actions": {
+    "signOut": "Terminar sessão",
+    "openMenu": "Abrir menu"
+  }
+}

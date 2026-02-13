@@ -36,6 +36,8 @@ function useCarousel() {
   const context = React.useContext(CarouselContext)
 
   if (!context) {
+    // Development-only error: indicates incorrect hook usage
+    // Not translated as this is a developer-facing error message
     throw new Error("useCarousel must be used within a <Carousel />")
   }
 
@@ -217,7 +219,8 @@ const CarouselPrevious = React.forwardRef<
       {...props}
     >
       <ArrowLeft className="h-4 w-4" />
-      <span className="sr-only">Previous slide</span>
+      {/* Translation key: common.ui.previousSlide - Accessible text for screen readers */}
+      <span className="sr-only">Go to previous slide</span>
     </Button>
   )
 })
@@ -246,7 +249,8 @@ const CarouselNext = React.forwardRef<
       {...props}
     >
       <ArrowRight className="h-4 w-4" />
-      <span className="sr-only">Next slide</span>
+      {/* Translation key: common.ui.nextSlide - Accessible text for screen readers */}
+      <span className="sr-only">Go to next slide</span>
     </Button>
   )
 })

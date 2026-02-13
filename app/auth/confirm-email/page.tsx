@@ -14,8 +14,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslations } from "next-intl";
 
 export default function ConfirmEmailPage() {
+  const t = useTranslations('auth');
   const [isResending, setIsResending] = useState(false);
   const [canResend, setCanResend] = useState(true);
   const [countdown, setCountdown] = useState(0);
@@ -48,8 +50,8 @@ export default function ConfirmEmailPage() {
       if (error) throw error;
 
       toast({
-        title: "Confirmation email sent",
-        description: "Check your inbox for the verification link.",
+        title: t('confirmEmail.confirmationSent'),
+        description: t('confirmEmail.confirmationSentDesc'),
       });
 
       // Start 30-second cooldown
@@ -59,11 +61,11 @@ export default function ConfirmEmailPage() {
       console.error("Failed to resend confirmation:", error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t('toast.error'),
         description:
           error instanceof Error
             ? error.message
-            : "Failed to resend confirmation email",
+            : t('confirmEmail.failedResend'),
       });
     } finally {
       setIsResending(false);
@@ -75,14 +77,14 @@ export default function ConfirmEmailPage() {
       <div className="container max-w-md mx-auto mt-20">
         <Card>
           <CardHeader>
-            <CardTitle>Invalid Request</CardTitle>
+            <CardTitle>{t('confirmEmail.invalidRequest')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              No email address provided.
+              {t('confirmEmail.noEmailProvided')}
             </p>
             <Button onClick={() => router.push("/auth")} className="w-full">
-              Go to Login
+              {t('confirmEmail.goToLogin')}
             </Button>
           </CardContent>
         </Card>
@@ -99,9 +101,9 @@ export default function ConfirmEmailPage() {
               <Mail className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle>Check Your Email</CardTitle>
+          <CardTitle>{t('confirmEmail.checkYourEmail')}</CardTitle>
           <CardDescription>
-            We've sent a confirmation link to:
+            {t('confirmEmail.sentTo')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -113,18 +115,18 @@ export default function ConfirmEmailPage() {
 
           <div className="text-sm text-muted-foreground space-y-2">
             <p>
-              <strong>Next steps:</strong>
+              <strong>{t('confirmEmail.nextSteps')}</strong>
             </p>
             <ol className="list-decimal list-inside space-y-1 ml-2">
-              <li>Open the email from VolleyStats</li>
-              <li>Click the confirmation link</li>
-              <li>You'll be redirected to sign in</li>
+              <li>{t('confirmEmail.step1')}</li>
+              <li>{t('confirmEmail.step2')}</li>
+              <li>{t('confirmEmail.step3')}</li>
             </ol>
           </div>
 
           <div className="pt-4 space-y-2">
             <p className="text-sm text-muted-foreground text-center">
-              Didn't receive the email?
+              {t('confirmEmail.didntReceive')}
             </p>
             <Button
               variant="outline"
@@ -135,12 +137,12 @@ export default function ConfirmEmailPage() {
               {isResending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  {t('confirmEmail.resending')}
                 </>
               ) : countdown > 0 ? (
-                `Resend in ${countdown}s`
+                t('confirmEmail.resendIn', { seconds: countdown })
               ) : (
-                "Resend Confirmation Email"
+                t('confirmEmail.resendConfirmation')
               )}
             </Button>
           </div>
@@ -152,17 +154,17 @@ export default function ConfirmEmailPage() {
               onClick={() => router.push("/auth")}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Sign In
+              {t('confirmEmail.backToSignIn')}
             </Button>
           </div>
 
           <div className="text-xs text-muted-foreground text-center">
-            <p>Wrong email address?</p>
+            <p>{t('confirmEmail.wrongEmail')}</p>
             <button
               onClick={() => router.push("/auth")}
               className="text-primary hover:underline"
             >
-              Sign up with a different email
+              {t('confirmEmail.signupDifferent')}
             </button>
           </div>
         </CardContent>

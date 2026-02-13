@@ -27,13 +27,9 @@ import { LoadingSpinner } from "../ui/loading-spinner";
 import { Championship, MatchFormat } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { MatchFormatSelect } from "../match-formats/match-format-select";
+import { useTranslations } from "next-intl";
 
 const supabase = createClient();
-
-const formSchema = z.object({
-  name: z.string().min(1, "Championship name is required"),
-  default_match_format: z.string().min(1, "Match format is required"),
-});
 
 type QuickCreateChampionshipDialogProps = {
   open: boolean;
@@ -48,10 +44,17 @@ export function QuickCreateChampionshipDialog({
   onSuccess,
   defaultName,
 }: QuickCreateChampionshipDialogProps) {
+  const t = useTranslations('championships');
+  const tc = useTranslations('common');
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMatchFormat, setSelectedMatchFormat] = useState<MatchFormat | null>(null);
   const championshipApi = useChampionshipApi();
+
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    default_match_format: z.string().min(1, t('validation.formatRequired')),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,7 +76,7 @@ export function QuickCreateChampionshipDialog({
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      if (!session) throw new Error(tc('errors.notAuthenticated'));
 
       const newChampionship: Omit<Championship, "match_formats"> = {
         id: crypto.randomUUID(),
@@ -93,8 +96,8 @@ export function QuickCreateChampionshipDialog({
       const createdChampionship = await championshipApi.createChampionship(newChampionship);
 
       toast({
-        title: "Championship created",
-        description: `${values.name} has been created. You can add more details later.`,
+        title: t('toast.created'),
+        description: t('toast.createdDesc', { name: values.name }),
       });
 
       form.reset();
@@ -104,8 +107,8 @@ export function QuickCreateChampionshipDialog({
     } catch (error) {
       console.error("Error creating championship:", error);
       toast({
-        title: "Error",
-        description: "Failed to create championship. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.createError'),
         variant: "destructive",
       });
     } finally {
@@ -123,9 +126,9 @@ export function QuickCreateChampionshipDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Quick Create Championship</DialogTitle>
+          <DialogTitle>{t('quickCreate.title')}</DialogTitle>
           <DialogDescription>
-            Create a new championship with minimal details. Defaults: type &quot;Other&quot;, gender &quot;Mixte&quot;, age category &quot;Senior&quot;.
+            {t('quickCreate.description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -135,10 +138,10 @@ export function QuickCreateChampionshipDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Championship Name</FormLabel>
+                  <FormLabel>{t('form.name')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter championship name"
+                      placeholder={t('form.namePlaceholder')}
                       {...field}
                       disabled={isLoading}
                     />
@@ -152,7 +155,7 @@ export function QuickCreateChampionshipDialog({
               name="default_match_format"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Match Format</FormLabel>
+                  <FormLabel>{t('form.format')}</FormLabel>
                   <FormControl>
                     <MatchFormatSelect
                       value={selectedMatchFormat}
@@ -175,16 +178,16 @@ export function QuickCreateChampionshipDialog({
                 onClick={handleClose}
                 disabled={isLoading}
               >
-                Cancel
+                {tc('actions.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <LoadingSpinner size="sm" className="mr-2" />
-                    Creating...
+                    {t('quickCreate.creating')}
                   </>
                 ) : (
-                  "Create Championship"
+                  t('form.createChampionship')
                 )}
               </Button>
             </div>

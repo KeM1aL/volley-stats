@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { ScoreBoard } from "@/components/matches/live/score-board";
@@ -65,6 +66,7 @@ const initialMatchState: MatchState = {
 };
 
 export default function LiveMatchPage() {
+  const t = useTranslations("matches");
   const { id: matchId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const { isOnline, wasOffline } = useOnlineStatus();
@@ -84,9 +86,9 @@ export default function LiveMatchPage() {
   const { history, canUndo, canRedo } = useCommandHistory();
 
   const LOADING_STEPS = [
-    { label: "Syncing match data", description: "Ensuring you have the latest data" },
-    { label: "Loading match format", description: "Getting match rules" },
-    { label: "Loading teams", description: "Fetching team information" },
+    { label: t("live.syncingMatchData"), description: t("live.ensuringLatestData") },
+    { label: t("live.loadingMatchFormat"), description: t("live.gettingMatchRules") },
+    { label: t("live.loadingTeams"), description: t("live.fetchingTeamInfo") },
   ];
 
   // Sidebar and panel state
@@ -104,7 +106,7 @@ export default function LiveMatchPage() {
       setIsLoading(true);
       const teamId = searchParams.get("team");
       if (!teamId) {
-        throw new Error("Please select your managed team");
+        throw new Error(t("errors.selectTeam"));
       }
 
       setLoadingStep(0);
@@ -112,22 +114,22 @@ export default function LiveMatchPage() {
         const synced = await db?.syncManager.syncMatch(matchId);
         if (synced) {
           toast({
-            title: "Ready for offline",
-            description: "Match data is synced. You can now go offline if needed.",
+            title: t("live.readyForOffline"),
+            description: t("live.readyForOfflineDesc"),
           });
         } else {
           toast({
             variant: "default",
-            title: "Sync timeout",
-            description: "Sync is still in progress, but you can proceed with available data.",
+            title: t("live.syncTimeout"),
+            description: t("live.syncTimeoutDesc"),
           });
         }
       } catch (e) {
         console.error("Sync failed", e);
         toast({
           variant: "destructive",
-          title: "Sync Warning",
-          description: "Failed to sync match data. You may proceed but some data might be missing.",
+          title: t("live.syncWarning"),
+          description: t("live.syncWarningDesc"),
         });
       }
 
@@ -145,7 +147,7 @@ export default function LiveMatchPage() {
       ]);
 
       if (!matchDoc) {
-        throw new Error("Match not found");
+        throw new Error(t("live.matchNotFound"));
       }
 
       const match = matchDoc.toMutableJSON() as Match;
@@ -153,7 +155,7 @@ export default function LiveMatchPage() {
         .findOne(match.match_format_id)
         .exec();
       if (!formatDoc) {
-        throw new Error("Match format not found");
+        throw new Error(t("live.loadingMatchFormat"));
       }
       const format = formatDoc.toMutableJSON();
       match.match_formats = format as MatchFormat;
@@ -163,12 +165,12 @@ export default function LiveMatchPage() {
         .exec();
 
       if (!teamDocs || teamDocs.size !== 2) {
-        throw new Error("Teams not found");
+        throw new Error(t("errors.teamsNotFound"));
       }
 
       const teams = Array.from(teamDocs.values()).map((doc) => doc.toJSON());
       if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
-        throw new Error("Managed Team not found");
+        throw new Error(t("errors.managedTeamNotFound"));
       }
       setHomeTeam(teams[0]);
       setAwayTeam(teams[1]);
@@ -271,15 +273,15 @@ export default function LiveMatchPage() {
       console.error("Failed to load match data:", error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("live.failedLoadMatchData"),
         description:
-          error instanceof Error ? error.message : "Failed to load match data",
+          error instanceof Error ? error.message : t("live.failedLoadMatchData"),
       });
       router.push("/matches");
     } finally {
       setIsLoading(false);
     }
-  }, [db, matchId, router]);
+  }, [db, matchId, router, t]);
 
   useEffect(() => {
     loadMatchData();
@@ -297,12 +299,12 @@ export default function LiveMatchPage() {
         console.error("Failed to complete set setup:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to complete set setup",
+          title: t("live.failedCompleteSetSetup"),
+          description: t("live.failedCompleteSetSetup"),
         });
       }
     },
-    [db, matchState, history]
+    [db, matchState, history, t]
   );
 
   const onSubstitutionRecorded = useCallback(
@@ -319,22 +321,22 @@ export default function LiveMatchPage() {
         const playerIn = teamPlayerById.get(substitution.player_in_id);
 
         toast({
-          title: "Substitution recorded",
+          title: t("live.substitution"),
           description:
             playerOut && playerIn
               ? `#${playerOut.number} ${playerOut.name} replaced by #${playerIn.number} ${playerIn.name} at position ${substitution.position}`
-              : "Substitution recorded successfully",
+              : t("matches.toast.substitutionRecordedDesc"),
         });
       } catch (error) {
         console.error("Failed to record substitution:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to record substitution",
+          title: t("live.failedRecordSubstitution"),
+          description: t("live.failedRecordSubstitution"),
         });
       }
     },
-    [db, matchState, history, teamPlayerById]
+    [db, matchState, history, teamPlayerById, t]
   );
 
   const onPlayerStatRecorded = useCallback(
@@ -352,12 +354,12 @@ export default function LiveMatchPage() {
         console.error("Failed to record stat:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to record stat",
+          title: t("live.failedRecordStat"),
+          description: t("live.failedRecordStat"),
         });
       }
     },
-    [db, matchState, history]
+    [db, matchState, history, t]
   );
 
   const onPointRecorded = useCallback(
@@ -377,19 +379,19 @@ export default function LiveMatchPage() {
         console.error("Failed to record point:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to record point",
+          title: t("live.failedRecordPoint"),
+          description: t("live.failedRecordPoint"),
         });
       }
     },
-    [db, matchState, managedTeam, history]
+    [db, matchState, managedTeam, history, t]
   );
 
   const onMatchCompleted = () => {
     if (isOnline) {
       toast({
-        title: "Match Finished",
-        description: "Let's go to the stats !",
+        title: t("live.matchFinished"),
+        description: t("live.matchFinished"),
       });
       // const searchParams = new URLSearchParams();
       // searchParams.set("team", managedTeam!.id);
@@ -398,8 +400,8 @@ export default function LiveMatchPage() {
       // );
     } else {
       toast({
-        title: "Match Finished",
-        description: "You must be online to view the stats",
+        title: t("live.matchFinished"),
+        description: t("live.mustBeOnlineToViewStats"),
       });
     }
   };
@@ -410,15 +412,15 @@ export default function LiveMatchPage() {
       setMatchState(state);
 
       toast({
-        title: "Action undone",
-        description: "The last action has been undone",
+        title: t("live.actionUndone"),
+        description: t("live.lastActionUndone"),
       });
     } catch (error) {
       console.error("Failed to undo action:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to undo action",
+        title: t("live.failedUndoAction"),
+        description: t("live.failedUndoAction"),
       });
     }
   };
@@ -469,7 +471,7 @@ export default function LiveMatchPage() {
   }
 
   if (!matchState.match || !homeTeam || !awayTeam) {
-    return <div>Match not found</div>;
+    return <div>{t("live.matchNotFound")}</div>;
   }
 
   if (matchState.match.status === "completed") {
@@ -506,7 +508,7 @@ export default function LiveMatchPage() {
                     disabled={!isOnline}
                   >
                     <BarChart3 className="h-4 w-4 mr-2" />
-                    View Detailed Stats
+                    {t("stats.title")}
                   </Button>
                 </span>
               </TooltipTrigger>
@@ -514,7 +516,7 @@ export default function LiveMatchPage() {
                 <TooltipContent>
                   <div className="flex items-center gap-2">
                     <WifiOff className="h-4 w-4" />
-                    <span>You need an internet connection to view detailed stats</span>
+                    <span>{t("live.needInternetForStats")}</span>
                   </div>
                 </TooltipContent>
               )}
@@ -722,7 +724,7 @@ export default function LiveMatchPage() {
                 <SheetContent
                   side="right"
                   className="w-[70%] overflow-hidden flex flex-col"
-                  title="Match panel"
+                  title={t("live.matchPanel")}
                 >
                   <div className="flex-1 overflow-y-auto live-match-scroll">
                     {renderPanelContent()}
@@ -755,7 +757,7 @@ export default function LiveMatchPage() {
                 <SheetContent
                   side="right"
                   className="w-[85%] overflow-hidden flex flex-col"
-                  title="Match panel"
+                  title={t("live.matchPanel")}
                 >
                   <div className="flex-1 overflow-y-auto live-match-scroll">
                     {renderPanelContent()}

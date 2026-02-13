@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Clock, RefreshCw, MessageSquare } from "lucide-react";
@@ -42,6 +43,7 @@ export function QuickEventButtons({
   onSubstitutionRecorded,
   onEventCreated,
 }: QuickEventButtonsProps) {
+  const t = useTranslations("matches");
   const { localDb: db } = useLocalDb();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null);
@@ -65,13 +67,13 @@ export function QuickEventButtons({
   const getDialogTitle = () => {
     switch (selectedEventType) {
       case "timeout":
-        return "Add Timeout";
+        return t("events.addTimeout");
       case "substitution":
-        return "Add Substitution";
+        return t("events.addSubstitution");
       case "comment":
-        return "Add Comment";
+        return t("events.addComment");
       default:
-        return "Add Event";
+        return t("events.addEvent");
     }
   };
 
@@ -103,7 +105,7 @@ export function QuickEventButtons({
           className="flex items-center gap-2"
         >
           <Clock className="h-4 w-4" />
-          <span>Timeout</span>
+          <span>{t("live.timeout")}</span>
         </Button>
 
         <Button
@@ -114,7 +116,7 @@ export function QuickEventButtons({
           className="flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
-          <span>Substitution</span>
+          <span>{t("live.substitution")}</span>
         </Button>
 
         <Button
@@ -125,7 +127,7 @@ export function QuickEventButtons({
           className="flex items-center gap-2"
         >
           <MessageSquare className="h-4 w-4" />
-          <span>Comment</span>
+          <span>{t("live.comment")}</span>
         </Button>
       </div>
 

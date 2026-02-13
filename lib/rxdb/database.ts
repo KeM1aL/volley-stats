@@ -92,7 +92,8 @@ export function getStorage(): RxStorage<any, any> {
   } else if (storageKey === 'dexie') {
     return getRxStorageDexie();
   } else {
-    throw new Error('storage key not defined ' + storageKey);
+    // Error identifier maps to translation key: errors.database.storageKeyNotDefined
+    throw new Error('storageKeyNotDefined');
   }
 }
 

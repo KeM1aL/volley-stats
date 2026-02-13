@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { StatResult } from "@/lib/enums";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,14 @@ export function StatButton({
   className,
   isLandscape = false,
 }: StatButtonProps) {
+  const t = useTranslations("matches");
+  const resultLabel: Record<StatResult, string> = {
+    [StatResult.SUCCESS]: t("stats.statResults.success"),
+    [StatResult.ERROR]: t("stats.statResults.error"),
+    [StatResult.GOOD]: t("stats.statResults.good"),
+    [StatResult.BAD]: t("stats.statResults.bad"),
+  };
+
   // Landscape compact mode
   if (isLandscape) {
     return (
@@ -48,7 +57,7 @@ export function StatButton({
           <LoadingSpinner size="sm" className="text-white" />
         ) : (
           <span>
-            {result.charAt(0).toUpperCase() + result.slice(1)}
+            {resultLabel[result]}
             {result === StatResult.SUCCESS && " +1"}
             {result === StatResult.ERROR && " -1"}
           </span>
@@ -66,7 +75,7 @@ export function StatButton({
       }}
       disabled={disabled || isLoading}
       className={cn(
-        "h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg font-semibold transition-transform active:scale-95",
+        "h-12 sm:h-14 text-sm sm:text-base md:text-md font-semibold transition-transform active:scale-95",
         variants[result],
         className
       )}
@@ -76,7 +85,7 @@ export function StatButton({
       ) : (
         <div>
           <div className="text-xs sm:text-sm md:text-md font-medium">
-            {result.charAt(0).toUpperCase() + result.slice(1)}
+            {resultLabel[result]}
           </div>
           {(() => {
             switch (result) {
