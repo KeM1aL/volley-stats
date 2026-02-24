@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@/contexts/auth-context";
-import { Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranslations } from "next-intl";
 
 export function AuthForm() {
@@ -165,7 +165,7 @@ export function AuthForm() {
         )}
         <div className="flex flex-col gap-2">
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <LoadingSpinner size="sm" className="mr-2" />}
             {isForgotPassword ? t('sendResetLink') : isSignUp ? t('signUp') : t('signIn')}
           </Button>
           {isForgotPassword ? (
