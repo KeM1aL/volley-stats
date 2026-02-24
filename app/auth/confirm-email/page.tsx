@@ -12,9 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, ArrowLeft } from "lucide-react";
+import { Mail, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function ConfirmEmailPage() {
   const t = useTranslations('auth');
@@ -136,7 +137,7 @@ export default function ConfirmEmailPage() {
             >
               {isResending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <LoadingSpinner size="sm" className="mr-2" />
                   {t('confirmEmail.resending')}
                 </>
               ) : countdown > 0 ? (
