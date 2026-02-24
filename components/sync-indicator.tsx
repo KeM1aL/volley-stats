@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Wifi, WifiOff, RefreshCw } from "lucide-react";
+import { Wifi, WifiOff } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranslations } from "next-intl";
 
 export function SyncIndicator() {
@@ -70,7 +71,7 @@ export function SyncIndicator() {
         {isOnline ? (
           isSyncing ? (
             <>
-              <RefreshCw className="h-4 w-4 animate-spin" />
+              <LoadingSpinner size="sm" />
               <span className="text-sm font-medium">{t("ui.syncing")}</span>
             </>
           ) : (
