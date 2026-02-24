@@ -18,7 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   PasswordStrengthIndicator,
   calculatePasswordStrength,
@@ -115,7 +116,7 @@ export default function ResetPasswordPage() {
       <div className="container max-w-md mx-auto mt-20">
         <Card>
           <CardContent className="p-6 flex justify-center">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <LoadingSpinner />
           </CardContent>
         </Card>
       </div>
@@ -205,7 +206,7 @@ export default function ResetPasswordPage() {
                 )}
               />
               <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading && <LoadingSpinner size="sm" className="mr-2" />}
                 {t('resetPassword.resetPassword')}
               </Button>
             </form>
