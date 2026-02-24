@@ -5,8 +5,8 @@ import { useTranslations } from "next-intl";
 import { useLocalDatabase } from "@/hooks/use-local-database";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
+import { LoadingSpinner } from "../ui/loading-spinner";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 
 const LocalDatabaseContext = createContext<ReturnType<
@@ -82,7 +82,7 @@ export function LocalDatabaseProvider({
   if (database.isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
