@@ -2,10 +2,11 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { Loader2, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 import { uploadAvatar, deleteAvatar } from "@/lib/supabase/storage";
 
@@ -86,7 +87,7 @@ export function AvatarUpload({
         <input {...getInputProps()} />
         {isUploading ? (
           <div className="flex flex-col items-center justify-center py-4">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <LoadingSpinner size="lg" className="text-muted-foreground" />
             <p className="mt-2 text-sm text-muted-foreground">{t("form.uploading")}</p>
           </div>
         ) : previewUrl ? (
