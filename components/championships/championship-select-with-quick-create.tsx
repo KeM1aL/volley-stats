@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Championship } from "@/lib/types";
 import AsyncSelect from "react-select/async";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
@@ -77,6 +78,7 @@ export function ChampionshipSelectWithQuickCreate({
   isClearable = false,
   disabled = false,
 }: ChampionshipSelectWithQuickCreateProps) {
+  const t = useTranslations("common");
   const championshipApi = useChampionshipApi();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -121,7 +123,7 @@ export function ChampionshipSelectWithQuickCreate({
         formatOptionLabel={formatOptionLabel}
         isClearable={isClearable}
         isDisabled={disabled}
-        placeholder="Select a championship..."
+        placeholder={t("ui.selectChampionship")}
         styles={{
           option: (provided, state) => ({
             ...provided,

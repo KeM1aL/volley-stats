@@ -9,10 +9,12 @@ export async function importFfvbMatches(seasonId: number, championshipId: number
   ]);
   let championship = championships?.[0];
   if (!championship) {
-    throw new Error("Championship not found");
+    // Error identifier maps to translation key: errors.importer.championshipNotFound
+    throw new Error("championshipNotFound");
   }
   if(!championship.ext_code) {
-    throw new Error("Championship reference not found");
+    // Error identifier maps to translation key: errors.importer.championshipReferenceNotFound
+    throw new Error("championshipReferenceNotFound");
   }
 
   const seasons = await api.seasons.getSeasons([
@@ -21,7 +23,8 @@ export async function importFfvbMatches(seasonId: number, championshipId: number
   const season = seasons?.[0];
 
   if (!season) {
-    throw new Error("Season not found");
+    // Error identifier maps to translation key: errors.importer.seasonNotFound
+    throw new Error("seasonNotFound");
   }
 
 

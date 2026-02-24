@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Season } from "@/lib/types";
 import AsyncSelect from "react-select/async";
 import { useSeasonApi } from "@/hooks/use-season-api";
@@ -41,6 +42,7 @@ export function SeasonSelect({
   isClearable = true,
   disabled = false,
 }: SeasonSelectProps) {
+  const t = useTranslations("teams");
   const seasonApi = useSeasonApi();
 
   return (
@@ -54,7 +56,7 @@ export function SeasonSelect({
       getOptionLabel={(option) => option.name}
       isClearable={isClearable}
       isDisabled={disabled}
-      placeholder="Select a season..."
+      placeholder={t("seasonSelectPlaceholder")}
     />
   );
 }

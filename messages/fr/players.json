@@ -1,0 +1,64 @@
+{
+  "title": "Joueurs",
+  "newPlayer": "Nouveau joueur",
+  "editPlayer": "Modifier le joueur",
+  "deletePlayer": "Supprimer le joueur",
+  "dialog": {
+    "newPlayer": "Nouveau joueur",
+    "editPlayer": "Modifier le joueur"
+  },
+  "table": {
+    "avatar": "Avatar",
+    "name": "Nom",
+    "position": "Poste",
+    "role": "Rôle",
+    "actions": "Actions"
+  },
+  "form": {
+    "avatar": "Avatar",
+    "name": "Nom",
+    "namePlaceholder": "Entrez le nom du joueur",
+    "role": "Rôle",
+    "rolePlaceholder": "Sélectionnez un rôle",
+    "number": "Numéro",
+    "numberPlaceholder": "Entrez le numéro",
+    "position": "Poste",
+    "positionPlaceholder": "Sélectionnez un poste",
+    "selectRole": "Sélectionnez un rôle",
+    "selectPosition": "Sélectionnez un poste",
+    "saveChanges": "Enregistrer les Modifications",
+    "createPlayer": "Créer un Joueur",
+    "uploading": "Importation..."
+  },
+  "positions": {
+    "setter": "Passeur",
+    "opposite": "Pointu",
+    "outsideHitter": "Réceptionneur-Attaquant",
+    "middleHitter": "Central",
+    "libero": "Libéro"
+  },
+  "roles": {
+    "player": "Joueur",
+    "captain": "Capitaine",
+    "coach": "Entraîneur"
+  },
+  "validation": {
+    "nameRequired": "Le nom du joueur est obligatoire",
+    "numberPositive": "Le numéro doit être positif",
+    "numberMax": "Le numéro doit être inférieur à 100"
+  },
+  "toast": {
+    "created": "Joueur créé",
+    "createdDesc": "Le joueur a été créé avec succès.",
+    "updated": "Joueur mis à jour",
+    "updatedDesc": "Le joueur a été mis à jour avec succès.",
+    "deleted": "Joueur supprimé",
+    "deletedDesc": "Le joueur a été supprimé avec succès.",
+    "error": "Erreur",
+    "createError": "Échec de la création du joueur. Veuillez réessayer.",
+    "updateError": "Échec de la mise à jour du joueur. Veuillez réessayer.",
+    "deleteError": "Échec de la suppression du joueur. Veuillez réessayer."
+  },
+  "confirmDelete": "Êtes-vous sûr ?",
+  "confirmDeleteDesc": "Cette action ne peut pas être annulée. Cela supprimera définitivement le joueur et toutes les statistiques associées."
+}

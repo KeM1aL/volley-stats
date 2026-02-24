@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Check, Circle, X } from "lucide-react";
@@ -25,6 +26,8 @@ export function PdfLoadingOverlay({
   currentStepIndex,
   onCancel,
 }: PdfLoadingOverlayProps) {
+  const t = useTranslations("common.ui");
+
   if (!isVisible) return null;
 
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
@@ -35,9 +38,9 @@ export function PdfLoadingOverlay({
         <div className="space-y-6">
           {/* Header */}
           <div className="text-center">
-            <h2 className="text-lg font-semibold">Generating PDF Report</h2>
+            <h2 className="text-lg font-semibold">{t("generatingPdfReport")}</h2>
             <p className="text-sm text-muted-foreground">
-              Please wait while your match statistics are compiled
+              {t("pleaseWaitWhileCompiling")}
             </p>
           </div>
 
@@ -83,11 +86,11 @@ export function PdfLoadingOverlay({
           {/* Progress Text and Cancel Button */}
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Step {currentStepIndex + 1} of {steps.length}
+              {t("step")} {currentStepIndex + 1} {t("of")} {steps.length}
             </p>
             <Button variant="outline" size="sm" onClick={onCancel}>
               <X className="h-4 w-4 mr-1" />
-              Cancel
+              {t("cancel")}
             </Button>
           </div>
         </div>

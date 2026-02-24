@@ -1,0 +1,120 @@
+{
+  "title": "Impostazioni",
+  "description": "Gestisci le tue preferenze e notifiche",
+  "account": {
+    "title": "Sicurezza account",
+    "description": "Gestisci password e indirizzo email",
+    "changePassword": "Cambia password",
+    "changePasswordDesc": "Aggiorna la tua password per mantenere sicuro il tuo account",
+    "newPassword": "Nuova password",
+    "confirmPassword": "Conferma nuova password",
+    "updatePassword": "Aggiorna password",
+    "updating": "Aggiornamento...",
+    "passwordUpdated": "Password aggiornata",
+    "passwordUpdatedDesc": "La tua password è stata modificata con successo.",
+    "emailAddress": "Indirizzo email",
+    "emailAddressDesc": "Aggiorna il tuo indirizzo email",
+    "currentEmail": "Email attuale",
+    "newEmail": "Nuovo indirizzo email",
+    "updateEmail": "Aggiorna email",
+    "sending": "Invio...",
+    "confirmEmailsSent": "Email di conferma inviate",
+    "confirmEmailsDesc": "Controlla sia la tua vecchia che la nuova email per confermare la modifica.",
+    "emailChangePending": "Cambio email in sospeso - Controlla {oldEmail} e {newEmail} per confermare.",
+    "confirmEmailDesc": "Dovrai confermare questa modifica su entrambi i tuoi indirizzi email vecchio e nuovo"
+  },
+  "preferences": {
+    "title": "Preferenze",
+    "description": "Seleziona le tue preferenze",
+    "theme": "Tema",
+    "themeLight": "Chiaro",
+    "themeDark": "Scuro",
+    "themeSystem": "Sistema",
+    "language": "Lingua",
+    "languagePlaceholder": "Seleziona una lingua",
+    "notifications": "Notifiche",
+    "matchReminders": "Promemoria partite",
+    "scoreUpdates": "Aggiornamenti punteggi"
+  },
+  "validation": {
+    "passwordsMatch": "Le password non corrispondono",
+    "passwordTooWeak": "La password è troppo debole"
+  },
+  "languages": {
+    "en": "English",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português"
+  },
+  "localData": {
+    "title": "Dati locali",
+    "syncMatch": "Sincronizza partita",
+    "matchId": "ID partita",
+    "synchronize": "Sincronizza",
+    "matchSynchronization": "Sincronizzazione partite",
+    "matchesDataSynchronized": "I dati della partita sono stati sincronizzati",
+    "allDataSynchronized": "Tutti i dati sono stati sincronizzati",
+    "clearLocalStats": "Cancella statistiche locali",
+    "clearLocalStatsDesc": "Cancella la cache delle statistiche locali",
+    "clearLocalMatches": "Cancella partite locali",
+    "clearLocalMatchesDesc": "Cancella la cache delle partite locali",
+    "clearLocalTeams": "Cancella squadre locali",
+    "clearLocalTeamsDesc": "Cancella la cache delle squadre locali",
+    "clearAll": "Cancella tutto",
+    "deleting": "Eliminazione...",
+    "clear": "Cancella"
+  },
+  "actions": {
+    "resetToDefaults": "Ripristina predefiniti",
+    "saveChanges": "Salva modifiche",
+    "saving": "Salvataggio..."
+  },
+  "toast": {
+    "saved": "Impostazioni salvate",
+    "savedDesc": "Le tue preferenze sono state aggiornate.",
+    "reset": "Impostazioni ripristinate",
+    "resetDesc": "Le tue preferenze sono state ripristinate ai valori predefiniti.",
+    "cacheCleared": "Cache cancellata",
+    "cacheDesc": "La tua cache locale è stata cancellata",
+    "error": "Errore",
+    "failedSaveSettings": "Impossibile salvare le impostazioni",
+    "failedChangePassword": "Impossibile cambiare la password",
+    "failedChangeEmail": "Impossibile cambiare l'email",
+    "favoritesUpdated": "Preferiti aggiornati",
+    "favoritesUpdatedDesc": "I tuoi preferiti sono stati aggiornati.",
+    "favoritesUpdateError": "Impossibile aggiornare i preferiti"
+  },
+  "favorites": {
+    "title": "Preferiti",
+    "description": "Imposta la tua squadra o club preferito per un filtro rapido sulle pagine di partite e squadre",
+    "favoriteTeam": "Squadra preferita",
+    "favoriteClub": "Club preferito",
+    "selectTeam": "Seleziona squadra",
+    "selectClub": "Seleziona club",
+    "favoriteType": "Tipo preferito",
+    "none": "Nessuno (nessun filtro predefinito)",
+    "noMemberships": "Devi essere membro di almeno una squadra o un club per impostare un preferito. Iscriviti a una squadra o a un club prima.",
+    "noAccess": "Avviso: Non hai più accesso a questo {type}",
+    "saveFavorite": "Salva preferito",
+    "favoritesSaved": "Il tuo preferito è stato salvato.",
+    "validation": {
+      "noTeamAccess": "Non hai accesso alla squadra selezionata",
+      "noClubAccess": "Non hai accesso al club selezionato",
+      "selectTeam": "Per favore seleziona una squadra",
+      "selectClub": "Per favore seleziona un club"
+    }
+  },
+  "sync": {
+    "title": "Sincronizzazione partite",
+    "matchSynced": "I dati della partita sono stati sincronizzati",
+    "dataToSync": "{name} {count} dati da sincronizzare",
+    "dataSynced": "{name} {index}/{chunkSize} dati sono stati sincronizzati",
+    "allDataSynced": "Tutti i dati sono stati sincronizzati",
+    "error": "Impossibile sincronizzare la partita. Riprovare.",
+    "failedUpdateLanguage": "Impossibile aggiornare la lingua"
+  },
+  "errors": {
+    "generic": "Errore"
+  }
+}

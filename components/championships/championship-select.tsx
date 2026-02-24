@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Championship } from "@/lib/types";
 import AsyncSelect from "react-select/async";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
@@ -37,6 +38,7 @@ export function ChampionshipSelect({
   onChange,
   isClearable = false,
 }: ChampionshipSelectProps) {
+  const t = useTranslations("common");
   const championshipApi = useChampionshipApi();
 
   return (
@@ -49,7 +51,7 @@ export function ChampionshipSelect({
       getOptionValue={(option) => option.id.toString()}
       getOptionLabel={(option) => option.name}
       isClearable={isClearable}
-      placeholder="Select a Championship ..."
+      placeholder={t("ui.selectChampionship")}
     />
   );
 };

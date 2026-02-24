@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { uploadAvatar, deleteAvatar } from "@/lib/supabase/storage";
@@ -21,6 +22,8 @@ export function AvatarUpload({
   onAvatarChange,
   className,
 }: AvatarUploadProps) {
+  const t = useTranslations("players");
+  const tCommon = useTranslations("common");
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentAvatar || null);
 
@@ -84,13 +87,13 @@ export function AvatarUpload({
         {isUploading ? (
           <div className="flex flex-col items-center justify-center py-4">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">Uploading...</p>
+            <p className="mt-2 text-sm text-muted-foreground">{t("form.uploading")}</p>
           </div>
         ) : previewUrl ? (
           <div className="relative aspect-square w-32 mx-auto">
             <Image
               src={previewUrl}
-              alt="Avatar preview"
+              alt={tCommon("ui.avatarPreview")}
               fill
               className="rounded-lg object-cover"
             />

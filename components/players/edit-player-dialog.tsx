@@ -14,6 +14,7 @@ import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";
 import { update } from "rxdb/plugins/update";
 import { useTeamMembersApi } from "@/hooks/use-team-members-api";
+import { useTranslations } from "next-intl";
 
 type EditPlayerDialogProps = {
   player: TeamMember | null;
@@ -26,6 +27,7 @@ export function EditPlayerDialog({
   onClose,
   onPlayerUpdated,
 }: EditPlayerDialogProps) {
+  const t = useTranslations('players');
   const { toast } = useToast();
   const teamMemberApi = useTeamMembersApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,8 +51,8 @@ export function EditPlayerDialog({
       onPlayerUpdated(playerUpdated);
 
       toast({
-        title: "Player updated",
-        description: "The player has been successfully updated.",
+        title: t('toast.updated'),
+        description: t('toast.updatedDesc'),
       });
 
       onClose();
@@ -58,8 +60,8 @@ export function EditPlayerDialog({
       console.error("Failed to update player:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to update player. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.updateError'),
       });
     } finally {
       setIsSubmitting(false);
@@ -70,12 +72,12 @@ export function EditPlayerDialog({
     <Dialog open={!!player} onOpenChange={() => onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Player</DialogTitle>
+          <DialogTitle>{t('dialog.editPlayer')}</DialogTitle>
         </DialogHeader>
         <PlayerForm
           defaultValues={player || undefined}
           onSubmit={onSubmit}
-          submitLabel="Save Changes"
+          submitLabel={t('form.saveChanges')}
           isSubmitting={isSubmitting}
           onCancel={onClose}
         />

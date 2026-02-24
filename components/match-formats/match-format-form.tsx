@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMatchFormatApi } from "@/hooks/use-match-format-api";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { MatchFormat } from "@/lib/types";
+import { useTranslations } from "next-intl";
 
 const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
@@ -55,6 +56,9 @@ type MatchFormatFormProps = {
 };
 
 export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
+  const t = useTranslations("matchFormats");
+  const te = useTranslations("enums");
+  const tc = useTranslations("commons");
   const { toast } = useToast();
   const matchFormatApi = useMatchFormatApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,8 +87,8 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
       });
 
       toast({
-        title: "Match format created",
-        description: "Your new match format has been created successfully.",
+        title: t("toast.created"),
+        description: t("toast.createdDesc"),
       });
 
       if (onSuccess) {
@@ -94,8 +98,8 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
       console.error("Failed to create match format:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to create match format. Please try again.",
+        title: t("toast.error"),
+        description: t("toast.createError"),
       });
     } finally {
       setIsSubmitting(false);
@@ -110,10 +114,10 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>{t("form.description")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., Standard 6x6 - Best of 5"
+                  placeholder={t("form.descriptionPlaceholder")}
                   disabled={isSubmitting}
                   {...field}
                 />
@@ -128,7 +132,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
           name="format"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Volleyball Format</FormLabel>
+              <FormLabel>{t("form.format")}</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
@@ -136,14 +140,14 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select format" />
+                    <SelectValue placeholder={t("form.selectFormat")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="2x2">2x2</SelectItem>
-                  <SelectItem value="3x3">3x3</SelectItem>
-                  <SelectItem value="4x4">4x4</SelectItem>
-                  <SelectItem value="6x6">6x6</SelectItem>
+                  <SelectItem value="2x2">{te("championshipFormat.2x2")}</SelectItem>
+                  <SelectItem value="3x3">{te("championshipFormat.3x3")}</SelectItem>
+                  <SelectItem value="4x4">{te("championshipFormat.4x4")}</SelectItem>
+                  <SelectItem value="6x6">{te("championshipFormat.6x6")}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -157,7 +161,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
             name="sets_to_win"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Sets to Win</FormLabel>
+                <FormLabel>{t("form.setsToWin")}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -177,7 +181,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
             name="point_by_set"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Points per Set</FormLabel>
+                <FormLabel>{t("form.pointsPerSet")}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -198,7 +202,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
           name="point_final_set"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Points in Final Set</FormLabel>
+              <FormLabel>{t("form.pointsFinalSet")}</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -226,9 +230,9 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Enable Rotation</FormLabel>
+                <FormLabel>{t("form.enableRotation")}</FormLabel>
                 <FormDescription>
-                  Players rotate positions after winning serve
+                  {t("form.enableRotationDesc")}
                 </FormDescription>
               </div>
             </FormItem>
@@ -248,9 +252,9 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Decisive Point</FormLabel>
+                <FormLabel>{t("form.decisivePoint")}</FormLabel>
                 <FormDescription>
-                  Win by 2 points or play to decisive point
+                  {t("form.decisivePointDesc")}
                 </FormDescription>
               </div>
             </FormItem>
@@ -265,17 +269,17 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
               onClick={onCancel}
               disabled={isSubmitting}
             >
-              Cancel
+              {tc("actions.cancel")}
             </Button>
           )}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
-                Creating...
+                {t("form.creating")}
               </>
             ) : (
-              "Create Match Format"
+              t("form.createMatchFormat")
             )}
           </Button>
         </div>

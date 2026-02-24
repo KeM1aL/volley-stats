@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -34,10 +35,12 @@ export function LiveMatchSidebar({
   isMobile = false,
   isLandscape = false,
 }: LiveMatchSidebarProps) {
+  const t = useTranslations("stats.sidebar");
+
   const menuItems = [
     {
       id: "stats",
-      title: "Stats",
+      title: t("stats"),
       icon: ChartBar,
       onClick: () => {
         if (activePanel === "stats") {
@@ -53,7 +56,7 @@ export function LiveMatchSidebar({
     },
     {
       id: "events",
-      title: "Events",
+      title: t("events"),
       icon: CalendarClock,
       onClick: () => {
         if (activePanel === "events") {
@@ -69,7 +72,7 @@ export function LiveMatchSidebar({
     },
     {
       id: "points",
-      title: "Points",
+      title: t("points"),
       icon: Target,
       onClick: () => {
         if (activePanel === "points") {
@@ -85,7 +88,7 @@ export function LiveMatchSidebar({
     },
     {
       id: "court",
-      title: "Court",
+      title: t("court"),
       icon: Grid3x3,
       onClick: () => {
         if (activePanel === "court") {
@@ -108,6 +111,7 @@ export function LiveMatchSidebar({
         {menuItems.map((item) => (
           <Button
             key={item.id}
+            data-testid={`sidebar-btn-${item.id}`}
             variant={item.isActive ? "default" : "ghost"}
             size="icon"
             onClick={item.onClick}
@@ -131,6 +135,7 @@ export function LiveMatchSidebar({
         {menuItems.map((item) => (
           <Button
             key={item.id}
+            data-testid={`sidebar-btn-${item.id}`}
             variant={item.isActive ? "default" : "ghost"}
             size="icon"
             onClick={item.onClick}
@@ -165,7 +170,7 @@ export function LiveMatchSidebar({
               <ChevronRight className="h-4 w-4" />
             )}
             <span className="sr-only">
-              {navExpanded ? "Collapse" : "Expand"} navigation
+              {navExpanded ? t("collapse") : t("expand")} {t("navigation")}
             </span>
           </Button>
         </div>
@@ -176,6 +181,7 @@ export function LiveMatchSidebar({
         {menuItems.map((item) => (
           <Button
             key={item.id}
+            data-testid={`sidebar-btn-${item.id}`}
             variant={item.isActive ? "secondary" : "ghost"}
             onClick={item.onClick}
             className={cn(

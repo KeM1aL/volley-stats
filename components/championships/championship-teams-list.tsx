@@ -20,6 +20,7 @@ import {
 import { ChevronDown, Eye, Users } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslations } from "next-intl";
 
 type ChampionshipTeamsListProps = {
   teams: Team[];
@@ -32,6 +33,8 @@ export function ChampionshipTeamsList({
   isLoading,
   championshipId,
 }: ChampionshipTeamsListProps) {
+  const t = useTranslations("championships");
+  const tc = useTranslations("common");
   const [showTeams, setShowTeams] = useState(false);
   const { user } = useAuth();
 
@@ -57,7 +60,7 @@ export function ChampionshipTeamsList({
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-center text-muted-foreground">Loading teams...</p>
+          <p className="text-center text-muted-foreground">{t("teamsList.loading")}</p>
         </CardContent>
       </Card>
     );
@@ -68,10 +71,9 @@ export function ChampionshipTeamsList({
       <Card>
         <CardContent className="p-6">
           <p className="text-center text-muted-foreground">
-            No active teams in this championship yet. Assign teams to this
-            championship from the{" "}
-            <Link href="/teams" className="underline hover:text-primary">Teams</Link>{" "}
-            page.
+            {t("teamsList.noTeamsYet")} {" "}
+            <Link href="/teams" className="underline hover:text-primary">{t("teamsList.goTo")}</Link>{" "}
+            {t("teamsList.page")}.
           </p>
         </CardContent>
       </Card>
@@ -88,7 +90,7 @@ export function ChampionshipTeamsList({
                 showTeams ? "rotate-180" : ""
               }`}
             />
-            {showTeams ? "Hide" : "Show"} Teams List ({teams.length})
+            {showTeams ? t("teamsList.hide") : t("teamsList.show")} {t("teamsList.teamsList")} ({teams.length})
           </Button>
         </CollapsibleTrigger>
       </div>
@@ -99,9 +101,9 @@ export function ChampionshipTeamsList({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Team Name</TableHead>
-                  <TableHead>Club</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("table.teamName")}</TableHead>
+                  <TableHead>{t("table.club")}</TableHead>
+                  <TableHead className="text-right">{t("table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -109,21 +111,21 @@ export function ChampionshipTeamsList({
                   <TableRow key={team.id}>
                     <TableCell className="font-medium">{team.name}</TableCell>
                     <TableCell>
-                      {team.clubs?.name || <span className="text-muted-foreground italic">No club</span>}
+                      {team.clubs?.name || <span className="text-muted-foreground italic">{t("teamsList.noClub")}</span>}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/teams/${team.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
-                            View
+                            {tc("actions.view")}
                           </Link>
                         </Button>
                         {canManage(team) && (
                           <Button variant="ghost" size="sm" asChild>
                             <Link href={`/teams/${team.id}/players`}>
                               <Users className="h-4 w-4 mr-1" />
-                              Players
+                              {t("teamsList.players")}
                             </Link>
                           </Button>
                         )}

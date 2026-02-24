@@ -6,6 +6,7 @@ import AsyncSelect from "react-select/async";
 import { useMatchFormatApi } from "@/hooks/use-match-format-api";
 import { Filter } from "@/lib/api/types";
 import { NewMatchFormatDialog } from "./new-match-format-dialog";
+import { useTranslations } from "next-intl";
 
 type MatchFormatSelectProps = {
   value: MatchFormat | null;
@@ -23,6 +24,7 @@ const CREATE_NEW_OPTION_ID = "__create_new__";
 const loadOptions = async (
   inputValue: string,
   matchFormatApi: ReturnType<typeof useMatchFormatApi>,
+  createOptionLabel: string,
 ): Promise<MatchFormatOption[]> => {
   try {
     const filters: Filter[] = inputValue
@@ -40,7 +42,7 @@ const loadOptions = async (
     // Add "Create new" option at the beginning
     const createOption: MatchFormatOption = {
       id: CREATE_NEW_OPTION_ID,
-      description: "+ Create new match format...",
+      description: createOptionLabel,
       format: "6x6",
       sets_to_win: 0,
       rotation: false,
@@ -57,7 +59,7 @@ const loadOptions = async (
     console.error("Error fetching match formats", error);
     const createOption: MatchFormatOption = {
       id: CREATE_NEW_OPTION_ID,
-      description: "+ Create new match format...",
+      description: createOptionLabel,
       format: "6x6",
       sets_to_win: 0,
       rotation: false,
@@ -78,6 +80,7 @@ export function MatchFormatSelect({
   isClearable = false,
   disabled = false,
 }: MatchFormatSelectProps) {
+  const t = useTranslations("matchFormats");
   const matchFormatApi = useMatchFormatApi();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -110,7 +113,7 @@ export function MatchFormatSelect({
     <>
       <AsyncSelect<MatchFormatOption>
         cacheOptions
-        loadOptions={(inputValue) => loadOptions(inputValue, matchFormatApi)}
+        loadOptions={(inputValue) => loadOptions(inputValue, matchFormatApi, t("description"))}
         defaultOptions
         value={value}
         onChange={handleChange}
@@ -119,7 +122,7 @@ export function MatchFormatSelect({
         formatOptionLabel={formatOptionLabel}
         isClearable={isClearable}
         isDisabled={disabled}
-        placeholder="Select match format..."
+        placeholder={t("selectPlaceholder")}
         styles={{
           option: (provided, state) => ({
             ...provided,

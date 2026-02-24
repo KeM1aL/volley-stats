@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { PlayerForm } from "./player-form";
 import { useTeamMembersApi } from "@/hooks/use-team-members-api";
+import { useTranslations } from "next-intl";
 
 type NewPlayerDialogProps = {
   teamId: string;
@@ -27,6 +28,7 @@ export function NewPlayerDialog({
   onClose,
   onPlayerCreated,
 }: NewPlayerDialogProps) {
+  const t = useTranslations('players');
   const { toast } = useToast();
   const teamMemberApi = useTeamMembersApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,8 +53,8 @@ export function NewPlayerDialog({
       onPlayerCreated(player);
 
       toast({
-        title: "Player created",
-        description: "The player has been successfully created.",
+        title: t('toast.created'),
+        description: t('toast.createdDesc'),
       });
 
       onClose();
@@ -60,8 +62,8 @@ export function NewPlayerDialog({
       console.error("Failed to create player:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to create player. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.createError'),
       });
     } finally {
       setIsSubmitting(false);
@@ -72,11 +74,11 @@ export function NewPlayerDialog({
     <Dialog open={open} onOpenChange={() => onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New Player</DialogTitle>
+          <DialogTitle>{t('dialog.newPlayer')}</DialogTitle>
         </DialogHeader>
         <PlayerForm
           onSubmit={onSubmit}
-          submitLabel="Create Player"
+          submitLabel={t('form.createPlayer')}
           isSubmitting={isSubmitting}
           onCancel={onClose}
         />

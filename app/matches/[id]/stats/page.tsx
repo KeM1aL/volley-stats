@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,15 +32,8 @@ import {
   PdfGenerationStep,
 } from "@/components/ui/pdf-loading-overlay";
 
-const PDF_STEPS: PdfGenerationStep[] = [
-  { id: "overview", label: "Match Overview", status: "pending" },
-  { id: "scores", label: "Score Progression", status: "pending" },
-  { id: "sets", label: "Set Breakdown", status: "pending" },
-  { id: "players", label: "Player Performance", status: "pending" },
-  { id: "team", label: "Team Performance", status: "pending" },
-];
-
 export default function MatchStatsPage() {
+  const t = useTranslations("matches");
   const { id: matchId } = useParams();
   const { isOnline, wasOffline } = useOnlineStatus();
   const searchParams = useSearchParams();
@@ -54,7 +48,13 @@ export default function MatchStatsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-  const [pdfSteps, setPdfSteps] = useState<PdfGenerationStep[]>(PDF_STEPS);
+  const [pdfSteps, setPdfSteps] = useState<PdfGenerationStep[]>([
+    { id: "overview", label: t("stats.tabs.overview"), status: "pending" },
+    { id: "scores", label: t("stats.tabs.scores"), status: "pending" },
+    { id: "sets", label: t("stats.tabs.sets"), status: "pending" },
+    { id: "players", label: t("stats.tabs.players"), status: "pending" },
+    { id: "team", label: t("stats.tabs.team"), status: "pending" },
+  ]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -106,7 +106,7 @@ export default function MatchStatsPage() {
 
         const managedTeamParam = searchParams.get("team");
         if (!managedTeamParam) {
-          throw new Error("Please select your managed team");
+          throw new Error(t("errors.selectTeam"));
         }
 
         const teamId = searchParams.get("team");
@@ -115,7 +115,7 @@ export default function MatchStatsPage() {
           teamId !== matchData.home_team_id &&
           teamId !== matchData.away_team_id
         ) {
-          throw new Error("Managed Team not found");
+          throw new Error(t("errors.managedTeamNotFound"));
         }
 
         const playerIds =
@@ -144,8 +144,8 @@ export default function MatchStatsPage() {
         console.error("Failed to load match data:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to load match data",
+          title: t("toast.error"),
+          description: t("toast.loadError"),
         });
       } finally {
         setIsLoading(false);
@@ -185,7 +185,7 @@ export default function MatchStatsPage() {
             .exec(),
         ]);
         if (!matchDoc) {
-          throw new Error("Match not found");
+          throw new Error(t("live.matchNotFound"));
         }
         const match = matchDoc.toMutableJSON() as Match;
         const points = pointDocs.map((doc) => doc.toJSON()) as ScorePoint[];
@@ -199,13 +199,13 @@ export default function MatchStatsPage() {
 
         const managedTeamParam = searchParams.get("team");
         if (!managedTeamParam) {
-          throw new Error("Please select your managed team");
+          throw new Error(t("errors.selectTeam"));
         }
 
         const teamId = searchParams.get("team");
 
         if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
-          throw new Error("Managed Team not found");
+          throw new Error(t("errors.managedTeamNotFound"));
         }
 
         const playerIds =
@@ -228,7 +228,7 @@ export default function MatchStatsPage() {
           .exec();
 
         if (!teamDocs || teamDocs.size !== 2) {
-          throw new Error("Teams not found");
+          throw new Error(t("errors.teamsNotFound"));
         }
 
         const teams = Array.from(teamDocs.values()).map((doc) => doc.toJSON());
@@ -239,8 +239,8 @@ export default function MatchStatsPage() {
         console.error("Failed to load local match data:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to load local match data",
+          title: t("toast.error"),
+          description: t("toast.failedLoadLocalMatchData"),
         });
       } finally {
         setIsLoading(false);
@@ -252,7 +252,7 @@ export default function MatchStatsPage() {
     } else {
       loadLocalData();
     }
-  }, [db, matchId, isOnline]);
+  }, [db, matchId, isOnline, t]);
 
   const updateStepStatus = (
     stepId: string,
@@ -264,7 +264,9 @@ export default function MatchStatsPage() {
   };
 
   const resetSteps = () => {
-    setPdfSteps(PDF_STEPS.map((step) => ({ ...step, status: "pending" })));
+    setPdfSteps((prev) =>
+      prev.map((step) => ({ ...step, status: "pending" }))
+    );
     setCurrentStepIndex(0);
   };
 
@@ -274,8 +276,8 @@ export default function MatchStatsPage() {
     resetSteps();
     document.body.removeAttribute("data-pdf-export");
     toast({
-      title: "PDF Generation Cancelled",
-      description: "The PDF generation was cancelled.",
+      title: t("stats.pdfGenerationCancelled"),
+      description: t("pdf.cancelled"),
     });
   };
 
@@ -293,7 +295,7 @@ export default function MatchStatsPage() {
     const margin = 40;
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    let docTitle = "Match Statistics";
+    let docTitle = t("stats.matchStats");
     if (managedTeam && opponentTeam) {
       docTitle += ` - ${managedTeam.name} vs ${opponentTeam.name}`;
     }
@@ -308,10 +310,10 @@ export default function MatchStatsPage() {
     });
 
     const componentsToExport = [
-      { ref: overviewRef, title: "Overview", tab: "overview", stepId: "overview" },
-      { ref: scoreProgressionRef, title: "Score Progression", tab: "scores", stepId: "scores" },
-      { ref: setBreakdownRef, title: "Set Breakdown", tab: "sets", stepId: "sets" },
-      { ref: playerPerformanceRef, title: "Player Performance", tab: "players", stepId: "players" },
+      { ref: overviewRef, title: t("pdf.steps.overview"), tab: "overview", stepId: "overview" },
+      { ref: scoreProgressionRef, title: t("pdf.steps.scores"), tab: "scores", stepId: "scores" },
+      { ref: setBreakdownRef, title: t("pdf.steps.sets"), tab: "sets", stepId: "sets" },
+      { ref: playerPerformanceRef, title: t("pdf.steps.players"), tab: "players", stepId: "players" },
       // { ref: teamPerformanceRef, title: "Team Performance", tab: "team", stepId: "team" },
     ];
 
@@ -322,7 +324,7 @@ export default function MatchStatsPage() {
       for (let i = 0; i < componentsToExport.length; i++) {
         // Check for cancellation
         if (abortControllerRef.current?.signal.aborted) {
-          throw new Error("Cancelled");
+          throw new Error(t("stats.errors.pdfCancelled"));
         }
 
         const { ref, title, tab, stepId } = componentsToExport[i];
@@ -353,8 +355,8 @@ export default function MatchStatsPage() {
 
       doc.save(`match-stats-${matchId}.pdf`);
       toast({
-        title: "PDF Generated!",
-        description: "Your match statistics PDF has been downloaded.",
+        title: t("pdf.success"),
+        description: t("pdf.successDesc"),
       });
     } catch (error) {
       if ((error as Error).message === "Cancelled") {
@@ -364,8 +366,8 @@ export default function MatchStatsPage() {
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF.",
+        title: t("pdf.failed"),
+        description: t("pdf.failedDesc"),
       });
     } finally {
       document.body.removeAttribute("data-pdf-export");
@@ -378,7 +380,7 @@ export default function MatchStatsPage() {
   const shareStats = async () => {
     try {
       await navigator.share({
-        title: "Match Statistics",
+        title: t("stats.title"),
         text: "Check out the statistics from our latest match!",
         url: window.location.href,
       });
@@ -396,7 +398,7 @@ export default function MatchStatsPage() {
     );
   }
   if (!match) {
-    return <div>Match not found</div>;
+    return <div>{t("live.matchNotFound")}</div>;
   }
 
   return (
@@ -409,7 +411,7 @@ export default function MatchStatsPage() {
       />
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Match Statistics</h1>
+          <h1 className="text-3xl font-bold">{t("stats.title")}</h1>
           <p className="text-muted-foreground">
             {new Date(match.date).toLocaleDateString()}
           </p>
@@ -425,7 +427,7 @@ export default function MatchStatsPage() {
             disabled={isPdfGenerating}
           >
             <Download className="h-4 w-4 mr-2" />
-            {isPdfGenerating ? "Generating..." : "Export PDF"}
+            {isPdfGenerating ? t("stats.tabs.pending") : "Export PDF"}
           </Button>
           <Button
             variant="outline"
@@ -446,11 +448,11 @@ export default function MatchStatsPage() {
             className="space-y-4"
           >
             <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="scores">Scores</TabsTrigger>
-              <TabsTrigger value="sets">Sets</TabsTrigger>
-              <TabsTrigger value="players">Players</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
+              <TabsTrigger value="overview">{t("stats.tabs.overview")}</TabsTrigger>
+              <TabsTrigger value="scores">{t("stats.tabs.scores")}</TabsTrigger>
+              <TabsTrigger value="sets">{t("stats.tabs.sets")}</TabsTrigger>
+              <TabsTrigger value="players">{t("stats.tabs.players")}</TabsTrigger>
+              <TabsTrigger value="team">{t("stats.tabs.team")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" id="overview-section" className="space-y-4" >

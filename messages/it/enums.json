@@ -1,0 +1,58 @@
+{
+  "playerRole": {
+    "setter": "Palleggiatore",
+    "opposite": "Opposto",
+    "outside_hitter": "Schiacciatore",
+    "middle_hitter": "Centrale",
+    "libero": "Libero"
+  },
+  "playerPosition": {
+    "p1": "Posizione 1",
+    "p2": "Posizione 2",
+    "p3": "Posizione 3",
+    "p4": "Posizione 4",
+    "p5": "Posizione 5",
+    "p6": "Posizione 6"
+  },
+  "teamStatus": {
+    "incomplete": "Incompleto",
+    "active": "Attivo",
+    "archived": "Archiviato"
+  },
+  "teamMemberRole": {
+    "player": "Giocatore",
+    "coach": "Allenatore",
+    "owner": "Proprietario",
+    "staff": "Staff"
+  },
+  "matchStatus": {
+    "upcoming": "Prossimo",
+    "live": "In corso",
+    "completed": "Completato"
+  },
+  "championshipType": {
+    "regional": "Regionale",
+    "departmental": "Dipartimentale",
+    "national": "Nazionale"
+  },
+  "championshipFormat": {
+    "2x2": "2x2",
+    "3x3": "3x3",
+    "4x4": "4x4",
+    "6x6": "6x6"
+  },
+  "championshipAgeCategory": {
+    "U10": "Under 10",
+    "U12": "Under 12",
+    "U14": "Under 14",
+    "U16": "Under 16",
+    "U18": "Under 18",
+    "U21": "Under 21",
+    "senior": "Senior"
+  },
+  "championshipGender": {
+    "male": "Maschile",
+    "female": "Femminile",
+    "mixed": "Misto"
+  }
+}

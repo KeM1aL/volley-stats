@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Set } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,7 @@ interface SetSelectorProps {
 }
 
 export function SetSelector({ sets, selectedSetId, onSelectSet }: SetSelectorProps) {
+  const t = useTranslations("matches");
   return (
     <div className="inline-flex pdf-hide">
         <Button
@@ -19,7 +21,7 @@ export function SetSelector({ sets, selectedSetId, onSelectSet }: SetSelectorPro
           className="rounded-r-none"
           id="set-selector-all"
         >
-          All Sets
+          {t("stats.allSetsOverview")}
         </Button>
         {sets.map((set, index) => (
           <Button
@@ -36,7 +38,7 @@ export function SetSelector({ sets, selectedSetId, onSelectSet }: SetSelectorPro
                         }
                       `}
           >
-            Set {set.set_number}
+            {t("stats.setLabel")} {set.set_number}
           </Button>
         ))}
       </div>

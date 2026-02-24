@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { TeamForm } from "@/components/teams/team-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 
 export default function NewTeamPage() {
+  const t = useTranslations('teams');
   const router = useRouter();
 
   const onTeamCreated = () => {
@@ -15,7 +17,7 @@ export default function NewTeamPage() {
     <Card className="max-w-2xl mx-auto p-6">
       <CardHeader>
         <CardTitle className="text-2xl text-center">
-          Create a new Team
+          {t('createNewTeam')}
         </CardTitle>
       </CardHeader>
       <CardContent>

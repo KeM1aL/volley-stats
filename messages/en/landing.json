@@ -1,0 +1,30 @@
+{
+  "hero": {
+    "title": "Volleyball Statistics for Dummies",
+    "subtitle": "Track, analyze, and improve your team's performance with simple analytics",
+    "getStarted": "Get Started",
+    "createTeam": "Create my team"
+  },
+  "features": {
+    "matchTracking": {
+      "title": "Match Tracking",
+      "description": "Real-time statistics and scoring",
+      "content": "Track serves, attacks, blocks, and more during live matches with our intuitive interface."
+    },
+    "teamManagement": {
+      "title": "Team Management",
+      "description": "Organize players and teams",
+      "content": "Manage multiple teams, player rosters, and track individual performance metrics."
+    },
+    "analytics": {
+      "title": "Advanced Analytics",
+      "description": "Detailed performance insights",
+      "content": "Analyze team and player statistics with comprehensive charts and reports."
+    },
+    "collaboration": {
+      "title": "Collaboration",
+      "description": "Share and export data",
+      "content": "Export statistics to CSV/PDF and share match results with team members."
+    }
+  }
+}

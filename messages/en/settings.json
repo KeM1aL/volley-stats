@@ -1,0 +1,120 @@
+{
+  "title": "Settings",
+  "description": "Manage your preferences and notifications",
+  "account": {
+    "title": "Account Security",
+    "description": "Manage your password and email address",
+    "changePassword": "Change Password",
+    "changePasswordDesc": "Update your password to keep your account secure",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "updatePassword": "Update Password",
+    "updating": "Updating...",
+    "passwordUpdated": "Password updated",
+    "passwordUpdatedDesc": "Your password has been successfully changed.",
+    "emailAddress": "Email Address",
+    "emailAddressDesc": "Update your email address",
+    "currentEmail": "Current Email",
+    "newEmail": "New Email Address",
+    "updateEmail": "Update Email",
+    "sending": "Sending...",
+    "confirmEmailsSent": "Confirmation emails sent",
+    "confirmEmailsDesc": "Check both your old and new email to confirm the change.",
+    "emailChangePending": "Email change pending - Check both {oldEmail} and {newEmail} to confirm the change.",
+    "confirmEmailDesc": "You will need to confirm this change on both your old and new email addresses"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "description": "Select your preferences",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "language": "Language",
+    "languagePlaceholder": "Select a language",
+    "notifications": "Notifications",
+    "matchReminders": "Match Reminders",
+    "scoreUpdates": "Score Updates"
+  },
+  "validation": {
+    "passwordsMatch": "Passwords don't match",
+    "passwordTooWeak": "Password is too weak"
+  },
+  "languages": {
+    "en": "English",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português"
+  },
+  "localData": {
+    "title": "Local data",
+    "syncMatch": "Synchronize Match",
+    "matchId": "Match ID",
+    "synchronize": "Synchronize",
+    "matchSynchronization": "Match synchronization",
+    "matchesDataSynchronized": "Matches data has been synchronized",
+    "allDataSynchronized": "All data has been synchronized",
+    "clearLocalStats": "Clear Local Stats",
+    "clearLocalStatsDesc": "Clear the local stats cache",
+    "clearLocalMatches": "Clear Local Matches",
+    "clearLocalMatchesDesc": "Clear the local matches cache",
+    "clearLocalTeams": "Clear Local Teams",
+    "clearLocalTeamsDesc": "Clear the local teams cache",
+    "clearAll": "Clear All",
+    "deleting": "Deleting...",
+    "clear": "Clear"
+  },
+  "actions": {
+    "resetToDefaults": "Reset to Defaults",
+    "saveChanges": "Save Changes",
+    "saving": "Saving..."
+  },
+  "toast": {
+    "saved": "Settings saved",
+    "savedDesc": "Your preferences have been updated.",
+    "reset": "Settings reset",
+    "resetDesc": "Your preferences have been reset to default values.",
+    "cacheCleared": "Cache cleared",
+    "cacheDesc": "Your local cache has been cleared",
+    "error": "Error",
+    "failedSaveSettings": "Failed to save settings",
+    "failedChangePassword": "Failed to change password",
+    "failedChangeEmail": "Failed to change email",
+    "favoritesUpdated": "Favorites updated",
+    "favoritesUpdatedDesc": "Your favorites have been updated.",
+    "favoritesUpdateError": "Failed to update favorites"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "description": "Set your default team or club for quick filtering on matches and teams pages",
+    "favoriteTeam": "Favorite Team",
+    "favoriteClub": "Favorite Club",
+    "selectTeam": "Select Team",
+    "selectClub": "Select Club",
+    "favoriteType": "Favorite Type",
+    "none": "None (no default filter)",
+    "noMemberships": "You need to be a member of at least one team or club to set a favorite. Join a team or club first.",
+    "noAccess": "Warning: You no longer have access to this {type}",
+    "saveFavorite": "Save Favorite",
+    "favoritesSaved": "Your favorite has been saved.",
+    "validation": {
+      "noTeamAccess": "You do not have access to the selected team",
+      "noClubAccess": "You do not have access to the selected club",
+      "selectTeam": "Please select a team",
+      "selectClub": "Please select a club"
+    }
+  },
+  "sync": {
+    "title": "Match synchronization",
+    "matchSynced": "Matches data has been synchronized",
+    "dataToSync": "{name} {count} data to be synchronized",
+    "dataSynced": "{name} {index}/{chunkSize} data has been synchronized",
+    "allDataSynced": "All data has been synchronized",
+    "error": "Failed to sync match. Please try again.",
+    "failedUpdateLanguage": "Failed to update language"
+  },
+  "errors": {
+    "generic": "Error"
+  }
+}

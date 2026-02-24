@@ -28,7 +28,8 @@ const withRetry = async <T>(
     try {
       return await fn();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Unknown error');
+      // Error identifier maps to translation key: errors.api.unknown
+      lastError = error instanceof Error ? error : new Error('unknown');
 
       // Don't retry on validation errors (user profile not found, etc.)
       if (!lastError.message.includes('timed out')) {
@@ -47,7 +48,8 @@ const withRetry = async <T>(
     }
   }
 
-  throw lastError || new Error('Retry failed');
+  // Error identifier maps to translation key: errors.api.retryFailed
+  throw lastError || new Error('retryFailed');
 };
 
 type LoadingStage = 'profile' | 'memberships';
@@ -73,7 +75,8 @@ export const getUser = async (
   return await withRetry(async () => {
     try {
       if (!session || !session.user) {
-        throw new Error('No user found in session');
+        // Error identifier maps to translation key: errors.api.noUserInSession
+        throw new Error('noUserInSession');
       }
       // Load profile first
       onStageChange?.('profile');
@@ -136,7 +139,8 @@ export const getProfile = async (userId: string): Promise<Profile> => {
 
   if (!data) {
     console.warn('No profile found for user:', userId);
-    throw new Error('User profile not found. Please complete your profile setup.');
+    // Error identifier maps to translation key: errors.api.userProfileNotFound
+    throw new Error('userProfileNotFound');
   }
 
   return data as unknown as Profile;

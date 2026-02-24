@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Progress } from "@/components/ui/progress";
 
 interface PasswordStrengthIndicatorProps {
@@ -44,6 +45,7 @@ export function calculatePasswordStrength(password: string): {
 export function PasswordStrengthIndicator({
   password,
 }: PasswordStrengthIndicatorProps) {
+  const t = useTranslations("auth.passwordStrength");
   const { strength, score } = useMemo(
     () => calculatePasswordStrength(password),
     [password]
@@ -57,22 +59,17 @@ export function PasswordStrengthIndicator({
     strong: "text-green-600",
   }[strength];
 
-  const strengthLabel = {
-    weak: "Weak",
-    medium: "Medium",
-    strong: "Strong",
-  }[strength];
+  const strengthLabel = t(strength);
 
   return (
     <div className="space-y-2">
       <Progress value={score} className="h-2" />
       <p className={`text-sm font-medium ${strengthColor}`}>
-        Password strength: {strengthLabel}
+        {t("label")} {strengthLabel}
       </p>
       {strength === "weak" && (
         <p className="text-xs text-muted-foreground">
-          Use at least 8 characters with a mix of uppercase, lowercase, numbers,
-          and special characters.
+          {t("weakHint")}
         </p>
       )}
     </div>

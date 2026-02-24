@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +31,7 @@ import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export default function LiveScorePage() {
+  const t = useTranslations("matches");
   const { id: matchId } = useParams();
   const { isOnline, wasOffline } = useOnlineStatus();
   const searchParams = useSearchParams();
@@ -88,7 +90,7 @@ export default function LiveScorePage() {
 
         const managedTeamParam = searchParams.get("team");
         if (!managedTeamParam) {
-          throw new Error("Please select your managed team");
+          throw new Error(t("errors.selectTeam"));
         }
 
         const teamId = searchParams.get("team");
@@ -97,7 +99,7 @@ export default function LiveScorePage() {
           teamId !== matchData.home_team_id &&
           teamId !== matchData.away_team_id
         ) {
-          throw new Error("Managed Team not found");
+          throw new Error(t("errors.managedTeamNotFound"));
         }
 
         const playerIds =
@@ -129,8 +131,8 @@ export default function LiveScorePage() {
         console.error("Failed to load match data:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to load match data",
+          title: t("toast.error"),
+          description: t("toast.loadError"),
         });
       } finally {
         setIsLoading(false);
@@ -138,7 +140,7 @@ export default function LiveScorePage() {
     };
 
     loadData();
-  }, [db, matchId, isOnline]);
+  }, [db, matchId, isOnline, t]);
 
   useEffect(() => {
     const channel = supabase
@@ -185,14 +187,14 @@ export default function LiveScorePage() {
   }
 
   if (!match) {
-    return <div>Match not found</div>;
+    return <div>{t("live.matchNotFound")}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Match Live Score</h1>
+          <h1 className="text-3xl font-bold">{t("score.title")}</h1>
           <p className="text-muted-foreground">
             {new Date(match.date).toLocaleDateString()}
           </p>

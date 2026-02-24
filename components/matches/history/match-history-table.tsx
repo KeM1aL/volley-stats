@@ -28,6 +28,7 @@ import MatchEditDialog from "../match-edit-dialog";
 import MatchStatsDialog from "../match-stats-dialog";
 import MatchScoreDialog from "../match-score-dialog";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslations } from "next-intl";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
@@ -43,6 +44,8 @@ export function MatchHistoryTable({
   error,
   isLoading,
 }: MatchHistoryTableProps) {
+  const t = useTranslations("matches");
+  const te = useTranslations("enums");
   const { user } = useAuth();
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -112,7 +115,7 @@ export function MatchHistoryTable({
     return (
       <Alert variant="destructive">
         <AlertDescription>
-          Failed to load matches. Please try refreshing the page.
+          {t("errors.loadError")}
         </AlertDescription>
       </Alert>
     );
@@ -134,16 +137,16 @@ export function MatchHistoryTable({
     return (
       <EmptyState
         icon={<Search className="h-12 w-12" />}
-        title="No matches found"
+        title={t("history.noMatchesFound")}
         description={
           hasFavorite
-            ? "No matches found with current filters. Try adjusting your search criteria or date range."
-            : "Set your favorite team or club in settings to see your matches by default, or use the filters above to find matches."
+            ? t("history.noMatchesWithFilters")
+            : t("history.noFavoritesHint")
         }
         action={
           !hasFavorite
             ? {
-                label: "Go to Settings",
+                label: t("history.goToSettings"),
                 href: "/settings"
               }
             : undefined
@@ -168,7 +171,7 @@ export function MatchHistoryTable({
                 {new Date(match.date).toLocaleDateString()}
               </span>
               <span className="text-sm capitalize px-2 py-0.5 bg-muted rounded">
-                {match.status}
+                {te(`matchStatus.${match.status}`)}
               </span>
             </div>
             <div className="space-y-1">
@@ -216,22 +219,22 @@ export function MatchHistoryTable({
                 onClick={() => toggleSort("date")}
               >
                 <div className="flex items-center gap-2">
-                  Date
+                  {t("table.date")}
                   <SortIcon field="date" />
                 </div>
               </TableHead>
-              <TableHead>Teams</TableHead>
+              <TableHead>{t("table.teams")}</TableHead>
               <TableHead
                 className="cursor-pointer"
                 onClick={() => toggleSort("score")}
               >
                 <div className="flex items-center gap-2">
-                  Score
+                  {t("table.score")}
                   <SortIcon field="score" />
                 </div>
               </TableHead>
-              <TableHead>Status</TableHead>
-              {user && <TableHead className="w-[150px]">Actions</TableHead>}
+              <TableHead>{t("table.status")}</TableHead>
+              {user && <TableHead className="w-[150px]">{t("table.actions")}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -239,14 +242,14 @@ export function MatchHistoryTable({
               <TableRow key={match.id}>
                 <TableCell className="whitespace-nowrap">{new Date(match.date).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  {match.home_team?.name || "Unknown"} vs{" "}
-                  {match.away_team?.name || "Unknown"}
+                  {match.home_team?.name || t("table.unknown")} {t("table.vs")}{" "}
+                  {match.away_team?.name || t("table.unknown")}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   {match.home_score} - {match.away_score}
                 </TableCell>
                 <TableCell>
-                  <span className="capitalize">{match.status}</span>
+                  <span className="capitalize">{te(`matchStatus.${match.status}`)}</span>
                 </TableCell>
                 {user && isMemberOfTeamOrClub(match) && (
                   <TableCell>

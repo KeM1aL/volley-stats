@@ -79,7 +79,8 @@ export function replicateSupabase<RxDocType>(
             .eq(primaryPath, id)
             .limit(1)
         if (error) throw error
-        if (data.length != 1) throw new Error('doc not found ' + id)
+        // Error identifier maps to translation key: errors.database.documentNotFound
+        if (data.length != 1) throw new Error('documentNotFound')
         return rowToDoc(data[0])
     }
 

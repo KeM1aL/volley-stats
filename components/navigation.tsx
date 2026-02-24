@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import {
   Volleyball,
   BarChart3,
@@ -19,36 +20,38 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { ThemeToggle } from "./theme-toggle";
 import { FullScreenToggle } from "./fullscreen-toggle";
+import { LanguageSwitcher } from "./language-switcher";
 import { useLandscape } from "@/hooks/use-landscape";
-
-const routes = [
-  {
-    href: "/championships",
-    label: "Championships",
-    icon: Trophy,
-  },
-  {
-    href: "/matches",
-    label: "Matches",
-    icon: Volleyball,
-  },
-  {
-    href: "/teams",
-    label: "Teams",
-    icon: Users,
-  },
-  {
-    href: "/settings",
-    label: "Settings",
-    icon: Settings,
-  },
-];
 
 export function Navigation() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isLandscape = useLandscape();
+  const t = useTranslations('navigation');
+
+  const routes = [
+    {
+      href: "/championships",
+      label: t('menu.championships'),
+      icon: Trophy,
+    },
+    {
+      href: "/matches",
+      label: t('menu.matches'),
+      icon: Volleyball,
+    },
+    {
+      href: "/teams",
+      label: t('menu.teams'),
+      icon: Users,
+    },
+    {
+      href: "/settings",
+      label: t('menu.settings'),
+      icon: Settings,
+    },
+  ];
 
   // Compact navigation in landscape mode on live match pages
   const isLivePage = pathname?.includes('/live');
@@ -60,11 +63,11 @@ export function Navigation() {
             {user && (
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Open menu">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={t('actions.openMenu')}>
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[240px] sm:w-[300px]" title="Navigation menu">
+                <SheetContent side="left" className="w-[240px] sm:w-[300px]" title={t('actions.openMenu')}>
                   <nav className="flex flex-col gap-4 mt-4">
                     {routes.map((route) => {
                       const Icon = route.icon;
@@ -92,7 +95,7 @@ export function Navigation() {
             <Link href="/" className="flex items-center pl-1">
               <Image
                 src='/logo.png'
-                alt="VolleyStats"
+                alt={t('common.app.shortTitle')}
                 width='24'
                 height='24'
                 className="rounded object-cover"
@@ -101,6 +104,7 @@ export function Navigation() {
           </div>
           <div className="flex items-center gap-1">
             <FullScreenToggle />
+            <LanguageSwitcher />
             <ThemeToggle />
           </div>
         </div>
@@ -116,11 +120,11 @@ export function Navigation() {
             <div className="md:hidden">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Open menu">
+                  <Button variant="ghost" size="icon" aria-label={t('actions.openMenu')}>
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[240px] sm:w-[300px]" title="Navigation menu">
+                <SheetContent side="left" className="w-[240px] sm:w-[300px]" title={t('actions.openMenu')}>
                   <nav className="flex flex-col gap-4 mt-4">
                     {routes.map((route) => {
                       const Icon = route.icon;
@@ -149,7 +153,7 @@ export function Navigation() {
           <Link href="/" className="flex items-center gap-2 font-semibold pl-2">
             <Image
                   src='/logo.png'
-                          alt="VolleyStats for Dummies"
+                          alt={t('common.app.title')}
                           width='50'
                           height='50'
                           className="rounded-lg object-cover w-10 h-10 md:w-12 md:h-12"
@@ -180,11 +184,12 @@ export function Navigation() {
         </div>
         <div className="flex items-center">
           <FullScreenToggle />
+          <LanguageSwitcher />
           <ThemeToggle />
           {user && (
             <Button variant="ghost" size="sm" onClick={signOut} className="px-2 md:px-3 text-xs md:text-sm">
               <LogOut className="h-4 w-4 mr-1 md:mr-2" />
-              <span>Sign Out</span>
+              <span>{t('actions.signOut')}</span>
             </Button>
           )}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useImperativeHandle, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import {
@@ -78,6 +79,7 @@ const TeamPerformance = React.forwardRef<
     { match, sets, points, managedTeam, stats, players, isPdfGenerating },
     ref
   ) => {
+    const t = useTranslations("matches");
     const [selectedPlayer, setSelectedPlayer] = useState<string>(players[0].id);
     const [selectedSet, setSelectedSet] = useState<string>("all");
     const [selectedTab, setSelectedTab] = useState("positions");
@@ -260,7 +262,7 @@ const TeamPerformance = React.forwardRef<
     return (
       <Card ref={teamPerformanceRef} id="team-section-content">
         <CardHeader>
-          <CardTitle>Player Performance Analysis</CardTitle>
+          <CardTitle>{t("stats.teamPerformance")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs
@@ -269,11 +271,11 @@ const TeamPerformance = React.forwardRef<
             className="space-y-4"
           >
             <TabsList>
-              <TabsTrigger value="positions">Position Analysis</TabsTrigger>
-              <TabsTrigger value="streaks">Streak Analysis</TabsTrigger>
-              <TabsTrigger value="patterns">Scoring Patterns</TabsTrigger>
-              <TabsTrigger value="defense">Defensive Analysis</TabsTrigger>
-              <TabsTrigger value="insights">Tactical Insights</TabsTrigger>
+              <TabsTrigger value="positions">{t("stats.positionAnalysis")}</TabsTrigger>
+              <TabsTrigger value="streaks">{t("stats.streakAnalysis")}</TabsTrigger>
+              <TabsTrigger value="patterns">{t("stats.scoringPatterns")}</TabsTrigger>
+              <TabsTrigger value="defense">{t("stats.defensiveAnalysis")}</TabsTrigger>
+              <TabsTrigger value="insights">{t("stats.tacticalInsights")}</TabsTrigger>
             </TabsList>
             <div className="space-y-4">
               <div className="inline-flex space-x-2 pdf-hide">
@@ -282,7 +284,7 @@ const TeamPerformance = React.forwardRef<
                   onValueChange={setSelectedPlayer}
                 >
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select player" />
+                    <SelectValue placeholder={t("stats.selectPlayer")} />
                   </SelectTrigger>
                   <SelectContent defaultValue={players[0].id}>
                     {players.map((player) => (
@@ -299,7 +301,7 @@ const TeamPerformance = React.forwardRef<
                     onClick={() => setSelectedSet("all")}
                     className="rounded-r-none"
                   >
-                    All Sets
+                    {t("stats.allSetsOverview")}
                   </Button>
                   {sets.map((set, index) => (
                     <Button
@@ -307,7 +309,7 @@ const TeamPerformance = React.forwardRef<
                       key={set.id}
                       onClick={() => setSelectedSet(set.id)}
                       className={`
-                        ${index === sets.length - 1 ? "rounded-l-none" : ""} 
+                        ${index === sets.length - 1 ? "rounded-l-none" : ""}
                         ${
                           index >= 0 && index < sets.length - 1
                             ? "rounded-none border-x-0"
@@ -315,7 +317,7 @@ const TeamPerformance = React.forwardRef<
                         }
                       `}
                     >
-                      Set {set.set_number}
+                      {t("stats.setLabel")} {set.set_number}
                     </Button>
                   ))}
                 </div>
@@ -324,9 +326,9 @@ const TeamPerformance = React.forwardRef<
                 <div className="grid gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Position Performance Overview</CardTitle>
+                      <CardTitle>{t("stats.positionPerformance")}</CardTitle>
                       <CardDescription>
-                        Points scored and conceded by position
+                        {t("stats.pointsScoredbyConcededByPosition")}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
@@ -354,9 +356,9 @@ const TeamPerformance = React.forwardRef<
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Attack distribution</CardTitle>
+                      <CardTitle>{t("stats.attackDistribution")}</CardTitle>
                       <CardDescription>
-                        Success spiked by player position
+                        {t("stats.successSpikedByPosition")}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className={`${isPdfGenerating ? "h-[400px]" : "h-[800px]"} grid grid-cols-3 gap-4`}>
@@ -386,7 +388,7 @@ const TeamPerformance = React.forwardRef<
                 <div className="grid gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Streak Distribution</CardTitle>
+                      <CardTitle>{t("stats.streakDistribution")}</CardTitle>
                       <CardDescription>
                         Winning and losing streaks by position
                       </CardDescription>
@@ -417,7 +419,7 @@ const TeamPerformance = React.forwardRef<
                   <div className="grid grid-cols-2 gap-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle>Winning Streak Analysis</CardTitle>
+                        <CardTitle>{t("stats.winningStreakAnalysis")}</CardTitle>
                         <CardDescription>
                           Average Length:{" "}
                           {streakAnalysis.winning.averageLength.toFixed(1)}{" "}
@@ -452,7 +454,7 @@ const TeamPerformance = React.forwardRef<
 
                     <Card>
                       <CardHeader>
-                        <CardTitle>Losing Streak Analysis</CardTitle>
+                        <CardTitle>{t("stats.losingStreakAnalysis")}</CardTitle>
                         <CardDescription>
                           Average Length:{" "}
                           {streakAnalysis.losing.averageLength.toFixed(1)}{" "}
@@ -492,7 +494,7 @@ const TeamPerformance = React.forwardRef<
                 <div className="grid gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Scoring Sequences</CardTitle>
+                      <CardTitle>{t("stats.scoringSequences")}</CardTitle>
                       <CardDescription>
                         Points and successful sequences by rotation
                       </CardDescription>
@@ -522,7 +524,7 @@ const TeamPerformance = React.forwardRef<
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Notable Scoring Runs</CardTitle>
+                      <CardTitle>{t("stats.notableScoringRuns")}</CardTitle>
                       <CardDescription>
                         Sequences of 3+ consecutive points
                       </CardDescription>
@@ -557,7 +559,7 @@ const TeamPerformance = React.forwardRef<
                 <div className="grid gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Defensive Vulnerabilities</CardTitle>
+                      <CardTitle>{t("stats.defensiveVulnerabilities")}</CardTitle>
                       <CardDescription>
                         Points conceded and longest losing streaks by position
                       </CardDescription>
@@ -587,7 +589,7 @@ const TeamPerformance = React.forwardRef<
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Attack Pattern Analysis</CardTitle>
+                      <CardTitle>{t("stats.attackPatternAnalysis")}</CardTitle>
                       <CardDescription>
                         Opponent's successful attack distributions
                       </CardDescription>
@@ -625,7 +627,7 @@ const TeamPerformance = React.forwardRef<
                 <div className="grid gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Key Findings</CardTitle>
+                      <CardTitle>{t("stats.keyFindings")}</CardTitle>
                       <CardDescription>
                         Strategic analysis and recommendations
                       </CardDescription>

@@ -13,8 +13,10 @@ import { Team } from "@/lib/types";
 import { Filter, Sort } from "@/lib/api/types";
 import { TeamFilters } from "@/components/teams/team-filters";
 import { NewTeamDialog } from "@/components/teams/new-team-dialog";
+import { useTranslations } from "next-intl";
 
 export default function TeamsPage() {
+  const t = useTranslations('teams');
   const { user, reloadUser } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [newTeam, setNewTeam] = useState<boolean>(false);
@@ -98,9 +100,9 @@ export default function TeamsPage() {
     <div className="space-y-8">
       <div className="space-y-4">
         <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Teams</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">{t('title')}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-            View and manage your teams
+            {t('description')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -110,11 +112,11 @@ export default function TeamsPage() {
             className="flex-1 sm:flex-none text-xs sm:text-sm"
           >
             <FilterIcon className="h-4 w-4 mr-1 sm:mr-2" />
-            <span>Filters</span>
+            <span>{t('filters.title')}</span>
           </Button>
           <Button onClick={() => setNewTeam(true)} className="flex-1 sm:flex-none text-xs sm:text-sm">
             <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-            <span>New Team</span>
+            <span>{t('newTeam')}</span>
           </Button>
         </div>
       </div>

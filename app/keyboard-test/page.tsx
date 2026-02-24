@@ -15,6 +15,7 @@
 
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useKeyboard } from '@/contexts/keyboard-context'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,6 +25,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 
 export default function KeyboardTestPage() {
+  const t = useTranslations('debug')
   const keyboardState = useKeyboard()
   const { height, visible, rect, method } = keyboardState
 
@@ -46,15 +48,15 @@ export default function KeyboardTestPage() {
   const getMethodLabel = () => {
     switch (method) {
       case 'virtualKeyboard':
-        return 'VirtualKeyboard API'
+        return t('keyboard.methods.virtualKeyboard')
       case 'visualViewport':
-        return 'Visual Viewport API'
+        return t('keyboard.methods.visualViewport')
       case 'focus':
-        return 'Focus Detection'
+        return t('keyboard.methods.focus')
       case 'unsupported':
-        return 'Unsupported'
+        return t('keyboard.methods.unsupported')
       default:
-        return 'Unknown'
+        return t('keyboard.methods.unknown')
     }
   }
 
@@ -88,28 +90,28 @@ export default function KeyboardTestPage() {
       <div className="max-w-2xl mx-auto pt-24 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Virtual Keyboard Test</h1>
+          <h1 className="text-3xl font-bold">{t('keyboard.title')}</h1>
           <p className="text-muted-foreground">
-            Test keyboard detection across different devices and browsers
+            {t('keyboard.description')}
           </p>
         </div>
 
         {/* Device Info Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Device Information</CardTitle>
-            <CardDescription>Current device and browser details</CardDescription>
+            <CardTitle>{t('keyboard.deviceInfo')}</CardTitle>
+            <CardDescription>{t('keyboard.deviceInfoDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">User Agent:</span>
+              <span className="text-muted-foreground">{t('keyboard.userAgent')}:</span>
               <span className="text-right text-xs max-w-xs truncate">
                 {typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A'}
               </span>
             </div>
             <Separator />
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Screen Size:</span>
+              <span className="text-muted-foreground">{t('keyboard.screenSize')}:</span>
               <span>
                 {typeof window !== 'undefined'
                   ? `${window.screen.width} × ${window.screen.height}px`
@@ -117,7 +119,7 @@ export default function KeyboardTestPage() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Window Size:</span>
+              <span className="text-muted-foreground">{t('keyboard.windowSize')}:</span>
               <span>
                 {typeof window !== 'undefined'
                   ? `${window.innerWidth} × ${window.innerHeight}px`
@@ -125,7 +127,7 @@ export default function KeyboardTestPage() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Viewport Height:</span>
+              <span className="text-muted-foreground">{t('keyboard.viewportHeight')}:</span>
               <span>
                 {typeof window !== 'undefined' && window.visualViewport
                   ? `${window.visualViewport.height}px`
@@ -138,25 +140,25 @@ export default function KeyboardTestPage() {
         {/* Keyboard State Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Keyboard State</CardTitle>
-            <CardDescription>Current virtual keyboard detection details</CardDescription>
+            <CardTitle>{t('keyboard.state')}</CardTitle>
+            <CardDescription>{t('keyboard.stateDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label className="text-muted-foreground">Detection Method</Label>
+                <Label className="text-muted-foreground">{t('keyboard.detectionMethod')}</Label>
                 <div className="font-mono text-sm">{method}</div>
               </div>
               <div className="space-y-1">
-                <Label className="text-muted-foreground">Visibility</Label>
+                <Label className="text-muted-foreground">{t('keyboard.visibility')}</Label>
                 <div className="font-mono text-sm">{visible ? 'true' : 'false'}</div>
               </div>
               <div className="space-y-1">
-                <Label className="text-muted-foreground">Height</Label>
+                <Label className="text-muted-foreground">{t('keyboard.height')}</Label>
                 <div className="font-mono text-sm">{height}px</div>
               </div>
               <div className="space-y-1">
-                <Label className="text-muted-foreground">Has Rect</Label>
+                <Label className="text-muted-foreground">{t('keyboard.hasRect')}</Label>
                 <div className="font-mono text-sm">{rect ? 'yes' : 'no'}</div>
               </div>
             </div>
@@ -165,7 +167,7 @@ export default function KeyboardTestPage() {
               <>
                 <Separator />
                 <div>
-                  <Label className="text-muted-foreground">Bounding Rectangle</Label>
+                  <Label className="text-muted-foreground">{t('keyboard.boundingRect')}</Label>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-xs font-mono">
                     <div>x: {rect.x}px</div>
                     <div>y: {rect.y}px</div>
@@ -185,21 +187,21 @@ export default function KeyboardTestPage() {
         {/* Layout Information Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Layout Information</CardTitle>
-            <CardDescription>CSS Grid layout and keyboard space management</CardDescription>
+            <CardTitle>{t('keyboard.layoutInfo')}</CardTitle>
+            <CardDescription>{t('keyboard.layoutInfoDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Grid Layout:</span>
-              <Badge variant="outline" className="bg-green-500 text-white">Active</Badge>
+              <span className="text-muted-foreground">{t('keyboard.gridLayout')}:</span>
+              <Badge variant="outline" className="bg-green-500 text-white">{t('keyboard.active')}</Badge>
             </div>
             <Separator />
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Keyboard Spacer Height:</span>
+              <span className="text-muted-foreground">{t('keyboard.spacerHeight')}:</span>
               <span className="font-mono">{height}px</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">VirtualKeyboard overlaysContent:</span>
+              <span className="text-muted-foreground">{t('keyboard.overlaysContent')}:</span>
               <span className="font-mono text-xs">
                 {typeof navigator !== 'undefined' && 'virtualKeyboard' in navigator && navigator.virtualKeyboard
                   ? (navigator.virtualKeyboard.overlaysContent ? 'true' : 'false')
@@ -207,18 +209,18 @@ export default function KeyboardTestPage() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">env(keyboard-inset-height):</span>
+              <span className="text-muted-foreground">{t('keyboard.envInsetHeight')}:</span>
               <span className="font-mono text-xs">
                 {method === 'virtualKeyboard' ? 'available' : 'not available'}
               </span>
             </div>
             <Separator />
             <div className="flex justify-between">
-              <span className="text-muted-foreground">CSS --keyboard-height:</span>
+              <span className="text-muted-foreground">{t('keyboard.cssHeight')}:</span>
               <span className="font-mono">{height}px</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Body class keyboard-visible:</span>
+              <span className="text-muted-foreground">{t('keyboard.bodyClass')}:</span>
               <span className="font-mono text-xs">
                 {typeof document !== 'undefined' && document.body.classList.contains('keyboard-visible')
                   ? 'true'
@@ -231,71 +233,71 @@ export default function KeyboardTestPage() {
         {/* Test Inputs Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Test Inputs</CardTitle>
+            <CardTitle>{t('keyboard.testInputs')}</CardTitle>
             <CardDescription>
-              Focus on these inputs to test keyboard detection
+              {t('keyboard.testInputsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="test-text">Text Input</Label>
+              <Label htmlFor="test-text">{t('keyboard.textInput')}</Label>
               <Input
                 id="test-text"
                 type="text"
-                placeholder="Focus here to show keyboard..."
+                placeholder={t('keyboard.focusPlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="test-email">Email Input</Label>
+              <Label htmlFor="test-email">{t('keyboard.emailInput')}</Label>
               <Input
                 id="test-email"
                 type="email"
-                placeholder="test@example.com"
+                placeholder={t('keyboard.emailPlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="test-number">Number Input</Label>
+              <Label htmlFor="test-number">{t('keyboard.numberInput')}</Label>
               <Input
                 id="test-number"
                 type="number"
-                placeholder="123"
+                placeholder={t('keyboard.numberPlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="test-tel">Phone Input</Label>
+              <Label htmlFor="test-tel">{t('keyboard.phoneInput')}</Label>
               <Input
                 id="test-tel"
                 type="tel"
-                placeholder="+1 (555) 000-0000"
+                placeholder={t('keyboard.phonePlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="test-url">URL Input</Label>
+              <Label htmlFor="test-url">{t('keyboard.urlInput')}</Label>
               <Input
                 id="test-url"
                 type="url"
-                placeholder="https://example.com"
+                placeholder={t('keyboard.urlPlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="test-search">Search Input</Label>
+              <Label htmlFor="test-search">{t('keyboard.searchInput')}</Label>
               <Input
                 id="test-search"
                 type="search"
-                placeholder="Search..."
+                placeholder={t('keyboard.searchPlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="test-textarea">Textarea</Label>
+              <Label htmlFor="test-textarea">{t('keyboard.textarea')}</Label>
               <Textarea
                 id="test-textarea"
-                placeholder="Type multiple lines here..."
+                placeholder={t('keyboard.textareaPlaceholder')}
                 rows={4}
               />
             </div>
@@ -305,16 +307,16 @@ export default function KeyboardTestPage() {
         {/* Instructions */}
         <Card>
           <CardHeader>
-            <CardTitle>Testing Instructions</CardTitle>
+            <CardTitle>{t('keyboard.instructions')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <ol className="list-decimal list-inside space-y-2">
-              <li>Focus on any input field above</li>
-              <li>Observe the status bar at the top update in real-time</li>
-              <li>Check the keyboard height value</li>
-              <li>Verify the detection method matches your device</li>
-              <li>Try rotating your device (portrait ↔ landscape)</li>
-              <li>Test in both PWA installed mode and browser</li>
+              <li>{t('keyboard.step1')}</li>
+              <li>{t('keyboard.step2')}</li>
+              <li>{t('keyboard.step3')}</li>
+              <li>{t('keyboard.step4')}</li>
+              <li>{t('keyboard.step5')}</li>
+              <li>{t('keyboard.step6')}</li>
             </ol>
           </CardContent>
         </Card>
@@ -322,37 +324,37 @@ export default function KeyboardTestPage() {
         {/* Expected Results */}
         <Card>
           <CardHeader>
-            <CardTitle>Expected Results</CardTitle>
+            <CardTitle>{t('keyboard.expectedResults')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="space-y-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge className="bg-green-500">VirtualKeyboard API</Badge>
-                  <span className="font-semibold">Android Chrome 94+</span>
+                  <Badge className="bg-green-500">{t('keyboard.virtualKeyboardAPI')}</Badge>
+                  <span className="font-semibold">{t('keyboard.androidChrome')}</span>
                 </div>
                 <p className="text-muted-foreground">
-                  Should detect keyboard with exact geometry (DOMRect available)
+                  {t('keyboard.result1')}
                 </p>
               </div>
 
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge className="bg-blue-500">Visual Viewport API</Badge>
-                  <span className="font-semibold">iOS Safari 13+, Firefox</span>
+                  <Badge className="bg-blue-500">{t('keyboard.visualViewportAPI')}</Badge>
+                  <span className="font-semibold">{t('keyboard.iosSafari')}</span>
                 </div>
                 <p className="text-muted-foreground">
-                  Should calculate keyboard height from viewport changes
+                  {t('keyboard.result2')}
                 </p>
               </div>
 
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge className="bg-yellow-500">Focus Detection</Badge>
-                  <span className="font-semibold">Older Browsers</span>
+                  <Badge className="bg-yellow-500">{t('keyboard.focusDetection')}</Badge>
+                  <span className="font-semibold">{t('keyboard.olderBrowsers')}</span>
                 </div>
                 <p className="text-muted-foreground">
-                  Basic detection based on input focus and window resize
+                  {t('keyboard.result3')}
                 </p>
               </div>
             </div>
@@ -371,7 +373,7 @@ export default function KeyboardTestPage() {
         >
           <div className="flex items-center justify-center h-full">
             <div className="bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold">
-              Keyboard Area: {height}px
+              {t('keyboard.area')}: {height}px
             </div>
           </div>
         </div>

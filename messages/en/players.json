@@ -1,0 +1,64 @@
+{
+  "title": "Players",
+  "newPlayer": "New Player",
+  "editPlayer": "Edit Player",
+  "deletePlayer": "Delete Player",
+  "dialog": {
+    "newPlayer": "New Player",
+    "editPlayer": "Edit Player"
+  },
+  "table": {
+    "avatar": "Avatar",
+    "name": "Name",
+    "position": "Position",
+    "role": "Role",
+    "actions": "Actions"
+  },
+  "form": {
+    "avatar": "Avatar",
+    "name": "Name",
+    "namePlaceholder": "Enter player name",
+    "role": "Role",
+    "rolePlaceholder": "Select role",
+    "number": "Number",
+    "numberPlaceholder": "Enter number",
+    "position": "Position",
+    "positionPlaceholder": "Select position",
+    "selectRole": "Select role",
+    "selectPosition": "Select position",
+    "saveChanges": "Save Changes",
+    "createPlayer": "Create Player",
+    "uploading": "Uploading..."
+  },
+  "positions": {
+    "setter": "Setter",
+    "opposite": "Opposite",
+    "outsideHitter": "Outside Hitter",
+    "middleHitter": "Middle Hitter",
+    "libero": "Libero"
+  },
+  "roles": {
+    "player": "Player",
+    "captain": "Captain",
+    "coach": "Coach"
+  },
+  "validation": {
+    "nameRequired": "Player name is required",
+    "numberPositive": "Number must be positive",
+    "numberMax": "Number must be less than 100"
+  },
+  "toast": {
+    "created": "Player created",
+    "createdDesc": "The player has been successfully created.",
+    "updated": "Player updated",
+    "updatedDesc": "The player has been successfully updated.",
+    "deleted": "Player deleted",
+    "deletedDesc": "The player has been successfully deleted.",
+    "error": "Error",
+    "createError": "Failed to create player. Please try again.",
+    "updateError": "Failed to update player. Please try again.",
+    "deleteError": "Failed to delete player. Please try again."
+  },
+  "confirmDelete": "Are you sure?",
+  "confirmDeleteDesc": "This action cannot be undone. This will permanently delete the player and all associated statistics."
+}

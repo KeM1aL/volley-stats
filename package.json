@@ -2,7 +2,7 @@
   "name": "volleyball-stats",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.13.1",
+  "packageManager": "pnpm@10.28.2",
   "scripts": {
     "dev": "next dev",
     "dev:inspect": "next dev --inspect=0.0.0.0",
@@ -10,11 +10,15 @@
     "start": "next start",
     "start:inspect": "next start --inspect=0.0.0.0",
     "lint": "next lint",
+    "i18n:check": "i18n-check -s en --locales messages",
     "supabase:types": "npx supabase gen types typescript --project-id 'gvtjccisbwrwpjtabnyd' --schema public > lib/supabase/database.types.ts",
     "email:dev": "email dev --dir emails",
     "email:build": "email export --outDir supabase/templates/auth --dir emails",
     "email:preview": "email dev --port 3001 --dir emails",
-    "email:deploy": "tsx scripts/deploy-email-templates.ts"
+    "email:deploy": "tsx scripts/deploy-email-templates.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -65,6 +69,7 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.553.0",
     "next": "^15.5.7",
+    "next-intl": "^4.8.0",
     "next-pwa": "^5.6.0",
     "next-themes": "^0.4.6",
     "papaparse": "^5.5.3",
@@ -91,6 +96,8 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@lingual/i18n-check": "^0.8.19",
     "@react-email/components": "^0.0.25",
     "@react-email/render": "^1.0.0",
     "@types/lodash": "^4.17.20",

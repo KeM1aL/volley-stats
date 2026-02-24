@@ -1,0 +1,36 @@
+{
+  "title": "Club",
+  "description": "Gestire i club di pallavolo",
+  "newClub": "Nuovo club",
+  "quickCreate": {
+    "title": "Creazione rapida club",
+    "description": "Crea un nuovo club con solo un nome. Puoi aggiungere più dettagli in seguito.",
+    "creating": "Creazione..."
+  },
+  "form": {
+    "name": "Nome del club",
+    "namePlaceholder": "Inserisci il nome del club",
+    "location": "Posizione",
+    "locationPlaceholder": "Inserisci la posizione",
+    "saveChanges": "Salva modifiche",
+    "createClub": "Crea club",
+    "saving": "Salvataggio..."
+  },
+  "validation": {
+    "nameRequired": "Il nome del club è obbligatorio"
+  },
+  "selectClub": "Seleziona un club...",
+  "quickCreateOption": "+ Crea nuovo club...",
+  "toast": {
+    "created": "Club creato",
+    "createdDesc": "{name} è stato creato. Puoi aggiungere più dettagli in seguito.",
+    "updated": "Club aggiornato",
+    "updatedDesc": "Il club è stato aggiornato con successo.",
+    "deleted": "Club eliminato",
+    "deletedDesc": "Il club è stato eliminato con successo.",
+    "error": "Errore",
+    "createError": "Impossibile creare il club. Riprova.",
+    "updateError": "Impossibile aggiornare il club. Riprova.",
+    "deleteError": "Impossibile eliminare il club. Riprova."
+  }
+}

@@ -12,12 +12,14 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 type ChampionshipListProps = {
   refreshKey?: number;
 };
 
 export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
+  const t = useTranslations("championships");
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const championshipApi = useChampionshipApi();
@@ -55,8 +57,8 @@ export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
 
   const groupedChampionships = championships.reduce((acc, championship) => {
     const season = seasons.find((s) => s.id === championship.season_id);
-    const seasonName = season ? `Season ${season.name}` : "Unknown Season";
-    const format = championship.match_formats?.format || "Unknown Format";
+    const seasonName = season ? `${t("list.seasonPrefix")} ${season.name}` : t("list.unknownSeason");
+    const format = championship.match_formats?.format || t("list.unknownFormat");
 
     if (!acc[seasonName]) {
       acc[seasonName] = {};
@@ -84,7 +86,7 @@ export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
   return (
     <div className="space-y-8">
       {Object.keys(groupedChampionships).length === 0 ? (
-        <p className="text-center text-muted-foreground">No championships found matching the current filters.</p>
+        <p className="text-center text-muted-foreground">{t("filters.noChampionshipsMatching")}</p>
       ) : (
         Object.entries(groupedChampionships).map(([seasonName, formats]) => (
           <div key={seasonName}>
@@ -105,15 +107,15 @@ export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
                         <CardTitle>{championship.name}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p>Format: {championship.match_formats?.format}</p>
-                        <p>Gender: {championship.gender}</p>
-                        <p>Age Category: {championship.age_category}</p>
+                        <p>{t("list.formatLabel")} {championship.match_formats?.format}</p>
+                        <p>{t("list.genderLabel")} {championship.gender}</p>
+                        <p>{t("list.ageCategoryLabel")} {championship.age_category}</p>
                         {/* Add more useful information here */}
                       </CardContent>
                       <CardFooter>
                         <Button asChild variant="outline" className="w-full">
                           <Link href={`/championships/${championship.id}`}>
-                            View Details
+                            {t("list.viewDetails")}
                           </Link>
                         </Button>
                       </CardFooter>

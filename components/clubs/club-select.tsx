@@ -3,6 +3,7 @@
 import { Club } from "@/lib/types";
 import AsyncSelect from "react-select/async";
 import { useClubApi } from "@/hooks/use-club-api";
+import { useTranslations } from "next-intl";
 
 type ClubSelectProps = {
   value: Club | null;
@@ -29,6 +30,7 @@ export function ClubSelect({
   onChange,
   isClearable = false,
 }: ClubSelectProps) {
+  const t = useTranslations("clubs");
   const clubApi = useClubApi();
 
   return (
@@ -41,7 +43,7 @@ export function ClubSelect({
       getOptionValue={(option) => option.id.toString()}
       getOptionLabel={(option) => option.name}
       isClearable={isClearable}
-      placeholder="Select a Club ..."
+      placeholder={t("selectClub")}
     />
   );
 };

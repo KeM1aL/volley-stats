@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -31,14 +32,6 @@ type SetSetupProps = {
   onComplete: (set: Set) => Promise<void>;
 };
 
-const NAMES = [
-  "First Set",
-  "Second Set",
-  "Third Set",
-  "Fourth Set",
-  "Tie-Break",
-];
-
 export function SetSetup({
   match,
   sets,
@@ -48,6 +41,10 @@ export function SetSetup({
   awayTeam,
   onComplete,
 }: SetSetupProps) {
+  const t = useTranslations("matches");
+  const tp = useTranslations("players");
+  const te = useTranslations("enums");
+  const tc = useTranslations("common");
   const [selectedPosition, setSelectedPosition] =
     useState<PlayerPosition | null>(null);
   const [selectedRole, setSelectedRole] = useState<PlayerRole | null>(null);
@@ -155,8 +152,8 @@ export function SetSetup({
     if (existingPositions.some((position) => !positions[position])) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "All positions must be specified",
+        title: tc("errors.generalError"),
+        description: t("sets.allPositionsMustBeSpecified"),
       });
       setIsLoading(false);
       return;
@@ -164,8 +161,8 @@ export function SetSetup({
     if ((sets.length === 0 || sets.length === 4) && !serverTeamId) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Serving team must be specified",
+        title: tc("errors.generalError"),
+        description: t("sets.servingTeamMustBeSpecified"),
       });
       setIsLoading(false);
       return;
@@ -222,21 +219,27 @@ export function SetSetup({
   };
 
   return (
-    <div className="space-y-6">
+    <div data-testid="set-setup" className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-2 md:mb-4">{`${
-          NAMES[sets.length]
-        } Setup`}</h2>
+        <h2 className="text-lg font-semibold mb-2 md:mb-4">{t("sets.setupTitle", {
+          name: [
+            t("sets.firstSet"),
+            t("sets.secondSet"),
+            t("sets.thirdSet"),
+            t("sets.fourthSet"),
+            t("sets.tieBreak"),
+          ][sets.length] ?? ""
+        })}</h2>
         <div className="space-y-2">
           {(sets.length === 0 || sets.length === 4) && (
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <Label>Serving Team</Label>
+                <Label>{t("sets.selectServingTeam")}</Label>
                 <Select
                   onValueChange={(value) => setServerTeamId(value as string)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select serving team" />
+                  <SelectTrigger data-testid="serving-team-select">
+                    <SelectValue placeholder={t("sets.selectServingTeam")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={homeTeam.id}>{homeTeam.name}</SelectItem>
@@ -271,7 +274,7 @@ export function SetSetup({
                 />
                 <div className="grid grid-cols-4 gap-6">
                   <div className="col-span-2 col-start-2">
-                    <Label>Role {selectedRole}</Label>
+                    <Label>{tp("form.role")}</Label>
                     <div className="flex flex-row items-center space-x-1">
                       <Select
                         value={selectedRole ?? ""}
@@ -280,25 +283,14 @@ export function SetSetup({
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={`Select role`} />
+                          <SelectValue placeholder={tp("form.selectRole")} />
                         </SelectTrigger>
                         <SelectContent>
                           {Object.values(PlayerRole)
                             .filter((role) => role !== PlayerRole.LIBERO)
                             .map((role) => (
                               <SelectItem key={role} value={role}>
-                                {(() => {
-                                  switch (role) {
-                                    case PlayerRole.SETTER:
-                                      return "Setter";
-                                    case PlayerRole.OPPOSITE:
-                                      return "Opposite";
-                                    case PlayerRole.OUTSIDE_HITTER:
-                                      return "Outside Hitter";
-                                    case PlayerRole.MIDDLE_HITTER:
-                                      return "Middle Hitter";
-                                  }
-                                })()}
+                                {te(`playerRole.${role}`)}
                               </SelectItem>
                             ))}
                         </SelectContent>
@@ -312,7 +304,7 @@ export function SetSetup({
           {match.match_formats?.format === "6x6" && (
             <div className="grid grid-cols-4 gap-6">
               <div className="col-span-2 col-start-2">
-                <Label>Libero</Label>
+                <Label>{t("sets.libero")}</Label>
                 <div className="flex flex-row items-center space-x-1">
                   <Select
                     defaultValue={null as unknown as string}
@@ -324,11 +316,11 @@ export function SetSetup({
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={`Select player`} />
+                      <SelectValue placeholder={t("sets.selectPlayer")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={null as unknown as string}>
-                        None
+                        {t("sets.none")}
                       </SelectItem>
                       {players
                         .filter((player) =>
@@ -354,8 +346,8 @@ export function SetSetup({
 
       {/* <Separator /> */}
 
-      <Button onClick={handleComplete} className="w-full" disabled={isLoading}>
-        Start Set
+      <Button data-testid="start-set-btn" onClick={handleComplete} className="w-full" disabled={isLoading}>
+        {t("sets.startSet")}
       </Button>
     </div>
   );

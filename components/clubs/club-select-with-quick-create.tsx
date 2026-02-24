@@ -6,6 +6,7 @@ import AsyncSelect from "react-select/async";
 import { useClubApi } from "@/hooks/use-club-api";
 import { Filter } from "@/lib/api/types";
 import { QuickCreateClubDialog } from "./quick-create-club-dialog";
+import { useTranslations } from "next-intl";
 
 type ClubSelectWithQuickCreateProps = {
   value: Club | null;
@@ -23,6 +24,7 @@ const CREATE_NEW_OPTION_ID = "__create_new__";
 const loadOptions = async (
   inputValue: string,
   clubApi: ReturnType<typeof useClubApi>,
+  createOptionLabel: string,
 ): Promise<ClubOption[]> => {
   try {
     const filters: Filter[] = inputValue
@@ -39,7 +41,7 @@ const loadOptions = async (
 
     const createOption: ClubOption = {
       id: CREATE_NEW_OPTION_ID,
-      name: "+ Create new club...",
+      name: createOptionLabel,
       user_id: "",
       website: null,
       contact_email: null,
@@ -52,7 +54,7 @@ const loadOptions = async (
     console.error("Error fetching clubs", error);
     const createOption: ClubOption = {
       id: CREATE_NEW_OPTION_ID,
-      name: "+ Create new club...",
+      name: createOptionLabel,
       user_id: "",
       website: null,
       contact_email: null,
@@ -69,6 +71,7 @@ export function ClubSelectWithQuickCreate({
   isClearable = false,
   disabled = false,
 }: ClubSelectWithQuickCreateProps) {
+  const t = useTranslations("clubs");
   const clubApi = useClubApi();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -103,7 +106,7 @@ export function ClubSelectWithQuickCreate({
     <>
       <AsyncSelect<ClubOption>
         cacheOptions
-        loadOptions={(inputValue) => loadOptions(inputValue, clubApi)}
+        loadOptions={(inputValue) => loadOptions(inputValue, clubApi, t("quickCreateOption"))}
         defaultOptions
         value={value}
         onChange={handleChange}
@@ -113,7 +116,7 @@ export function ClubSelectWithQuickCreate({
         formatOptionLabel={formatOptionLabel}
         isClearable={isClearable}
         isDisabled={disabled}
-        placeholder="Select a club..."
+        placeholder={t("selectClub")}
         styles={{
           option: (provided, state) => ({
             ...provided,

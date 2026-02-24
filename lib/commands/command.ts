@@ -43,7 +43,8 @@ export class CommandHistory {
 
   async undo(): Promise<MatchState> {
     const command = this.undoStack.pop();
-    if (!command) throw new Error("No command to undo");
+    // Error identifier maps to translation key: errors.commands.noUndo
+    if (!command) throw new Error("noUndo");
 
     try {
       const state = await command.undo();
@@ -58,7 +59,8 @@ export class CommandHistory {
 
   async redo(): Promise<MatchState> {
     const command = this.redoStack.pop();
-    if (!command) throw new Error("No command to redo");
+    // Error identifier maps to translation key: errors.commands.noRedo
+    if (!command) throw new Error("noRedo");
 
     try {
       const state = await command.execute();

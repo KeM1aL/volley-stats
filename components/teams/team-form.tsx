@@ -23,15 +23,9 @@ import { createClient } from "@/lib/supabase/client";
 import { ClubSelectWithQuickCreate } from "../clubs/club-select-with-quick-create";
 import { GenericSelect } from "../ui/generic-select";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 const supabase = createClient();
-
-const formSchema = z.object({
-  name: z.string().min(1, "Team name is required"),
-  championships: z.custom<Championship | null>(() => true).nullable(),
-  clubs: z.custom<Club | null>(() => true).nullable(),
-  status: z.enum(['incomplete', 'active', 'archived']),
-});
 
 type TeamFormProps = {
   team?: Team | null;
@@ -40,11 +34,20 @@ type TeamFormProps = {
 };
 
 export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
+  const t = useTranslations('teams');
+  const tc = useTranslations('common');
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const teamApi = useTeamApi();
   const router = useRouter();
   const isEditMode = !!team;
+
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    championships: z.custom<Championship | null>(() => true).nullable(),
+    clubs: z.custom<Club | null>(() => true).nullable(),
+    status: z.enum(['incomplete', 'active', 'archived']),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -78,8 +81,8 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           status: values.status,
         });
         toast({
-          title: "Team updated",
-          description: "The team has been successfully updated.",
+          title: t('toast.updated'),
+          description: t('toast.updatedDesc'),
         });
         router.refresh();
         if (onSuccess) {
@@ -89,7 +92,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        if (!session) throw new Error("Not authenticated");
+        if (!session) throw new Error(tc('errors.notAuthenticated'));
 
         const newTeam: Omit<Team, "championships" | "clubs"> = {
           id: crypto.randomUUID(),
@@ -109,8 +112,8 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           onSuccess(createdTeam.id);
         }
         toast({
-          title: "Team created",
-          description: "Your new team has been created successfully.",
+          title: t('toast.created'),
+          description: t('toast.createdDesc'),
         });
       }
       if (onClose) {
@@ -120,10 +123,8 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
       console.error(`Failed to ${isEditMode ? "update" : "create"} team:`, error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: `Failed to ${
-          isEditMode ? "update" : "create"
-        } team. Please try again.`,
+        title: t('toast.error'),
+        description: isEditMode ? t('toast.updateError') : t('toast.createError'),
       });
     } finally {
       setIsLoading(false);
@@ -138,10 +139,10 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>{t('form.name')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter team name"
+                  placeholder={t('form.namePlaceholder')}
                   {...field}
                   disabled={isLoading}
                 />
@@ -156,7 +157,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           name="championships"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Championship</FormLabel>
+              <FormLabel>{t('form.championship')}</FormLabel>
               <FormControl>
                 <ChampionshipSelectWithQuickCreate
                   value={field.value}
@@ -174,7 +175,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           name="clubs"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Club</FormLabel>
+              <FormLabel>{t('form.club')}</FormLabel>
               <FormControl>
                 <ClubSelectWithQuickCreate
                   value={field.value}
@@ -192,17 +193,17 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>{t('form.status')}</FormLabel>
               <FormControl>
                 <GenericSelect
                   options={[
-                    { label: 'Incomplete', value: 'incomplete' },
-                    { label: 'Active', value: 'active' },
-                    { label: 'Archived', value: 'archived' }
+                    { label: t('status.incomplete'), value: 'incomplete' },
+                    { label: t('status.active'), value: 'active' },
+                    { label: t('status.archived'), value: 'archived' }
                   ]}
                   value={field.value}
                   onValueChange={field.onChange}
-                  placeholder="Select status"
+                  placeholder={t('form.statusPlaceholder')}
                 />
               </FormControl>
               <FormMessage />
@@ -218,7 +219,7 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
               onClick={onClose}
               disabled={isLoading}
             >
-              Cancel
+              {tc('actions.cancel')}
             </Button>
           )}
           <Button
@@ -229,12 +230,12 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
             {isLoading ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
-                {isEditMode ? "Saving..." : "Creating Team..."}
+                {isEditMode ? t('form.saving') : t('form.creating')}
               </>
             ) : isEditMode ? (
-              "Save Changes"
+              t('form.saveChanges')
             ) : (
-              "Create Team"
+              t('form.createTeam')
             )}
           </Button>
         </div>

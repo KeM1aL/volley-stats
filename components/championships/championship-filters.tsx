@@ -8,8 +8,10 @@ import type { ChampionshipFilters as ChampionshipFilterType } from "@/hooks/use-
 import { useSeasonApi } from "@/hooks/use-season-api";
 import { Championship, Season } from "@/lib/types";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 export function ChampionshipFilters() {
+  const t = useTranslations("championships");
   const [seasons, setSeasons] = useState<Season[]>([]);
   const seasonApi = useSeasonApi();
   const { filters, setFilters } = useChampionshipFilters();
@@ -45,72 +47,74 @@ export function ChampionshipFilters() {
     });
   };
 
+  const te = useTranslations("enums");
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Filters</CardTitle>
+        <CardTitle>{t("filters.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="season">Season</Label>
+            <Label htmlFor="season">{t("filters.season")}</Label>
             <Select
               id="season"
               options={[...seasons.map((season) => ({ value: String(season.id), label: season.name }))]}
               value={filters.seasonId ? { value: String(filters.seasonId), label: seasons.find(s => s.id === filters.seasonId)?.name || "" } : null}
               onChange={(selectedOption) => handleFilterChange("seasonId", selectedOption ? selectedOption.value : undefined)}
               isClearable
-              placeholder="Select a season"
+              placeholder={t("filters.selectSeason")}
             />
           </div>
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="format">Format</Label>
+            <Label htmlFor="format">{t("filters.format")}</Label>
             <Select
               id="format"
               options={[
-                { value: "2x2", label: "2x2" },
-                { value: "3x3", label: "3x3" },
-                { value: "4x4", label: "4x4" },
-                { value: "6x6", label: "6x6" },
+                { value: "2x2", label: te("championshipFormat.2x2") },
+                { value: "3x3", label: te("championshipFormat.3x3") },
+                { value: "4x4", label: te("championshipFormat.4x4") },
+                { value: "6x6", label: te("championshipFormat.6x6") },
               ]}
-              value={filters.match_formats?.format ? { value: filters.match_formats?.format, label: filters.match_formats?.format } : null}
+              value={filters.match_formats?.format ? { value: filters.match_formats?.format, label: te(`championshipFormat.${filters.match_formats?.format}`) } : null}
               onChange={(selectedOption) => handleFormatChange(selectedOption ? selectedOption.value : undefined)}
               isClearable
-              placeholder="Select a format"
+              placeholder={t("filters.selectFormat")}
             />
           </div>
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="gender">Gender</Label>
+            <Label htmlFor="gender">{t("filters.gender")}</Label>
             <Select
               id="gender"
               options={[
-                { value: "female", label: "Female" },
-                { value: "male", label: "Male" },
-                { value: "mixte", label: "Mixte" },
+                { value: "female", label: t("gender.female") },
+                { value: "male", label: t("gender.male") },
+                { value: "mixte", label: t("gender.mixte") },
               ]}
-              value={filters.gender ? { value: filters.gender, label: filters.gender } : null}
+              value={filters.gender ? { value: filters.gender, label: t(`gender.${filters.gender}`) } : null}
               onChange={(selectedOption) => handleFilterChange("gender", selectedOption ? selectedOption.value : undefined)}
               isClearable
-              placeholder="Select a gender"
+              placeholder={t("filters.selectGender")}
             />
           </div>
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="age_category">Age Category</Label>
+            <Label htmlFor="age_category">{t("filters.ageCategory")}</Label>
             <Select
               id="age_category"
               options={[
-                { value: "U10", label: "U10" },
-                { value: "U12", label: "U12" },
-                { value: "U14", label: "U14" },
-                { value: "U16", label: "U16" },
-                { value: "U18", label: "U18" },
-                { value: "U21", label: "U21" },
-                { value: "senior", label: "Senior" },
+                { value: "U10", label: t("ageCategory.u10") },
+                { value: "U12", label: t("ageCategory.u12") },
+                { value: "U14", label: t("ageCategory.u14") },
+                { value: "U16", label: t("ageCategory.u16") },
+                { value: "U18", label: t("ageCategory.u18") },
+                { value: "U21", label: t("ageCategory.u21") },
+                { value: "senior", label: t("ageCategory.senior") },
               ]}
-              value={filters.ageCategory ? { value: filters.ageCategory, label: filters.ageCategory } : null}
+              value={filters.ageCategory ? { value: filters.ageCategory, label: t(`ageCategory.${filters.ageCategory.toLowerCase()}`) } : null}
               onChange={(selectedOption) => handleFilterChange("ageCategory", selectedOption ? selectedOption.value : undefined)}
               isClearable
-              placeholder="Select an age category"
+              placeholder={t("filters.selectAgeCategory")}
             />
           </div>
         </div>

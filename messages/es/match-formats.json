@@ -1,0 +1,35 @@
+{
+  "title": "Formatos de Partida",
+  "description": "+ Crear nuevo formato de partida...",
+  "selectPlaceholder": "Seleccione formato de partida...",
+  "newFormat": "Nuevo Formato de Partida",
+  "form": {
+    "description": "Descripción",
+    "descriptionPlaceholder": "ej: Estándar 6x6 - Mejor de 5",
+    "format": "Formato de Voleibol",
+    "selectFormat": "Seleccione formato",
+    "setsToWin": "Sets para Ganar",
+    "pointsPerSet": "Puntos por Set",
+    "pointsFinalSet": "Puntos en Set Final",
+    "enableRotation": "Activar Rotación",
+    "enableRotationDesc": "Los jugadores rotan posiciones después de ganar el saque",
+    "decisivePoint": "Punto Decisivo",
+    "decisivePointDesc": "Ganar por 2 puntos o jugar hasta punto decisivo",
+    "createMatchFormat": "Crear Formato de Partida",
+    "saving": "Guardando...",
+    "creating": "Creando..."
+  },
+  "dialog": {
+    "newMatchFormat": "Nuevo Formato de Partida"
+  },
+  "validation": {
+    "descriptionRequired": "La descripción es obligatoria",
+    "formatRequired": "Por favor seleccione un formato de voleibol"
+  },
+  "toast": {
+    "created": "Formato de partida creado",
+    "createdDesc": "El formato de partida ha sido creado con éxito.",
+    "error": "Error",
+    "createError": "Error al crear formato de partida. Inténtelo de nuevo."
+  }
+}

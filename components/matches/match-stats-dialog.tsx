@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { Match, Team } from "@/lib/types";
 import { MatchLineupSetup } from "@/components/matches/match-lineup-setup";
 import {
@@ -25,6 +26,7 @@ type MatchStatsDialogProps = {
 };
 
 export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
+  const t = useTranslations("matches");
   const { localDb: db } = useLocalDb();
   const { user } = useAuth(); // Use the auth context
   const router = useRouter();
@@ -61,8 +63,8 @@ export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
       } else if (userManagedTeams.length === 0) {
         toast({
           variant: "destructive",
-          title: "Permission Denied",
-          description: "You do not have permission to manage either team in this match.",
+          title: t("dialog.permissionDenied"),
+          description: t("dialog.noPermissionMessage"),
         });
         setIsDialogOpen(false);
       } else {
@@ -76,14 +78,14 @@ export default function MatchEditDialog({ match }: MatchStatsDialogProps) {
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" title="View Stats" disabled={isLoading || userManagedTeams.length === 0}>
+        <Button variant="ghost" size="sm" title={t("stats.title")} disabled={isLoading || userManagedTeams.length === 0}>
           <BarChart2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       {userManagedTeams.length > 1 && ( // Only show content if user can manage both
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Select Managing Team</DialogTitle>
+            <DialogTitle>{t("dialog.selectManagingTeam")}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <MatchManagedTeamSetup
