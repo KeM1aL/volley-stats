@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Check, Circle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LoadingSpinner } from "./loading-spinner";
 
 export interface PdfGenerationStep {
   id: string;
@@ -63,7 +64,7 @@ export function PdfLoadingOverlay({
                   {step.status === "completed" ? (
                     <Check className="h-5 w-5 text-green-500" />
                   ) : step.status === "in-progress" ? (
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <LoadingSpinner size="sm" />
                   ) : (
                     <Circle className="h-5 w-5 text-muted-foreground" />
                   )}
