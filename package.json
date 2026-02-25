@@ -12,6 +12,9 @@
     "lint": "next lint",
     "i18n:check": "i18n-check -s en --locales messages",
     "supabase:types": "npx supabase gen types typescript --project-id 'gvtjccisbwrwpjtabnyd' --schema public > lib/supabase/database.types.ts",
+    "supabase:functions:deploy:send-email": "npx supabase functions deploy send-email --no-verify-jwt --project-ref 'gvtjccisbwrwpjtabnyd'",
+    "supabase:functions:deploy:health": "npx supabase functions deploy health --no-verify-jwt --project-ref 'gvtjccisbwrwpjtabnyd'",
+    "supabase:secrets:set": "npx supabase secrets set --env-file supabase/functions/.env --project-ref 'gvtjccisbwrwpjtabnyd'",
     "email:dev": "email dev --dir emails",
     "email:build": "email export --outDir supabase/templates/auth --dir emails",
     "email:preview": "email dev --port 3001 --dir emails",
@@ -96,8 +99,8 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.0",
     "@lingual/i18n-check": "^0.8.19",
+    "@playwright/test": "^1.49.0",
     "@react-email/components": "^0.0.25",
     "@react-email/render": "^1.0.0",
     "@types/lodash": "^4.17.20",
@@ -109,7 +112,7 @@
     "baseline-browser-mapping": "^2.9.14",
     "dotenv": "^16.4.7",
     "react-email": "^3.0.0",
-    "supabase": "^2.65.3",
+    "supabase": "^2.76.14",
     "tsx": "^4.19.2"
   }
 }
