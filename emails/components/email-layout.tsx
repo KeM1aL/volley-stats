@@ -1,11 +1,14 @@
 import {
   Body,
+  Column,
   Container,
   Head,
   Html,
   Img,
   Preview,
+  Row,
   Section,
+  Text,
 } from "@react-email/components";
 import * as React from "react";
 
@@ -21,15 +24,25 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => {
       <Preview>{preview}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Header with Logo */}
+          {/* Top accent stripe */}
+          <Section style={accentStripe} />
+
+          {/* Header with Logo + Brand Name */}
           <Section style={header}>
-            <Img
-              src="&#123;&#123;.SiteURL&#125;&#125;/logo.png"
-              width="50"
-              height="50"
-              alt="VolleyStats"
-              style={logo}
-            />
+            <Row>
+              <Column style={{ width: "52px" }}>
+                <Img
+                  src="{{.SiteURL}}/logo.png"
+                  width="40"
+                  height="40"
+                  alt="VolleyStats"
+                  style={logo}
+                />
+              </Column>
+              <Column>
+                <Text style={brandName}>VolleyStats</Text>
+              </Column>
+            </Row>
           </Section>
 
           {/* Main Content */}
@@ -47,32 +60,34 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => {
 
 const EmailFooter = () => {
   return (
-    <>
-      <div style={footerText}>
-        <p style={footerParagraph}>
-          Questions? Contact us at{" "}
-          <a href="mailto:volleystats@blockservice.fr" style={link}>
-            volleystats@blockservice.fr
-          </a>
-        </p>
-        <p style={footerParagraph}>
-          <a href="https://twitter.com/volleystats" style={socialLink}>
-            Twitter
-          </a>{" "}
-          •{" "}
-          <a href="https://instagram.com/volleystats" style={socialLink}>
-            Instagram
-          </a>{" "}
-          •{" "}
-          <a href="https://facebook.com/volleystats" style={socialLink}>
-            Facebook
-          </a>
-        </p>
-        <p style={footerCopyright}>
-          © {new Date().getFullYear()} VolleyStats. All rights reserved.
-        </p>
+    <div style={footerWrapper}>
+      <Text style={tagline}>Volleyball statistics made simple 🏐</Text>
+
+      <Text style={footerParagraph}>
+        Questions?{" "}
+        <a href="mailto:volleystats@blockservice.fr" style={footerLink}>
+          volleystats@blockservice.fr
+        </a>
+      </Text>
+
+      <div style={socialRow}>
+        <a href="https://x.com/volleystats" style={socialPill}>
+          X
+        </a>
+        {"  "}
+        <a href="https://instagram.com/volleystats" style={socialPill}>
+          Instagram
+        </a>
+        {"  "}
+        <a href="https://facebook.com/volleystats" style={socialPill}>
+          Facebook
+        </a>
       </div>
-    </>
+
+      <Text style={copyright}>
+        © {new Date().getFullYear()} VolleyStats. All rights reserved.
+      </Text>
+    </div>
   );
 };
 
@@ -86,56 +101,88 @@ const main = {
 const container = {
   backgroundColor: "#ffffff",
   margin: "0 auto",
-  padding: "20px 0 48px",
   marginBottom: "64px",
   maxWidth: "600px",
+  borderRadius: "8px",
+  overflow: "hidden" as const,
+};
+
+const accentStripe = {
+  backgroundColor: "#0f172a",
+  height: "4px",
+  width: "100%",
 };
 
 const header = {
-  padding: "32px 48px",
-  textAlign: "center" as const,
+  padding: "24px 40px",
   borderBottom: "1px solid #f0f0f0",
 };
 
 const logo = {
-  margin: "0 auto",
   borderRadius: "8px",
+  display: "block",
+};
+
+const brandName = {
+  fontSize: "20px",
+  fontWeight: "700",
+  color: "#0f172a",
+  margin: "0",
+  lineHeight: "40px",
+  paddingLeft: "12px",
 };
 
 const content = {
-  padding: "32px 48px",
+  padding: "32px 40px",
 };
 
 const footer = {
-  padding: "32px 48px",
+  padding: "24px 40px 32px",
   borderTop: "1px solid #f0f0f0",
 };
 
-const footerText = {
+const footerWrapper = {
   textAlign: "center" as const,
-  color: "#737373",
+};
+
+const tagline = {
   fontSize: "14px",
-  lineHeight: "24px",
+  color: "#374151",
+  margin: "0 0 12px",
+  fontWeight: "500",
 };
 
 const footerParagraph = {
-  margin: "8px 0",
+  fontSize: "13px",
+  color: "#737373",
+  margin: "0 0 16px",
+  lineHeight: "22px",
 };
 
-const link = {
+const footerLink = {
   color: "#0f172a",
   textDecoration: "underline",
 };
 
-const socialLink = {
-  color: "#737373",
-  textDecoration: "none",
+const socialRow = {
+  margin: "0 0 16px",
 };
 
-const footerCopyright = {
-  margin: "16px 0 0",
-  color: "#a3a3a3",
+const socialPill = {
+  backgroundColor: "#f4f4f4",
+  borderRadius: "4px",
+  padding: "4px 10px",
+  color: "#374151",
   fontSize: "12px",
+  textDecoration: "none",
+  margin: "0 4px",
+  display: "inline-block",
+};
+
+const copyright = {
+  fontSize: "12px",
+  color: "#a3a3a3",
+  margin: "0",
 };
 
 export default EmailLayout;

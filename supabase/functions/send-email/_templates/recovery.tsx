@@ -3,8 +3,7 @@ import * as React from 'npm:react@18.3.1'
 import { getLocale, getTranslations } from '../_i18n.ts'
 import { EmailLayout } from './_layout.tsx'
 
-interface SignUpEmailProps {
-  username: string
+interface RecoveryEmailProps {
   lang: string
   token: string
   supabase_url: string
@@ -14,8 +13,7 @@ interface SignUpEmailProps {
   token_hash: string
 }
 
-export const SignUpEmail = ({
-  username,
+export const RecoveryEmail = ({
   lang,
   token,
   supabase_url,
@@ -23,13 +21,13 @@ export const SignUpEmail = ({
   email_action_type,
   redirect_to,
   token_hash,
-}: SignUpEmailProps) => {
-  const t = getTranslations(getLocale(lang)).signup
+}: RecoveryEmailProps) => {
+  const t = getTranslations(getLocale(lang)).recovery
   const confirmUrl = `${supabase_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`
 
   return (
     <EmailLayout preview={t.preview} site_url={site_url}>
-      <Heading style={heading}>{t.heading(username)}</Heading>
+      <Heading style={heading}>{t.heading}</Heading>
 
       <Text style={paragraph}>{t.body}</Text>
 
@@ -44,15 +42,19 @@ export const SignUpEmail = ({
         </Link>
       </Text>
 
-      <Text style={codeLabel}>{t.codeLabel}</Text>
-      <Section style={codeBox}>
-        <Text style={codeText}>{token}</Text>
-      </Section>
+      {t.timeWarning && <Text style={warningBox}>{t.timeWarning}</Text>}
 
       <Text style={ignoreText}>{t.ignoreText}</Text>
 
+      {/* <Text style={codeLabel}>{t.codeLabel}</Text>
+      <Section style={codeBox}>
+        <Text style={codeText}>{token}</Text>
+      </Section> */}
+
+      {t.tipText && <Text style={tipBox}>{t.tipText}</Text>}
+
       <Text style={signature}>
-        Happy tracking!
+        Stay secure!
         <br />
         The VolleyStats Team
       </Text>
@@ -60,18 +62,17 @@ export const SignUpEmail = ({
   )
 }
 
-SignUpEmail.PreviewProps = {
-  username: 'player1',
+RecoveryEmail.PreviewProps = {
   lang: 'en',
   token: '123456',
   supabase_url: 'https://example.supabase.co',
   site_url: 'https://volleystats.app',
-  email_action_type: 'signup',
+  email_action_type: 'recovery',
   redirect_to: 'https://volleystats.app',
   token_hash: 'abc123',
-} as SignUpEmailProps
+} as RecoveryEmailProps
 
-export default SignUpEmail
+export default RecoveryEmail
 
 const heading = {
   fontSize: '28px',
@@ -114,6 +115,24 @@ const link = {
   wordBreak: 'break-all' as const,
 }
 
+const warningBox = {
+  fontSize: '14px',
+  lineHeight: '22px',
+  color: '#374151',
+  backgroundColor: '#fef3c7',
+  padding: '16px',
+  borderRadius: '8px',
+  margin: '24px 0',
+  border: '1px solid #fde68a',
+}
+
+const ignoreText = {
+  fontSize: '14px',
+  lineHeight: '22px',
+  color: '#737373',
+  margin: '16px 0',
+}
+
 const codeLabel = {
   fontSize: '14px',
   color: '#737373',
@@ -137,11 +156,15 @@ const codeText = {
   margin: '0',
 }
 
-const ignoreText = {
+const tipBox = {
   fontSize: '14px',
   lineHeight: '22px',
-  color: '#737373',
-  margin: '16px 0',
+  color: '#374151',
+  backgroundColor: '#f0fdf4',
+  padding: '16px',
+  borderRadius: '8px',
+  margin: '24px 0',
+  border: '1px solid #d1fae5',
 }
 
 const signature = {
