@@ -67,12 +67,6 @@ export const MagicLinkEmail = ({
       </Section>
 
       <Text style={ignoreText}>{t.ignoreText}</Text>
-
-      <Text style={signature}>
-        Happy tracking!
-        <br />
-        The VolleyStats Team
-      </Text>
     </EmailLayout>
   )
 }
@@ -169,11 +163,4 @@ const ignoreText = {
   lineHeight: '22px',
   color: '#737373',
   margin: '16px 0',
-}
-
-const signature = {
-  fontSize: '16px',
-  lineHeight: '26px',
-  color: '#374151',
-  margin: '32px 0 0',
 }

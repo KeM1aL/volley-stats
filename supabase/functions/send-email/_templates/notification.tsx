@@ -40,12 +40,6 @@ export const NotificationEmail = ({
       <Text style={safeBox}>{t.safeText}</Text>
 
       <Text style={warningBox}>{t.warningText}</Text>
-
-      <Text style={signature}>
-        Stay secure!
-        <br />
-        The VolleyStats Team
-      </Text>
     </EmailLayout>
   )
 }
@@ -93,11 +87,4 @@ const warningBox = {
   borderRadius: '8px',
   margin: '16px 0',
   border: '1px solid #fde68a',
-}
-
-const signature = {
-  fontSize: '16px',
-  lineHeight: '26px',
-  color: '#374151',
-  margin: '32px 0 0',
 }

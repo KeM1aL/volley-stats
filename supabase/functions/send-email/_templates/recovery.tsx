@@ -52,12 +52,6 @@ export const RecoveryEmail = ({
       </Section> */}
 
       {t.tipText && <Text style={tipBox}>{t.tipText}</Text>}
-
-      <Text style={signature}>
-        Stay secure!
-        <br />
-        The VolleyStats Team
-      </Text>
     </EmailLayout>
   )
 }
@@ -165,11 +159,4 @@ const tipBox = {
   borderRadius: '8px',
   margin: '24px 0',
   border: '1px solid #d1fae5',
-}
-
-const signature = {
-  fontSize: '16px',
-  lineHeight: '26px',
-  color: '#374151',
-  margin: '32px 0 0',
 }

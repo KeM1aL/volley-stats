@@ -1,4 +1,7 @@
 {
+  "compilerOptions": {
+    "types": ["npm:@types/react@18"]
+  },
   "imports": {
     "react": "npm:react@18.3.1",
     "standardwebhooks": "https://esm.sh/standardwebhooks@1.0.0",

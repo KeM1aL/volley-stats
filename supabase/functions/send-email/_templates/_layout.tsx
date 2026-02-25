@@ -16,7 +16,7 @@ import * as React from 'npm:react@18.3.1'
 interface EmailLayoutProps {
   preview: string
   site_url: string
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 export const EmailLayout = ({ preview, site_url, children }: EmailLayoutProps) => {
