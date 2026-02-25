@@ -160,6 +160,7 @@
     "pip",
     "pip3",
     "pipx",
+    "playwright",
     "pnpm",
     "pnpx",
     "pub",
@@ -196,6 +197,7 @@
     "frameworks": [
       "nextjs",
       "react",
+      "playwright",
       "eslint"
     ],
     "databases": [],
@@ -219,7 +221,10 @@
       "email:dev",
       "email:build",
       "email:preview",
-      "email:deploy"
+      "email:deploy",
+      "test:e2e",
+      "test:e2e:ui",
+      "test:e2e:debug"
     ],
     "make_targets": [],
     "poetry_scripts": [],
@@ -227,6 +232,6 @@
     "shell_scripts": []
   },
   "project_dir": "D:\\Development\\GIT\\volley-stats",
-  "created_at": "2026-02-09T01:12:53.923555",
-  "project_hash": "9bad708c546b550652f7bda8987aef97"
+  "created_at": "2026-02-24T15:33:48.491421",
+  "project_hash": "e0ef8cfb9b4802b79f3baf30f7e9a745"
 }
