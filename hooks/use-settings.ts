@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useAuth } from "@/contexts/auth-context";
 import { getUser, updateProfile } from "@/lib/api/users";
 import { supabase } from "@/lib/supabase/client";
+import { useLocale } from "next-intl";
 
 export const settingsSchema = z.object({
   favoriteTeam: z.string().optional(),
@@ -27,6 +28,7 @@ const defaultSettings: Settings = {
 
 export function useSettings() {
   const { user, setUser } = useAuth();
+  const currentLocale = useLocale();
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,18 +43,18 @@ export function useSettings() {
         loadedSettings = { ...loadedSettings, ...validated };
       }
 
-      if (user?.profile?.language) {
-        loadedSettings.language = user.profile.language;
-      }
+      // Profile language is source of truth for authenticated users;
+      // fall back to the active locale (cookie / Accept-Language) for others.
+      loadedSettings.language = user?.profile?.language ?? currentLocale;
 
       setSettings(loadedSettings);
     } catch (error) {
       console.error("Failed to load settings:", error);
-      setSettings(defaultSettings);
+      setSettings({ ...defaultSettings, language: currentLocale });
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, currentLocale]);
 
   useEffect(() => {
     loadSettings();

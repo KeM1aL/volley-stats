@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { syncLocaleFromProfile } from '@/lib/i18n/actions';
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +104,8 @@ export function AuthForm() {
       } else {
         // Update session in context
         setSession(authResponse.data.session);
+        // Sync profile language to cookie so future visits use the correct locale
+        await syncLocaleFromProfile();
         const redirectTo = searchParams.get("redirectTo");
         router.replace(redirectTo || "/");
         router.refresh();

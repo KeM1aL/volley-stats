@@ -2,8 +2,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import { getUserLocale } from '@/lib/i18n/locale';
+import { getLocale, getMessages } from 'next-intl/server';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LocalDatabaseProvider } from '@/components/providers/local-database-provider';
 import { Toaster } from '@/components/ui/toaster';
@@ -60,7 +59,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await getUserLocale();
+  const locale = await getLocale();
   const messages = await getMessages();
 
   return (

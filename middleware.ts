@@ -22,10 +22,10 @@ export async function middleware(req: NextRequest) {
     // Update session for Supabase
     const supabaseResponse = await updateSession(req);
 
-    // Set temporary cookie for this locale
+    // Persist locale from URL prefix for future visits
     const response = NextResponse.rewrite(newUrl);
     response.cookies.set('NEXT_LOCALE', locale, {
-      maxAge: 60 * 60, // 1 hour (temporary override)
+      maxAge: 60 * 60 * 24 * 365, // 1 year
     });
 
     // Copy Supabase session cookies to the response

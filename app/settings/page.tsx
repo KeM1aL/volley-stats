@@ -621,7 +621,7 @@ export default function SettingsPage() {
                       <FormLabel>{t('preferences.language')}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
