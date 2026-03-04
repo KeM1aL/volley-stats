@@ -23,5 +23,9 @@
       "Bash(playwright-cli:*)",
       "Bash(pnpm test:e2e:*)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true
 }
