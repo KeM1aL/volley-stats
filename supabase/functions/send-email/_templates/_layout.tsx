@@ -12,14 +12,17 @@ import {
   Text,
 } from 'npm:@react-email/components@0.0.22'
 import * as React from 'npm:react@18.3.1'
+import { getTranslations, type SupportedLocale } from '../_i18n.ts'
 
 interface EmailLayoutProps {
   preview: string
   site_url: string
+  locale: SupportedLocale
   children?: React.ReactNode
 }
 
-export const EmailLayout = ({ preview, site_url, children }: EmailLayoutProps) => {
+export const EmailLayout = ({ preview, site_url, locale, children }: EmailLayoutProps) => {
+  const tl = getTranslations(locale).layout
   return (
     <Html>
       <Head />
@@ -54,9 +57,9 @@ export const EmailLayout = ({ preview, site_url, children }: EmailLayoutProps) =
 
           {/* Footer */}
           <Section style={footerSection}>
-            <Text style={tagline}>Volleyball statistics made simple 🏐</Text>
+            <Text style={tagline}>{tl.tagline}</Text>
             <Text style={footerContact}>
-              Questions?{' '}
+              {tl.questionsLabel}{' '}
               <Link href="mailto:volleystats@blockservice.fr" style={footerLink}>
                 volleystats@blockservice.fr
               </Link>
@@ -69,7 +72,7 @@ export const EmailLayout = ({ preview, site_url, children }: EmailLayoutProps) =
               <Link href="https://facebook.com/volleystats" style={socialPill}>Facebook</Link>
             </Text>
             <Text style={copyright}>
-              © {new Date().getFullYear()} VolleyStats. All rights reserved.
+              © {new Date().getFullYear()} VolleyStats. {tl.copyright}
             </Text>
           </Section>
         </Container>

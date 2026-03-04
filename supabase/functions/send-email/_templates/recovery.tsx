@@ -22,11 +22,12 @@ export const RecoveryEmail = ({
   redirect_to,
   token_hash,
 }: RecoveryEmailProps) => {
-  const t = getTranslations(getLocale(lang)).recovery
+  const locale = getLocale(lang)
+  const t = getTranslations(locale).recovery
   const confirmUrl = `${supabase_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`
 
   return (
-    <EmailLayout preview={t.preview} site_url={site_url}>
+    <EmailLayout preview={t.preview} site_url={site_url} locale={locale}>
       <Heading style={heading}>{t.heading}</Heading>
 
       <Text style={paragraph}>{t.body}</Text>

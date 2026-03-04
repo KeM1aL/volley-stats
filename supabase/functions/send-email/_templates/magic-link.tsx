@@ -37,13 +37,14 @@ export const MagicLinkEmail = ({
   redirect_to,
   token_hash,
 }: MagicLinkEmailProps) => {
-  const translations = getTranslations(getLocale(lang))
+  const locale = getLocale(lang)
+  const translations = getTranslations(locale)
   const key = actionTypeToKey[email_action_type] ?? 'magiclink'
   const t = translations[key]
   const confirmUrl = `${supabase_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`
 
   return (
-    <EmailLayout preview={t.preview} site_url={site_url}>
+    <EmailLayout preview={t.preview} site_url={site_url} locale={locale}>
       <Heading style={heading}>{t.heading}</Heading>
 
       <Text style={paragraph}>{t.body}</Text>

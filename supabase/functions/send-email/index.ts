@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
           site_url: resolved_site_url,
           token,
           token_hash,
-          redirect_to,
+          redirect_to: redirect_to + lang + '/auth',
           email_action_type,
         })
       )

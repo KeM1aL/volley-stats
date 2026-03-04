@@ -24,11 +24,12 @@ export const SignUpEmail = ({
   redirect_to,
   token_hash,
 }: SignUpEmailProps) => {
-  const t = getTranslations(getLocale(lang)).signup
+  const locale = getLocale(lang)
+  const t = getTranslations(locale).signup
   const confirmUrl = `${supabase_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`
 
   return (
-    <EmailLayout preview={t.preview} site_url={site_url}>
+    <EmailLayout preview={t.preview} site_url={site_url} locale={locale}>
       <Heading style={heading}>{t.heading(username)}</Heading>
 
       <Text style={paragraph}>{t.body}</Text>
@@ -43,11 +44,6 @@ export const SignUpEmail = ({
           {confirmUrl}
         </Link>
       </Text>
-
-      <Text style={codeLabel}>{t.codeLabel}</Text>
-      <Section style={codeBox}>
-        <Text style={codeText}>{token}</Text>
-      </Section>
 
       <Text style={ignoreText}>{t.ignoreText}</Text>
     </EmailLayout>

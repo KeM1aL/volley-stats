@@ -39,6 +39,12 @@ type NotificationTranslations = {
   warningText: string
 }
 
+type LayoutTranslations = {
+  tagline: string
+  questionsLabel: string
+  copyright: string
+}
+
 export type Translations = {
   signup: SignupTranslations
   magiclink: OtpTranslations
@@ -49,6 +55,7 @@ export type Translations = {
   emailChange: OtpTranslations
   passwordChangedNotification: NotificationTranslations
   emailChangedNotification: NotificationTranslations
+  layout: LayoutTranslations
 }
 
 // ─── English ─────────────────────────────────────────────────────────────────
@@ -57,7 +64,7 @@ const en: Translations = {
   signup: {
     subject: 'Confirm your VolleyStats account',
     preview: 'Welcome to VolleyStats! Confirm your email to get started.',
-    heading: (username) => `Hey ${username}! Welcome to the team 🎉`,
+    heading: (username) => `Hey ${username ? username + ' ' : ''}! Welcome to the team 🎉`,
     body: "We're excited to have you join VolleyStats! Please confirm your email address to get started.",
     ctaText: 'Confirm Email Address',
     linkLabel: 'Or copy and paste this link into your browser:',
@@ -144,6 +151,11 @@ const en: Translations = {
     safeText: 'If you made this change, no further action is required. Future emails will be sent to your new address.',
     warningText: "⚠️ Didn't make this change? Please contact us immediately at volleystats@blockservice.fr to recover your account.",
   },
+  layout: {
+    tagline: 'Volleyball statistics made simple 🏐',
+    questionsLabel: 'Questions?',
+    copyright: 'All rights reserved.',
+  },
 }
 
 // ─── French ──────────────────────────────────────────────────────────────────
@@ -152,7 +164,7 @@ const fr: Translations = {
   signup: {
     subject: 'Confirmez votre compte VolleyStats',
     preview: 'Bienvenue sur VolleyStats ! Confirmez votre email pour commencer.',
-    heading: (username) => `Salut ${username} ! Bienvenue dans l'équipe 🎉`,
+    heading: (username) => `Salut ${username ? username + ' ' : ''}! Bienvenue dans l'équipe 🎉`,
     body: 'Nous sommes ravis de vous accueillir sur VolleyStats ! Veuillez confirmer votre adresse email pour commencer.',
     ctaText: "Confirmer l'adresse email",
     linkLabel: 'Ou copiez-collez ce lien dans votre navigateur :',
@@ -239,6 +251,11 @@ const fr: Translations = {
     safeText: "Si vous avez effectué ce changement, aucune action supplémentaire n'est requise. Les prochains emails seront envoyés à votre nouvelle adresse.",
     warningText: "⚠️ Vous n'avez pas fait ce changement ? Veuillez nous contacter immédiatement à volleystats@blockservice.fr pour récupérer votre compte.",
   },
+  layout: {
+    tagline: 'Les statistiques de volleyball simplifiées 🏐',
+    questionsLabel: 'Des questions ?',
+    copyright: 'Tous droits réservés.',
+  },
 }
 
 // ─── Spanish ─────────────────────────────────────────────────────────────────
@@ -247,7 +264,7 @@ const es: Translations = {
   signup: {
     subject: 'Confirma tu cuenta de VolleyStats',
     preview: '¡Bienvenido a VolleyStats! Confirma tu email para empezar.',
-    heading: (username) => `¡Hola ${username}! Bienvenido al equipo 🎉`,
+    heading: (username) => `¡Hola ${username ? username + ' ' : ''}! Bienvenido al equipo 🎉`,
     body: '¡Nos alegra que te hayas unido a VolleyStats! Confirma tu dirección de email para empezar.',
     ctaText: 'Confirmar dirección de email',
     linkLabel: 'O copia y pega este enlace en tu navegador:',
@@ -334,6 +351,11 @@ const es: Translations = {
     safeText: 'Si realizaste este cambio, no es necesaria ninguna acción adicional. Los próximos emails se enviarán a tu nueva dirección.',
     warningText: '⚠️ ¿No realizaste este cambio? Contáctanos inmediatamente en volleystats@blockservice.fr para recuperar tu cuenta.',
   },
+  layout: {
+    tagline: 'Estadísticas de voleibol hechas simples 🏐',
+    questionsLabel: '¿Preguntas?',
+    copyright: 'Todos los derechos reservados.',
+  },
 }
 
 // ─── Italian ─────────────────────────────────────────────────────────────────
@@ -342,7 +364,7 @@ const it: Translations = {
   signup: {
     subject: 'Conferma il tuo account VolleyStats',
     preview: 'Benvenuto su VolleyStats! Conferma la tua email per iniziare.',
-    heading: (username) => `Ciao ${username}! Benvenuto nella squadra 🎉`,
+    heading: (username) => `Ciao ${username ? username + ' ' : ''}! Benvenuto nella squadra 🎉`,
     body: 'Siamo entusiasti di averti su VolleyStats! Conferma il tuo indirizzo email per iniziare.',
     ctaText: "Conferma l'indirizzo email",
     linkLabel: 'Oppure copia e incolla questo link nel tuo browser:',
@@ -429,6 +451,11 @@ const it: Translations = {
     safeText: "Se hai effettuato questa modifica, non è necessaria alcuna ulteriore azione. Le email future saranno inviate al tuo nuovo indirizzo.",
     warningText: '⚠️ Non hai effettuato questa modifica? Contattaci immediatamente a volleystats@blockservice.fr per recuperare il tuo account.',
   },
+  layout: {
+    tagline: 'Statistiche di pallavolo semplificate 🏐',
+    questionsLabel: 'Domande?',
+    copyright: 'Tutti i diritti riservati.',
+  },
 }
 
 // ─── Portuguese ───────────────────────────────────────────────────────────────
@@ -437,7 +464,7 @@ const pt: Translations = {
   signup: {
     subject: 'Confirme sua conta VolleyStats',
     preview: 'Bem-vindo ao VolleyStats! Confirme seu email para começar.',
-    heading: (username) => `Olá ${username}! Bem-vindo à equipe 🎉`,
+    heading: (username) => `Olá ${username ? username + ' ' : ''}! Bem-vindo à equipe 🎉`,
     body: 'Estamos animados em tê-lo no VolleyStats! Confirme seu endereço de email para começar.',
     ctaText: 'Confirmar endereço de email',
     linkLabel: 'Ou copie e cole este link no seu navegador:',
@@ -523,6 +550,11 @@ const pt: Translations = {
     body: 'Esta é uma confirmação de que o endereço de email da sua conta VolleyStats foi alterado com sucesso.',
     safeText: 'Se você fez esta alteração, nenhuma ação adicional é necessária. Futuros emails serão enviados para seu novo endereço.',
     warningText: '⚠️ Não fez esta alteração? Entre em contato conosco imediatamente em volleystats@blockservice.fr para recuperar sua conta.',
+  },
+  layout: {
+    tagline: 'Estatísticas de vôlei simplificadas 🏐',
+    questionsLabel: 'Dúvidas?',
+    copyright: 'Todos os direitos reservados.',
   },
 }
 

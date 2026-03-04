@@ -27,12 +27,13 @@ export const NotificationEmail = ({
   site_url,
   email_action_type,
 }: NotificationEmailProps) => {
-  const translations = getTranslations(getLocale(lang))
+  const locale = getLocale(lang)
+  const translations = getTranslations(locale)
   const key = actionTypeToKey[email_action_type] ?? 'passwordChangedNotification'
   const t = translations[key]
 
   return (
-    <EmailLayout preview={t.preview} site_url={site_url}>
+    <EmailLayout preview={t.preview} site_url={site_url} locale={locale}>
       <Heading style={heading}>{t.heading}</Heading>
 
       <Text style={paragraph}>{t.body}</Text>

@@ -19,8 +19,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { syncLocaleFromProfile } from '@/lib/i18n/actions';
+import { SignInWithPasswordCredentials, SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +32,7 @@ export function AuthForm() {
   const { toast } = useToast();
   const { setSession } = useAuth();
   const t = useTranslations('auth');
+  const locale = useLocale();
 
   const formSchema = z.object({
     email: z.string().email(t('validation.invalidEmail')),
@@ -87,10 +89,17 @@ export function AuthForm() {
       }
 
       // TypeScript now knows password exists and is valid
-      const credentials = {
+      const credentials: SignUpWithPasswordCredentials | SignInWithPasswordCredentials= {
         email: values.email,
         password: values.password as string,
       };
+      if (isSignUp) {
+        credentials.options = {
+          data: {
+            lang: locale,
+          },
+        }
+      }
 
       const authResponse = isSignUp
         ? await supabase.auth.signUp(credentials)
