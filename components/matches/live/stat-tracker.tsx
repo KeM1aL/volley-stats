@@ -249,7 +249,7 @@ export function StatTracker({
         </div>
 
         {/* Bottom row: Stat Cards + Team Points/Undo */}
-        <div className="flex-1 flex gap-1 min-h-0">
+        <div className="flex-1 flex gap-1 min-h-14">
           {/* Left: Stat Cards - scrollable */}
           <div className="flex-1 overflow-y-auto flex flex-col gap-1">
             {availableStatTypes.map((type, index) => (
@@ -373,7 +373,7 @@ export function StatTracker({
       </div>
 
       {/* Stat Cards Section - Scrollable on mobile only */}
-      <div className="space-y-1 overflow-y-auto md:overflow-y-hidden py-1 touch-manipulation">
+      <div className="space-y-1 py-1 touch-manipulation">
         {availableStatTypes.map((type, index) => (
           <Card
             key={type}
