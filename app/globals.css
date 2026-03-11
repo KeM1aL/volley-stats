@@ -218,18 +218,10 @@
 }
 
 /* Keyboard-aware dialog/modal positioning */
+/* max-height and overflow-y are handled in the component via dvh units */
 body.keyboard-visible [role="dialog"],
 body.keyboard-visible [data-radix-dialog-content] {
-  /* Adjust max-height to account for keyboard */
-  max-height: calc(100dvh - max(
-    var(--keyboard-height),
-    env(keyboard-inset-height, 0px)
-  ) - 2rem) !important;
-
-  /* Enable vertical scrolling within dialog */
-  overflow-y: auto !important;
-
-  /* Correct centering: move dialog CENTER up by keyboard-height/2 */
+  /* Progressive enhancement: nudge dialog up on browsers with VirtualKeyboard API (Android Chrome) */
   top: 50% !important;
   transform: translateX(-50%) translateY(calc(-50% - max(
     var(--keyboard-height),
@@ -237,13 +229,7 @@ body.keyboard-visible [data-radix-dialog-content] {
   ) / 2)) !important;
 
   /* Smooth transition */
-  transition: transform 0.3s ease-out, max-height 0.3s ease-out !important;
-}
-
-/* Ensure dialog content doesn't have conflicting scroll padding */
-body.keyboard-visible [role="dialog"] *,
-body.keyboard-visible [data-radix-dialog-content] * {
-  scroll-padding-bottom: 0 !important;
+  transition: transform 0.3s ease-out !important;
 }
 
 /* Loading bar animations */
