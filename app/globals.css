@@ -126,7 +126,7 @@
   }
 
 :fullscreen #live-match {
-  top: 0;
+  top: 20px;
 }
   /* Don't hide header if keyboard is visible (user needs navigation) */
   body.keyboard-visible:fullscreen header {
