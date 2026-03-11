@@ -85,10 +85,11 @@ export function TeamSelectWithQuickCreate({
   const teamApi = useTeamApi();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [pendingName, setPendingName] = useState("");
 
   const handleChange = (option: TeamOption | null) => {
     if (option?.isCreateOption) {
-      // User clicked "Create new", open the dialog
+      setPendingName(inputValue);
       setDialogOpen(true);
       return;
     }
@@ -147,7 +148,7 @@ export function TeamSelectWithQuickCreate({
         onClose={() => setDialogOpen(false)}
         onSuccess={handleTeamCreated}
         defaultChampionshipId={defaultChampionshipId}
-        defaultName={inputValue}
+        defaultName={pendingName}
       />
     </>
   );

@@ -82,9 +82,11 @@ export function ChampionshipSelectWithQuickCreate({
   const championshipApi = useChampionshipApi();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [pendingName, setPendingName] = useState("");
 
   const handleChange = (option: ChampionshipOption | null) => {
     if (option?.isCreateOption) {
+      setPendingName(inputValue);
       setDialogOpen(true);
       return;
     }
@@ -141,7 +143,7 @@ export function ChampionshipSelectWithQuickCreate({
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSuccess={handleChampionshipCreated}
-        defaultName={inputValue}
+        defaultName={pendingName}
       />
     </>
   );

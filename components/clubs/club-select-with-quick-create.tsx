@@ -75,9 +75,11 @@ export function ClubSelectWithQuickCreate({
   const clubApi = useClubApi();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [pendingName, setPendingName] = useState("");
 
   const handleChange = (option: ClubOption | null) => {
     if (option?.isCreateOption) {
+      setPendingName(inputValue);
       setDialogOpen(true);
       return;
     }
@@ -134,7 +136,7 @@ export function ClubSelectWithQuickCreate({
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSuccess={handleClubCreated}
-        defaultName={inputValue}
+        defaultName={pendingName}
       />
     </>
   );
