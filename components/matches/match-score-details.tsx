@@ -32,8 +32,8 @@ export function MatchScoreDetails({
       <div className="text-primary">
         {/* Team 1 Row */}
         <div className="grid grid-cols-8 gap-0.5">
-          <div className="col-span-2 bg-primary/10 px-1 rounded flex items-center justify-center text-xs font-bold truncate">
-            {homeTeam.name}
+          <div className="col-span-2 bg-primary/10 px-1 rounded flex items-center justify-center text-xs font-bold">
+            <span className="truncate min-w-0">{homeTeam.name}</span>
           </div>
           {sets.map((set, index) => (
             <div
@@ -59,8 +59,8 @@ export function MatchScoreDetails({
 
         {/* Team 2 Row */}
         <div className="grid grid-cols-8 gap-0.5 mt-0.5">
-          <div className="col-span-2 bg-primary/10 px-1 rounded flex items-center justify-center text-xs font-bold truncate">
-            {awayTeam.name}
+          <div className="col-span-2 bg-primary/10 px-1 rounded flex items-center justify-center text-xs font-bold">
+            <span className="truncate min-w-0">{awayTeam.name}</span>
           </div>
           {sets.map((set, index) => (
             <div
@@ -93,8 +93,8 @@ export function MatchScoreDetails({
       <div className="text-primary">
         <div className="grid grid-cols-8 gap-1 sm:gap-4">
           {/* Team 1 Row */}
-          <div className="col-span-2 bg-primary/10 p-1 sm:p-2 rounded-lg flex items-center justify-center text-sm sm:text-md font-bold truncate">
-            {homeTeam.name}
+          <div className="col-span-2 bg-primary/10 p-1 sm:p-2 rounded-lg flex items-center justify-center text-sm sm:text-md font-bold">
+            <span className="truncate min-w-0">{homeTeam.name}</span>
           </div>
           {sets.map((set, index) => (
             <div
@@ -135,8 +135,8 @@ export function MatchScoreDetails({
 
         {/* Team 2 Row */}
         <div className="grid grid-cols-8 gap-1 sm:gap-4">
-          <div className="col-span-2 bg-primary/10 p-1 sm:p-2 rounded-lg flex items-center justify-center text-sm sm:text-md font-bold truncate">
-            {awayTeam.name}
+          <div className="col-span-2 bg-primary/10 p-1 sm:p-2 rounded-lg flex items-center justify-center text-sm sm:text-md font-bold">
+            <span className="truncate min-w-0">{awayTeam.name}</span>
           </div>
           {sets.map((set, index) => (
             <div
