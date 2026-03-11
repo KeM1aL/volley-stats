@@ -67,7 +67,9 @@
     "togglePlayerAvailability": "Alternar disponibilidade do jogador"
   },
   "matchLineup": {
-    "heading": "Escalação da Partida"
+    "heading": "Escalação da Partida",
+    "description": "Selecione os jogadores disponíveis para esta partida.",
+    "notEnoughPlayers": "São necessários pelo menos {count} jogadores para uma partida {format}."
   },
   "matchManaged": {
     "heading": "Time Gerenciado"

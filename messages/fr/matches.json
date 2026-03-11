@@ -67,7 +67,9 @@
     "togglePlayerAvailability": "Basculer la disponibilité du joueur"
   },
   "matchLineup": {
-    "heading": "Feuille de Match"
+    "heading": "Feuille de Match",
+    "description": "Sélectionnez les joueurs disponibles pour ce match.",
+    "notEnoughPlayers": "Au moins {count} joueurs sont requis pour un match {format}."
   },
   "matchManaged": {
     "heading": "Équipe Gérée"

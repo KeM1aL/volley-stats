@@ -41,6 +41,15 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
+  const [playerError, setPlayerError] = useState(false);
+
+  const minPlayers = parseInt(match.match_formats?.format?.split("x")[0] ?? "6");
+
+  useEffect(() => {
+    if (playerError && availablePlayers.length >= minPlayers) {
+      setPlayerError(false);
+    }
+  }, [availablePlayers, playerError, minPlayers]);
 
   const userManagedTeams = useMemo(() => {
     if (!user || !user.teamMembers) return [];
@@ -79,6 +88,10 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
 
   const onSetupComplete = async () => {
     if (!managedTeam) return;
+    if (availablePlayers.length < minPlayers) {
+      setPlayerError(true);
+      return;
+    }
     setIsLoading(true);
     try {
       // Save available players for managed team and start the match
@@ -166,12 +179,22 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
             selectedTeamId={managedTeam?.id}
           />
           {managedTeam && players && (
-            <MatchLineupSetup
-              match={match}
-              players={players}
-              availablePlayers={availablePlayers}
-              setAvailablePlayers={setAvailablePlayers}
-            />
+            <>
+              <MatchLineupSetup
+                match={match}
+                players={players}
+                availablePlayers={availablePlayers}
+                setAvailablePlayers={setAvailablePlayers}
+              />
+              {playerError && (
+                <p className="text-sm text-destructive">
+                  {t("matchLineup.notEnoughPlayers", {
+                    count: minPlayers,
+                    format: match.match_formats?.format ?? "",
+                  })}
+                </p>
+              )}
+            </>
           )}
         </div>
         <DialogFooter>

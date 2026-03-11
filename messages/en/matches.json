@@ -67,7 +67,9 @@
     "togglePlayerAvailability": "Toggle player availability"
   },
   "matchLineup": {
-    "heading": "Match Roster"
+    "heading": "Match Roster",
+    "description": "Select the players available for this match.",
+    "notEnoughPlayers": "At least {count} players are required for a {format} match."
   },
   "matchManaged": {
     "heading": "Managed Team"

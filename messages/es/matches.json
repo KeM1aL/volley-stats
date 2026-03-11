@@ -67,7 +67,9 @@
     "togglePlayerAvailability": "Alternar disponibilidad del jugador"
   },
   "matchLineup": {
-    "heading": "Alineación del Partido"
+    "heading": "Alineación del Partido",
+    "description": "Selecciona los jugadores disponibles para este partido.",
+    "notEnoughPlayers": "Se requieren al menos {count} jugadores para un partido {format}."
   },
   "matchManaged": {
     "heading": "Equipo Gestionado"

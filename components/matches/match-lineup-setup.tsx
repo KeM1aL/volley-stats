@@ -41,7 +41,8 @@ export function MatchLineupSetup({ match, players, availablePlayers, setAvailabl
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4">{t("matchLineup.heading")}</h2>
+        <h2 className="text-lg font-semibold mb-1">{t("matchLineup.heading")}</h2>
+        <p className="text-sm text-muted-foreground mb-4">{t("matchLineup.description")}</p>
         <div className="grid grid-cols-4 gap-4">
           {[...players].sort(sortPlayers).map((player) => (
             <Toggle
