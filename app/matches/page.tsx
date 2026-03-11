@@ -146,7 +146,7 @@ export default function MatchPage() {
     };
 
     loadData();
-  // matchApi and clubApi are stable singletons (lib/api/index.ts) — intentionally excluded from deps
+  // matchApi and clubApi are stable singletons (lib/api/index.ts) -- intentionally excluded from deps
   }, [selectedTeam, selectedClub, dateRange, toast, selectedChampionship, user, refreshKey]);
 
   const handleTeamChange = (team: Team | null) => {
