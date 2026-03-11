@@ -58,6 +58,7 @@ export default function MatchPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const matchApi = useMatchApi();
+  const clubApi = useClubApi();
 
   // Apply favorites on mount if no manual filters set
   useMemo(() => {
@@ -145,12 +146,11 @@ export default function MatchPage() {
     };
 
     loadData();
-  }, [selectedTeam, selectedClub, dateRange, toast, selectedChampionship, matchApi, user, refreshKey]);
+  }, [selectedTeam, selectedClub, dateRange, toast, selectedChampionship, user, refreshKey]);
 
   const handleTeamChange = (team: Team | null) => {
     setSelectedTeam(team);
     if (team && team.club_id) {
-      const clubApi = useClubApi();
       clubApi.getClubById(team.club_id).then(setSelectedClub);
     } else {
       setSelectedClub(null);
