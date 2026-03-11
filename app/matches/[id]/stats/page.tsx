@@ -421,10 +421,12 @@ export default function MatchStatsPage() {
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button> */}
+
           <Button
             variant="outline"
             onClick={exportToPDF}
             disabled={isPdfGenerating}
+            className="invisible lg:visible"
           >
             <Download className="h-4 w-4 mr-2" />
             {isPdfGenerating ? t("stats.tabs.pending") : "Export PDF"}
