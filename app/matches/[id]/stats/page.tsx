@@ -78,32 +78,6 @@ export default function MatchStatsPage() {
         if (matchError) throw matchError;
         setMatch(matchData);
 
-        const { data: setsData, error: setsError } = await supabase
-          .from("sets")
-          .select("*")
-          .eq("match_id", matchId as string)
-          .order("set_number", { ascending: true });
-        if (setsError) throw setsError;
-        setSets(setsData);
-
-        const { data: playerStatsData, error: playerStatsError } =
-          await supabase
-            .from("player_stats")
-            .select("*")
-            .eq("match_id", matchId as string)
-            .order("created_at", { ascending: true });
-        if (playerStatsError) throw playerStatsError;
-        setStats(playerStatsData);
-
-        const { data: scorePointsData, error: scorePointsError } =
-          await supabase
-            .from("score_points")
-            .select("*")
-            .eq("match_id", matchId as string)
-            .order("created_at", { ascending: true });
-        if (scorePointsError) throw scorePointsError;
-        setPoints(scorePointsData);
-
         const managedTeamParam = searchParams.get("team");
         if (!managedTeamParam) {
           throw new Error(t("errors.selectTeam"));
@@ -122,21 +96,52 @@ export default function MatchStatsPage() {
           teamId === matchData.home_team_id
             ? matchData.home_available_players
             : matchData.away_available_players;
-        const {
-          data: availablePlayersData,
-          error: availablePlayersError,
-        } = // @ts-ignore
-          await supabase
+
+        const [
+          { data: setsData, error: setsError },
+          { data: playerStatsData, error: playerStatsError },
+          { data: scorePointsData, error: scorePointsError },
+          // @ts-ignore
+          { data: availablePlayersData, error: availablePlayersError },
+          { data: teamsData, error: teamsError },
+        ] = await Promise.all([
+          supabase
+            .from("sets")
+            .select("*")
+            .eq("match_id", matchId as string)
+            .order("set_number", { ascending: true }),
+          supabase
+            .from("player_stats")
+            .select("*")
+            .eq("match_id", matchId as string)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("score_points")
+            .select("*")
+            .eq("match_id", matchId as string)
+            .order("created_at", { ascending: true }),
+          supabase
             .from("team_members")
             .select("*")
-            .in("id", playerIds as string[]);
+            .in("id", playerIds as string[]),
+          supabase
+            .from("teams")
+            .select("*")
+            .in("id", [matchData.home_team_id, matchData.away_team_id]),
+        ]);
+
+        if (setsError) throw setsError;
+        setSets(setsData);
+
+        if (playerStatsError) throw playerStatsError;
+        setStats(playerStatsData);
+
+        if (scorePointsError) throw scorePointsError;
+        setPoints(scorePointsData);
+
         if (availablePlayersError) throw availablePlayersError;
         setPlayers(availablePlayersData);
 
-        const { data: teamsData, error: teamsError } = await supabase
-          .from("teams")
-          .select("*")
-          .in("id", [matchData.home_team_id, matchData.away_team_id]);
         if (teamsError) throw teamsError;
         setManagedTeam(teamsData.find((team) => team.id === teamId));
         setOpponentTeam(teamsData.find((team) => team.id !== teamId));
