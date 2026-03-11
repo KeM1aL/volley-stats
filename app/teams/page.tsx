@@ -9,7 +9,7 @@ import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
 import { useTeamApi } from "@/hooks/use-team-api";
 import { useAuth } from "@/contexts/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Team } from "@/lib/types";
+import { Team, User } from "@/lib/types";
 import { Filter, Sort } from "@/lib/api/types";
 import { TeamFilters } from "@/components/teams/team-filters";
 import { NewTeamDialog } from "@/components/teams/new-team-dialog";
@@ -31,30 +31,26 @@ export default function TeamsPage() {
   // Placeholder for user permissions
   const canManage = (team: Team) => {
     // Replace with actual permission check
-    return user?.teamMembers?.some((tm => tm.team_id === team.id && (tm.user_id === user.id || tm.role === 'owner' || tm.role === 'coach'))) || false;
+    if (!user || !user.teamMembers) return false;
+    if(user.id === team.user_id) return true; // Owners can manage
+    return user?.teamMembers?.some((tm) => tm.team_id === team.id && (tm.user_id === user.id || tm.role === 'owner' || tm.role === 'coach')) || false;
   };
 
   // Prepare initial filters from favorites
   const initialFilters = useMemo(() => {
-    if (!user) return undefined;
-
-    if (user.profile.favorite_club) {
-      return { selectedClub: user.profile.favorite_club };
-    } else if (user.profile.favorite_team) {
-      // If favorite team is set, search by team name
-      return { searchTerm: user.profile.favorite_team.name };
-    }
-
-    return undefined;
+  
+    return {
+      status: 'active',
+      user_id: user?.id,
+    };
   }, [user]);
 
   useEffect(() => {
     const loadTeams = async () => {
       // Don't load if no favorite and no filters set
-      const hasFavorite = user?.profile.favorite_team_id || user?.profile.favorite_club_id;
       const hasFilters = filters.length > 0;
 
-      if (!hasFavorite && !hasFilters) {
+      if (!hasFilters) {
         setTeams([]);
         setIsLoading(false);
         return;
@@ -62,7 +58,7 @@ export default function TeamsPage() {
 
       // On initial mount, wait for filters to be applied if we have favorites
       // This prevents loading all teams before initialFilters are applied
-      if (isInitialMount.current && hasFavorite && !hasFilters) {
+      if (isInitialMount.current && !hasFilters) {
         isInitialMount.current = false;
         return; // Keep loading state, will load when filters arrive
       }

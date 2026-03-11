@@ -16,6 +16,7 @@ export type TeamFilterState = {
   championshipAgeCategory: string;
   championshipGender: string;
   status: string;
+  user_id: string | null;
 };
 
 const initialState: TeamFilterState = {
@@ -27,6 +28,7 @@ const initialState: TeamFilterState = {
   championshipAgeCategory: '',
   championshipGender: '',
   status: '',
+  user_id: null,
 };
 
 export function useTeamFilters(onFilter: (filters: Filter[]) => void, initialFilters?: Partial<TeamFilterState>) {
@@ -40,8 +42,7 @@ export function useTeamFilters(onFilter: (filters: Filter[]) => void, initialFil
   // Apply initial filters when they become available (e.g., after user data loads)
   useEffect(() => {
     if (initialFilters && !initialFiltersAppliedRef.current) {
-      console.log(initialFilters.searchTerm);
-      const hasInitialValues = initialFilters.selectedClub || initialFilters.searchTerm || initialFilters.selectedChampionship;
+      const hasInitialValues = Object.values(initialFilters).some(value => value !== null && value !== '');
 
       // Only apply if there are initial values
       if (hasInitialValues) {
@@ -91,6 +92,9 @@ export function useTeamFilters(onFilter: (filters: Filter[]) => void, initialFil
     }
     if (debouncedFilters.status) {
       newFilters.push({ field: 'status', operator: 'eq', value: debouncedFilters.status });
+    }
+    if (debouncedFilters.user_id) {
+      newFilters.push({ field: 'user_id', operator: 'eq', value: debouncedFilters.user_id });
     }
     onFilter(newFilters);
     setAppliedFilters(debouncedFilters); // Update applied filters after debounce
