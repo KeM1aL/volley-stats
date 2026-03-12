@@ -1,11 +1,7 @@
 /**
  * Matches E2E tests — full match flow
  *
- * 3.1  Navigate to Matches tab
- * 3.2  Filter by the team created in 01-teams.spec.ts
- * 3.3  Create a new match (managed team vs Team 1, format "Test (6x6)")
- * 3.4  Click "Start Match" in the actions column
- * 3.5  Select players and confirm "Start Match"
+ * 3.1–3.5  Create match + start it (delegated to createAndStartMatch helper)
  * 3.6  Set setup: serving team + court positions (reusable helper)
  * 3.7  Play set with randomised stats + substitution via Events panel
  * 3.8  Setup next set
@@ -16,13 +12,19 @@ import { test, expect, Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { setupCourtPositions } from '../helpers/court';
+import { createAndStartMatch } from '../helpers/match-setup';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 
 // Load team data saved by 01-teams.spec.ts
-function loadFixture(): { teamName: string; playerNames: string[] } {
+function loadFixture(): { teamName: string; playerNames: string[]; [key: string]: unknown } {
   const raw = fs.readFileSync(FIXTURE_PATH, 'utf-8');
   return JSON.parse(raw);
+}
+
+function saveFixture(data: Record<string, unknown>): void {
+  const existing = loadFixture();
+  fs.writeFileSync(FIXTURE_PATH, JSON.stringify({ ...existing, ...data }, null, 2));
 }
 
 // ─── Helper: play one full set ───────────────────────────────────────────────
@@ -178,87 +180,8 @@ test.describe('Matches — full match flow', () => {
     const { teamName, playerNames } = loadFixture();
     expect(teamName, 'Team fixture not found — run 01-teams.spec.ts first').toBeTruthy();
 
-    // 3.1 Navigate to Matches
-    await page.goto('/matches');
-    // Use level:1 to target only the h1, not the nav link
-    await expect(page.getByRole('heading', { name: 'Matches', level: 1 })).toBeVisible({ timeout: 5_000 });
-
-    // 3.2 Apply filter: select the team
-    // Matches page pre-fills Team filter with user's favourite ("Playwright 2") from profile.
-    // Open filter panel, then change Team to our E2E team so the new match is visible afterward.
-    await page.getByRole('button', { name: 'Filters' }).click();
-
-    // When the filter panel is open and no dialog is present, combobox order is:
-    // 0=Championship, 1=Club, 2=Team (react-select AsyncSelect, no proper label association)
-    const teamFilterCombobox = page.getByRole('combobox').nth(2);
-    if (await teamFilterCombobox.isVisible().catch(() => false)) {
-      await teamFilterCombobox.click();
-      // Wait for options to load, then click our team
-      await page.getByRole('option', { name: new RegExp(teamName, 'i') }).waitFor({ state: 'visible', timeout: 5_000 });
-      await page.getByRole('option', { name: new RegExp(teamName, 'i') }).click();
-    }
-
-    // 3.3 Create new match
-    await page.getByRole('button', { name: 'New Match' }).click();
-
-    // Fill the match form
-    // All team/format fields use react-select AsyncSelect — getByLabel() doesn't work
-    // because react-select uses a generated inputId, not the FormItem id.
-    // Combobox order inside the dialog: 0=Championship, 1=HomeTeam, 2=AwayTeam, 3=MatchFormat
-    const dialog = page.getByRole('dialog');
-    await dialog.waitFor({ state: 'visible', timeout: 5_000 });
-
-    // Home team (combobox index 1)
-    await dialog.getByRole('combobox').nth(1).click();
-    await page.getByRole('option', { name: new RegExp(teamName, 'i') }).waitFor({ state: 'visible', timeout: 5_000 });
-    await page.getByRole('option', { name: new RegExp(teamName, 'i') }).click();
-
-    // Away team (combobox index 2) — use exact:true to avoid matching "E2E Team 1..." names
-    await dialog.getByRole('combobox').nth(2).click();
-    await page.getByRole('option', { name: 'Team 1', exact: true }).waitFor({ state: 'visible', timeout: 5_000 });
-    await page.getByRole('option', { name: 'Team 1', exact: true }).click();
-
-    // Match format (combobox index 3)
-    await dialog.getByRole('combobox').nth(3).click();
-    await expect(page.getByRole('option', { name: 'Test (6x6)' })).toBeVisible({ timeout: 3_000 });
-    await page.getByRole('option', { name: 'Test (6x6)' }).click();
-
-    // Submit
-    await page.getByRole('button', { name: 'Create Match' }).click();
-
-    // Wait for success (use .first() to avoid strict-mode with aria-live duplicate)
-    await expect(page.getByText('Match created').first()).toBeVisible({ timeout: 10_000 });
-
-    // 3.4 Find the match row and click "Start Match"
-    // Two triggers exist: one in mobile card (md:hidden) and one in desktop table (hidden md:block).
-    // At 768px viewport: mobile = hidden, desktop = visible.
-    // Use .last() to target the desktop table button (second in DOM order).
-    const startMatchTrigger = page.getByTestId('start-match-trigger').last();
-    await startMatchTrigger.waitFor({ state: 'visible', timeout: 10_000 });
-    await startMatchTrigger.click();
-
-    // 3.5 Start Match dialog
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3_000 });
-
-    // Select the managed team (first radio option — home team is our team)
-    // RadioGroupItem is sr-only; the visual div overlays it and intercepts pointer events.
-    // Use force:true to bypass the overlay and directly activate the radio button.
-    await page.getByRole('radio').first().click({ force: true });
-    await page.waitForTimeout(300);
-
-    // Select all players from the lineup toggles
-    const playerToggles = page.getByTestId('lineup-player-toggle');
-    const toggleCount = await playerToggles.count();
-    for (let i = 0; i < toggleCount; i++) {
-      await playerToggles.nth(i).click();
-      await page.waitForTimeout(100);
-    }
-
-    // Confirm Start Match
-    await page.getByTestId('start-match-confirm').click();
-
-    // Wait for navigation to live match page
-    await page.waitForURL(/\/matches\/.+\/live/, { timeout: 15_000 });
+    // 3.1 – 3.5 Create match and navigate to live page
+    await createAndStartMatch(page, { teamName, playerNames });
 
     // 3.6 First set setup (with serving team selection)
     await setupCourtPositions(page, playerNames.slice(0, 6), {
@@ -282,12 +205,14 @@ test.describe('Matches — full match flow', () => {
       matchDone = await playSetToCompletion(page, playerNames.slice(0, 6), false);
     }
 
-    // Assert match is complete.
-    // The live page replaces the score tracker with MVPAnalysis on completion.
-    // The "Match Finished" toast auto-dismisses, so check for the persistent MVP heading
-    // OR the Match Statistics button (both appear on the post-match view).
-    await expect(
-      page.getByText('Match MVP Analysis').or(page.getByRole('button', { name: 'Match Statistics' })).first()
-    ).toBeVisible({ timeout: 15_000 });
+    // Assert match is complete — wait specifically for the Match Statistics button
+    // (which we need to navigate to the stats URL) rather than the more general MVP text.
+    const statsBtn = page.getByRole('button', { name: 'Match Statistics' });
+    await expect(statsBtn).toBeVisible({ timeout: 15_000 });
+
+    // Navigate to stats page and save the full URL (includes ?team= query param)
+    await statsBtn.click();
+    await page.waitForURL(/\/matches\/.+\/stats/, { timeout: 10_000 });
+    saveFixture({ completedMatchStatsUrl: page.url() });
   });
 });
