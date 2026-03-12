@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Team } from "@/lib/types";
 import AsyncSelect from "react-select/async";
@@ -64,17 +63,13 @@ export function TeamSelect({
   const t = useTranslations("teams");
   const teamApi = useTeamApi();
 
-  const handleLoadOptions = useCallback(
-    (inputValue: string) =>
-      loadOptions(inputValue, teamApi, clubId, championshipId),
-    [teamApi, clubId, championshipId]
-  );
-
   return (
     <AsyncSelect
       key={`${clubId}-${championshipId}`}
       cacheOptions
-      loadOptions={handleLoadOptions}
+      loadOptions={(inputValue) =>
+        loadOptions(inputValue, teamApi, clubId, championshipId)
+      }
       defaultOptions
       value={value}
       onChange={onChange}

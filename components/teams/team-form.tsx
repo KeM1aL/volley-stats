@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -42,16 +42,12 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
   const router = useRouter();
   const isEditMode = !!team;
 
-  const formSchema = useMemo(
-    () =>
-      z.object({
-        name: z.string().min(1, t('validation.nameRequired')),
-        championships: z.custom<Championship | null>(() => true).nullable(),
-        clubs: z.custom<Club | null>(() => true).nullable(),
-        status: z.enum(['incomplete', 'active', 'archived']),
-      }),
-    [t]
-  );
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    championships: z.custom<Championship | null>(() => true).nullable(),
+    clubs: z.custom<Club | null>(() => true).nullable(),
+    status: z.enum(['incomplete', 'active', 'archived']),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
