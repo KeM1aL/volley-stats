@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Share2 } from "lucide-react";
-import { jsPDF } from "jspdf";
 import type {
   Match,
   TeamMember,
@@ -296,6 +295,7 @@ export default function MatchStatsPage() {
     // Enable PDF export mode for proper badge styling
     document.body.setAttribute("data-pdf-export", "true");
 
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF("p", "pt", "a4");
     const margin = 40;
     const pageWidth = doc.internal.pageSize.getWidth();

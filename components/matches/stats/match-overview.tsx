@@ -2,8 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import React, { useState, useRef, useImperativeHandle } from "react";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type {
   Match,
@@ -56,6 +54,7 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
           currentYOffset += 60;
 
           if (overviewRef.current) {
+            const html2canvas = (await import("html2canvas")).default;
             const canvas = await html2canvas(overviewRef.current, {
               scale: 1.5,
               useCORS: true,
