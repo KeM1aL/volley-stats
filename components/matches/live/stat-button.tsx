@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { StatResult } from "@/lib/enums";
@@ -22,7 +23,7 @@ export const variants = {
   [StatResult.GOOD]: "bg-blue-500 hover:bg-blue-600 text-white",
 };
 
-export function StatButton({
+export const StatButton = memo(function StatButton({
   result,
   onClick,
   disabled,
@@ -101,4 +102,4 @@ export function StatButton({
       )}
     </Button>
   );
-}
+});
