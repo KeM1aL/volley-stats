@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -155,7 +155,7 @@ export function MatchHistoryTable({
     );
   }
 
-  const sortedMatches = [...matches].sort(sortMatches);
+  const sortedMatches = useMemo(() => [...matches].sort(sortMatches), [matches, sortField, sortDirection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

@@ -85,11 +85,14 @@ export default function LiveMatchPage() {
   const [loadingStep, setLoadingStep] = useState(0);
   const { history, canUndo, canRedo } = useCommandHistory();
 
-  const LOADING_STEPS = [
-    { label: t("live.syncingMatchData"), description: t("live.ensuringLatestData") },
-    { label: t("live.loadingMatchFormat"), description: t("live.gettingMatchRules") },
-    { label: t("live.loadingTeams"), description: t("live.fetchingTeamInfo") },
-  ];
+  const LOADING_STEPS = useMemo(
+    () => [
+      { label: t("live.syncingMatchData"), description: t("live.ensuringLatestData") },
+      { label: t("live.loadingMatchFormat"), description: t("live.gettingMatchRules") },
+      { label: t("live.loadingTeams"), description: t("live.fetchingTeamInfo") },
+    ],
+    [t]
+  );
 
   // Sidebar and panel state
   const [showDesktopPanel, setShowDesktopPanel] = useState(false); // Desktop grid panel

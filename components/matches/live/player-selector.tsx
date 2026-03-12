@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { TeamMember } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -22,13 +23,24 @@ export function PlayerSelector({
   className,
   isLandscape = false,
 }: PlayerSelectorProps) {
+  const sortedPlayers = useMemo(
+    () => [...players].sort((a, b) => a.number - b.number),
+    [players]
+  );
+
+  const sortedAllPlayers = useMemo(
+    () =>
+      (liberoPlayer ? [...players, liberoPlayer] : [...players]).sort(
+        (a, b) => a.number - b.number
+      ),
+    [players, liberoPlayer]
+  );
+
   // Landscape mode: horizontal row of player buttons with avatar + name
   if (isLandscape) {
-    const allPlayers = liberoPlayer ? [...players, liberoPlayer] : players;
     return (
       <div className={cn("flex gap-1.5 overflow-x-auto", className)}>
-        {allPlayers
-          .sort((a, b) => a.number - b.number)
+        {sortedAllPlayers
           .map((player) => (
             <Button
               key={player.id}
@@ -67,8 +79,7 @@ export function PlayerSelector({
   return (
     <div className={cn("grid grid-cols-5 gap-1 sm:gap-2", className)}>
       <div className={cn("grid grid-cols-3 gap-1 sm:gap-2", liberoPlayer ? "col-span-4" : "col-span-5")}>
-        {players
-          .sort((a, b) => a.number - b.number)
+        {sortedPlayers
           .map((player) => (
             <Button
               key={player.id}
