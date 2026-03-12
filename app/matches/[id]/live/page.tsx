@@ -281,7 +281,7 @@ export default function LiveMatchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [db, matchId, router, t]);
+  }, [db, matchId, router, t, searchParams]);
 
   useEffect(() => {
     loadMatchData();
@@ -304,7 +304,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t]
   );
 
   const onSubstitutionRecorded = useCallback(
@@ -336,7 +336,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, history, teamPlayerById, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, teamPlayerById, t]
   );
 
   const onPlayerStatRecorded = useCallback(
@@ -359,7 +359,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t]
   );
 
   const onPointRecorded = useCallback(
@@ -384,7 +384,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, managedTeam, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, managedTeam?.id, history, t]
   );
 
   const onMatchCompleted = () => {
