@@ -2,8 +2,6 @@
 
 import React, { useState, useRef, useImperativeHandle } from "react";
 import { useTranslations } from "next-intl";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import { PlayerStat, Team, TeamMember, Set, Match } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -112,6 +110,7 @@ const PlayerPerformance = React.forwardRef<
           currentYOffset += 30;
 
           if (playerPerformanceRef.current) {
+            const html2canvas = (await import("html2canvas")).default;
             const canvas = await html2canvas(playerPerformanceRef.current, {
               scale: 1.5,
               useCORS: true,

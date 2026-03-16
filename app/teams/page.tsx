@@ -14,13 +14,29 @@ import { Filter, Sort } from "@/lib/api/types";
 import { TeamFilters } from "@/components/teams/team-filters";
 import { NewTeamDialog } from "@/components/teams/new-team-dialog";
 import { useTranslations } from "next-intl";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TeamsPage() {
   const t = useTranslations('teams');
+  const tc = useTranslations('common');
   const { user, reloadUser } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [newTeam, setNewTeam] = useState<boolean>(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -79,7 +95,7 @@ export default function TeamsPage() {
     };
 
     loadTeams();
-  }, [filters, teamApi, user, refreshKey]);
+  }, [filters, teamApi, refreshKey]);
 
   const handleFilterChange = useCallback((newFilters: Filter[]) => {
     setFilters(newFilters);
@@ -91,6 +107,23 @@ export default function TeamsPage() {
     }
     setRefreshKey((prev) => prev + 1);
   }, [editingTeam]);
+
+  const handleDelete = async () => {
+    if (!deletingTeam) return;
+    setIsDeleting(true);
+    try {
+      await teamApi.deleteTeam(deletingTeam.id);
+      toast({ title: t('toast.deleted'), description: t('toast.deletedDesc') });
+      router.refresh();
+      setRefreshKey((prev) => prev + 1);
+    } catch (error) {
+      console.error("Failed to delete team:", error);
+      toast({ variant: "destructive", title: t('toast.error'), description: t('toast.deleteError') });
+    } finally {
+      setIsDeleting(false);
+      setDeletingTeam(null);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -124,7 +157,7 @@ export default function TeamsPage() {
       {isLoading ? (
         <Skeleton className="h-[600px] w-full" />
       ) : (
-        <TeamTable teams={teams} onEdit={setEditingTeam} canManage={canManage} />
+        <TeamTable teams={teams} onEdit={setEditingTeam} onDelete={setDeletingTeam} canManage={canManage} />
       )}
 
       <EditTeamDialog
@@ -138,6 +171,26 @@ export default function TeamsPage() {
         onClose={() => setNewTeam(false)}
         onSuccess={handleTeamRefresh}
       />
+
+      <AlertDialog open={!!deletingTeam} onOpenChange={() => setDeletingTeam(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('confirmDeleteDesc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tc('actions.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="confirm-delete-btn"
+            >
+              {tc('actions.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

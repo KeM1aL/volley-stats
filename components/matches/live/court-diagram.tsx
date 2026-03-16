@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,101 +29,105 @@ export function CourtDiagram({
   const [selectedPosition, setSelectedPosition] =
     useState<PlayerPosition | null>(null);
   const [netPosition, setNetPosition] = useState<"right" | "left">("right");
-  let existingPositions: PlayerPosition[] = [];
-  let coordByPosition: {
-    [key in "right" | "left"]: {
-      [key in PlayerPosition]?: { x: string; y: string };
+  const { existingPositions, coordByPosition } = useMemo(() => {
+    let existingPositions: PlayerPosition[] = [];
+    let coordByPosition: {
+      [key in "right" | "left"]: {
+        [key in PlayerPosition]?: { x: string; y: string };
+      };
+    } = {
+      right: {},
+      left: {},
     };
-  } = {
-    right: {},
-    left: {},
-  };
 
-  if (matchFormat) {
-    if (matchFormat.format === "2x2") {
-      existingPositions = [PlayerPosition.P1, PlayerPosition.P2];
+    if (matchFormat) {
+      if (matchFormat.format === "2x2") {
+        existingPositions = [PlayerPosition.P1, PlayerPosition.P2];
 
-      coordByPosition = {
-        right: {
-          p1: { x: "25%", y: "75%" },
-          p2: { x: "25%", y: "25%" },
-        },
-        left: {
-          p2: { x: "75%", y: "75%" },
-          p1: { x: "75%", y: "25%" },
-        },
-      };
-    } else if (matchFormat.format === "3x3") {
-      existingPositions = [
-        PlayerPosition.P1,
-        PlayerPosition.P2,
-        PlayerPosition.P3,
-      ];
+        coordByPosition = {
+          right: {
+            p1: { x: "25%", y: "75%" },
+            p2: { x: "25%", y: "25%" },
+          },
+          left: {
+            p2: { x: "75%", y: "75%" },
+            p1: { x: "75%", y: "25%" },
+          },
+        };
+      } else if (matchFormat.format === "3x3") {
+        existingPositions = [
+          PlayerPosition.P1,
+          PlayerPosition.P2,
+          PlayerPosition.P3,
+        ];
 
-      coordByPosition = {
-        right: {
-          p1: { x: "25%", y: "75%" },
-          p2: { x: "25%", y: "25%" },
-          p3: { x: "25%", y: "25%" },
-        },
-        left: {
-          p3: { x: "75%", y: "75%" },
-          p2: { x: "75%", y: "75%" },
-          p1: { x: "75%", y: "25%" },
-        },
-      };
-    } else if (matchFormat.format === "4x4") {
-      existingPositions = [
-        PlayerPosition.P1,
-        PlayerPosition.P2,
-        PlayerPosition.P3,
-        PlayerPosition.P4,
-      ];
+        coordByPosition = {
+          right: {
+            p1: { x: "25%", y: "75%" },
+            p2: { x: "25%", y: "25%" },
+            p3: { x: "25%", y: "25%" },
+          },
+          left: {
+            p3: { x: "75%", y: "75%" },
+            p2: { x: "75%", y: "75%" },
+            p1: { x: "75%", y: "25%" },
+          },
+        };
+      } else if (matchFormat.format === "4x4") {
+        existingPositions = [
+          PlayerPosition.P1,
+          PlayerPosition.P2,
+          PlayerPosition.P3,
+          PlayerPosition.P4,
+        ];
 
-      coordByPosition = {
-        right: {
-          p1: { x: "40%", y: "80%" },
-          p2: { x: "80%", y: "50%" },
-          p3: { x: "40%", y: "20%" },
-          p4: { x: "25%", y: "50%" },
-        },
-        left: {
-          p4: { x: "75%", y: "50%" },
-          p3: { x: "70%", y: "80%" },
-          p2: { x: "20%", y: "50%" },
-          p1: { x: "70%", y: "20%" },
-        },
-      };
-    } else if (matchFormat.format === "6x6") {
-      existingPositions = [
-        PlayerPosition.P1,
-        PlayerPosition.P2,
-        PlayerPosition.P3,
-        PlayerPosition.P4,
-        PlayerPosition.P5,
-        PlayerPosition.P6,
-      ];
+        coordByPosition = {
+          right: {
+            p1: { x: "40%", y: "80%" },
+            p2: { x: "80%", y: "50%" },
+            p3: { x: "40%", y: "20%" },
+            p4: { x: "25%", y: "50%" },
+          },
+          left: {
+            p4: { x: "75%", y: "50%" },
+            p3: { x: "70%", y: "80%" },
+            p2: { x: "20%", y: "50%" },
+            p1: { x: "70%", y: "20%" },
+          },
+        };
+      } else if (matchFormat.format === "6x6") {
+        existingPositions = [
+          PlayerPosition.P1,
+          PlayerPosition.P2,
+          PlayerPosition.P3,
+          PlayerPosition.P4,
+          PlayerPosition.P5,
+          PlayerPosition.P6,
+        ];
 
-      coordByPosition = {
-        right: {
-          p1: { x: "25%", y: "75%" },
-          p2: { x: "75%", y: "75%" },
-          p3: { x: "75%", y: "50%" },
-          p4: { x: "75%", y: "25%" },
-          p5: { x: "25%", y: "25%" },
-          p6: { x: "25%", y: "50%" },
-        },
-        left: {
-          p6: { x: "75%", y: "50%" },
-          p5: { x: "75%", y: "75%" },
-          p4: { x: "25%", y: "75%" },
-          p3: { x: "25%", y: "50%" },
-          p2: { x: "25%", y: "25%" },
-          p1: { x: "75%", y: "25%" },
-        },
-      };
+        coordByPosition = {
+          right: {
+            p1: { x: "25%", y: "75%" },
+            p2: { x: "75%", y: "75%" },
+            p3: { x: "75%", y: "50%" },
+            p4: { x: "75%", y: "25%" },
+            p5: { x: "25%", y: "25%" },
+            p6: { x: "25%", y: "50%" },
+          },
+          left: {
+            p6: { x: "75%", y: "50%" },
+            p5: { x: "75%", y: "75%" },
+            p4: { x: "25%", y: "75%" },
+            p3: { x: "25%", y: "50%" },
+            p2: { x: "25%", y: "25%" },
+            p1: { x: "75%", y: "25%" },
+          },
+        };
+      }
     }
-  }
+
+    return { existingPositions, coordByPosition };
+  }, [matchFormat]);
 
   return (
     <div className={cn("relative aspect-[3/2] bg-muted rounded-lg min-h-[200px] max-h-[400px]", className)}>

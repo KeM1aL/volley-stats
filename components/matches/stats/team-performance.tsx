@@ -2,8 +2,6 @@
 
 import React, { useState, useRef, useImperativeHandle, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import {
   Card,
   CardContent,
@@ -142,6 +140,7 @@ const TeamPerformance = React.forwardRef<
           currentYOffset += 20;
 
           if (teamPerformanceRef.current) {
+            const html2canvas = (await import("html2canvas")).default;
             const canvas = await html2canvas(teamPerformanceRef.current, {
               scale: 1.5,
               useCORS: true,

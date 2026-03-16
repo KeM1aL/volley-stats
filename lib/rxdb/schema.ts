@@ -15,9 +15,13 @@ export type CollectionName =
   | "club_members";
 
 const timestampFields = {
-  created_at: { type: "string", "format": "date-time", maxLength: 32/*, final: true */},
+  created_at: {
+    type: "string",
+    "format": "date-time",
+    maxLength: 32, /*, final: true */
+  },
   updated_at: { type: "string", "format": "date-time", maxLength: 32 },
-  _deleted: { type: "boolean" }
+  _deleted: { type: "boolean" },
 };
 
 // Championship Schema
@@ -109,13 +113,13 @@ export const matchFormatSchema = toTypedRxJsonSchema({
     "rotation",
     "point_by_set",
     "point_final_set",
-    "decisive_point", 
-    "created_at", 
-    "updated_at"
+    "decisive_point",
+    "created_at",
+    "updated_at",
   ],
   indexes: [
-    "created_at", 
-    "updated_at"
+    "created_at",
+    "updated_at",
   ],
 });
 
@@ -127,7 +131,11 @@ export const teamSchema = toTypedRxJsonSchema({
   properties: {
     id: { type: "string", maxLength: 36 }, // UUID
     name: { type: "string" },
-    status: { type: "string", enum: ['incomplete', 'active', 'archived'], maxLength: 10 },
+    status: {
+      type: "string",
+      enum: ["incomplete", "active", "archived"],
+      maxLength: 10,
+    },
     user_id: { type: ["string", "null"], maxLength: 36 },
     club_id: { type: ["string", "null"], maxLength: 36 },
     championship_id: { type: ["string", "null"], maxLength: 36 }, // UUID
@@ -187,7 +195,7 @@ export const playerSchema = toTypedRxJsonSchema({
     team_id: { type: "string", maxLength: 36 },
     user_id: { type: ["string", "null"], maxLength: 36 },
     name: { type: ["string", "null"] },
-    number: { type: "number"},
+    number: { type: "number" },
     role: {
       type: "string",
       enum: ["owner", "coach", "staff", "player"],
@@ -397,7 +405,14 @@ export const eventSchema = toTypedRxJsonSchema({
     team_id: { type: ["string", "null"], maxLength: 36 }, // Nullable for non-team events
     event_type: {
       type: "string",
-      enum: ["substitution", "timeout", "injury", "sanction", "technical", "comment"],
+      enum: [
+        "substitution",
+        "timeout",
+        "injury",
+        "sanction",
+        "technical",
+        "comment",
+      ],
       maxLength: 20,
     },
     timestamp: { type: "string", format: "date-time", maxLength: 32 },
@@ -420,7 +435,7 @@ export const eventSchema = toTypedRxJsonSchema({
     "event_type",
     "timestamp",
     "created_at",
-    "updated_at"
+    "updated_at",
   ],
   indexes: [
     "event_type",

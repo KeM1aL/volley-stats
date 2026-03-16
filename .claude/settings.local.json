@@ -1,31 +1,32 @@
 {
+  "defaultMode": "bypassPermissions",
   "permissions": {
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(git push:*)",
+      "Bash(docker run:*)",
+      "WebFetch",
+      "Read(.env*)"
+    ],
     "allow": [
-      "Bash(npm run dev:*)",
       "Bash(curl:*)",
-      "Bash(npx tsc:*)",
-      "Bash(npm run build:*)",
-      "Bash(pnpm add:*)",
-      "Bash(pnpm run dev)",
-      "Bash(pnpm run build:*)",
+      "Bash(npx *)",
+      "Bash(npm *)",
       "Bash(grep:*)",
       "Bash(git diff:*)",
       "Bash(done)",
       "Bash(dir:*)",
       "Bash(wc:*)",
-      "Bash(pnpm install:*)",
       "Skill(playwright-cli)",
       "Skill(playwright-cli:*)",
-      "Bash(playwright-cli open:*)",
-      "Bash(playwright-cli run-code:*)",
-      "Bash(playwright-cli screenshot:*)",
-      "Bash(playwright-cli goto:*)",
-      "Bash(playwright-cli:*)",
-      "Bash(pnpm test:e2e:*)"
+      "Bash(playwright-cli*)",
+      
+      "Bash(pnpm *)",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

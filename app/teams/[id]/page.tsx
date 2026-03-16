@@ -73,6 +73,7 @@ export default function TeamDetailsPage() {
 
       setIsLoading(true);
       try {
+        // Prepare all filters and joins before making API calls
         const filters: Filter[] = [
           {
             field: "id",
@@ -80,12 +81,8 @@ export default function TeamDetailsPage() {
             value: id
           }
         ];
-        // Load team with relations
         const joins = ["championships", "clubs"];
-        const teamsData = await teamApi.getTeams(filters, undefined, joins);
-        setTeam(teamsData[0] || null);
 
-        // Load matches where this team is home or away
         const matchFilters: Filter[] = [
           {
             operator: "or",
@@ -97,24 +94,23 @@ export default function TeamDetailsPage() {
           "home_team:teams!matches_home_team_id_fkey",
           "away_team:teams!matches_away_team_id_fkey",
         ];
-        const matchesData = await matchApi.getMatchs(
-          matchFilters,
-          matchSort,
-          matchJoins
-        );
-        setMatches(matchesData);
 
-        // Load team members
         const memberFilters: Filter[] = [
           { field: "team_id", operator: "eq", value: id },
         ];
         const memberSort: Sort<TeamMember>[] = [
           { field: "number", direction: "asc" },
         ];
-        const membersData = await teamMembersApi.getTeamMembers(
-          memberFilters,
-          memberSort
-        );
+
+        // Run all three API calls in parallel
+        const [teamsData, matchesData, membersData] = await Promise.all([
+          teamApi.getTeams(filters, undefined, joins),
+          matchApi.getMatchs(matchFilters, matchSort, matchJoins),
+          teamMembersApi.getTeamMembers(memberFilters, memberSort),
+        ]);
+
+        setTeam(teamsData[0] || null);
+        setMatches(matchesData);
         setTeamMembers(membersData);
       } catch (error) {
         console.error("Failed to load team data:", error);

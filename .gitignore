@@ -62,6 +62,11 @@ node_modules/
 # tasks.json
 # tasks/ 
 
+# Playwright test artifacts
+playwright-report/
+test-results/
+playwright/
+
 # Auto Claude data directory
 .auto-claude/
 

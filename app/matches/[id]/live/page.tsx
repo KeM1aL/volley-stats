@@ -85,11 +85,14 @@ export default function LiveMatchPage() {
   const [loadingStep, setLoadingStep] = useState(0);
   const { history, canUndo, canRedo } = useCommandHistory();
 
-  const LOADING_STEPS = [
-    { label: t("live.syncingMatchData"), description: t("live.ensuringLatestData") },
-    { label: t("live.loadingMatchFormat"), description: t("live.gettingMatchRules") },
-    { label: t("live.loadingTeams"), description: t("live.fetchingTeamInfo") },
-  ];
+  const LOADING_STEPS = useMemo(
+    () => [
+      { label: t("live.syncingMatchData"), description: t("live.ensuringLatestData") },
+      { label: t("live.loadingMatchFormat"), description: t("live.gettingMatchRules") },
+      { label: t("live.loadingTeams"), description: t("live.fetchingTeamInfo") },
+    ],
+    [t]
+  );
 
   // Sidebar and panel state
   const [showDesktopPanel, setShowDesktopPanel] = useState(false); // Desktop grid panel
@@ -281,7 +284,7 @@ export default function LiveMatchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [db, matchId, router, t]);
+  }, [db, matchId, router, t, searchParams]);
 
   useEffect(() => {
     loadMatchData();
@@ -304,7 +307,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t]
   );
 
   const onSubstitutionRecorded = useCallback(
@@ -336,7 +339,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, history, teamPlayerById, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, teamPlayerById, t]
   );
 
   const onPlayerStatRecorded = useCallback(
@@ -359,7 +362,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t]
   );
 
   const onPointRecorded = useCallback(
@@ -384,7 +387,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState, managedTeam, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, managedTeam?.id, history, t]
   );
 
   const onMatchCompleted = () => {

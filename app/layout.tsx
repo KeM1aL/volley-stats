@@ -104,7 +104,7 @@ export default async function RootLayout({
           </KeyboardProvider>
         </NextIntlClientProvider>
       </body>
-      {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
+      {process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
     </html>
   );
 }

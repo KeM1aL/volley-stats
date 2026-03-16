@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Match, TeamMember, PlayerStat, ScorePoint, Set, Team } from "@/lib/types";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent } from "@/components/ui/card";
@@ -128,7 +128,7 @@ export function StatTracker({
     updateData();
   }, [match.id, currentSet]);
 
-  const recordStat = async (type: StatType, result: StatResult) => {
+  const recordStat = useCallback(async (type: StatType, result: StatResult) => {
     if (!selectedPlayer) {
       toast({
         title: t("live.selectAPlayer"),
@@ -163,13 +163,13 @@ export function StatTracker({
       } as PlayerStat;
       await onStat(playerStat);
       setSelectedPlayer(null);
-      
+
     } finally {
       setIsRecording(false);
     }
-  };
+  }, [selectedPlayer, toast, t, liberoPlayer, currentSet, match.id, onStat]);
 
-  const recordPoint = async (
+  const recordPoint = useCallback(async (
     actionTeamId: string,
     type: PointType,
     result: StatResult
@@ -177,7 +177,6 @@ export function StatTracker({
     setIsRecording(true);
     try {
       const isSuccess = result === StatResult.SUCCESS;
-      const isError = result === StatResult.ERROR;
       const scoringTeamId = isSuccess ? managedTeam.id : opponentTeam.id;
       const newHomeScore =
         scoringTeamId === match.home_team_id ? score.home + 1 : score.home;
@@ -208,7 +207,7 @@ export function StatTracker({
     } finally {
       setIsRecording(false);
     }
-  };
+  }, [managedTeam.id, opponentTeam.id, match.home_team_id, match.away_team_id, match.id, score, currentSet, onPoint]);
 
   const statTypeLabel: Record<StatType, string> = {
     [StatType.SPIKE]: t("stats.spike"),

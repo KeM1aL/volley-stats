@@ -11,7 +11,7 @@
     "start:inspect": "next start --inspect=0.0.0.0",
     "lint": "next lint",
     "i18n:check": "i18n-check -s en --locales messages",
-    "supabase:types": "npx supabase gen types typescript --project-id 'gvtjccisbwrwpjtabnyd' --schema public > lib/supabase/database.types.ts",
+    "supabase:types": "npx supabase gen types typescript --project-id gvtjccisbwrwpjtabnyd --schema public > lib/supabase/database.types.ts",
     "supabase:functions:deploy:send-email": "npx supabase functions deploy send-email --no-verify-jwt --project-ref 'gvtjccisbwrwpjtabnyd'",
     "supabase:functions:deploy:health": "npx supabase functions deploy health --no-verify-jwt --project-ref 'gvtjccisbwrwpjtabnyd'",
     "supabase:secrets:set": "npx supabase secrets set --env-file supabase/functions/.env --project-ref 'gvtjccisbwrwpjtabnyd'",

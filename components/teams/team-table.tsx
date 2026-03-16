@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, Pencil, Trash2, Users, Search } from "lucide-react";
 import {
@@ -11,22 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { Team, TeamStatus } from "@/lib/types";
-import { useTeamApi } from "@/hooks/use-team-api";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslations } from "next-intl";
 
@@ -47,44 +34,14 @@ function getTeamStatusVariant(status: TeamStatus): "default" | "secondary" | "ou
 type TeamTableProps = {
   teams: Team[];
   onEdit: (team: Team) => void;
+  onDelete: (team: Team) => void;
   canManage: (team: Team) => boolean;
 };
 
-export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
+export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps) {
   const t = useTranslations('teams');
-  const tc = useTranslations('common');
   const router = useRouter();
-  const { toast } = useToast();
   const { user } = useAuth();
-  const teamApi = useTeamApi();
-  const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    if (!deletingTeam) return;
-
-    setIsDeleting(true);
-    try {
-      await teamApi.deleteTeam(deletingTeam.id);
-
-      toast({
-        title: t('toast.deleted'),
-        description: t('toast.deletedDesc'),
-      });
-
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to delete team:", error);
-      toast({
-        variant: "destructive",
-        title: t('toast.error'),
-        description: t('toast.deleteError'),
-      });
-    } finally {
-      setIsDeleting(false);
-      setDeletingTeam(null);
-    }
-  };
 
   if (teams.length === 0) {
     const hasFavorite = user?.profile.favorite_team_id || user?.profile.favorite_club_id;
@@ -164,7 +121,7 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setDeletingTeam(team)}
+                    onClick={() => onDelete(team)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -227,7 +184,7 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setDeletingTeam(team)}
+                          onClick={() => onDelete(team)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -242,26 +199,6 @@ export function TeamTable({ teams, onEdit, canManage }: TeamTableProps) {
         </div>
       </div>
 
-      <AlertDialog open={!!deletingTeam} onOpenChange={() => setDeletingTeam(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('confirmDeleteDesc')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{tc('actions.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {tc('actions.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
