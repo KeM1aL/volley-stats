@@ -68,8 +68,9 @@ test.describe('Match Statistics', () => {
 
     // 7.5 Verify the Export PDF button is attached to the DOM.
     // The button has className="invisible lg:visible" — at 768px viewport it is
-    // hidden via CSS but still present in the DOM.
-    const exportPdfButton = page.getByRole('button', { name: /export pdf/i });
+    // visibility:hidden (Tailwind `invisible`), which removes it from the ARIA tree.
+    // Use a CSS-based locator rather than getByRole() to find it regardless of visibility.
+    const exportPdfButton = page.locator('button').filter({ hasText: /export pdf/i });
     await expect(exportPdfButton).toBeAttached();
 
     // Also verify the Share button is visible (no visibility restriction on it)

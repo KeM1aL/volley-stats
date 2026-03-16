@@ -1,8 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 import { config } from 'dotenv';
 
-// Load .env.test for E2E test credentials (falls back to .env if not found)
+// Load E2E test credentials — try .env.test first, then .env.test.local (Next.js convention),
+// then fall back to .env.local / .env.
 config({ path: '.env.test' });
+config({ path: '.env.test.local' });
+config({ path: '.env.local' });
 config({ path: '.env' });
 
 export default defineConfig({

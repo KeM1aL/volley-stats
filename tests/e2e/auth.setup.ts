@@ -5,6 +5,14 @@ import fs from 'fs';
 const authFile = path.join(__dirname, '../../playwright/.auth/user.json');
 
 setup('authenticate', async ({ page }) => {
+  // Fail fast with a clear message if test credentials are not configured.
+  // Copy .env.test.example to .env.test.local (or .env.test) and fill in credentials.
+  if (!process.env.TEST_EMAIL || !process.env.TEST_PASSWORD) {
+    throw new Error(
+      'Missing TEST_EMAIL or TEST_PASSWORD. Copy .env.test.example to .env.test.local and fill in your credentials.'
+    );
+  }
+
   // Ensure the auth directory exists
   const authDir = path.dirname(authFile);
   if (!fs.existsSync(authDir)) {
@@ -13,11 +21,14 @@ setup('authenticate', async ({ page }) => {
 
   await page.goto('/auth');
 
+  // Wait for the sign-in form to be ready before interacting
+  await page.getByLabel('Email').waitFor({ state: 'visible', timeout: 15_000 });
+
   // Fill email
-  await page.getByLabel('Email').fill(process.env.TEST_EMAIL!);
+  await page.getByLabel('Email').fill(process.env.TEST_EMAIL);
 
   // Fill password
-  await page.getByLabel('Password').fill(process.env.TEST_PASSWORD!);
+  await page.getByLabel('Password').fill(process.env.TEST_PASSWORD);
 
   // Sign in
   await page.getByRole('button', { name: 'Sign In' }).click();

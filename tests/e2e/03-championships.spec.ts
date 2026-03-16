@@ -58,9 +58,10 @@ test.describe('Championships — CRUD', () => {
     }
 
     // Gender: shadcn Select (combobox index 1 within dialog)
+    // Use exact:true — "Male" is a substring of "Female", causing strict-mode violations.
     await dialog.getByRole('combobox').nth(1).click();
-    await page.getByRole('option', { name: 'Male' }).waitFor({ state: 'visible', timeout: 3_000 });
-    await page.getByRole('option', { name: 'Male' }).click();
+    await page.getByRole('option', { name: 'Male', exact: true }).waitFor({ state: 'visible', timeout: 3_000 });
+    await page.getByRole('option', { name: 'Male', exact: true }).click();
 
     // Age Category: shadcn Select (combobox index 2 within dialog)
     await dialog.getByRole('combobox').nth(2).click();

@@ -50,6 +50,25 @@ export function MatchHistoryTable({
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
+  // Must be declared before any early returns to satisfy Rules of Hooks.
+  const sortedMatches = useMemo(() => {
+    return [...matches].sort((a, b) => {
+      switch (sortField) {
+        case "date":
+          return sortDirection === "asc"
+            ? new Date(a.date).getTime() - new Date(b.date).getTime()
+            : new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "score": {
+          const aScore = Math.abs((a.home_score ?? 0) - (a.away_score ?? 0));
+          const bScore = Math.abs((b.home_score ?? 0) - (b.away_score ?? 0));
+          return sortDirection === "asc" ? aScore - bScore : bScore - aScore;
+        }
+        default:
+          return 0;
+      }
+    });
+  }, [matches, sortField, sortDirection]);
+
   const isMemberOfTeamOrClub = (match: Match) => {
     if (!user) return false;
 
@@ -72,25 +91,6 @@ export function MatchHistoryTable({
     );
 
     return isHomeTeamMember || isAwayTeamMember || isHomeClubMember || isAwayClubMember;
-  };
-
-  const sortMatches = (a: Match, b: Match) => {
-    switch (sortField) {
-      case "date":
-        return sortDirection === "asc"
-          ? new Date(a.date).getTime() - new Date(b.date).getTime()
-          : new Date(b.date).getTime() - new Date(a.date).getTime();
-      case "score":
-        a.home_score = a.home_score || 0;
-        a.away_score = a.away_score || 0;
-        b.home_score = b.home_score || 0;
-        b.away_score = b.away_score || 0;
-        const aScore = Math.abs(a.home_score - a.away_score);
-        const bScore = Math.abs(b.home_score - b.away_score);
-        return sortDirection === "asc" ? aScore - bScore : bScore - aScore;
-      default:
-        return 0;
-    }
   };
 
   const toggleSort = (field: SortField) => {
@@ -154,8 +154,6 @@ export function MatchHistoryTable({
       />
     );
   }
-
-  const sortedMatches = useMemo(() => [...matches].sort(sortMatches), [matches, sortField, sortDirection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

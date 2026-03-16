@@ -97,8 +97,8 @@ async function playSetToCompletion(
     await page.getByTestId('sidebar-btn-events').first().click();
 
     // Wait for the Events panel to appear with the Substitution quick-action button.
-    // The button uses the "eventShort" translation key which renders as "Sub".
-    const subBtn = page.getByRole('button', { name: 'Sub', exact: true });
+    // The button uses the "live.substitution" translation key which renders as "Substitution".
+    const subBtn = page.getByRole('button', { name: 'Substitution', exact: true });
     await subBtn.waitFor({ state: 'visible', timeout: 5_000 });
     await subBtn.click();
 
