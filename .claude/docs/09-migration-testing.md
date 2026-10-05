@@ -6,11 +6,11 @@ When ready to migrate from Supabase REST API to a custom backend API:
 
 ### Step 1: Create REST API DataStore
 ```typescript
-// lib/api/base/rest-api-data-store.ts
+// lib/api/rest.ts (new file, alongside lib/api/supabase.ts)
 class RestApiDataStore<T> implements DataStore<T> {
   constructor(private baseUrl: string, private endpoint: string) {}
 
-  async getAll(filters?, sort?, joins?): Promise<T[]> {
+  async getAll(filters?: Filter[], sort?: Sort<T>[], joins?: string[]): Promise<T[]> {
     const queryParams = buildQueryString(filters, sort, joins)
     const response = await fetch(`${this.baseUrl}/${this.endpoint}?${queryParams}`)
     return response.json()
@@ -20,24 +20,28 @@ class RestApiDataStore<T> implements DataStore<T> {
 }
 ```
 
-### Step 2: Update API Factory
-```typescript
-// lib/api/index.ts
-export function createApi(config: ApiConfig) {
-  const useRestApi = config.type === 'rest'
+### Step 2: Update API Factories
+Each `createXApi` factory builds its own `SupabaseDataStore`. Let it receive a `DataStore` instead, and choose the implementation in `createApi`:
 
-  if (useRestApi) {
-    return {
-      teams: new TeamApi(new RestApiDataStore(config.baseUrl, 'teams')),
-      matches: new MatchApi(new RestApiDataStore(config.baseUrl, 'matches')),
-      // ...
-    }
-  } else {
-    // Existing Supabase implementation
-    return {
-      teams: new TeamApi(config.supabaseClient),
-      // ...
-    }
+```typescript
+// lib/api/teams/index.ts
+export const createTeamApi = (dataStore: DataStore<Team>) => ({
+  getTeams: (filters?: Filter[], sort?: Sort<Team>[], joins?: string[]) => dataStore.getAll(filters, sort, joins),
+  createTeam: (team: Partial<Team>) => dataStore.create(team),
+  // ...
+})
+
+// lib/api/index.ts
+export const createApi = (config: ApiConfig) => {
+  const store = <T>(table: TableName) =>
+    config.type === 'rest'
+      ? new RestApiDataStore<T>(config.baseUrl, table)
+      : new SupabaseDataStore(table, config.supabaseClient)
+
+  return {
+    teams: createTeamApi(store('teams')),
+    matches: createMatchApi(store('matches')),
+    // ...one entry per domain
   }
 }
 ```
@@ -53,17 +57,18 @@ API_BASE_URL=https://api.volley-stats.com/v1
 - ✅ Components (use hooks, agnostic to implementation)
 - ✅ Hooks (call API methods, don't care about implementation)
 - ✅ RxDB schemas (same structure)
-- ✅ Sync logic (same interface)
+
+The live match sync ([lib/rxdb/sync/](lib/rxdb/sync/)) talks to Supabase directly through `replicateSupabase`, not through the API layer, so it needs its own pull/push handlers for a new backend.
 
 **Estimated Migration Effort**: 2-3 days for basic REST API implementation, assuming API endpoints mirror Supabase structure.
 
 ---
 
-## Testing Strategy (Recommendations)
+## Testing Strategy
 
-Currently, the project has no tests. Here's a recommended testing strategy:
+E2E tests run on Playwright ([tests/e2e/](tests/e2e/), config in `playwright.config.ts`, `npm run test:e2e`). There are no unit or integration tests and Jest is not installed; the unit and integration sections below are recommendations.
 
-### Unit Tests (Jest + React Testing Library)
+### Unit Tests (recommended: Jest + React Testing Library)
 ```typescript
 // Example: hooks/use-team-api.test.ts
 import { renderHook } from '@testing-library/react'
@@ -73,70 +78,52 @@ describe('useTeamApi', () => {
   it('should fetch teams', async () => {
     // Mock API
     const { result } = renderHook(() => useTeamApi())
-    const teams = await result.current.getAll()
+    const teams = await result.current.getTeams()
     expect(teams).toHaveLength(5)
   })
 })
 
-// Example: lib/stats/calculate-mvp.test.ts
-import { calculateMVP } from './calculate-mvp'
+// Example: lib/stats/calculations.test.ts
+import { calculateMVPScore } from './calculations'
 
-describe('calculateMVP', () => {
+describe('calculateMVPScore', () => {
   it('should calculate MVP based on weighted stats', () => {
     const stats = [/* mock player stats */]
-    const mvp = calculateMVP(stats)
-    expect(mvp.player_id).toBe('player-123')
+    const { matchMVP } = calculateMVPScore(stats, players, sets)
+    expect(matchMVP.player.id).toBe('player-123')
   })
 })
 ```
 
-### Integration Tests (RxDB + Sync)
+### Integration Tests (recommended: RxDB + Sync)
 ```typescript
-// Example: lib/rxdb/sync/sync-handler.test.ts
-import { SyncHandler } from './sync-handler'
+// Example: lib/rxdb/sync/manager.test.ts
+import { SyncManager } from './manager'
 import { createTestDatabase } from '../test-utils'
 
-describe('SyncHandler', () => {
-  it('should sync local changes to Supabase', async () => {
-    const db = await createTestDatabase()
-    const syncHandler = new SyncHandler(db, mockSupabaseClient)
+describe('SyncManager', () => {
+  it('should pull one match into RxDB with syncMatch', async () => {
+    const db = await createTestDatabase()      // memory storage
+    const syncManager = new SyncManager(db, mockSupabaseClient)
+    await syncManager.setUser(testUser)
 
-    // Create local record
-    await db.teams.insert({ name: 'Test Team' })
+    const synced = await syncManager.syncMatch('match-123')
 
-    // Wait for sync
-    await syncHandler.processQueue()
-
-    // Verify in Supabase
-    const { data } = await mockSupabaseClient.from('teams').select()
-    expect(data).toContainEqual(expect.objectContaining({ name: 'Test Team' }))
+    expect(synced).toBe(true)
+    expect(await db.matches.findOne('match-123').exec()).not.toBeNull()
   })
 })
 ```
 
 ### E2E Tests (Playwright)
-```typescript
-// Example: e2e/live-match-tracking.spec.ts
-import { test, expect } from '@playwright/test'
 
-test('should track match score offline', async ({ page }) => {
-  await page.goto('/matches/123/live?team=456')
+Existing specs in [tests/e2e/](tests/e2e/) run in order: teams, matches, championships, live match offline/reconnect (`04-live-offline.spec.ts`), settings, match stats, and team cleanup. `auth.setup.ts` logs in and saves `playwright/.auth/user.json`; shared IDs pass between specs through `tests/fixtures/test-data.json`.
 
-  // Go offline
-  await page.context().setOffline(true)
+Helpers in `tests/helpers/`:
+- `match-setup.ts` — `createAndStartMatch()` creates a match and opens its live page
+- `court.ts` — `setupCourtPositions()` fills the set lineup
+- `network.ts` — `goOffline()`, `goOnline()`, `blockSupabase()`
 
-  // Score points
-  await page.click('[data-testid="home-point-button"]')
-  await page.click('[data-testid="away-point-button"]')
+Use `04-live-offline.spec.ts` as the template for offline scenarios.
 
-  // Verify score updated
-  await expect(page.locator('[data-testid="home-score"]')).toHaveText('1')
-  await expect(page.locator('[data-testid="away-score"]')).toHaveText('1')
-
-  // Go online
-  await page.context().setOffline(false)
-
-  // Wait for sync
-  await expect(page.locator('[data-testid="sync-status"]')).toHaveText('Synced')
-})
-```
+`playwright.config.ts` runs one worker, sequentially, against `BASE_URL` (default `http://localhost:3000`) with no `webServer`, so start the app first. Test credentials load from `.env.test` (then `.env.test.local`, `.env.local`, `.env`).

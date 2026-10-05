@@ -14,53 +14,55 @@
 │                          │                                   │
 │  ┌──────────────────────▼───────────────────────────────┐  │
 │  │  State Management Layer                               │  │
-│  │  - React Context (AuthContext, DatabaseContext)       │  │
+│  │  - React Context (AuthContext, LocalDatabaseProvider) │  │
 │  │  - Custom Hooks (useTeamApi, useMatchApi, etc.)      │  │
 │  │  - Command Pattern (Undo/Redo Stack)                 │  │
 │  └──────────────────────┬───────────────────────────────┘  │
 │                          │                                   │
 └──────────────────────────┼───────────────────────────────────┘
                            │
-          ┌────────────────┴────────────────┐
-          │                                  │
-   ┌──────▼──────────┐            ┌─────────▼──────────┐
-   │   API Layer     │            │  RxDB (Local DB)   │
-   │   (lib/api/)    │◄──────────►│  - Dexie Storage   │
-   │  - Repository   │   Sync     │  - 13 Collections  │
-   │    Pattern      │ Handler    │  - Offline Queue   │
-   │  - Factory      │            │  - Change Events   │
-   │    Pattern      │            └────────────────────┘
-   └────────┬────────┘
-            │
-   ┌────────▼────────┐
-   │    Supabase     │
-   │  - PostgreSQL   │
-   │  - Auth         │
-   │  - Realtime     │
-   │  - RLS          │
-   └─────────────────┘
+          ┌────────────────┴─────────────────┐
+          │ Other screens                    │ Live match (offline)
+   ┌──────▼──────────┐            ┌──────────▼──────────┐
+   │   API Layer     │            │  RxDB (Local DB)    │
+   │   (lib/api/)    │            │  - Dexie Storage    │
+   │  - Repository   │            │  - 12 Collections   │
+   │    Pattern      │            │  - Commands write   │
+   │  - Factory      │            │    here             │
+   │    Pattern      │            └──────────┬──────────┘
+   └────────┬────────┘                       │ SyncManager
+            │                                │ (RxDB replication)
+   ┌────────▼────────────────────────────────▼─┐
+   │                 Supabase                  │
+   │  - PostgreSQL   - Auth                    │
+   │  - Realtime     - RLS                     │
+   └───────────────────────────────────────────┘
 ```
 
 ## Data Flow Architecture
 
+Two paths, chosen by screen:
+
 ```
-User Interaction
+Screens other than the live match (teams, championships, match list, settings…)
       ↓
 React Component
       ↓
 Custom Hook (e.g., useTeamApi)
       ↓
-API Layer (lib/api/)
+API Layer (lib/api/) → Supabase (direct calls, requires connectivity)
+
+
+Live match tracking (app/matches/[id]/live)
       ↓
-   ┌──┴──┐
-   ↓     ↓
-RxDB ←→ Supabase
-   ↓
-SyncHandler (bidirectional sync)
-   - Real-time subscriptions
-   - Offline queue processing
-   - Conflict resolution (LWW)
+syncMatch(matchId) pulls that one match into RxDB on page load
+      ↓
+User action → Command (lib/commands/) → RxDB write (useLocalDb)
+      ↓
+SyncManager replication pushes to Supabase when online
 ```
+
+Local data stays scoped to what a match needs: reference data plus the matches opened with `syncMatch(matchId)`. Don't sync whole tables to the device. See [04-offline-sync.md](04-offline-sync.md).
 
 ## Directory Structure
 
@@ -74,8 +76,8 @@ volley-stats/
 │   │   ├── [id]/score/          # Score entry
 │   │   └── [id]/stats/          # Match statistics
 │   ├── settings/                 # User settings
-│   ├── stats/                    # Statistics views
-│   └── teams/                    # Team management
+│   ├── teams/                    # Team management
+│   └── api/import/ffvb/          # FFVB match import route
 │
 ├── components/                   # React components (feature-based)
 │   ├── auth/                     # Authentication UI
@@ -86,48 +88,61 @@ volley-stats/
 │   │   └── stats/               # Statistics displays
 │   ├── players/                  # Player management
 │   ├── providers/                # Context providers
+│   │   └── local-database-provider.tsx  # RxDB provider + useLocalDb()
 │   ├── teams/                    # Team components
-│   └── ui/                       # Shadcn/ui components (50+)
+│   └── ui/                       # Shadcn/ui components
 │
 ├── contexts/                     # React Context providers
-│   └── auth-context.tsx         # Authentication context
+│   ├── auth-context.tsx         # Authentication context
+│   └── keyboard-context.tsx     # Virtual keyboard state (mobile)
 │
-├── hooks/                        # Custom React hooks (14 hooks)
+├── hooks/                        # Custom React hooks
 │   ├── use-team-api.ts          # Team API wrapper
 │   ├── use-match-api.ts         # Match API wrapper
 │   ├── use-local-database.ts    # RxDB instance management
-│   └── use-command-history.ts   # Undo/redo functionality
+│   ├── use-command-history.ts   # Undo/redo functionality
+│   └── use-toast.ts             # Toast notifications
 │
 ├── lib/                          # Core business logic
 │   ├── api/                      # API layer (Supabase abstraction)
-│   │   ├── base/                # Base DataStore interface
-│   │   ├── championships/       # Championship API
-│   │   ├── clubs/               # Club API
-│   │   ├── matches/             # Match API
-│   │   ├── seasons/             # Season API
-│   │   ├── teams/               # Team API
-│   │   └── index.ts             # API factory
+│   │   ├── datastore.ts         # DataStore interface
+│   │   ├── supabase.ts          # SupabaseDataStore implementation
+│   │   ├── types.ts             # Filter / Sort types
+│   │   ├── championships/       # One createXApi factory per domain:
+│   │   ├── clubs/               #   teams, team-members, championships,
+│   │   ├── events/              #   clubs, matches, seasons,
+│   │   ├── match-formats/       #   match-formats, events
+│   │   ├── matches/
+│   │   ├── seasons/
+│   │   ├── team-members/
+│   │   ├── teams/
+│   │   └── index.ts             # createApi() / getApi()
 │   ├── commands/                 # Command pattern (undo/redo)
-│   │   ├── command.ts           # Command interface
-│   │   ├── set-setup-command.ts
-│   │   ├── substitution-command.ts
-│   │   ├── player-stat-command.ts
-│   │   └── score-point-command.ts
-│   ├── importers/                # Data import utilities
-│   ├── pdf/                      # PDF export (jsPDF)
+│   │   ├── command.ts           # Command, MatchState, CommandHistory
+│   │   └── match-commands.ts    # SetSetup, Substitution, PlayerStat, ScorePoint commands
+│   ├── i18n/                     # next-intl helpers
+│   ├── importers/                # Data import utilities (FFVB)
+│   ├── pdf/                      # PDF export types (jsPDF)
 │   ├── rxdb/                     # RxDB configuration
-│   │   ├── sync/                # Sync handler
-│   │   │   └── sync-handler.ts  # Bidirectional sync logic
-│   │   ├── database.ts          # RxDB setup
-│   │   └── schema.ts            # RxDB schemas (13 collections)
+│   │   ├── sync/
+│   │   │   ├── manager.ts       # SyncManager (what to sync, syncMatch)
+│   │   │   └── index.ts         # replicateSupabase (RxDB ↔ Supabase replication)
+│   │   ├── database.ts          # RxDB setup (12 collections)
+│   │   └── schema.ts            # RxDB schemas
 │   ├── stats/                    # Statistics calculation
 │   ├── supabase/                 # Supabase client setup
 │   │   ├── client.ts            # Browser client
-│   │   └── server.ts            # Server client
+│   │   ├── server.ts            # Server client
+│   │   └── database.types.ts    # Generated DB types (npm run supabase:types)
 │   ├── utils/                    # Utility functions
 │   ├── types.ts                  # TypeScript type definitions
+│   ├── types/events.ts           # Event types (substitution, timeout, …)
 │   └── enums.ts                  # Enums for constants
 │
+├── messages/                     # next-intl translations (en, es, fr, it, pt)
+├── tests/e2e/                    # Playwright E2E tests
+│
 └── supabase/                     # Supabase configuration
+    ├── functions/                # Edge functions (send-email, health)
     └── migrations/               # Database migrations
 ```

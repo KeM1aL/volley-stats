@@ -9,75 +9,74 @@
 ### Base Interface
 
 ```typescript
-// lib/api/base/data-store.ts
+// lib/api/datastore.ts
 interface DataStore<T> {
-  getAll(filters?, sort?, joins?): Promise<T[]>
+  getAll(filters?: Filter[], sort?: Sort<T>[], joins?: string[]): Promise<T[]>
   create(item: Partial<T>): Promise<T>
-  get(id: string, joins?): Promise<T | null>
+  get(id: string, joins?: string[]): Promise<T | null>
   update(id: string, updates: Partial<T>): Promise<T>
   delete(id: string): Promise<void>
 }
 ```
 
+`Filter` and `Sort` are defined in [lib/api/types.ts](lib/api/types.ts).
+
 ### Supabase Implementation
 
-```typescript
-// lib/api/base/supabase-data-store.ts
-class SupabaseDataStore<TableName> implements DataStore<T> {
-  constructor(client: SupabaseClient, tableName: string)
+[lib/api/supabase.ts](lib/api/supabase.ts) — `SupabaseDataStore<TableName>` implements `DataStore`, typed from `Database` in [lib/supabase/database.types.ts](lib/supabase/database.types.ts). Constructor: `new SupabaseDataStore("teams", supabaseClient?)` (defaults to the browser client).
 
-  // Features:
-  // - Type-safe filters with operators (eq, gt, like, in, etc.)
-  // - Dynamic join support via select query building
-  // - Automatic error handling
-  // - Filter composition (and, or)
-}
-```
+Features:
+- Filter operators (eq, neq, gt, gte, lt, lte, like, ilike, in, is, or, and)
+- Joins via `select` query building (`joins: ['championships', 'clubs']`); filters on `table.field` add `!inner` joins
+- Throws on Supabase errors
 
 ### API Factory Pattern
 
+Each domain folder exports a `createXApi(supabaseClient?)` factory that wraps a `SupabaseDataStore` and returns domain-named methods (e.g. `getTeams`, `getTeam`, `createTeam`, `updateTeam`, `deleteTeam`). [lib/api/index.ts](lib/api/index.ts) assembles them:
+
 ```typescript
 // lib/api/index.ts
-export function createApi(supabaseClient: SupabaseClient) {
-  return {
-    teams: new TeamApi(supabaseClient),
-    matches: new MatchApi(supabaseClient),
-    championships: new ChampionshipApi(supabaseClient),
-    clubs: new ClubApi(supabaseClient),
-    seasons: new SeasonApi(supabaseClient),
-  }
-}
+export const createApi = (supabaseClient: SupabaseClient) => ({
+  teams: createTeamApi(supabaseClient),
+  teamMembers: createTeamMembersApi(supabaseClient),
+  championships: createChampionshipApi(supabaseClient),
+  clubs: createClubApi(supabaseClient),
+  matches: createMatchApi(supabaseClient),
+  seasons: createSeasonApi(supabaseClient),
+  matchFormats: createMatchFormatApi(supabaseClient),
+  events: createEventApi(supabaseClient)
+});
 
-// Singleton instance
-let apiInstance: ReturnType<typeof createApi> | null = null
-export function getApi(): ReturnType<typeof createApi> {
-  if (!apiInstance) {
-    apiInstance = createApi(createClient())
-  }
-  return apiInstance
-}
+const api = createApi(supabase);   // browser client singleton
+export const getApi = () => api;
 ```
+
+Server code (e.g. `app/api/import/ffvb/route.ts`) calls `createApi()` with the server client from `lib/supabase/server.ts`.
 
 ### Custom Hook Wrappers
 
 ```typescript
 // hooks/use-team-api.ts
-export function useTeamApi() {
-  return getApi().teams
-}
+export const useTeamApi = () => {
+  return getApi().teams;
+};
 
 // Usage in components:
 const teamApi = useTeamApi()
-const teams = await teamApi.getAll({ filters: { club_id: 'abc' } })
+const teams = await teamApi.getTeams(
+  [{ field: 'club_id', operator: 'eq', value: clubId }],
+  [{ field: 'name', direction: 'asc' }],
+  ['championships', 'clubs']
+)
 ```
 
 **Benefits**:
 - Easy to swap Supabase for REST API later
 - Consistent API across all domains
 - Type-safe queries
-- Reusable in both client and server components
+- Reusable in client code and server route handlers
 
-**Migration Path**: When ready to move to a separate API, only the `SupabaseDataStore` implementation needs to be replaced with `RestApiDataStore` - all consuming code remains unchanged.
+**Migration Path**: When ready to move to a separate API, replace `SupabaseDataStore` with a `RestApiDataStore` and have the `createXApi` factories receive the store instead of constructing it - hooks and components remain unchanged. See [09-migration-testing.md](09-migration-testing.md).
 
 ---
 
@@ -97,41 +96,52 @@ interface Command {
 }
 
 interface MatchState {
-  match: Match
-  currentSet: Set
-  scorePoints: ScorePoint[]
-  playerStats: PlayerStat[]
-  // ... other state
+  match: Match | null
+  currentSet: Set | null
+  sets: Set[]
+  setPoints: ScorePoint[]
+  points: ScorePoint[]
+  setStats: PlayerStat[]
+  stats: PlayerStat[]
+  setEvents: Event[]
+  events: Event[]
+  score: Score
 }
 ```
 
+`CommandHistory` (same file) holds the undo/redo stacks.
+
 ### Implementations
 
-1. **SetSetupCommand** - Create/modify set lineup and rotation
-2. **SubstitutionCommand** - Player substitution during set
-3. **PlayerStatCommand** - Record individual stat (serve, spike, block, etc.)
-4. **ScorePointCommand** - Record point with attribution and rotation update
+All in [lib/commands/match-commands.ts](lib/commands/match-commands.ts); each takes the current `MatchState` and the RxDB database:
+
+1. **SetSetupCommand** - Insert a new set with its lineup
+2. **SubstitutionCommand** - Insert a `substitution` event and update the set's `current_lineup`
+3. **PlayerStatCommand** - Record individual stat (serve, spike, block, etc.); a `success` or `error` result also runs a ScorePointCommand
+4. **ScorePointCommand** - Record point, update set score/server/rotation, complete set and match when won
 
 ### Usage Pattern
 
 ```typescript
-// In live match component
-const { executeCommand, undo, redo, canUndo, canRedo } = useCommandHistory()
+// app/matches/[id]/live/page.tsx
+const { localDb: db } = useLocalDb()
+const { history, canUndo, canRedo } = useCommandHistory()
 
 // Execute a command
-await executeCommand(new ScorePointCommand(matchState, pointData))
+const command = new ScorePointCommand(matchState, point, myTeam, db)
+const newMatchState = await history.executeCommand(command)
+setMatchState(newMatchState)
 
 // Undo last action
-if (canUndo) {
-  await undo()
-}
+const state = await history.undo()
+setMatchState(state)
 ```
 
 **Key Features**:
-- Full state capture for each command
-- Bidirectional operations (execute/undo)
-- Stack-based history (max 50 operations)
-- Persisted to RxDB (works offline)
+- Each command captures previous and next `MatchState`
+- Bidirectional operations (execute/undo); `history.redo()` re-executes
+- Stack-based history (max 50 operations), kept in memory (`useRef`) for the page session
+- Commands write match data to RxDB (works offline); SyncManager replicates it to Supabase
 - Automatic rotation tracking in ScorePointCommand
 
 ---
@@ -141,49 +151,44 @@ if (canUndo) {
 **Multi-layered Approach**:
 
 ### Layer 1: Server State (Source of Truth)
-- **Supabase**: Remote PostgreSQL database
-- **RxDB**: Local IndexedDB mirror
-- **Sync**: Bidirectional via SyncHandler
+- **Supabase**: Remote PostgreSQL database. Screens other than the live match read and write it directly through the API layer hooks.
+- **RxDB**: Local IndexedDB copy, scoped to reference data plus the matches pulled with `syncMatch(matchId)`. Used by live match tracking.
+- **Sync**: `SyncManager` ([lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts)) runs RxDB replication with Supabase
 
 ### Layer 2: Global State (React Context)
 ```typescript
-// contexts/auth-context.tsx
+// contexts/auth-context.tsx (useAuth) — main fields
 interface AuthContextType {
   user: User | null
   session: Session | null
   isLoading: boolean
   signOut: () => Promise<void>
   reloadUser: () => Promise<void>
+  // ...see the file for the full interface
 }
 
-// contexts/local-database-context.tsx
-interface LocalDatabaseContextType {
-  database: RxDatabase | null
-  isInitialized: boolean
-  syncStatus: 'idle' | 'syncing' | 'error'
+// components/providers/local-database-provider.tsx
+// useLocalDb() returns the value of hooks/use-local-database.ts:
+{
+  localDb: VolleyballDatabase | null   // RxDB database with .syncManager
+  isLoading: boolean
+  error: Error | null
 }
 ```
 
 ### Layer 3: Local State (Component-level)
-- `useState` for component-specific state
-- `useReducer` for complex state logic (e.g., live match state)
+- `useState` for component-specific state (the live match page keeps `MatchState` in `useState`)
 - URL state via Next.js `searchParams` for filters
 
 ### Layer 4: Command State (Undo/Redo)
-- Command history stack
-- Persisted to RxDB
-- Cleared on set completion
+- Command history stack (`CommandHistory`)
+- Held in memory for the live match page session
 
-**State Flow Example**:
+**State Flow Example (live match)**:
 ```
 User scores a point
-  → Component calls executeCommand(ScorePointCommand)
-  → Command updates local state
-  → Command saves to RxDB
-  → RxDB emits change event
-  → SyncHandler uploads to Supabase (when online)
-  → Supabase broadcasts to other connected clients
-  → Other clients receive via Realtime subscription
-  → SyncHandler updates their RxDB
-  → Component reactively updates from RxDB query
+  → Component calls history.executeCommand(new ScorePointCommand(...))
+  → Command writes score point / set / match changes to RxDB
+  → Command returns the new MatchState; component calls setMatchState
+  → SyncManager replication pushes the changes to Supabase (when online)
 ```

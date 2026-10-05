@@ -4,7 +4,7 @@
 
 **Location**: [app/matches/[id]/live/page.tsx](app/matches/[id]/live/page.tsx)
 
-**Purpose**: Real-time point-by-point match scoring with comprehensive statistics tracking. This is the most critical feature of the application and must work 100% offline.
+**Purpose**: Real-time point-by-point match scoring with comprehensive statistics tracking. This is the most critical feature of the application and must work offline. It is the only screen that reads and writes RxDB; see [04-offline-sync.md](04-offline-sync.md).
 
 **Features**:
 - Point-by-point scoring with instant feedback
@@ -12,53 +12,52 @@
 - Player attribution for each action
 - Stat tracking: serves, spikes, blocks, receptions, defenses
 - Outcome recording: success, error, good, bad
-- Player substitution management
+- Player substitution management (stored as `substitution` events)
 - Set progression
 - **Undo/Redo functionality** (last 50 actions)
 - Visual court positions
 - Live score updates
-- Works completely offline
+- Works offline once the match has been pulled with `syncMatch(matchId)`
 
 **Data Flow**:
 ```
+Page load
+  → db.syncManager.syncMatch(matchId) pulls the match into RxDB (30 s timeout)
 User taps "Point" button
   → ScorePointCommand created
-  → Command executed
-  → Updates local match state
-  → Persists to RxDB
-  → SyncHandler uploads to Supabase (when online)
-  → UI reactively updates
+  → history.executeCommand(command)
+  → Command writes score point / set / match to RxDB
+  → Returned MatchState stored with setMatchState
+  → SyncManager replication pushes to Supabase (when online)
   → Undo button enabled
 ```
 
 **Implementation Pattern**:
 ```typescript
-// Live match component uses reducer for complex state
-const [matchState, dispatch] = useReducer(matchReducer, initialState)
+// app/matches/[id]/live/page.tsx
+const { localDb: db } = useLocalDb()
+const [matchState, setMatchState] = useState<MatchState>(initialMatchState)
 
 // Command history for undo/redo
-const { executeCommand, undo, redo, canUndo, canRedo } = useCommandHistory()
+const { history, canUndo, canRedo } = useCommandHistory()
 
 // Score a point
-const handleScorePoint = async (team: 'home' | 'away') => {
-  const command = new ScorePointCommand(matchState, { team })
-  const newState = await executeCommand(command)
-  dispatch({ type: 'UPDATE_STATE', payload: newState })
-}
+const command = new ScorePointCommand(matchState, point, myTeam, db)
+const newMatchState = await history.executeCommand(command)
+setMatchState(newMatchState)
 
 // Undo last action
 const handleUndo = async () => {
-  const newState = await undo()
-  dispatch({ type: 'UPDATE_STATE', payload: newState })
+  const state = await history.undo()
+  setMatchState(state)
 }
 ```
 
 **Critical Considerations**:
-- All data stored locally first (RxDB)
-- No network calls during live tracking
-- Background sync happens automatically
+- All match data written locally first (RxDB)
+- No direct network calls during live tracking; replication runs in the background
 - User never blocked by network issues
-- Conflicts resolved automatically (LWW)
+- Replication conflicts resolve to the server state (RxDB default conflict handler)
 
 ---
 
@@ -73,32 +72,36 @@ const handleUndo = async () => {
   - Avatar upload (stored in Supabase Storage)
   - Role (player, coach, staff, owner)
 - Assign teams to clubs and championships
-- Import teams from CSV or external sources
-- Team member invitation system
+- Team status: incomplete, active, archived
+- Teams can also be created by the FFVB match import ([lib/importers/ffvb.ts](lib/importers/ffvb.ts))
 
-**API Usage**:
+**API Usage** (direct Supabase via the API layer):
 ```typescript
 const teamApi = useTeamApi()
+const teamMemberApi = useTeamMembersApi()
 
 // Create team
-const team = await teamApi.create({
+const team = await teamApi.createTeam({
   name: 'Team Volley',
   club_id: clubId,
   championship_id: championshipId
 })
 
 // Add player
-const player = await teamApi.addPlayer(teamId, {
+const player = await teamMemberApi.createTeamMember({
+  team_id: team.id,
   name: 'John Doe',
   number: 7,
   role: 'player',
-  position: 'Outside Hitter'
+  position: 'outside_hitter'
 })
 
-// Get team with members
-const teamWithMembers = await teamApi.get(teamId, {
-  joins: ['team_members', 'clubs', 'championships']
-})
+// List teams with joined relations
+const teams = await teamApi.getTeams(
+  [{ field: 'club_id', operator: 'eq', value: clubId }],
+  undefined,
+  ['championships', 'clubs']
+)
 ```
 
 ---
@@ -110,9 +113,9 @@ const teamWithMembers = await teamApi.get(teamId, {
 **Features**:
 - Individual player performance metrics
 - Team performance analysis
-- MVP calculation (based on weighted stats)
+- MVP calculation (`calculateMVPScore` in [lib/stats/calculations.ts](lib/stats/calculations.ts))
 - Set-by-set breakdown
-- Historical match data with filters
+- Tactical insights, scoring patterns and streaks ([lib/stats/calculations.ts](lib/stats/calculations.ts))
 - Visual charts (recharts):
   - Serve success rate
   - Attack efficiency
@@ -129,26 +132,8 @@ const teamWithMembers = await teamApi.get(teamId, {
 - Points scored per player
 
 **PDF Export**:
-```typescript
-// lib/pdf/match-stats-export.ts
-export async function exportMatchStatsToPDF(matchId: string) {
-  // 1. Query match data with all stats
-  const matchData = await getMatchWithStats(matchId)
-
-  // 2. Render stats component to hidden div
-  const element = document.getElementById('stats-export-container')
-
-  // 3. Use html2canvas to capture as image
-  const canvas = await html2canvas(element)
-
-  // 4. Generate PDF with jsPDF
-  const pdf = new jsPDF('p', 'mm', 'a4')
-  pdf.addImage(canvas, 'PNG', 0, 0, 210, 297)
-
-  // 5. Download
-  pdf.save(`match-stats-${matchId}.pdf`)
-}
-```
+- Triggered from [app/matches/[id]/stats/page.tsx](app/matches/[id]/stats/page.tsx), which dynamically imports `jspdf` and builds the document
+- Each exported tab component (`components/matches/stats/*`) exposes a `PdfExportHandle` ([lib/pdf/types.ts](lib/pdf/types.ts)) via `useImperativeHandle`; its `generatePdfContent(doc, yOffset, sets, title)` renders its section (capturing DOM with `html2canvas`) and returns the next y offset
 
 ---
 
@@ -162,9 +147,9 @@ export async function exportMatchStatsToPDF(matchId: string) {
   - Age category: U10, U12, U14, U16, U18, U21, Senior
   - Gender: Female, Male, Mixed
   - Match format rules (sets to win, points per set, rotation)
-- Import championships from external sources
+- Import matches (and missing teams) for a championship from FFVB via `/api/import/ffvb` ([lib/importers/ffvb.ts](lib/importers/ffvb.ts))
 - Assign teams to championships
 - Track championship seasons
 - View championship standings (future feature)
 
-**Implementation Note**: Championships use UUID IDs. The volleyball format (2x2, 3x3, 4x4, 6x6) is defined in the associated match_format record, allowing different match formats to share the same volleyball format specification.
+**Implementation Note**: Championships use UUID IDs, like every table. The volleyball format (2x2, 3x3, 4x4, 6x6) is defined in the associated match_format record, allowing different match formats to share the same volleyball format specification.

@@ -9,15 +9,15 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 ## Core Architecture Documentation
 
 ### [01-project-overview.md](01-project-overview.md)
-**Purpose**: High-level project introduction, tech stack summary, and statistics
+**Purpose**: High-level project introduction and tech stack summary
 **When to read**: First time working on the project, or when you need a quick refresher
-**Contains**: Application purpose, core tech stack, project statistics
+**Contains**: Application purpose, core tech stack
 **Reading time**: ~2 minutes
 
 ### [02-architecture.md](02-architecture.md)
 **Purpose**: System architecture, data flow, and directory structure
 **When to read**: Understanding system design, component relationships, or data flow patterns
-**Contains**: High-level architecture diagrams, data flow, directory structure, layer descriptions
+**Contains**: High-level architecture diagrams, the two data paths (API layer → Supabase for most screens; RxDB + sync for the live match), directory structure
 **Reading time**: ~5 minutes
 
 ### [03-code-patterns.md](03-code-patterns.md)
@@ -37,18 +37,17 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 **Reading time**: ~8 minutes
 
 ### [04-offline-sync.md](04-offline-sync.md)
-**Purpose**: Offline-first architecture and synchronization mechanism
+**Purpose**: Offline live match architecture and synchronization mechanism
 **When to read**:
 - Debugging sync issues
-- Adding new tables/collections
+- Adding live match data that must work offline
 - Understanding offline behavior
-- Implementing conflict resolution
+- Understanding conflict handling
 
 **Contains**:
-- RxDB configuration (13 collections)
-- SyncHandler bidirectional sync logic
-- Offline queue mechanism
-- Conflict resolution (LWW)
+- RxDB configuration (12 collections, everything except `profiles`)
+- SyncManager (login-time reference sync, per-match `syncMatch`) and `replicateSupabase`
+- Pull/push replication, conflicts and soft deletes
 - What works offline vs. online
 
 **Reading time**: ~7 minutes
@@ -58,7 +57,7 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 ## Data & Security Documentation
 
 ### [05-database-schema.md](05-database-schema.md)
-**Purpose**: Complete database schema with all fields and relationships
+**Purpose**: Database tables, their meaning and relationships
 **When to read**:
 - Adding new tables or columns
 - Understanding data relationships
@@ -66,9 +65,9 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 - Implementing RLS policies
 
 **Contains**:
-- All 13 tables with complete field definitions
-- TypeScript type definitions
-- Relationship diagrams
+- All 13 tables (meaning and key references); column definitions live in `lib/supabase/database.types.ts`
+- Schema conventions (UUID keys, timestamps, `_deleted`)
+- Relationship diagram
 - RLS policy descriptions
 
 **Reading time**: ~10 minutes
@@ -118,13 +117,13 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 - Adding new features (essential!)
 - Writing error handling code
 - Using the API layer
-- Ensuring offline compatibility
+- Adding offline live match data
 
 **Contains**:
 - Naming conventions
 - Error handling patterns
 - API layer usage examples
-- Offline-first checklist for new features
+- Checklist for new features (API layer, plus offline steps for live match data)
 - Performance considerations
 
 **Reading time**: ~10 minutes
@@ -143,7 +142,7 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 
 **Contains**:
 - Step-by-step migration plan from Supabase to REST API
-- Testing strategy recommendations (unit, integration, E2E)
+- Testing strategy: existing Playwright E2E suite, recommended unit/integration tests
 - Example test code
 - Migration effort estimates
 
@@ -171,7 +170,7 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 ## Task-Based Documentation Guide
 
 ### "I need to add a new feature"
-1. **Start**: [08-development-guidelines.md](08-development-guidelines.md) - Section "Adding New Features (Offline-First Checklist)"
+1. **Start**: [08-development-guidelines.md](08-development-guidelines.md) - Section "Adding New Features (Checklist)"
 2. **If adding a table**: [05-database-schema.md](05-database-schema.md) + [04-offline-sync.md](04-offline-sync.md)
 3. **If using API**: [03-code-patterns.md](03-code-patterns.md) - Section "API Layer"
 
@@ -198,7 +197,7 @@ Read in this order:
 
 ### "I need to work on the database"
 1. **Quick reference**: Check main CLAUDE.md (table names & relationships)
-2. **Full details**: [05-database-schema.md](05-database-schema.md) (all fields, types, RLS)
+2. **Full details**: [05-database-schema.md](05-database-schema.md) (tables, relationships, RLS) and `lib/supabase/database.types.ts` (columns)
 3. **Adding tables**: [08-development-guidelines.md](08-development-guidelines.md) + [04-offline-sync.md](04-offline-sync.md)
 
 ### "I need to deploy or optimize"
@@ -209,14 +208,9 @@ Read in this order:
 
 ## Documentation Maintenance
 
-**Last Updated**: 2025-12-02
-**Total Documentation**: ~1,445 lines across 10 files
-**Avg Reading Time**: ~6.5 minutes per file
-
 **Note**: This documentation is reference material. The main [CLAUDE.md](../../CLAUDE.md) file provides essential context and is automatically loaded. Read these docs as needed using the Read tool.
 
 ### Quick Navigation
 
 - [← Back to CLAUDE.md](../../CLAUDE.md)
-- [Task Master Guide](../../.taskmaster/CLAUDE.md)
 - [Main Codebase](../../)

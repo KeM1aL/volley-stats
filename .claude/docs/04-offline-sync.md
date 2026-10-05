@@ -1,12 +1,18 @@
-# Offline-First Architecture
+# Offline Live Match Architecture
+
+Only live match tracking works offline. It reads and writes RxDB, and `SyncManager` replicates RxDB with Supabase. Every other screen reads and writes live Supabase data through the API layer hooks (see [03-code-patterns.md](03-code-patterns.md)).
+
+Keep local data scoped to what a match needs. Reference data is synced at login, and match data is pulled one match at a time with `syncMatch(matchId)`. Don't add whole-table syncs of match data: the app shouldn't load all data onto the device.
 
 ## RxDB Configuration
 
-**Location**: [lib/rxdb/](lib/rxdb/)
+**Location**: [lib/rxdb/](lib/rxdb/) — [database.ts](lib/rxdb/database.ts) creates the database, [schema.ts](lib/rxdb/schema.ts) defines the schemas.
 
-**Storage Engine**: Dexie (IndexedDB) with memory fallback
+**Storage Engine**: Dexie (IndexedDB); `?storage=memory` in the URL switches to in-memory storage
 
-**Collections** (13 total, mirroring Supabase):
+**Access**: `useLocalDb()` from [components/providers/local-database-provider.tsx](components/providers/local-database-provider.tsx) returns `{ localDb, isLoading, error }`. `localDb.syncManager` is the `SyncManager` instance.
+
+**Collections** (12, mirroring every Supabase table except `profiles`):
 1. clubs
 2. club_members
 3. teams
@@ -16,70 +22,56 @@
 7. match_formats
 8. matches
 9. sets
-10. substitutions
-11. score_points
-12. player_stats
-13. events
+10. score_points
+11. player_stats
+12. events (includes substitutions, as `event_type: 'substitution'`)
 
 **Schema Features**:
-- Primary keys: UUIDs (strings) for most tables, integers for championships/seasons/formats
-- Indexes: `created_at`, `updated_at` on all tables + domain-specific indexes
-- Validation: JSON Schema via AJV plugin
-- Timestamps: Automatic `created_at` and `updated_at` tracking
+- Primary keys: UUID strings on all tables
+- Every schema has `created_at`, `updated_at` and `_deleted`
+- Indexes: `created_at`, `updated_at` + domain-specific indexes (`match_id`, `set_id`, `team_id`, …)
+- Validation: JSON Schema via AJV (`wrappedValidateAjvStorage`)
+- Timestamps: `preInsert` hook fills missing `created_at`/`updated_at`; Supabase triggers set `updated_at` server-side on update
+- Schema errors (version mismatch) in development, or with `?remove-database=true`, drop and recreate the local database
 
 ---
 
 ## Synchronization Mechanism
 
-**Location**: [lib/rxdb/sync/sync-handler.ts](lib/rxdb/sync/sync-handler.ts)
+**Location**:
+- [lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts) — `SyncManager`: decides what to replicate and tracks per-match sync state
+- [lib/rxdb/sync/index.ts](lib/rxdb/sync/index.ts) — `replicateSupabase()`: RxDB replication plugin adapter for Supabase (pull and push handlers)
 
-**SyncHandler Class** manages bidirectional sync between RxDB and Supabase.
+`getDatabase()` creates the `SyncManager` and attaches it to the database. `LocalDatabaseProvider` calls `syncManager.setUser(user)` when auth changes (stops all replications, then starts them for the new user) and `syncManager.setOnlineStatus(isOnline)` when connectivity changes (pauses replications offline, restarts them online).
 
-### Key Features
+### What Gets Synced
 
-1. **Initial Sync** (on login):
-   - Fetch all accessible records from Supabase
-   - Compare `updated_at` timestamps
-   - Upsert newer records into RxDB
-   - Queue purely local records for upload
+1. **At login** (`startSync`, one replication per collection):
+   - `championships`, `seasons`, `match_formats`, `clubs`, `teams` — every row the user can read (RLS applies)
+   - `club_members` — filtered to the clubs in `user.clubMembers`
+   - `team_members` — filtered to the teams in `user.teamMembers`
 
-2. **Real-time Sync** (when online):
-   ```
-   Local Change:
-   RxDB → RxChangeEvent → SyncHandler → Supabase
+2. **On demand per match** (`syncMatch(matchId)`, called by [app/matches/[id]/live/page.tsx](app/matches/[id]/live/page.tsx) when the live page loads):
+   - `matches` filtered by `id = matchId`; `sets`, `score_points`, `player_stats`, `events` filtered by `match_id = matchId`
+   - Replication identifiers: `sync_<collection>_chunk_<matchId>`
+   - Sync state is stored in the RxDB local document `sync-state-<matchId>` (`never-synced` → `syncing` → `synced`, or `error`)
+   - `syncMatch` resolves `true` once all five collections are in sync, or immediately if the match is already `synced`; it resolves `false` on error or after a 30 s timeout (`SYNC_TIMEOUT_MS`). The live page shows a toast either way and continues with local data.
 
-   Remote Change:
-   Supabase Realtime → SyncHandler → RxDB
-   ```
+### Replication (`replicateSupabase`)
 
-3. **Offline Queue** (when offline):
-   - Changes queued in memory
-   - Processed automatically when connectivity restored
-   - Max 3 retries per change
-   - Process every 30 seconds when online
-
-4. **Conflict Resolution** (Last-Write-Wins):
-   ```typescript
-   if (localRecord.updated_at > remoteRecord.updated_at) {
-     // Local wins: upload to Supabase
-     await supabase.upsert(localRecord)
-   } else {
-     // Remote wins: update RxDB
-     await rxdbCollection.upsert(remoteRecord)
-   }
-   ```
-
-5. **Edge Cases Handled**:
-   - INSERT conflict (23505): Convert to UPDATE if local is newer
-   - DELETE from server: Always delete locally, warn if queued changes exist
-   - Network errors: Queue changes, show user notification, auto-retry
-   - Stale data: Always check timestamps before applying changes
+- **Pull**: queries the table ordered by `updated_at, id`, using a checkpoint `{ modified: updated_at, id }` and the collection's filter. Pulls run when a replication starts or re-syncs.
+- **Push**: local writes are pushed as they happen. New documents are upserted; on an insert conflict (Postgres `23505`) the server row is returned as a conflict. Updates only apply if the server row still equals the assumed master state; otherwise the server row is returned as a conflict.
+- **Conflicts**: no custom conflict handler is configured, so RxDB's default handler applies (server state wins).
+- **Deletes**: soft delete via `_deleted`; Supabase realtime `DELETE` events are not used. `SupabaseDataStore.delete()` in the API layer issues a hard `DELETE`, which replication does not see.
+- **Realtime**: the Supabase realtime pull stream in `replicateSupabase` is commented out, so remote changes from other clients arrive on the next pull (replication start or re-sync), not live.
+- **Retries**: failed replication requests retry after RxDB's `retryTime` (5 s default).
+- **Multi-tab**: replication waits for leader election (`waitForLeadership: true`), so only one tab replicates.
 
 ### Sync Flow Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    User Action                          │
+│          Live match action (Command execute/undo)       │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
@@ -87,69 +79,48 @@
                   │    RxDB     │
                   └──────┬──────┘
                          │
-                 RxChangeEvent
+          RxDB replication (replicateSupabase)
                          │
-                         ▼
-              ┌──────────────────┐
-              │   SyncHandler    │
-              │  - Queue item    │
-              │  - Check online  │
-              └──────┬───────────┘
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-     ┌────▼────┐           ┌────▼─────┐
-     │ Online  │           │ Offline  │
-     └────┬────┘           └────┬─────┘
-          │                     │
-          ▼                     ▼
-    ┌────────────┐      ┌──────────────┐
-    │  Supabase  │      │ Queue in     │
-    │  - Upsert  │      │ Memory       │
-    │  - Realtime│      │ - Retry      │
-    │    notify  │      │   on online  │
-    └─────┬──────┘      └──────────────┘
-          │
-          ▼
-   ┌──────────────┐
-   │ Other Clients│
-   │  (Realtime)  │
-   └──────────────┘
+          ┌──────────────┴──────────┐
+          │                         │
+     ┌────▼────┐               ┌────▼─────┐
+     │ Online  │               │ Offline  │
+     └────┬────┘               └────┬─────┘
+          │                         │
+          ▼                         ▼
+    ┌────────────┐          ┌──────────────────┐
+    │  Supabase  │          │ Replication      │
+    │  - Upsert  │          │ paused; local    │
+    │  - Update  │          │ writes pushed    │
+    └────────────┘          │ when back online │
+                            └──────────────────┘
 ```
 
 ### Implementation Notes
 
-- Sync is transparent to components - they always query RxDB
-- User sees toast notifications for sync status
-- Offline indicator in UI
-- Conflicts are rare due to team-based data isolation
-- No user intervention required for conflict resolution
+- Live match components query RxDB via `useLocalDb()`; other screens use the API layer
+- Existing RxDB readers outside the live page: the match stats page (`app/matches/[id]/stats`) loads from Supabase when online and falls back to the local copy of a synced match when offline, and Settings has a manual "sync match" tool that pushes one match's local rows to Supabase
+- To make a new screen work offline, scope its data to a match and load it through `syncMatch`, not a new whole-table replication
+- `SyncManager` has unused helpers for syncing the user's last N matches (`updateLastMatches`, `restartDynamicSync`); their calls are commented out
 
 ---
 
 ## What Works Offline
 
-**Fully Offline**:
-✅ View all previously synced data (teams, matches, players)
-✅ **Live match tracking** (complete functionality)
-✅ Create new teams, matches, players
-✅ Edit any local records
-✅ Delete records
-✅ View statistics and history
-✅ Player substitutions
+**Offline** (after the match has been opened once online so `syncMatch` could pull it):
+✅ **Live match tracking** (scoring, stats, set setup)
+✅ Player substitutions and other match events
 ✅ Undo/redo operations
 
 **Requires Online**:
-❌ Initial data sync (first login)
+❌ Opening a match for the first time on a device
+❌ Teams, championships, match list, settings and other non-live screens (direct Supabase via the API layer)
+❌ Match statistics page from the live page (its stats button is disabled offline; the stats page itself falls back to local data)
 ❌ Real-time updates from other users
-❌ PDF export (font loading)
 ❌ Authentication (login/signup)
 ❌ Avatar uploads
-❌ Championship imports from external sources
+❌ FFVB match imports
 
 **User Experience**:
-- Offline indicator in UI (top banner)
-- Toast notifications for sync status
-- Automatic sync when connectivity restored
-- No data loss (queued changes preserved in memory)
-- Transparent to user (no manual sync required)
+- The live page shows a toast after `syncMatch`: ready for offline, or sync timed out / failed
+- Local writes are pushed automatically when connectivity is restored; no manual sync required

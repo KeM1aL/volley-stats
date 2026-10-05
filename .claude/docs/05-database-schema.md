@@ -1,189 +1,39 @@
 # Database Schema
 
+**Column definitions**: [lib/supabase/database.types.ts](lib/supabase/database.types.ts) is the source of truth for columns, types, enums and foreign keys. Regenerate it after schema changes with `npm run supabase:types`. App-level types live in [lib/types.ts](lib/types.ts) and [lib/types/events.ts](lib/types/events.ts).
+
+**Conventions**:
+- All primary keys and foreign keys are UUID strings
+- Every table except `profiles` has `created_at`, `updated_at` (set by a server trigger on update) and `_deleted` (soft-delete flag used by RxDB replication)
+- RxDB mirrors every table except `profiles` (see [04-offline-sync.md](04-offline-sync.md))
+- Migrations: [supabase/migrations/](supabase/migrations/)
+
 ## Supabase Tables (13 total)
 
 ### Core Entities
 
-1. **clubs** - Volleyball clubs/organizations
-   ```typescript
-   {
-     id: uuid
-     name: string
-     created_at: timestamp
-     updated_at: timestamp
-   }
-   ```
+| Table | Meaning | Key references |
+|-------|---------|----------------|
+| `profiles` | Per-user profile (name, language, favorites); `id` is the auth user id | `favorite_club_id` → clubs, `favorite_team_id` → teams |
+| `clubs` | Volleyball clubs/organizations | `user_id` → auth user (creator) |
+| `club_members` | Club membership with role `owner` / `admin` / `member` | `club_id` → clubs, `user_id` → auth user |
+| `teams` | Teams, with `status` `incomplete` / `active` / `archived`; `ext_code`/`ext_source` for imported teams | `club_id` → clubs, `championship_id` → championships |
+| `team_members` | Players and staff (`role`: owner, coach, staff, player; jersey `number`, `position`, `avatar_url`) | `team_id` → teams, `user_id` → auth user (optional) |
+| `championships` | Competition categories (`age_category`, `gender`, `type`) | `season_id` → seasons, `default_match_format` → match_formats |
+| `seasons` | Competition seasons (`start_date`, `end_date`) | — |
+| `match_formats` | Match rules: `format` (2x2, 3x3, 4x4, 6x6), `sets_to_win`, `point_by_set`, `point_final_set`, `rotation`, `decisive_point` | — |
 
-2. **club_members** - Club membership with roles
-   ```typescript
-   {
-     id: uuid
-     club_id: uuid → clubs.id
-     user_id: uuid → auth.users.id
-     role: 'owner' | 'admin' | 'member'
-     created_at: timestamp
-   }
-   ```
+### Match Data
 
-3. **teams** - Teams belonging to clubs
-   ```typescript
-   {
-     id: uuid
-     name: string
-     club_id: uuid → clubs.id
-     championship_id: integer → championships.id
-     avatar_url: string?
-     created_at: timestamp
-     updated_at: timestamp
-   }
-   ```
+| Table | Meaning | Key references |
+|-------|---------|----------------|
+| `matches` | Match records (`date`, `status` upcoming/live/completed, set totals, available players per side) | `home_team_id`, `away_team_id` → teams, `match_format_id` → match_formats, `championship_id` → championships, `season_id` → seasons |
+| `sets` | Individual sets (`set_number`, scores, `first_lineup`, `current_lineup`, `player_roles`, server team, `status`) | `match_id` → matches, `first_server_team_id`, `server_team_id` → teams |
+| `score_points` | Point-by-point scoring (`point_number`, `point_type`, `result`, running score, `current_rotation`) | `match_id`, `set_id`, `scoring_team_id`, `action_team_id` → teams, `player_id` → team_members, `player_stat_id` → player_stats |
+| `player_stats` | Individual stats (`stat_type`: serve, spike, block, reception, defense; `result`: success, good, bad, error) | `match_id`, `set_id`, `team_id`, `player_id` → team_members |
+| `events` | Match events: `event_type` substitution, timeout, injury, sanction, technical, comment; type-specific `details` JSON | `match_id`, `set_id` (optional), `team_id`, `player_id` |
 
-4. **team_members** - Players and staff
-   ```typescript
-   {
-     id: uuid
-     team_id: uuid → teams.id
-     name: string
-     number: integer
-     role: 'owner' | 'coach' | 'staff' | 'player'
-     position: string?
-     avatar_url: string?
-     created_at: timestamp
-     updated_at: timestamp
-   }
-   ```
-
-5. **championships** - Competition categories
-   ```typescript
-   {
-     id: uuid (primary key)
-     name: string
-     type: string
-     default_match_format: uuid → match_formats.id
-     age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior'
-     gender: 'female' | 'male' | 'mixte'
-     season_id: uuid? → seasons.id
-     ext_code: string?
-     ext_source: string?
-     created_at: timestamp
-     updated_at: timestamp
-   }
-   ```
-
-6. **seasons** - Competition seasons
-   ```typescript
-   {
-     id: integer (primary key)
-     name: string
-     championship_id: integer → championships.id
-     start_date: date
-     end_date: date
-     created_at: timestamp
-   }
-   ```
-
-7. **match_formats** - Match format rules
-   ```typescript
-   {
-     id: uuid (primary key)
-     description: string
-     format: '2x2' | '3x3' | '4x4' | '6x6'
-     sets_to_win: integer
-     rotation: boolean
-     point_by_set: integer
-     point_final_set: integer
-     decisive_point: boolean
-     created_at: timestamp
-     updated_at: timestamp
-   }
-   ```
-
-8. **matches** - Match records
-   ```typescript
-   {
-     id: uuid
-     home_team_id: uuid → teams.id
-     away_team_id: uuid → teams.id
-     managed_team_id: uuid → teams.id  // Team being tracked
-     match_format_id: integer → match_formats.id
-     season_id: integer? → seasons.id
-     date: timestamp
-     location: string?
-     status: 'upcoming' | 'live' | 'completed'
-     created_at: timestamp
-     updated_at: timestamp
-   }
-   ```
-
-### Match Data Entities
-
-9. **sets** - Individual sets within matches
-   ```typescript
-   {
-     id: uuid
-     match_id: uuid → matches.id
-     set_number: integer
-     home_score: integer
-     away_score: integer
-     lineup: json  // Player positions and rotations
-     status: 'upcoming' | 'in_progress' | 'completed'
-     created_at: timestamp
-     updated_at: timestamp
-   }
-   ```
-
-10. **substitutions** - Player substitutions during sets
-    ```typescript
-    {
-      id: uuid
-      set_id: uuid → sets.id
-      player_in_id: uuid → team_members.id
-      player_out_id: uuid → team_members.id
-      timestamp: timestamp
-      created_at: timestamp
-    }
-    ```
-
-11. **score_points** - Point-by-point scoring
-    ```typescript
-    {
-      id: uuid
-      set_id: uuid → sets.id
-      point_number: integer
-      scoring_team: 'home' | 'away'
-      home_score: integer
-      away_score: integer
-      rotation_state: json  // Court positions at this point
-      timestamp: timestamp
-      created_at: timestamp
-    }
-    ```
-
-12. **player_stats** - Individual player statistics
-    ```typescript
-    {
-      id: uuid
-      set_id: uuid → sets.id
-      player_id: uuid → team_members.id
-      stat_type: 'serve' | 'spike' | 'block' | 'reception' | 'defense'
-      outcome: 'success' | 'error' | 'good' | 'bad'
-      timestamp: timestamp
-      created_at: timestamp
-    }
-    ```
-
-13. **events** - Match events and comments
-    ```typescript
-    {
-      id: uuid
-      match_id: uuid → matches.id
-      set_id: uuid? → sets.id
-      event_type: string
-      description: string
-      timestamp: timestamp
-      created_at: timestamp
-    }
-    ```
+Substitutions are `events` rows with `event_type: 'substitution'` (see `SubstitutionDetails` in [lib/types/events.ts](lib/types/events.ts)); there is no `substitutions` table.
 
 ## Relationships
 
@@ -193,19 +43,22 @@ clubs (1) ←→ (N) teams
 teams (1) ←→ (N) team_members
 teams (1) ←→ (N) matches (as home_team_id or away_team_id)
 championships (1) ←→ (N) teams
-championships (1) ←→ (N) seasons
+championships (1) ←→ (N) matches
+seasons (1) ←→ (N) championships
+seasons (1) ←→ (N) matches
 match_formats (1) ←→ (N) matches
+match_formats (1) ←→ (N) championships (default_match_format)
 matches (1) ←→ (N) sets
+matches (1) ←→ (N) score_points, player_stats, events (via match_id)
 sets (1) ←→ (N) score_points
 sets (1) ←→ (N) player_stats
-sets (1) ←→ (N) substitutions
+sets (1) ←→ (N) events
 team_members (1) ←→ (N) player_stats
-team_members (1) ←→ (N) substitutions (as player_in_id or player_out_id)
+team_members (1) ←→ (N) events (player_id)
 ```
 
 ## Row Level Security (RLS)
 
-All tables have RLS policies enforcing:
-- Users can only access data from their clubs/teams
-- Role-based permissions (owner > admin > member)
-- Service role bypasses RLS for system operations
+RLS is enabled on the tables. Policies scope access to the user's clubs, teams and the matches involving those teams, with role-based permissions (club owners manage their clubs; team owners/editors manage players). The service role bypasses RLS. See [06-auth.md](06-auth.md) for the authorization model.
+
+Policy SQL in the repo: [lib/supabase/schema.sql](lib/supabase/schema.sql) (initial tables and policies; it predates later migrations and still defines `substitutions`) and [lib/supabase/match_formats_rls.sql](lib/supabase/match_formats_rls.sql) (any authenticated user can read and write match formats). The live policies are managed in the Supabase project.

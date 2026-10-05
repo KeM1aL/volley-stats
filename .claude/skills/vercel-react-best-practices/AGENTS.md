@@ -1651,7 +1651,9 @@ This pattern is especially useful for theme toggles, user preferences, authentic
 
 Use React's `<Activity>` to preserve state/DOM for expensive components that frequently toggle visibility.
 
-**Usage:**
+**Requires React 19.2+.** This project is on React 18.3.1, where `Activity` is not exported. Here, preserve state by keeping the component mounted and toggling visibility with CSS (the `hidden` attribute or a class). The example below applies only after a React 19.2 upgrade.
+
+**Usage (React 19.2+):**
 
 ```tsx
 import { Activity } from 'react'

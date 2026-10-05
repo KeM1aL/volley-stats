@@ -6,7 +6,7 @@
 - React.memo for expensive components
 - useCallback for event handlers
 - useMemo for complex calculations
-- IndexedDB for fast local queries
+- IndexedDB (RxDB) for fast local queries during live match tracking
 - PWA caching for static assets
 
 ### Recommended
@@ -53,25 +53,24 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...  # Server-only
 ## Future Enhancements
 
 ### High Priority
-1. **Testing Suite**: Add comprehensive tests (unit + E2E)
+1. **Unit & Integration Tests**: Add unit/integration tests alongside the Playwright E2E suite (see [09-migration-testing.md](09-migration-testing.md))
 2. **Championship Standings**: Leaderboard and rankings
 3. **Team Chat**: Real-time messaging for team members
 4. **Video Analysis**: Link video clips to specific points
 5. **Advanced Analytics**: ML-based insights and recommendations
 
 ### Medium Priority
-6. **Multi-language Support**: i18n for French, Dutch, etc.
-7. **Export to Excel**: CSV/XLSX export for stats
-8. **Custom Reports**: User-defined stat reports
-9. **Notifications**: Push notifications for match updates
-10. **API Rate Limiting**: Protect against abuse
+6. **Export to Excel**: CSV/XLSX export for stats
+7. **Custom Reports**: User-defined stat reports
+8. **Notifications**: Push notifications for match updates
+9. **API Rate Limiting**: Protect against abuse
 
 ### Low Priority
-11. **Social Features**: Share stats on social media
-12. **Gamification**: Badges and achievements
-13. **Dark Mode Improvements**: Better contrast and themes
-14. **Accessibility**: WCAG 2.1 compliance
-15. **Mobile Apps**: React Native or Capacitor
+10. **Social Features**: Share stats on social media
+11. **Gamification**: Badges and achievements
+12. **Dark Mode Improvements**: Better contrast and themes
+13. **Accessibility**: WCAG 2.1 compliance
+14. **Mobile Apps**: React Native or Capacitor (see [capacitor-integration.md](capacitor-integration.md))
 
 ---
 
@@ -87,25 +86,32 @@ npm run start           # Start production server
 # Database
 npx supabase migration new <name>  # Create migration
 npx supabase db reset              # Reset local database
+npm run supabase:types             # Regenerate lib/supabase/database.types.ts
 
 # Code Quality
 npm run lint            # Run ESLint
-npm run type-check     # Run TypeScript compiler
+npx tsc --noEmit        # Type-check
+npm run i18n:check      # Check translation keys across locales in messages/
+
+# Tests
+npm run test:e2e        # Playwright E2E (app must be running)
+npm run test:e2e:ui     # Playwright UI mode
 ```
 
 ### Key File Locations
 - API Layer: [lib/api/](lib/api/)
 - RxDB Setup: [lib/rxdb/database.ts](lib/rxdb/database.ts)
-- Sync Logic: [lib/rxdb/sync/sync-handler.ts](lib/rxdb/sync/sync-handler.ts)
+- Sync Logic: [lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts) (SyncManager), [lib/rxdb/sync/index.ts](lib/rxdb/sync/index.ts) (replicateSupabase)
 - Auth Context: [contexts/auth-context.tsx](contexts/auth-context.tsx)
+- Local DB Provider: [components/providers/local-database-provider.tsx](components/providers/local-database-provider.tsx) (`useLocalDb`)
 - Supabase Client: [lib/supabase/client.ts](lib/supabase/client.ts)
-- Types: [lib/types.ts](lib/types.ts)
-- Commands: [lib/commands/](lib/commands/)
+- Types: [lib/types.ts](lib/types.ts), generated DB types [lib/supabase/database.types.ts](lib/supabase/database.types.ts)
+- Commands: [lib/commands/match-commands.ts](lib/commands/match-commands.ts)
 - Live Match: [app/matches/[id]/live/page.tsx](app/matches/[id]/live/page.tsx)
 
 ### Important Patterns
-- **Data Access**: Always use API layer via hooks (never direct Supabase calls)
-- **State Updates**: Optimistic UI → RxDB → Sync → Supabase
+- **Data Access**: Screens other than the live match read and write live data through the API layer via hooks (e.g. `useTeamApi()`), which call Supabase directly
+- **Offline Live Match**: Live match tracking writes to RxDB (`useLocalDb` + `lib/commands`) and `SyncManager` replicates to Supabase in the background
+- **Scoped Local Data**: Keep RxDB data to what a match needs (`syncMatch(matchId)` pulls one match on demand); don't sync whole tables
 - **Error Handling**: Try-catch with toast notifications
-- **Offline First**: Write to RxDB first, sync in background
 - **Type Safety**: Use generated Supabase types + custom types in [types.ts](lib/types.ts)

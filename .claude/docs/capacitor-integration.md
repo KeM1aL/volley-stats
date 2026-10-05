@@ -4,7 +4,7 @@
 
 **Complexity Assessment**: **MEDIUM-HIGH**
 
-VolleyStats is well-positioned for Capacitor conversion due to its offline-first architecture, existing PWA configuration, and mostly client-side rendering. However, challenges exist around iOS storage limitations, native API adaptations, and authentication security.
+VolleyStats is well-positioned for Capacitor conversion due to its offline live match tracking (RxDB), existing PWA configuration, and mostly client-side rendering. However, challenges exist around iOS storage limitations, native API adaptations, and authentication security.
 
 **Recommended Approach**: Static Export with IndexedDB (migrate to SQLite if needed)
 
@@ -15,7 +15,7 @@ VolleyStats is well-positioned for Capacitor conversion due to its offline-first
 ## Complexity Justification
 
 ### Strengths (Making This Easier)
-- ✅ **Offline-first architecture** - RxDB + Supabase sync already handles offline scenarios
+- ✅ **Offline live match** - RxDB + Supabase replication already handles offline match tracking
 - ✅ **PWA foundation** - Service worker, manifest, icons already configured
 - ✅ **Client-side focused** - Minimal server dependencies, only 2 API routes
 - ✅ **Mobile-ready UI** - Responsive Tailwind CSS, touch-friendly Radix UI components
@@ -25,7 +25,7 @@ VolleyStats is well-positioned for Capacitor conversion due to its offline-first
 ### Challenges (Increasing Complexity)
 - ⚠️ **iOS IndexedDB quota** - 50MB hard limit (can store ~900 matches)
 - ⚠️ **Native API adaptations** - Network detection, secure storage, file handling
-- ⚠️ **Authentication security** - Must move from localStorage to secure storage
+- ⚠️ **Authentication security** - Session storage must move from browser cookies to native secure storage
 - ⚠️ **Build pipeline** - Static export, environment variables, platform-specific builds
 - ⚠️ **App lifecycle** - Sync must respect background/foreground states
 
@@ -80,7 +80,7 @@ let storageKey = url.searchParams.get('storage');
 ### 2. [lib/supabase/client.ts](lib/supabase/client.ts)
 **Purpose**: Supabase client configuration and authentication
 
-**Current Issue**: Uses `localStorage` for session tokens (insecure on mobile)
+**Current Issue**: Uses `createBrowserClient` from `@supabase/ssr`, which stores the session in browser cookies (not suited to a native WebView; should use native secure storage)
 
 **Required Changes**:
 - Create custom storage adapter using `@capacitor-community/secure-storage`
@@ -156,7 +156,8 @@ auth: {
 ### Build Process Flow
 ```bash
 1. Static Export:
-   NEXT_PUBLIC_BUILD_TARGET=capacitor next build && next export
+   NEXT_PUBLIC_BUILD_TARGET=capacitor next build
+   (next.config sets output: 'export' for this target; Next.js 15 has no `next export` command)
    → Creates /out directory with static HTML/CSS/JS
 
 2. Capacitor Sync:
@@ -341,7 +342,7 @@ NEXT_PUBLIC_STORAGE_ENGINE=dexie
 3. **Implement secure storage** (NEW: `lib/capacitor/secure-storage.ts`)
    - Install: `npm install @capacitor-community/secure-storage`
    - Create async storage adapter wrapping SecureStorage
-   - Platform detection: native uses SecureStorage, web uses localStorage
+   - Platform detection: native uses SecureStorage, web keeps the default cookie storage
 
 4. **Modify Supabase client** ([lib/supabase/client.ts](lib/supabase/client.ts))
    - Import custom storage adapter
@@ -656,7 +657,7 @@ npx cap run android --livereload --external
 
 ## Conclusion
 
-VolleyStats is **well-suited** for Capacitor conversion with a **MEDIUM-HIGH complexity** rating. The offline-first architecture and PWA foundation provide a strong starting point, while challenges around iOS storage quota and native API adaptations are manageable with clear mitigation strategies.
+VolleyStats is **well-suited** for Capacitor conversion with a **MEDIUM-HIGH complexity** rating. The offline live match layer (RxDB) and PWA foundation provide a strong starting point, while challenges around iOS storage quota and native API adaptations are manageable with clear mitigation strategies.
 
 **Recommended path forward**:
 1. Start with IndexedDB (zero code changes to RxDB)
