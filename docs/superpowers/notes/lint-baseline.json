@@ -1,4 +1,10 @@
 {
+  "react-hooks/immutability": 2,
+  "react-hooks/purity": 1,
+  "react-hooks/refs": 6,
   "react-hooks/rules-of-hooks": 1,
+  "react-hooks/set-state-in-effect": 19,
+  "react-hooks/set-state-in-render": 2,
+  "react-hooks/static-components": 2,
   "react/no-unescaped-entities": 9
 }

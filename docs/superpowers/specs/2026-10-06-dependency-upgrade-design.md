@@ -93,3 +93,4 @@ _Filled in during execution. One row per package that could not reach latest._
 
 | Package | Pinned at | Latest | Reason |
 |---|---|---|---|
+| `@types/node` | ^24.19.1 | 26.6.4 | Tracks the Node 24 runtime pinned in `.nvmrc`, not the newest Node typings |

@@ -79,3 +79,24 @@ test.describe('Match Statistics', () => {
     ).toBeVisible();
   });
 });
+
+test.describe('Match Statistics — logged out', () => {
+  // A visitor with no session cookies must still reach the public stats page.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('stats page is reachable without signing in', async ({ page }) => {
+    const { completedMatchStatsUrl } = loadFixture();
+    expect(
+      completedMatchStatsUrl,
+      'completedMatchStatsUrl not found in fixture — run 02-matches.spec.ts first'
+    ).toBeTruthy();
+
+    await page.goto(completedMatchStatsUrl!);
+    await page.waitForLoadState('domcontentloaded');
+
+    await expect(page).not.toHaveURL(/\/auth/);
+    await expect(page.getByRole('heading', { name: 'Match Statistics', level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
+  });
+});

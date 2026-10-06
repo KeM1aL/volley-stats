@@ -12,9 +12,6 @@ const withNextIntl = require('next-intl/plugin')('./i18n.ts');
 const nextConfig = {
   reactStrictMode: false,
   images: { unoptimized: true },
-  eslint: {
-    ignoreDuringBuilds: true,
-  }
 };
 
 module.exports = withPWA(withNextIntl(nextConfig));
