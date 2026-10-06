@@ -317,13 +317,15 @@ body.keyboard-visible [role="dialog"],
 body.keyboard-visible [data-radix-dialog-content] {
   /* Progressive enhancement: nudge dialog up on browsers with VirtualKeyboard API (Android Chrome) */
   top: 50% !important;
-  transform: translateX(-50%) translateY(calc(-50% - max(
+  /* Tailwind 4 centres dialogs with the `translate` property (not `transform`),
+     so override that property; a transform would stack on top of it. */
+  translate: -50% calc(-50% - max(
     var(--keyboard-height),
     env(keyboard-inset-height, 0px)
-  ) / 2)) !important;
+  ) / 2) !important;
 
   /* Smooth transition */
-  transition: transform 0.3s ease-out !important;
+  transition: translate 0.3s ease-out !important;
 }
 
 /* Loading bar animations */

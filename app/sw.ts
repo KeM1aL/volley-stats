@@ -1,6 +1,6 @@
 import { defaultCache } from '@serwist/turbopack/worker';
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist';
-import { Serwist } from 'serwist';
+import { NetworkOnly, Serwist } from 'serwist';
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -19,7 +19,18 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    // Never cache Supabase API calls: screens outside the live match read live
+    // data, and cached rows could outlive a sign-out on a shared device.
+    // Offline match data lives in RxDB, not in the HTTP cache.
+    {
+      matcher: ({ url }) =>
+        url.hostname.endsWith('.supabase.co') &&
+        /^\/(rest|auth|functions|realtime)\/v1\//.test(url.pathname),
+      handler: new NetworkOnly(),
+    },
+    ...defaultCache,
+  ],
 });
 
 serwist.addEventListeners();

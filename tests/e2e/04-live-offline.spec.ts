@@ -100,6 +100,12 @@ test.describe('Live match — offline/reconnect', () => {
       .or(page.getByTestId('set-setup').first())
       .or(page.getByRole('heading', { name: 'Failed to Load Profile' }));
     await expect(offlineAppShell).toBeVisible({ timeout: 20_000 });
+    if (await page.getByRole('heading', { name: 'Failed to Load Profile' }).isVisible()) {
+      test.info().annotations.push({
+        type: 'known-limitation',
+        description: 'Offline cold start stops at AuthProvider (profile fetch), not the live match',
+      });
+    }
 
     // 5.6 Reconnect — must not reload the page in the middle of a match.
     await page.evaluate(() => {
