@@ -115,4 +115,21 @@ test.describe('Championships — CRUD', () => {
     // ── 4.5 Save fixture ─────────────────────────────────────────────────────
     saveFixture({ championshipId, championshipName });
   });
+
+  test('empty form shows translated required-field messages', async ({ page }) => {
+    await page.goto('/championships');
+    await expect(page.getByRole('heading', { name: 'Championships', level: 1 })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await page.getByRole('button', { name: 'New Championship' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.waitFor({ state: 'visible', timeout: 5_000 });
+
+    await dialog.getByRole('button', { name: 'Create Championship' }).click();
+
+    await expect(dialog.getByText('Gender is required')).toBeVisible();
+    await expect(dialog.getByText('Age category is required')).toBeVisible();
+    await expect(dialog.getByText(/^Invalid (input|option)/)).toHaveCount(0);
+  });
 });

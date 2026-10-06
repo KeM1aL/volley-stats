@@ -53,7 +53,7 @@ export function PlayerForm({
     role: z.string().optional(),
     avatar_url: z.string().nullable(),
   });
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<z.input<typeof formSchema>, unknown, z.output<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: defaultValues?.name || "",
@@ -131,7 +131,7 @@ export function PlayerForm({
             <FormItem>
               <FormLabel>{t('form.number')}</FormLabel>
               <FormControl>
-                <Input type="number" {...field} />
+                <Input type="number" {...field} value={(field.value as number | string | undefined) ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>

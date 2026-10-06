@@ -74,10 +74,10 @@ export function NewChampionshipDialog({
     name: z.string().min(1, t('validation.nameRequired')),
     type: z.string().min(1, t('validation.typeRequired')),
     gender: z.enum(["female", "male", "mixte"], {
-      required_error: t('validation.genderRequired'),
+      error: t('validation.genderRequired'),
     }),
     age_category: z.enum(["U10", "U12", "U14", "U16", "U18", "U21", "senior"], {
-      required_error: t('validation.ageCategoryRequired'),
+      error: t('validation.ageCategoryRequired'),
     }),
     default_match_format: z.string().min(1, t('validation.formatRequired')),
     season_id: z.string().nullable(),

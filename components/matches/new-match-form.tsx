@@ -46,7 +46,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
   const formSchema = z.object({
     homeTeamId: z.string().min(1, t('validation.homeTeamRequired')),
     awayTeamId: z.string().min(1, t('validation.awayTeamRequired')),
-    date: z.date({ required_error: t('validation.dateRequired') }),
+    date: z.date({ error: t('validation.dateRequired') }),
     championshipId: z.string().nullable().optional(),
     matchFormatId: z.string().min(1, t('validation.formatRequired')),
     location: z.string().optional(),

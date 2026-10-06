@@ -32,7 +32,7 @@ import { useTranslations } from "next-intl";
 const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
   format: z.enum(["2x2", "3x3", "4x4", "6x6"], {
-    required_error: "Please select a volleyball format",
+    error: "Please select a volleyball format",
   }),
   sets_to_win: z.coerce
     .number()
@@ -63,7 +63,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
   const matchFormatApi = useMatchFormatApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<z.input<typeof formSchema>, unknown, z.output<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
@@ -169,6 +169,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
                     max="5"
                     disabled={isSubmitting}
                     {...field}
+                    value={(field.value as number | string | undefined) ?? ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -189,6 +190,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
                     max="50"
                     disabled={isSubmitting}
                     {...field}
+                    value={(field.value as number | string | undefined) ?? ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -210,6 +212,7 @@ export function MatchFormatForm({ onSuccess, onCancel }: MatchFormatFormProps) {
                   max="50"
                   disabled={isSubmitting}
                   {...field}
+                  value={(field.value as number | string | undefined) ?? ""}
                 />
               </FormControl>
               <FormMessage />
