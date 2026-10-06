@@ -1,6 +1,7 @@
   import { Club, ClubMember, Profile, Team, TeamMember, User } from '@/lib/types';
 import { supabase } from '../supabase/client';
 import { Session } from '@supabase/supabase-js';
+import type { TablesUpdate } from '../supabase/database.types';
 
 // Helper: Promise with timeout
 const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, errorMsg: string): Promise<T> => {
@@ -163,7 +164,7 @@ export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
 };
 
 export const updateProfile = async (userId: string, profile: Partial<Profile>): Promise<Profile> => {
-  const { data, error } = await supabase.from('profiles').update(profile).eq('id', userId).select(`
+  const { data, error } = await supabase.from('profiles').update(profile as TablesUpdate<'profiles'>).eq('id', userId).select(`
       *,
       favorite_team:teams!profiles_favorite_team_id_fkey(*),
       favorite_club:clubs!profiles_favorite_club_id_fkey(*)

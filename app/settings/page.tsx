@@ -38,6 +38,7 @@ import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
 import { Label } from "@/components/ui/label";
 import { CollectionName } from "@/lib/rxdb/schema";
 import { createClient } from "@/lib/supabase/client";
+import type { TablesUpdate } from "@/lib/supabase/database.types";
 import { Input } from "@/components/ui/input";
 import { chunk, delay } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -158,7 +159,7 @@ export default function SettingsPage() {
       if (doc) {
         const { error: updateError } = await supabase
           .from("matches")
-          .update(doc.toMutableJSON())
+          .update(doc.toMutableJSON() as TablesUpdate<"matches">)
           .eq("id", doc.id);
         if (updateError) throw updateError;
         toast({

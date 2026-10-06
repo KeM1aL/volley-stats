@@ -80,7 +80,7 @@ export class SupabaseDataStore<
         }
       });
     }
-    let query = this.supabase.from(this.tableName).select(select).eq('id', id as any).single();
+    let query = this.supabase.from(this.tableName).select(select).eq('id' as any, id as any).single();
     const { data, error } = await query;
       if (error) throw error;
       return (data as T);
@@ -101,7 +101,7 @@ export class SupabaseDataStore<
     const { data, error } = await this.supabase
       .from(this.tableName)
       .update(updates as any)
-      .eq("id", id as any)
+      .eq("id" as any, id as any)
       .select()
       .single();
     if (error) throw error;
@@ -109,7 +109,7 @@ export class SupabaseDataStore<
   }
 
   async delete(id: string): Promise<void> {
-    const { error } = await this.supabase.from(this.tableName).delete().eq("id", id as any);
+    const { error } = await this.supabase.from(this.tableName).delete().eq("id" as any, id as any);
     if (error) throw error;
   }
 }
