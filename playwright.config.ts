@@ -3,10 +3,10 @@ import { config } from 'dotenv';
 
 // Load E2E test credentials — try .env.test first, then .env.test.local (Next.js convention),
 // then fall back to .env.local / .env.
-config({ path: '.env.test' });
-config({ path: '.env.test.local' });
-config({ path: '.env.local' });
-config({ path: '.env' });
+config({ path: '.env.test', quiet: true });
+config({ path: '.env.test.local', quiet: true });
+config({ path: '.env.local', quiet: true });
+config({ path: '.env', quiet: true });
 
 export default defineConfig({
   testDir: './tests/e2e',

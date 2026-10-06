@@ -100,3 +100,31 @@ test.describe('Match Statistics — logged out', () => {
     });
   });
 });
+
+test.describe('Match Statistics — PDF export', () => {
+  // Export PDF is only visible from the lg breakpoint.
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('exports the statistics as a PDF', async ({ page }) => {
+    test.setTimeout(3 * 60_000);
+    const { completedMatchStatsUrl } = loadFixture();
+    expect(
+      completedMatchStatsUrl,
+      'completedMatchStatsUrl not found in fixture — run 02-matches.spec.ts first'
+    ).toBeTruthy();
+
+    await page.goto(completedMatchStatsUrl!);
+    await expect(page.getByRole('heading', { name: 'Match Statistics', level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 120_000 }),
+      page.getByRole('button', { name: /export pdf/i }).click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/\.pdf$/);
+    const file = await download.path();
+    const header = fs.readFileSync(file).subarray(0, 5).toString();
+    expect(header).toBe('%PDF-');
+  });
+});

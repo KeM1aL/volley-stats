@@ -54,7 +54,7 @@ const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
           currentYOffset += 60;
 
           if (overviewRef.current) {
-            const html2canvas = (await import("html2canvas")).default;
+            const html2canvas = (await import("html2canvas-pro")).default;
             const canvas = await html2canvas(overviewRef.current, {
               scale: 1.5,
               useCORS: true,

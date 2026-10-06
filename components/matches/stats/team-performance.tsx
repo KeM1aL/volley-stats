@@ -140,7 +140,7 @@ const TeamPerformance = React.forwardRef<
           currentYOffset += 20;
 
           if (teamPerformanceRef.current) {
-            const html2canvas = (await import("html2canvas")).default;
+            const html2canvas = (await import("html2canvas-pro")).default;
             const canvas = await html2canvas(teamPerformanceRef.current, {
               scale: 1.5,
               useCORS: true,

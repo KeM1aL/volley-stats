@@ -3,7 +3,7 @@
 import React, { useState, useRef, useImperativeHandle } from "react";
 import { useTranslations } from "next-intl";
 import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import {
   Card,
   CardContent,
