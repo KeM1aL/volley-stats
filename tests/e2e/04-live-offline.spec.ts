@@ -129,6 +129,6 @@ test.describe('Live match — offline/reconnect', () => {
     await expect(liveOrSetup).toBeVisible({ timeout: 20_000 });
 
     // 5.8 Save offlineMatchId to fixture
-    saveFixture({ offlineMatchId: matchId });
+    saveFixture({ offlineMatchId: matchId, offlineMatchLiveUrl: page.url() });
   });
 });

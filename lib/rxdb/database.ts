@@ -72,6 +72,32 @@ export type VolleyballDatabase = RxDatabase<DatabaseCollections> & {
 
 let dbPromise: Promise<VolleyballDatabase> | null = null;
 
+// RxDB major versions do not share an on-disk format. Bump DB_GENERATION when
+// upgrading RxDB's major version: databases from older generations are deleted
+// and the live match re-syncs from Supabase (syncMatch).
+const DB_BASE_NAME = 'volleystats_db';
+const DB_GENERATION = 'v17';
+const DB_CURRENT_NAME = `${DB_BASE_NAME}_${DB_GENERATION}`;
+
+async function deleteLegacyDatabases(): Promise<void> {
+  if (typeof indexedDB === 'undefined' || typeof indexedDB.databases !== 'function') return;
+  const legacyNames = (await indexedDB.databases())
+    .map((info) => info.name)
+    .filter(
+      (name): name is string =>
+        !!name && name.includes(DB_BASE_NAME) && !name.includes(DB_CURRENT_NAME)
+    );
+  await Promise.all(
+    legacyNames.map(
+      (name) =>
+        new Promise<void>((resolve) => {
+          const request = indexedDB.deleteDatabase(name);
+          request.onsuccess = request.onerror = request.onblocked = () => resolve();
+        })
+    )
+  );
+}
+
 function getStorageKey(): string {
   const url_string = window.location.href;
   const url = new URL(url_string);
@@ -100,14 +126,14 @@ export function getStorage(): RxStorage<any, any> {
 
 /**
 * In the e2e-test we get the database-name from the get-parameter
-* In normal mode, the database name is 'heroesdb'
+* In normal mode, the database name is 'volleystats_db_v17' (DB_CURRENT_NAME)
 */
 export function getDatabaseName() {
   const url_string = window.location.href;
   const url = new URL(url_string);
   const dbNameFromUrl = url.searchParams.get('database');
 
-  let ret = 'volleystats_db';
+  let ret = DB_CURRENT_NAME;
   if (dbNameFromUrl) {
     console.log('databaseName from url: ' + dbNameFromUrl);
     ret += dbNameFromUrl;
@@ -120,6 +146,12 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
 
   // Ensure dev mode plugin is loaded before creating database
   await devModePluginPromise;
+
+  try {
+    await deleteLegacyDatabases();
+  } catch (error) {
+    console.warn('Could not delete legacy local databases:', error);
+  }
 
   dbPromise = createRxDatabase<DatabaseCollections>({
     name: getDatabaseName(),

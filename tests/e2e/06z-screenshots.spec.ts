@@ -36,7 +36,7 @@ test.describe('Screenshots', () => {
         ['teams', '/teams'],
         ['matches', '/matches'],
         ['match-stats', fixture.completedMatchStatsUrl],
-        ['live-match', fixture.offlineMatchId ? `/matches/${fixture.offlineMatchId}/live` : undefined],
+        ['live-match', fixture.offlineMatchLiveUrl],
         ['championships', '/championships'],
         [
           'championship-detail',
