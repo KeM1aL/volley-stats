@@ -2,7 +2,7 @@
   "name": "volleyball-stats",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.28.2",
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "dev": "next dev",
     "dev:inspect": "next dev --inspect=0.0.0.0",
@@ -21,7 +21,8 @@
     "email:deploy": "tsx scripts/deploy-email-templates.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "lint:report": "next lint --format json --output-file test-results/lint.json || exit 0"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -115,5 +116,8 @@
     "react-email": "^3.0.7",
     "supabase": "^2.76.15",
     "tsx": "^4.21.0"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

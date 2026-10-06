@@ -1,3 +1,11 @@
-onlyBuiltDependencies:
-  - rxdb
-  - supabase
+allowBuilds:
+  '@firebase/util': false
+  '@parcel/watcher': false
+  '@swc/core': false
+  core-js: false
+  esbuild: true
+  protobufjs: false
+  rxdb: true
+  sharp: false
+  supabase: true
+  unrs-resolver: false
