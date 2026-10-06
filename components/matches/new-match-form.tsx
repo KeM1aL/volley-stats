@@ -160,7 +160,7 @@ export function NewMatchForm({ onMatchCreated, onCancel }: NewMatchFormProps) {
                     disabled={(date) =>
                       date < new Date(new Date().setHours(0, 0, 0, 0) - 365 * 24 * 60 * 60 * 1000)
                     }
-                    initialFocus
+                    autoFocus
                   />
                 </PopoverContent>
               </Popover>
