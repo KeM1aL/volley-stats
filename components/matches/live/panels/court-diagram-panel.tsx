@@ -210,9 +210,9 @@ export function CourtDiagramPanel({
 
   const aspectRatioClass = (netPosition: NetPosition): string => {
     if(netPosition === "right" || netPosition === "left") {
-      return "aspect-[3/2]";
+      return "aspect-3/2";
     } else {
-      return "aspect-[2/3]";
+      return "aspect-2/3";
     }
   }
 

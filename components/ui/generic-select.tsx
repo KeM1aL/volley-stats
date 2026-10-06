@@ -43,21 +43,21 @@ export function GenericSelect({
         className="react-select-container"
         classNames={{
           control: () =>
-            "!min-h-10 !border-input !bg-background hover:!bg-accent",
+            "min-h-10! border-input! bg-background! hover:bg-accent!",
           menu: () =>
-            "!bg-popover !border !border-border !rounded-md !shadow-md",
+            "bg-popover! border! border-border! rounded-md! shadow-md!",
           option: (state) =>
             state.isFocused
-              ? "!bg-accent !text-accent-foreground"
-              : "!bg-popover !text-popover-foreground",
+              ? "bg-accent! text-accent-foreground!"
+              : "bg-popover! text-popover-foreground!",
           singleValue: () =>
-            "!text-foreground",
+            "text-foreground!",
           placeholder: () =>
-            "!text-muted-foreground",
+            "text-muted-foreground!",
           input: () =>
-            "!text-foreground",
+            "text-foreground!",
           menuList: () =>
-            "!p-1",
+            "p-1!",
         }}
         styles={{
           control: (base) => ({

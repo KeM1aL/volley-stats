@@ -198,7 +198,7 @@ export function ScorePointsPanel({
 
   return (
     <Card className="h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-2 sm:pb-3 space-y-2 sm:space-y-3 flex-shrink-0 overflow-visible p-3 sm:p-6">
+      <CardHeader className="pb-2 sm:pb-3 space-y-2 sm:space-y-3 shrink-0 overflow-visible p-3 sm:p-6">
         <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2">
           <CardTitle className="text-xs sm:text-sm font-medium">{t("live.pointsHistory")} {currentSet && (
                                 <Badge variant="outline" className="ml-1 sm:ml-2 text-[10px] sm:text-xs">

@@ -63,7 +63,7 @@ export default function KeyboardTestPage() {
   return (
     <div className="min-h-screen bg-background p-4 pb-8">
       {/* Fixed Status Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 border-b">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">

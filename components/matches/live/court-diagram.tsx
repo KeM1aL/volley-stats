@@ -130,7 +130,7 @@ export function CourtDiagram({
   }, [matchFormat]);
 
   return (
-    <div className={cn("relative aspect-[3/2] bg-muted rounded-lg min-h-[200px] max-h-[400px]", className)}>
+    <div className={cn("relative aspect-3/2 bg-muted rounded-lg min-h-[200px] max-h-[400px]", className)}>
       {/* Court outline */}
       <div className="absolute inset-4 border-2 border-primary">
         {/* 3-meter line */}
@@ -157,7 +157,7 @@ export function CourtDiagram({
                 data-testid={`court-position-${pos}`}
                 className={`flex items-center justify-center w-full h-full rounded-full bg-background ${
                   selectedPosition === pos
-                    ? "border-4 border-indigo-500/100"
+                    ? "border-4 border-indigo-500"
                     : "border-2 border-primary"
                 }`}
                 onClick={() => {

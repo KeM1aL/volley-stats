@@ -26,7 +26,7 @@ export function FullScreenToggle() {
       size="icon"
       onClick={() => isFullscreen ? document.exitFullscreen() : document.body.requestFullscreen()}
     >
-      {isFullscreen ? <Minimize className="h-[1.5rem] w-[1.5rem]" /> : <Fullscreen className="h-[1.5rem] w-[1.5rem]" />}
+      {isFullscreen ? <Minimize className="h-6 w-6" /> : <Fullscreen className="h-6 w-6" />}
       <span className="sr-only">{t("ui.toggleFullscreen")}</span>
     </Button>
   );

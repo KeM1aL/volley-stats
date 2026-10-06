@@ -261,7 +261,7 @@ export function SetSetup({
             </div>
 
             {selectedPosition && (
-              <Card className="p-1 space-y-2 border-indigo-500/100 col-span-2">
+              <Card className="p-1 space-y-2 border-indigo-500 col-span-2">
                 <PlayerSelector
                   players={players.filter((player) =>
                     Object.entries(positions).every(

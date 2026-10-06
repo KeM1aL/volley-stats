@@ -34,7 +34,7 @@ export function PdfLoadingOverlay({
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-xs">
       <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
         <div className="space-y-6">
           {/* Header */}
@@ -60,7 +60,7 @@ export function PdfLoadingOverlay({
                 )}
               >
                 {/* Status Icon */}
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   {step.status === "completed" ? (
                     <Check className="h-5 w-5 text-green-500" />
                   ) : step.status === "in-progress" ? (

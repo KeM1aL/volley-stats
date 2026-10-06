@@ -93,7 +93,8 @@ export async function createAndStartMatch(
   await startMatchTrigger.click();
 
   // ── 3.5 Configure match start dialog ─────────────────────────────────────
-  await page.getByRole('dialog').waitFor({ state: 'visible', timeout: 3_000 });
+  // Scope by name: the closing "New Match" dialog may still be running its exit animation.
+  await page.getByRole('dialog', { name: 'Start Match' }).waitFor({ state: 'visible', timeout: 3_000 });
 
   // Select managed team (first radio — home team is our team)
   // RadioGroupItem uses sr-only; visual div overlays it. force:true bypasses the overlay.

@@ -273,7 +273,7 @@ export function EventsPanel({
 
   return (
     <Card className="h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-2 sm:pb-3 space-y-2 sm:space-y-3 flex-shrink-0 overflow-visible p-3 sm:p-6">
+      <CardHeader className="pb-2 sm:pb-3 space-y-2 sm:space-y-3 shrink-0 overflow-visible p-3 sm:p-6">
         {/* Row 1: title + generic Add button */}
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-xs sm:text-sm font-medium">{t("live.events")} {currentSet && (
