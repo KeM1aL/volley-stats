@@ -204,6 +204,11 @@ export const playerSchema = toTypedRxJsonSchema({
     position: { type: ["string", "null"] },
     comments: { type: ["string", "null"] },
     avatar_url: { type: ["string", "null"] },
+    voice_aliases: {
+      type: ["array", "null"],
+      items: { type: "string" },
+      default: [],
+    },
     ...timestampFields,
   },
   required: [
