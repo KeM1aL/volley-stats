@@ -94,3 +94,5 @@ _Filled in during execution. One row per package that could not reach latest._
 | Package | Pinned at | Latest | Reason |
 |---|---|---|---|
 | `@types/node` | ^24.19.1 | 26.6.4 | Tracks the Node 24 runtime pinned in `.nvmrc`, not the newest Node typings |
+| `eslint` | 9.39.5 | 10.12.0 | ESLint 10 crashes with eslint-config-next 16.3.8 (`scopeManager.addGlobals is not a function`); its react/import/jsx-a11y plugins only declare support up to ESLint 9 |
+| `typescript` | 6.0.3 | 7.0.2 | TypeScript 7 passes tsc and next build, but typescript-eslint (used by eslint-config-next) supports `<6.1.0` and refuses TS 7 |
