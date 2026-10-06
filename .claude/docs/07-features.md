@@ -121,7 +121,7 @@ const teams = await teamApi.getTeams(
   - Attack efficiency
   - Block effectiveness
   - Reception quality
-- **PDF Export** (jsPDF + html2canvas)
+- **PDF Export** (jsPDF + html2canvas-pro, which understands Tailwind 4 oklch/oklab colours)
 
 **Statistics Calculated**:
 - Serve: Total, success rate, errors

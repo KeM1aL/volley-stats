@@ -133,7 +133,7 @@ volley-stats/
 │   ├── supabase/                 # Supabase client setup
 │   │   ├── client.ts            # Browser client
 │   │   ├── server.ts            # Server client
-│   │   └── database.types.ts    # Generated DB types (npm run supabase:types)
+│   │   └── database.types.ts    # Generated DB types (pnpm supabase:types)
 │   ├── utils/                    # Utility functions
 │   ├── types.ts                  # TypeScript type definitions
 │   ├── types/events.ts           # Event types (substitution, timeout, …)

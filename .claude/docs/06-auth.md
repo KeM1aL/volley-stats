@@ -70,8 +70,8 @@ if (isTeamOwner) {
 
 ## Protected Routes
 
-**Middleware** ([middleware.ts](middleware.ts)):
-- Runs on all routes except static assets
+**Proxy** ([proxy.ts](proxy.ts), Next.js 16 name for middleware; session logic in [lib/supabase/middleware.ts](lib/supabase/middleware.ts)):
+- Runs on all routes except static assets and `/serwist` (the service worker must load for logged-out visitors)
 - Refreshes Supabase session automatically
 - Redirects unauthenticated users to /auth
 

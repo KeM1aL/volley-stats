@@ -33,6 +33,7 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 - Validation: JSON Schema via AJV (`wrappedValidateAjvStorage`)
 - Timestamps: `preInsert` hook fills missing `created_at`/`updated_at`; Supabase triggers set `updated_at` server-side on update
 - Schema errors (version mismatch) in development, or with `?remove-database=true`, drop and recreate the local database
+- **Database generation**: the local database is named `volleystats_db_v17` (`DB_GENERATION` in [database.ts](lib/rxdb/database.ts)). RxDB major versions do not share an on-disk format, so when upgrading RxDB's major version, bump `DB_GENERATION`: older databases are deleted on startup and the live match re-syncs from Supabase (unsynced local data from the old version is lost). Covered by `tests/e2e/04c-rxdb-legacy.spec.ts`.
 
 ---
 
@@ -114,6 +115,7 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 
 **Requires Online**:
 ❌ Opening a match for the first time on a device
+❌ Cold start while offline: the Serwist service worker serves the app shell, but `AuthProvider` must fetch the profile from Supabase and shows "Failed to Load Profile" when it cannot
 ❌ Teams, championships, match list, settings and other non-live screens (direct Supabase via the API layer)
 ❌ Match statistics page from the live page (its stats button is disabled offline; the stats page itself falls back to local data)
 ❌ Real-time updates from other users

@@ -66,7 +66,7 @@ The live match sync ([lib/rxdb/sync/](lib/rxdb/sync/)) talks to Supabase directl
 
 ## Testing Strategy
 
-E2E tests run on Playwright ([tests/e2e/](tests/e2e/), config in `playwright.config.ts`, `npm run test:e2e`). There are no unit or integration tests and Jest is not installed; the unit and integration sections below are recommendations.
+E2E tests run on Playwright ([tests/e2e/](tests/e2e/), config in `playwright.config.ts`, `pnpm test:e2e`). There are no unit or integration tests and Jest is not installed; the unit and integration sections below are recommendations.
 
 ### Unit Tests (recommended: Jest + React Testing Library)
 ```typescript

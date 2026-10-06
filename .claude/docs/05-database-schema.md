@@ -1,6 +1,6 @@
 # Database Schema
 
-**Column definitions**: [lib/supabase/database.types.ts](lib/supabase/database.types.ts) is the source of truth for columns, types, enums and foreign keys. Regenerate it after schema changes with `npm run supabase:types`. App-level types live in [lib/types.ts](lib/types.ts) and [lib/types/events.ts](lib/types/events.ts).
+**Column definitions**: [lib/supabase/database.types.ts](lib/supabase/database.types.ts) is the source of truth for columns, types, enums and foreign keys. Regenerate it after schema changes with `pnpm supabase:types`. App-level types live in [lib/types.ts](lib/types.ts) and [lib/types/events.ts](lib/types/events.ts).
 
 **Conventions**:
 - All primary keys and foreign keys are UUID strings

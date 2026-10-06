@@ -133,7 +133,7 @@ auth: {
 
 **Required Changes**:
 - Add static export mode when `NEXT_PUBLIC_BUILD_TARGET=capacitor`
-- Disable PWA (next-pwa) for native builds
+- Disable the Serwist service worker for native builds
 - Set `output: 'export'` for Capacitor builds
 - Add `trailingSlash: true` (required for static export)
 
@@ -157,7 +157,7 @@ auth: {
 ```bash
 1. Static Export:
    NEXT_PUBLIC_BUILD_TARGET=capacitor next build
-   (next.config sets output: 'export' for this target; Next.js 15 has no `next export` command)
+   (next.config sets output: 'export' for this target; Next.js 16 has no `next export` command)
    → Creates /out directory with static HTML/CSS/JS
 
 2. Capacitor Sync:
@@ -283,10 +283,10 @@ NEXT_PUBLIC_STORAGE_ENGINE=dexie
 **Tasks**:
 1. Install Capacitor CLI and core plugins
    ```bash
-   npm install @capacitor/core @capacitor/cli
-   npm install @capacitor/app @capacitor/network @capacitor/filesystem
-   npm install @capacitor/preferences @capacitor/splash-screen
-   npm install @capacitor/status-bar @capacitor/keyboard
+   pnpm add @capacitor/core @capacitor/cli
+   pnpm add @capacitor/app @capacitor/network @capacitor/filesystem
+   pnpm add @capacitor/preferences @capacitor/splash-screen
+   pnpm add @capacitor/status-bar @capacitor/keyboard
    ```
 
 2. Initialize Capacitor project
@@ -311,7 +311,7 @@ NEXT_PUBLIC_STORAGE_ENGINE=dexie
 
 6. Test static export
    ```bash
-   NEXT_PUBLIC_BUILD_TARGET=capacitor npm run build
+   NEXT_PUBLIC_BUILD_TARGET=capacitor pnpm build
    npx cap sync
    npx cap open ios  # Test in Xcode Simulator
    ```
@@ -340,7 +340,7 @@ NEXT_PUBLIC_STORAGE_ENGINE=dexie
    ```
 
 3. **Implement secure storage** (NEW: `lib/capacitor/secure-storage.ts`)
-   - Install: `npm install @capacitor-community/secure-storage`
+   - Install: `pnpm add @capacitor-community/secure-storage`
    - Create async storage adapter wrapping SecureStorage
    - Platform detection: native uses SecureStorage, web keeps the default cookie storage
 
@@ -372,7 +372,7 @@ NEXT_PUBLIC_STORAGE_ENGINE=dexie
 
 1. **Install Camera plugin**
    ```bash
-   npm install @capacitor/camera
+   pnpm add @capacitor/camera
    ```
 
 2. **Adapt avatar upload** ([components/players/avatar-upload.tsx](components/players/avatar-upload.tsx))
@@ -422,7 +422,7 @@ NEXT_PUBLIC_STORAGE_ENGINE=dexie
 
 4. **Add screen orientation** (optional)
    ```bash
-   npm install @capacitor/screen-orientation
+   pnpm add @capacitor/screen-orientation
    ```
    - Lock to landscape for match tracking
    - Allow rotation for other screens

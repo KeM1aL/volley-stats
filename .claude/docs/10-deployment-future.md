@@ -44,9 +44,9 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...  # Server-only
 ```
 
 ### Build Configuration
-- **Build Command**: `npm run build`
-- **Start Command**: `npm run start`
-- **PWA Configuration**: Automatic via next-pwa
+- **Build Command**: `pnpm build`
+- **Start Command**: `pnpm start`
+- **PWA Configuration**: Serwist service worker (app/sw.ts), built by the /serwist route at build time
 
 ---
 
@@ -79,23 +79,23 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...  # Server-only
 ### Common Commands
 ```bash
 # Development
-npm run dev              # Start dev server
-npm run build           # Build for production
-npm run start           # Start production server
+pnpm dev              # Start dev server
+pnpm build           # Build for production
+pnpm start           # Start production server
 
 # Database
 npx supabase migration new <name>  # Create migration
 npx supabase db reset              # Reset local database
-npm run supabase:types             # Regenerate lib/supabase/database.types.ts
+pnpm supabase:types             # Regenerate lib/supabase/database.types.ts
 
 # Code Quality
-npm run lint            # Run ESLint
+pnpm lint            # Run ESLint
 npx tsc --noEmit        # Type-check
-npm run i18n:check      # Check translation keys across locales in messages/
+pnpm i18n:check      # Check translation keys across locales in messages/
 
 # Tests
-npm run test:e2e        # Playwright E2E (app must be running)
-npm run test:e2e:ui     # Playwright UI mode
+CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e  # Playwright E2E against pnpm start -p 3100
+pnpm test:e2e:ui     # Playwright UI mode
 ```
 
 ### Key File Locations

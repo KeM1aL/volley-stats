@@ -180,7 +180,7 @@ Screens other than the live match use the API layer only (direct Supabase). Only
 - [ ] Add table to Supabase (via migration in `supabase/migrations/`)
 - [ ] Ensure `created_at`, `updated_at` and `_deleted` columns exist (and the `updated_at` trigger)
 - [ ] Add RLS policies to Supabase table
-- [ ] Regenerate [lib/supabase/database.types.ts](lib/supabase/database.types.ts) with `npm run supabase:types`
+- [ ] Regenerate [lib/supabase/database.types.ts](lib/supabase/database.types.ts) with `pnpm supabase:types`
 - [ ] Update TypeScript types in [lib/types.ts](lib/types.ts)
 
 ### 2. API Layer
@@ -200,7 +200,7 @@ Screens other than the live match use the API layer only (direct Supabase). Only
 - [ ] Use API via custom hooks
 - [ ] Add loading states
 - [ ] Add error handling with toasts
-- [ ] Add translations to every locale in `messages/` (`npm run i18n:check`)
+- [ ] Add translations to every locale in `messages/` (`pnpm i18n:check`)
 - [ ] Add to navigation if needed
 
 ### 5. Testing Offline Functionality (live match)
@@ -212,7 +212,7 @@ Screens other than the live match use the API layer only (direct Supabase). Only
 // 4. Verify data in RxDB (IndexedDB via DevTools)
 // 5. Go online
 // 6. Verify the rows reach Supabase
-// Automated: tests/e2e/04-live-offline.spec.ts (npm run test:e2e)
+// Automated: tests/e2e/04-live-offline.spec.ts (pnpm test:e2e)
 ```
 
 ### 6. Performance Considerations
