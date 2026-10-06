@@ -16,7 +16,7 @@ import fs from 'fs';
 import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { setupCourtPositions } from '../helpers/court';
-import { goOffline, goOnline } from '../helpers/network';
+import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 
@@ -55,6 +55,8 @@ test.describe('Live match — offline/reconnect', () => {
       await page.waitForTimeout(200);
     }
 
+    await waitForServiceWorker(page);
+
     // 5.4 Go offline
     await goOffline(page);
     // SyncIndicator is commented out — skip offline banner assertion
@@ -86,10 +88,29 @@ test.describe('Live match — offline/reconnect', () => {
       await page.waitForTimeout(200);
     }
 
-    // 5.6 Reconnect
+    // 5.5b Reload while still offline — the page shell must come from the
+    // service worker cache and the match state from RxDB.
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+    const offlineLiveOrSetup = page
+      .getByTestId('point-btn-managed-point').first()
+      .or(page.getByTestId('set-setup').first())
+      .or(page.getByText('Match MVP Analysis').first())
+      .or(page.getByRole('button', { name: 'Match Statistics' }).first());
+    await expect(offlineLiveOrSetup).toBeVisible({ timeout: 20_000 });
+
+    // 5.6 Reconnect — must not reload the page in the middle of a match.
+    await page.evaluate(() => {
+      (window as unknown as { __noReloadMarker?: boolean }).__noReloadMarker = true;
+    });
     await goOnline(page);
-    // Allow sync to start
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(2_000);
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __noReloadMarker?: boolean }).__noReloadMarker === true
+      ),
+      'page reloaded when the connection came back'
+    ).toBe(true);
 
     // 5.7 Reload and verify live match state is restored from RxDB
     await page.reload();

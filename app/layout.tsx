@@ -11,6 +11,7 @@ import { LoadingBar } from '@/components/ui/loading-bar';
 import { AuthProvider } from '@/contexts/auth-context';
 import { KeyboardProvider } from '@/contexts/keyboard-context';
 import { GoogleAnalytics } from '@next/third-parties/google'
+import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -76,33 +77,35 @@ export default async function RootLayout({
         <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
       </head>
       <body>
-        <NextIntlClientProvider messages={messages} locale={locale}>
-          <KeyboardProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="light"
-              storageKey="theme"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <AuthProvider>
-                <LocalDatabaseProvider>
-                  <LoadingBar />
-                  <div className="keyboard-layout-grid bg-background">
-                    <header>
-                      <Navigation />
-                    </header>
-                    <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
-                      {children}
-                    </main>
-                    <div className="keyboard-spacer" aria-hidden="true" />
-                  </div>
-                  <Toaster />
-                </LocalDatabaseProvider>
-              </AuthProvider>
-            </ThemeProvider>
-          </KeyboardProvider>
-        </NextIntlClientProvider>
+        <ServiceWorkerProvider>
+          <NextIntlClientProvider messages={messages} locale={locale}>
+            <KeyboardProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="light"
+                storageKey="theme"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <AuthProvider>
+                  <LocalDatabaseProvider>
+                    <LoadingBar />
+                    <div className="keyboard-layout-grid bg-background">
+                      <header>
+                        <Navigation />
+                      </header>
+                      <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
+                        {children}
+                      </main>
+                      <div className="keyboard-spacer" aria-hidden="true" />
+                    </div>
+                    <Toaster />
+                  </LocalDatabaseProvider>
+                </AuthProvider>
+              </ThemeProvider>
+            </KeyboardProvider>
+          </NextIntlClientProvider>
+        </ServiceWorkerProvider>
       </body>
       {process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
     </html>

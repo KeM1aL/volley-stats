@@ -1,11 +1,4 @@
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  buildExcludes: [/chunks\/.*$/],
-});
-
+const { withSerwist } = require('@serwist/turbopack');
 const withNextIntl = require('next-intl/plugin')('./i18n.ts');
 
 /** @type {import('next').NextConfig} */
@@ -14,4 +7,4 @@ const nextConfig = {
   images: { unoptimized: true },
 };
 
-module.exports = withPWA(withNextIntl(nextConfig));
+module.exports = withSerwist(withNextIntl(nextConfig));

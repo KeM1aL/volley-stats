@@ -40,3 +40,16 @@ export async function blockSupabase(page: Page): Promise<() => Promise<void>> {
   await page.route(pattern, route => route.abort('internetdisconnected'));
   return () => page.unroute(pattern);
 }
+
+/**
+ * Wait until a service worker controls the page, so offline reloads are
+ * served from its cache.
+ */
+export async function waitForServiceWorker(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, {
+    timeout: 15_000,
+  });
+}
