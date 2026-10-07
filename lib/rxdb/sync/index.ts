@@ -3,9 +3,8 @@ import { RxCollection, ReplicationPullOptions, ReplicationPushOptions, flatClone
 import { RxReplicationState, startReplicationOnLeaderShip } from 'rxdb/plugins/replication';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { Subject } from 'rxjs';
-import { DEFAULT_MODIFIED_FIELD, DEFAULT_DELETED_FIELD, POSTGRES_INSERT_CONFLICT_CODE, addDocEqualityToQuery } from './helper';
+import { DEFAULT_MODIFIED_FIELD, DEFAULT_DELETED_FIELD, POSTGRES_INSERT_CONFLICT_CODE, addDocEqualityToQuery, pickSchemaFields } from './helper';
 import { SupabaseCheckpoint, SyncOptionsSupabase } from './types';
-import { table } from 'console';
 
 
 
@@ -70,7 +69,10 @@ export function replicateSupabase<RxDocType>(
             (doc as any)[modifiedField] = modified;
         }
 
-        return doc;
+        return pickSchemaFields(
+            doc as Record<string, unknown>,
+            collection.schema.jsonSchema.properties as Record<string, unknown>
+        ) as WithDeleted<RxDocType>;
     }
     async function fetchById(id: string): Promise<WithDeleted<RxDocType>> {
         const { data, error } = await (options.client.from(options.tableName) as any)

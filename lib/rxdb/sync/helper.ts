@@ -62,3 +62,20 @@ export function addDocEqualityToQuery<RxDocType>(
 
     return query;
 }
+
+/**
+ * Keeps only the fields the local RxDB schema defines (plus `_deleted`).
+ * RxDB rejects documents with unknown fields, so a column added on the server
+ * (or a server-only column such as `_modified`) must never reach the local
+ * database.
+ */
+export function pickSchemaFields<T extends Record<string, unknown>>(
+  row: T,
+  schemaProperties: Record<string, unknown>
+): Partial<T> {
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(row)) {
+    if (key === "_deleted" || Object.hasOwn(schemaProperties, key)) out[key] = row[key];
+  }
+  return out as Partial<T>;
+}
