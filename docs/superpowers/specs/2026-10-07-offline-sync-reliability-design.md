@@ -116,8 +116,8 @@ Ships before the new app version and is backward-compatible with the current one
     instead of `Promise.all` throwing for the whole batch;
   - no realtime subscription (one scorer per match → nothing to listen for;
     pulls happen on start, reconnect and foreground);
-  - sends the `x-device-id` header (configured once on the Supabase client
-    used by sync).
+  - sets the `x-device-id` header on every sync request (`setHeader`), so
+    API-layer requests made with the same client never carry it.
 - **Reference tables** (`championships`, `seasons`, `match_formats`, `clubs`,
   `teams`, `club_members`, `team_members`): pull-only replications started at
   login, filters unchanged. Restarted only when the user id or the set of
