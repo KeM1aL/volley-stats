@@ -66,18 +66,22 @@ Ships before the new app version and is backward-compatible with the current one
   A `BEFORE INSERT OR UPDATE` trigger sets `NEW._modified = now()`. It is the
   pull checkpoint field and is **not** in the local RxDB schemas (RxDB plugin
   convention: `rowToDoc` drops it).
-- **`updated_at` means "time of the last edit".** The existing trigger
-  function changes to:
-  `IF TG_OP = 'UPDATE' AND NEW.updated_at IS NOT DISTINCT FROM OLD.updated_at THEN NEW.updated_at = now(); END IF;`
-  A client-provided new value is kept; API-layer updates that don't send one
-  are still bumped.
+- **`updated_at` means "time of the last edit".** The existing
+  `update_updated_at_column()` trigger function only sets `now()` when the
+  request has no `x-device-id` header. Sync requests always carry the header
+  and always send the device's edit time, so the server keeps it (and a
+  re-sent identical row doesn't change it); API-layer updates from other
+  screens have no header and are still bumped.
 - **Scorer claim columns on `matches`:** `scorer_device_id text`,
-  `scorer_user_id uuid`, `scorer_device_label text`, `scorer_claimed_at timestamptz`.
+  `scorer_user_id uuid`, `scorer_name text`, `scorer_device_label text`,
+  `scorer_claimed_at timestamptz`. `scorer_name` is written at claim time from
+  the caller's own profile, because RLS only lets users read their own
+  profile.
 - **RPC `claim_match_scorer(p_match_id uuid, p_device_id text, p_label text, p_force boolean)`**,
   `SECURITY INVOKER` (RLS applies). Atomically: if no scorer, the caller's
   device is the scorer, or `p_force` is true → set the four columns and return
-  `{ claimed: true, ... }`; otherwise return `{ claimed: false, scorer_*, scorer_name, last_activity_at }`
-  where `scorer_name` comes from the holder's profile and `last_activity_at` is
+  `{ claimed: true, ... }`; otherwise return `{ claimed: false, scorer_*, last_activity_at }`
+  where `last_activity_at` is
   the latest `_modified` across the match row and its `sets`, `score_points`,
   `player_stats` and `events` rows.
 - **RPC `get_match_scorer(p_match_id uuid)`** returns the same holder fields
@@ -87,13 +91,13 @@ Ships before the new app version and is backward-compatible with the current one
   (`current_setting('request.headers', true)::json->>'x-device-id'`). If the
   header is present, the match has a `scorer_device_id`, and they differ →
   `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'scorer_mismatch'`.
-  Requests without the header (API layer on other screens) are not affected.
-- **Foreign keys:** the first plan task reads the real FK definitions,
-  `ON DELETE` rules, triggers and RLS policies from Supabase. If deleting a
-  `team_members` row referenced by match data is allowed (cascade or set null)
-  or the API layer can hard-delete such a row, the migration makes it a
-  restriction or the API layer soft-deletes instead, so offline-recorded stats
-  can't lose their player.
+  The same check runs on `matches` updates, except when the update changes
+  `scorer_device_id` itself (a claim). Requests without the header (API layer
+  on other screens) are not affected.
+- **Foreign keys:** no change. Verified on 2026-10-07 (see "Verification
+  findings"): `player_stats.player_id` and `score_points.player_id` →
+  `team_members` are `NO ACTION`, so a player with recorded stats can't be
+  deleted; `events.player_id` is `SET NULL`.
 - Regenerate `lib/supabase/database.types.ts` (`pnpm supabase:types`).
 
 ## 2. Replication topology
@@ -147,9 +151,11 @@ Ships before the new app version and is backward-compatible with the current one
     keep all local data.
   - The provider no longer calls `cleanup()` in the `setUser` effect; it is
     only called when the database is destroyed.
-  - Connectivity: offline → `pause()` every running replication; online →
-    `start()` every paused one and `reSync()`. Loops use `continue`, never
-    `return` (removes bug 4). Foreground → `reSync()`.
+  - Connectivity: replications are never paused. RxDB's own retry already
+    waits for the browser's `online` event, so going offline needs no action;
+    going online or coming to the foreground calls `reSync()` on every
+    replication. There is no pause/start loop left to exit early (removes
+    bug 4).
   - Each state is tracked in a map keyed by identifier; stopping awaits
     cancellation before the map entry is removed, so a stop can't clear
     replications started after it.
@@ -207,9 +213,10 @@ Configured on the five match collections (`conflictHandler` in `addCollections`)
 
 **Dependency gating** (`lib/rxdb/sync/dependencies.ts`):
 
-- In-match parents: `sets.match_id → matches`;
-  `player_stats.{match_id, set_id}`; `score_points.{match_id, set_id, player_stat_id}`;
-  `events.{match_id, set_id}`.
+- In-match parents (the real foreign keys): `sets.match_id → matches`;
+  `player_stats.{match_id, set_id}`; `score_points.{match_id, set_id}`;
+  `events.{match_id, set_id}`. `score_points.player_stat_id` has no foreign
+  key, so a point never waits for its stat.
 - Before sending a row, the handler looks up its parents in `pending_changes`:
   - a parent `pending` → the row is not sent (no request); it is collected as
     *waiting*;
@@ -219,11 +226,11 @@ Configured on the five match collections (`conflictHandler` in `addCollections`)
   - the match's claim is `pending-force` → every row of the match waits until
     the claim RPC succeeds;
   - the match's claim is `lost` → every row of the match is `superseded`.
-- Rows of a batch are sent in dependency order.
-- After the batch, if any row is *waiting*, the handler throws a
-  `WaitingForDependencies` error so RxDB retries the batch; when a parent's
-  `sent$` fires, the child collection's replication is nudged (`reSync()`) so
-  the retry happens immediately rather than after `retryTime`.
+- Rows of a batch are sent one at a time, in order.
+- A row whose parent is pending first waits up to 5 s for the parent's
+  entry to clear (parents upload in parallel through their own
+  replications). If it is still pending, the handler throws a
+  `PushRetryError` after the batch so RxDB retries it after `retryTime`.
 - The handler keeps an in-memory map of rows accepted during a retried batch
   (doc id → accepted state) and skips them on the retry, so retries don't
   repeat requests.
@@ -235,7 +242,7 @@ Configured on the five match collections (`conflictHandler` in `addCollections`)
 | Temporary | network failure / `TypeError` from fetch, timeout, `401` / `PGRST301` / `PGRST303` (expired JWT), `408`, `429`, `5xx`, `23503` whose referenced table is `matches` / `sets` / `player_stats` | Batch retried (`retryTime` 5 s; paused while offline). |
 | Superseded | `P0001 scorer_mismatch` | Entry `superseded`; claim marked `lost`. |
 | Permanent | `42501` (RLS), `23514`, `23502`, `22xxx`, `42703`, `PGRST204`, `23505` whose row can't be read back, `23503` whose referenced table is outside the match (e.g. `team_members`), update of a row that no longer exists on the server | Entry `rejected` with code and message; the handler moves on, so later rows keep flowing. |
-| Temporary → permanent | the same row temporary for 20 attempts | Entry `rejected` ("couldn't be saved after repeated attempts"). |
+| Temporary → permanent | the same row failing with `parent_missing` or an unrecognised error for 20 attempts | Entry `rejected` ("couldn't be saved after repeated attempts"). Network, auth and server errors never count, so days offline never turn into rejections. |
 
 The referenced table of a `23503` comes from the Postgres error `details`
 (`Key (player_id)=(…) is not present in table "team_members"`). Messages are
@@ -320,7 +327,7 @@ in the app header (`components/navigation.tsx`) and the live match header:
 - No `DB_GENERATION` bump: local schemas are unchanged (`_modified` is
   server-only, `pending_changes` is a new collection), so nothing is wiped.
 - First launch: `tracked-matches` is seeded from existing
-  `sync-state-<matchId>` local documents, with `userId` = the signed-in user
+  matches stored locally (every match this device opened), with `userId` = the signed-in user
   and no claim (no claim means pushes are not gated; the server has no scorer
   for these matches yet, so the scorer trigger allows them; the first
   live-page open claims the match).
@@ -330,8 +337,9 @@ in the app header (`components/navigation.tsx`) and the live match header:
   sides follow the section 3 rule (later `updated_at` wins, so stale local
   copies don't overwrite the server). One-time cost: two requests per existing
   row.
-- Old replication metadata (`sync_*` identifiers) is removed after the new
-  replications of the match are in sync.
+- Old replication metadata (`sync_*` identifiers) is left in place: RxDB has
+  no API to remove it without starting the old replication, and it is a few
+  small documents.
 - Deploy order: Supabase migration → new app version.
 
 ## 10. Testing
@@ -382,9 +390,25 @@ in the app header (`components/navigation.tsx`) and the live match header:
   over; first becomes read-only with superseded rows.
 - New: sign-out warning with pending changes.
 
-**Pre-implementation verification** (read-only, Supabase MCP): FK definitions,
-`ON DELETE` rules, triggers, RLS policies; whether existing matches show the
-predicted damage (set scores disagreeing with their points).
+## Verification findings (2026-10-07, read-only queries on project `gvtjccisbwrwpjtabnyd`)
+
+- **Damage confirmed:** 11 of the 96 sets that have points (10 matches) have
+  a set score that disagrees with the highest running score of their points,
+  as root cause 1 predicts.
+- **Foreign keys:** `sets/score_points/player_stats.match_id → matches` and
+  `score_points/player_stats.set_id → sets` are `NO ACTION`; `events.match_id`
+  and `events.set_id` are `CASCADE`; `player_stats/score_points.player_id →
+  team_members` `NO ACTION`; `events.player_id` `SET NULL`; team references
+  (`team_id`, `scoring_team_id`, `action_team_id`, `server_team_id`,
+  `first_server_team_id`) → `teams`. `score_points.player_stat_id` has no FK.
+- **Unique constraints** on match tables: primary keys only.
+- **Triggers:** `BEFORE UPDATE … update_updated_at_column()` on every table
+  (twice on `team_members`); no `_modified` column exists yet.
+- **RLS:** match tables are writable by the owner of either team
+  (`teams.user_id = auth.uid()`) and readable by everyone; `profiles` are only
+  readable by their owner.
+- `matches.date` is `timestamptz` (local copy is a string; compared as an
+  instant).
 
 ## Files
 
