@@ -2,6 +2,29 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ReplicationOptions, ReplicationPullOptions, ReplicationPushOptions } from 'rxdb';
 
+/** Tables replicated per match; pushes and pending changes only concern these. */
+export const MATCH_COLLECTIONS = ["matches", "sets", "player_stats", "score_points", "events"] as const;
+export type MatchCollectionName = (typeof MATCH_COLLECTIONS)[number];
+
+/** Tables that are only pulled (edited online through the API layer). */
+export const REFERENCE_COLLECTIONS = [
+  "championships",
+  "seasons",
+  "match_formats",
+  "clubs",
+  "teams",
+  "club_members",
+  "team_members",
+] as const;
+export type ReferenceCollectionName = (typeof REFERENCE_COLLECTIONS)[number];
+
+/** What the sync layer needs to know about the signed-in user. */
+export interface SyncUser {
+  id: string;
+  teamIds: string[];
+  clubIds: string[];
+}
+
 export type SupabasePullQueryBuilderParams = {
     query: ReturnType<SupabaseClient['from']>['select'] extends (
         ...args: any[]

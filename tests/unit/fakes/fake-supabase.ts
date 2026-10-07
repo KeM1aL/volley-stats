@@ -247,7 +247,7 @@ export class FakeSupabaseServer {
   seed(table: string, row: Row): Row {
     const now = this.now();
     const full = { _deleted: false, created_at: now, updated_at: now, ...row, _modified: now };
-    this.tables.get(table)!.set(full.id, full);
+    this.tables.get(table)!.set(row.id, full);
     return { ...full };
   }
   /** An edit made from another screen (API layer: no x-device-id header, so updated_at is bumped). */
