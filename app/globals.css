@@ -238,6 +238,12 @@
     @apply bg-background text-foreground;
   }
 
+  /* Tailwind 4 no longer gives buttons a pointer cursor */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   /* Keyboard visible state - can be used for conditional styling */
   body.keyboard-visible {
     /* Add any global styles when keyboard is visible */

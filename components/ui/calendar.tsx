@@ -49,8 +49,9 @@ function Calendar({
         disabled: "text-muted-foreground opacity-50",
         range_start: "rounded-l-md bg-accent",
         range_end: "rounded-r-md bg-accent",
+        // Middle days also get `selected`; `!` makes these win over its primary colours.
         range_middle:
-          "bg-accent [&>button]:bg-transparent [&>button]:text-accent-foreground [&>button]:hover:bg-transparent",
+          "bg-accent [&>button]:bg-transparent! [&>button]:text-accent-foreground! [&>button]:hover:bg-transparent! [&>button]:hover:text-accent-foreground!",
         hidden: "invisible",
         ...classNames,
       }}
