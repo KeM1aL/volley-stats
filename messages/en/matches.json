@@ -224,6 +224,8 @@
     "fetchingTeamInfo": "Fetching team information",
     "readyForOffline": "Ready for offline",
     "readyForOfflineDesc": "Match data is synced and ready for offline use",
+    "offlineLocalData": "Offline",
+    "offlineLocalDataDesc": "Using the match data saved on this device. Sync resumes when the connection is back.",
     "syncTimeout": "Sync timeout",
     "syncTimeoutDesc": "Data sync took longer than expected. You can continue, but some data might be outdated.",
     "syncWarning": "Sync Warning",

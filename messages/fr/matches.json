@@ -224,6 +224,8 @@
     "fetchingTeamInfo": "Récupération des informations de l'équipe",
     "readyForOffline": "Prêt pour le mode hors ligne",
     "readyForOfflineDesc": "Les données du match sont synchronisées et prêtes pour une utilisation hors ligne",
+    "offlineLocalData": "Hors ligne",
+    "offlineLocalDataDesc": "Utilisation des données du match enregistrées sur cet appareil. La synchronisation reprendra au retour de la connexion.",
     "syncTimeout": "Délai d'attente de synchronisation",
     "syncTimeoutDesc": "La synchronisation des données a pris plus de temps que prévu. Vous pouvez continuer, mais certaines données pourraient être obsolètes.",
     "syncWarning": "Avertissement de Synchronisation",

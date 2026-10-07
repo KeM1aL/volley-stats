@@ -224,6 +224,8 @@
     "fetchingTeamInfo": "Obteniendo información del equipo",
     "readyForOffline": "Listo para modo offline",
     "readyForOfflineDesc": "Los datos del partido están sincronizados y listos para uso offline",
+    "offlineLocalData": "Sin conexión",
+    "offlineLocalDataDesc": "Usando los datos del partido guardados en este dispositivo. La sincronización se reanudará cuando vuelva la conexión.",
     "syncTimeout": "Timeout de sincronización",
     "syncTimeoutDesc": "La sincronización de datos tardó más de lo esperado. Puede continuar, pero algunos datos podrían estar desactualizados.",
     "syncWarning": "Advertencia de Sincronización",

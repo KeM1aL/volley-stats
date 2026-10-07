@@ -113,27 +113,38 @@ export default function LiveMatchPage() {
       }
 
       setLoadingStep(0);
-      try {
-        const synced = await db?.syncManager.syncMatch(matchId);
-        if (synced) {
+      if (!navigator.onLine) {
+        // Offline: the sync can't finish (it would only time out), so start it in
+        // the background and open the match from local data. Replication resumes
+        // when the connection is back.
+        db.syncManager.syncMatch(matchId).catch((e) => console.error("Sync failed", e));
+        toast({
+          title: t("live.offlineLocalData"),
+          description: t("live.offlineLocalDataDesc"),
+        });
+      } else {
+        try {
+          const synced = await db?.syncManager.syncMatch(matchId);
+          if (synced) {
+            toast({
+              title: t("live.readyForOffline"),
+              description: t("live.readyForOfflineDesc"),
+            });
+          } else {
+            toast({
+              variant: "default",
+              title: t("live.syncTimeout"),
+              description: t("live.syncTimeoutDesc"),
+            });
+          }
+        } catch (e) {
+          console.error("Sync failed", e);
           toast({
-            title: t("live.readyForOffline"),
-            description: t("live.readyForOfflineDesc"),
-          });
-        } else {
-          toast({
-            variant: "default",
-            title: t("live.syncTimeout"),
-            description: t("live.syncTimeoutDesc"),
+            variant: "destructive",
+            title: t("live.syncWarning"),
+            description: t("live.syncWarningDesc"),
           });
         }
-      } catch (e) {
-        console.error("Sync failed", e);
-        toast({
-          variant: "destructive",
-          title: t("live.syncWarning"),
-          description: t("live.syncWarningDesc"),
-        });
       }
 
       setLoadingStep(1);

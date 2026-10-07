@@ -4,6 +4,12 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { User } from "@/lib/types";
 import { getUser } from "@/lib/api/users";
+import {
+  clearCachedUser,
+  isNetworkFailure,
+  loadCachedUser,
+  saveCachedUser,
+} from "@/lib/auth/user-cache";
 import { supabase } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const sessionRef = useRef<Session | null>(null);
   const userRef = useRef<User | null>(null);
+  // True while the user comes from the copy saved on this device (offline start).
+  const usingCachedUserRef = useRef(false);
 
   useEffect(() => {
     // Listen for auth changes
@@ -57,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           case "SIGNED_OUT":
             console.log("User signed out");
+            clearCachedUser();
             toast({
               title: "Signed out",
               description: "You have been successfully signed out.",
@@ -98,10 +107,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setLoadingStage(stage);
             });
             userRef.current = user;
+            usingCachedUserRef.current = false;
+            if (user) saveCachedUser(user);
             setUser(user);
             setError(null);
             setLoadingStage("complete");
           } catch (error) {
+            // Offline: start with the profile saved on this device, if it is this user's.
+            const cachedUser = isNetworkFailure(error) ? loadCachedUser(session.user.id) : null;
+            if (cachedUser) {
+              console.warn("Offline: using the profile saved on this device");
+              userRef.current = cachedUser;
+              usingCachedUserRef.current = true;
+              setUser(cachedUser);
+              setError(null);
+              setLoadingStage("complete");
+              setIsLoading(false);
+              return;
+            }
             console.error("Failed to load user profile:", error);
             setUser(null);
             setError(
@@ -113,6 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } finally {
           }
         } else {
+          // No session on this device (signed out or expired): drop the saved profile.
+          clearCachedUser();
           setUser(null);
           setError(null);
           setLoadingStage(null);
@@ -126,6 +151,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
+  }, []);
+
+  // Back online after an offline start: replace the saved profile with fresh data.
+  useEffect(() => {
+    const refreshFromNetwork = async () => {
+      if (!usingCachedUserRef.current || !sessionRef.current) return;
+      try {
+        const freshUser = await getUser(sessionRef.current);
+        if (!freshUser) return;
+        usingCachedUserRef.current = false;
+        userRef.current = freshUser;
+        saveCachedUser(freshUser);
+        setUser(freshUser);
+      } catch (error) {
+        console.warn("Could not refresh the profile after reconnecting:", error);
+      }
+    };
+    window.addEventListener("online", refreshFromNetwork);
+    return () => window.removeEventListener("online", refreshFromNetwork);
   }, []);
 
   // Session health monitoring - check for expiry and warn user
@@ -193,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session, toast]);
 
   const signOut = async () => {
+    clearCachedUser();
     await supabase.auth.signOut();
 
     window.location.href = "/";
@@ -206,6 +251,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const user = await getUser(session, (stage) => {
           setLoadingStage(stage);
         });
+        usingCachedUserRef.current = false;
+        if (user) saveCachedUser(user);
         setUser(user);
         setLoadingStage("complete");
       } catch (error) {

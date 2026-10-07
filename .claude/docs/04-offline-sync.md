@@ -112,10 +112,11 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 ✅ **Live match tracking** (scoring, stats, set setup)
 ✅ Player substitutions and other match events
 ✅ Undo/redo operations
+✅ Cold start / reload of the live match page while offline: the service worker serves the page, `AuthProvider` uses the profile saved on the device ([lib/auth/user-cache.ts](lib/auth/user-cache.ts)), and the live page skips the blocking `syncMatch` wait (replication resumes when the connection returns)
 
 **Requires Online**:
 ❌ Opening a match for the first time on a device
-❌ Cold start while offline: the Serwist service worker serves the app shell, but `AuthProvider` must fetch the profile from Supabase and shows "Failed to Load Profile" when it cannot
+❌ Starting the app offline on a device that has never signed in online (no saved profile)
 ❌ Teams, championships, match list, settings and other non-live screens (direct Supabase via the API layer)
 ❌ Match statistics page from the live page (its stats button is disabled offline; the stats page itself falls back to local data)
 ❌ Real-time updates from other users
@@ -125,10 +126,12 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 
 **Service worker** ([app/sw.ts](app/sw.ts), Serwist):
 - Precaches the build's JS/CSS and runtime-caches pages, images and fonts (`defaultCache`); Supabase API calls are NetworkOnly, so non-live screens always read live data and no user data sits in Cache Storage.
-- `SerwistProvider` keeps `cacheOnNavigation` on: each client-side navigation asks the worker to fetch and cache that page, which is what lets the live page load again offline. It costs one extra page request per navigation.
+- `SerwistProvider` keeps `cacheOnNavigation` on: each client-side navigation asks the worker to fetch and cache that page, which is what lets the live page load again offline (together with the saved profile, see below). It costs one extra page request per navigation.
 - `reloadOnOnline` is off so reconnecting does not reload a live match.
 - `skipWaiting` + `clientsClaim`: a new deploy takes over open tabs immediately. A tab still running the previous build that then goes offline and needs a chunk it never loaded can fail to load it; reload once online.
 - After an RxDB major upgrade (`DB_GENERATION` bump), the new build deletes the old local databases. A tab still running the old build loses its database connection mid-session; reload it.
+
+**Saved profile** ([lib/auth/user-cache.ts](lib/auth/user-cache.ts)): after each successful profile load, `AuthProvider` stores the user (profile + team/club memberships) in `localStorage` (`volleystats:cached-user`). It is only used when loading fails because the network is unavailable, and only for the same user id as the current session; when the connection returns the profile is reloaded in the background. It is removed on sign-out and whenever the app starts without a session.
 
 **User Experience**:
 - The live page shows a toast after `syncMatch`: ready for offline, or sync timed out / failed
