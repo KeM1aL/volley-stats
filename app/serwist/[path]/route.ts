@@ -5,7 +5,7 @@ export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } =
   useNativeEsbuild: true,
   globIgnores: [
     // ~540 flag-icons SVGs: cached at runtime when shown, not downloaded up front.
-    '.next/static/media/*.svg',
+    '.next/static/**/media/*.svg', // also .next/static/immutable/media on Vercel
     // Leftovers from the old next-pwa build, if present locally.
     'public/sw.js',
     'public/workbox-*.js',
