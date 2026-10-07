@@ -22,7 +22,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "lint:report": "eslint . --format json --output-file test-results/lint.json || exit 0"
+    "lint:report": "node scripts/lint-report.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",
