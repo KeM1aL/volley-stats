@@ -22,7 +22,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "lint:report": "node scripts/lint-report.mjs"
+    "lint:report": "node scripts/lint-report.mjs",
+    "test:e2e:cleanup": "tsx tests/tools/cleanup-e2e-data.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",

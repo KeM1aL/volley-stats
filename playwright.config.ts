@@ -10,6 +10,8 @@ config({ path: '.env', quiet: true });
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Deletes the teams, matches and championships the specs created (set E2E_KEEP_DATA=1 to keep them).
+  globalTeardown: './tests/global-teardown.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

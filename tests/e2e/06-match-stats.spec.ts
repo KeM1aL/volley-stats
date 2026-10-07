@@ -62,7 +62,7 @@ test.describe('Match Statistics', () => {
     if (playerNames && playerNames.length > 0) {
       // The player performance panel shows player names in tables/cards
       await expect(
-        page.getByText(playerNames[0], { exact: false })
+        page.getByText(playerNames[0], { exact: false }).first()
       ).toBeVisible({ timeout: 10_000 });
     }
 

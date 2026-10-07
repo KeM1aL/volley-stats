@@ -124,7 +124,9 @@ Opt-in or machine-local specs (skipped otherwise):
 - `04c-rxdb-legacy` replays that capture; without the file it skips, so it only runs on a machine that captured one before an RxDB major upgrade.
 - `06z-screenshots` runs only with `SCREENSHOT_LABEL=<label>` and writes light/dark screenshots to `playwright/screens/<label>/` for before/after visual comparisons.
 
-Known failure: `07` "delete E2E team (cleanup)" fails because Supabase refuses to delete a team that has matches (`matches_home_team_id_fkey`), so every run leaves its E2E team, players, matches and championship in the database. `auth.setup.ts` logs in and saves `playwright/.auth/user.json`; shared IDs pass between specs through `tests/fixtures/test-data.json`.
+Cleanup: `tests/global-teardown.ts` runs after every suite (pass or fail) and deletes what the specs created in the shared Supabase project: teams named `E2E Team …` with their players, matches and match data, and championships named `E2E Championship …` ([tests/helpers/e2e-cleanup.ts](tests/helpers/e2e-cleanup.ts)). It runs as the test account; championships, which row-level security does not let their creator delete, are deleted with `SUPABASE_SERVICE_ROLE_KEY`. Set `E2E_KEEP_DATA=1` to keep the data, and run `pnpm test:e2e:cleanup [--dry-run]` to clean up by hand.
+
+Expected failure: `07` "delete E2E team (cleanup)" is marked `test.fail` because the app cannot delete a team that has played matches (`matches_home_team_id_fkey`).
 
 Helpers in `tests/helpers/`:
 - `match-setup.ts` — `createAndStartMatch()` creates a match and opens its live page
