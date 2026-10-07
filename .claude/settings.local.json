@@ -2,7 +2,6 @@
   "defaultMode": "bypassPermissions",
   "permissions": {
     "deny": [
-      "Bash(rm:*)",
       "Bash(git push:*)",
       "Bash(docker run:*)",
       "WebFetch",
@@ -22,7 +21,8 @@
       "Bash(playwright-cli*)",
       
       "Bash(pnpm *)",
-      "mcp__plugin_playwright_playwright__browser_take_screenshot"
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "Bash(rm:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
