@@ -11,6 +11,7 @@ export async function createTestDb() {
     storage: wrappedValidateAjvStorage({ storage: getRxStorageMemory() }),
     multiInstance: false,
     localDocuments: true,
+    allowSlowCount: true,
   });
   const pending = await setupCollections(db);
   return { db, pending };

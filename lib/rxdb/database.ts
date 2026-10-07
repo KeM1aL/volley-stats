@@ -103,6 +103,9 @@ const createDatabase = async (): Promise<VolleyballDatabase> => {
     multiInstance: true,
     ignoreDuplicate: false,
     localDocuments: true,
+    // pending_changes counts filter with $in / non-indexed fields, which Dexie only allows as slow counts.
+    // The table is small and local, so that is fine.
+    allowSlowCount: true,
   }).then(async (db) => {
     try {
       const pendingChanges = await setupCollections(db);
