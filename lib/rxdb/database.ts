@@ -141,9 +141,14 @@ export function getDatabaseName() {
   return ret;
 }
 
-export const getDatabase = async (): Promise<VolleyballDatabase> => {
-  if (dbPromise) return dbPromise;
+// The shared promise is assigned synchronously, before any await, so concurrent
+// callers always get the same database instead of racing to create two.
+export const getDatabase = (): Promise<VolleyballDatabase> => {
+  if (!dbPromise) dbPromise = createDatabase();
+  return dbPromise;
+};
 
+const createDatabase = async (): Promise<VolleyballDatabase> => {
   // Ensure dev mode plugin is loaded before creating database
   await devModePluginPromise;
 
@@ -153,7 +158,7 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
     console.warn('Could not delete legacy local databases:', error);
   }
 
-  dbPromise = createRxDatabase<DatabaseCollections>({
+  return createRxDatabase<DatabaseCollections>({
     name: getDatabaseName(),
     storage: wrappedValidateAjvStorage({
       storage: getStorage()
@@ -256,6 +261,4 @@ export const getDatabase = async (): Promise<VolleyballDatabase> => {
 
     return db as VolleyballDatabase;
   });
-
-  return dbPromise;
 };
