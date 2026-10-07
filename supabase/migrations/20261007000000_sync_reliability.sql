@@ -1,13 +1,14 @@
 -- Offline sync reliability (docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md, section 1).
 
 -- The x-device-id header sent by the app's sync code; NULL for every other request.
+-- Guard against empty string: pooled connections keep request.headers = '' after a PostgREST request.
 CREATE OR REPLACE FUNCTION public.request_device_id()
 RETURNS text
 LANGUAGE sql
 STABLE
 SET search_path = ''
 AS $$
-  SELECT nullif(current_setting('request.headers', true)::json ->> 'x-device-id', '')
+  SELECT nullif(nullif(current_setting('request.headers', true), '')::json ->> 'x-device-id', '')
 $$;
 
 -- 1. _modified: server-clock replication checkpoint, set on every insert and update.
