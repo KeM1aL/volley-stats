@@ -9,5 +9,3 @@ allowBuilds:
   sharp: false
   supabase: true
   unrs-resolver: false
-minimumReleaseAgeExclude:
-  - react-email@6.11.1
