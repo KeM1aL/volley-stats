@@ -47,6 +47,8 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...  # Server-only
 - **Build Command**: `pnpm build`
 - **Start Command**: `pnpm start`
 - **PWA Configuration**: Serwist service worker (app/sw.ts), built by the /serwist route at build time
+- **Package manager**: pnpm 12 (`packageManager` in package.json) on Node 24 (`engines`, `.nvmrc`). The host must use pnpm 12, e.g. by enabling Corepack (on Vercel: `ENABLE_EXPERIMENTAL_COREPACK=1`). Older pnpm versions ignore the `allowBuilds` list in `pnpm-workspace.yaml`, which allows install scripts for `esbuild` (service worker bundling), `rxdb` and `supabase`.
+- **Release-age delay**: pnpm 12 does not install versions published in the last day, so a fresh release may only be picked up by `pnpm update` a day later.
 
 ---
 

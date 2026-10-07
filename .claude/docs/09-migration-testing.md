@@ -117,7 +117,14 @@ describe('SyncManager', () => {
 
 ### E2E Tests (Playwright)
 
-Existing specs in [tests/e2e/](tests/e2e/) run in order: teams, matches, championships, live match offline/reconnect (`04-live-offline.spec.ts`), settings, match stats, and team cleanup. `auth.setup.ts` logs in and saves `playwright/.auth/user.json`; shared IDs pass between specs through `tests/fixtures/test-data.json`.
+Existing specs in [tests/e2e/](tests/e2e/) run in file-name order: public access (`00`), teams, matches, championships (+ `03b` dialog with keyboard, `03c` date range and cursor), live match offline/reconnect (`04-live-offline.spec.ts`), settings (+ `05b` service worker must not cache Supabase), match stats (incl. logged-out access and PDF export), and team cleanup.
+
+Opt-in or machine-local specs (skipped otherwise):
+- `04b-rxdb-capture` runs only with `CAPTURE_LEGACY_DB=1` and must run on the *previous* RxDB major to capture a legacy IndexedDB into `playwright/.auth/rxdb-legacy-state.json` (git-ignored: it is a full storage-state dump).
+- `04c-rxdb-legacy` replays that capture; without the file it skips, so it only runs on a machine that captured one before an RxDB major upgrade.
+- `06z-screenshots` runs only with `SCREENSHOT_LABEL=<label>` and writes light/dark screenshots to `playwright/screens/<label>/` for before/after visual comparisons.
+
+Known failure: `07` "delete E2E team (cleanup)" fails because Supabase refuses to delete a team that has matches (`matches_home_team_id_fkey`), so every run leaves its E2E team, players, matches and championship in the database. `auth.setup.ts` logs in and saves `playwright/.auth/user.json`; shared IDs pass between specs through `tests/fixtures/test-data.json`.
 
 Helpers in `tests/helpers/`:
 - `match-setup.ts` — `createAndStartMatch()` creates a match and opens its live page
@@ -126,4 +133,4 @@ Helpers in `tests/helpers/`:
 
 Use `04-live-offline.spec.ts` as the template for offline scenarios.
 
-`playwright.config.ts` runs one worker, sequentially, against `BASE_URL` (default `http://localhost:3000`) with no `webServer`, so start the app first. Test credentials load from `.env.test` (then `.env.test.local`, `.env.local`, `.env`).
+`playwright.config.ts` runs one worker, sequentially, against `BASE_URL` (default `http://localhost:3000`) with no `webServer`, so start the app first. Run it against a production build (`pnpm build && pnpm start -p 3100`, then `CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e`): the service worker is disabled in development, and set `BASE_URL` explicitly because `.env.test.local` may point to a deployed site. Test credentials load from `.env.test` (then `.env.test.local`, `.env.local`, `.env`).

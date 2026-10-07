@@ -123,6 +123,13 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 ❌ Avatar uploads
 ❌ FFVB match imports
 
+**Service worker** ([app/sw.ts](app/sw.ts), Serwist):
+- Precaches the build's JS/CSS and runtime-caches pages, images and fonts (`defaultCache`); Supabase API calls are NetworkOnly, so non-live screens always read live data and no user data sits in Cache Storage.
+- `SerwistProvider` keeps `cacheOnNavigation` on: each client-side navigation asks the worker to fetch and cache that page, which is what lets the live page load again offline. It costs one extra page request per navigation.
+- `reloadOnOnline` is off so reconnecting does not reload a live match.
+- `skipWaiting` + `clientsClaim`: a new deploy takes over open tabs immediately. A tab still running the previous build that then goes offline and needs a chunk it never loaded can fail to load it; reload once online.
+- After an RxDB major upgrade (`DB_GENERATION` bump), the new build deletes the old local databases. A tab still running the old build loses its database connection mid-session; reload it.
+
 **User Experience**:
 - The live page shows a toast after `syncMatch`: ready for offline, or sync timed out / failed
 - Local writes are pushed automatically when connectivity is restored; no manual sync required
