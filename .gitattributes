@@ -1,0 +1,15 @@
+# Line endings: store and check out text files with LF on every OS, so tools
+# that write LF (Next.js, pnpm, Tailwind, formatters) don't show up as whole-file
+# changes. Git detects text vs binary automatically.
+* text=auto eol=lf
+
+# Binary assets: never convert.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
