@@ -334,14 +334,16 @@ export class FakeSupabaseServer {
     const input = query.payload as Row;
     const unknown = this.unknownColumn(query.table, input);
     if (unknown) return fail(400, "PGRST204", `Could not find the '${unknown}' column of '${query.table}' in the schema cache`);
-    if (table.has(input.id)) {
-      return fail(409, "23505", "duplicate key value violates unique constraint", `Key (id)=(${input.id}) already exists.`);
-    }
+    const scorerFault = this.checkScorer(query.table, input, undefined, deviceId);
+    if (scorerFault) return scorerFault;
     if (this.writeDenials.get(query.table)?.(input)) {
       return fail(403, "42501", `new row violates row-level security policy for table "${query.table}"`);
     }
-    const blocked = this.checkForeignKeys(query.table, input) ?? this.checkScorer(query.table, input, undefined, deviceId);
-    if (blocked) return blocked;
+    if (table.has(input.id)) {
+      return fail(409, "23505", "duplicate key value violates unique constraint", `Key (id)=(${input.id}) already exists.`);
+    }
+    const fkFault = this.checkForeignKeys(query.table, input);
+    if (fkFault) return fkFault;
     const now = this.now();
     const row: Row = { _deleted: false, created_at: now, updated_at: now, ...input, _modified: now };
     table.set(row.id, row);
@@ -358,11 +360,13 @@ export class FakeSupabaseServer {
     const updated: Row[] = [];
     for (const previous of targets) {
       const next: Row = { ...previous, ...patch };
+      const scorerFault = this.checkScorer(query.table, next, previous, deviceId);
+      if (scorerFault) return scorerFault;
       if (this.writeDenials.get(query.table)?.(next)) {
         return fail(403, "42501", `new row violates row-level security policy for table "${query.table}"`);
       }
-      const blocked = this.checkForeignKeys(query.table, next) ?? this.checkScorer(query.table, next, previous, deviceId);
-      if (blocked) return blocked;
+      const fkFault = this.checkForeignKeys(query.table, next);
+      if (fkFault) return fkFault;
       const now = this.now();
       // update_updated_at_column(): only requests without x-device-id get the server time.
       if (!deviceId) next.updated_at = now;

@@ -60,4 +60,17 @@ describe("fake supabase server", () => {
     expect(response.status).toBe(0);
     expect(server.row("sets", set.id)).toBeDefined();
   });
+
+  it("scorer check runs before duplicate-id check (constraint ordering)", async () => {
+    const server = createFakeServer();
+    seedTeams(server);
+    const matchId = seedServerMatch(server);
+    const set = aSet(matchId);
+    const deviceA = server.client();
+    const firstInsert = await deviceA.from("sets").insert(set).setHeader("x-device-id", "device-a");
+    expect(firstInsert.status).toBe(201);
+    server.setScorer(matchId, { deviceId: "device-b" });
+    const secondInsert = await deviceA.from("sets").insert(set).setHeader("x-device-id", "device-a");
+    expect(secondInsert.error).toMatchObject({ code: "P0001", message: "scorer_mismatch" });
+  });
 });
