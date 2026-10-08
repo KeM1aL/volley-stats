@@ -1,5 +1,5 @@
 import { toTypedRxJsonSchema, type RxCollection, type RxDatabase } from "rxdb";
-import { map, type Observable } from "rxjs";
+import { filter, firstValueFrom, map, of, timeout, type Observable } from "rxjs";
 import type { ClassifiedError } from "./errors";
 import { isoToMicros } from "./timestamps";
 import { MATCH_COLLECTIONS, type MatchCollectionName } from "./types";
@@ -68,6 +68,16 @@ export interface PendingFilter {
   tables?: readonly MatchCollectionName[];
   statuses?: readonly PendingStatus[];
 }
+
+export interface ParentRef {
+  table: MatchCollectionName;
+  docId: string;
+}
+
+export type ParentStatus =
+  | { kind: "none" }
+  | { kind: "pending"; refs: ParentRef[] }
+  | { kind: "rejected" | "superseded"; ref: ParentRef };
 
 export const pendingId = (table: MatchCollectionName, docId: string): string => `${table}:${docId}`;
 
@@ -155,6 +165,36 @@ export class PendingChanges {
   async get(table: MatchCollectionName, docId: string): Promise<PendingChange | null> {
     const doc = await this.collection.findOne(pendingId(table, docId)).exec();
     return doc ? (doc.toJSON() as PendingChange) : null;
+  }
+
+  /**
+   * Whether these parents block a child row. Only rows the server doesn't have
+   * yet block: an unsent insert, or a rejected insert. A pending update of an
+   * uploaded parent doesn't.
+   */
+  async parentStatus(refs: ParentRef[]): Promise<ParentStatus> {
+    if (refs.length === 0) return { kind: "none" };
+    const found = await this.collection.findByIds(refs.map((ref) => pendingId(ref.table, ref.docId))).exec();
+    const entries = [...found.values()].map((doc) => doc.toJSON() as PendingChange);
+    const toRef = (entry: PendingChange): ParentRef => ({ table: entry.table_name, docId: entry.doc_id });
+    const superseded = entries.find((entry) => entry.status === "superseded");
+    if (superseded) return { kind: "superseded", ref: toRef(superseded) };
+    const rejected = entries.find((entry) => entry.status === "rejected" && (entry.is_insert || entry.never_uploaded));
+    if (rejected) return { kind: "rejected", ref: toRef(rejected) };
+    const inserts = entries.filter((entry) => entry.status === "pending" && entry.is_insert);
+    return inserts.length > 0 ? { kind: "pending", refs: inserts.map(toRef) } : { kind: "none" };
+  }
+
+  /** Resolves true once none of these entries is pending, false after `timeoutMs`. */
+  waitUntilSettled(refs: ParentRef[], timeoutMs: number): Promise<boolean> {
+    const ids = refs.map((ref) => pendingId(ref.table, ref.docId));
+    return firstValueFrom(
+      this.collection.find({ selector: { id: { $in: ids }, status: "pending" } }).$.pipe(
+        filter((docs) => docs.length === 0),
+        map(() => true),
+        timeout({ first: timeoutMs, with: () => of(false) })
+      )
+    );
   }
 
   /**

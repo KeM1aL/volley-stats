@@ -1,6 +1,8 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ReplicationOptions, ReplicationPullOptions, ReplicationPushOptions } from 'rxdb';
+import type { WithDeleted } from "rxdb";
+import type { ClassifiedError } from "./errors";
 
 /** Tables replicated per match; pushes and pending changes only concern these. */
 export const MATCH_COLLECTIONS = ["matches", "sets", "player_stats", "score_points", "events"] as const;
@@ -87,3 +89,14 @@ export interface SyncStateDocument {
 }
 
 export type DynamicCollectionName = 'matches' | 'sets' | 'score_points' | 'player_stats' | 'events';
+
+/** What the push handler does with one row before sending it. */
+export type GateDecision =
+  | { kind: "send" }
+  | { kind: "wait"; reason: "claim" | "parents" }
+  | { kind: "reject"; error: ClassifiedError }
+  | { kind: "supersede" };
+
+export interface PushGate {
+  check(doc: WithDeleted<any>): Promise<GateDecision>;
+}
