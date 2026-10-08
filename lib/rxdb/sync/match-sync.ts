@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RxReplicationState } from "rxdb/plugins/replication";
-import { filter, from, switchMap, type Subscription } from "rxjs";
+import { exhaustMap, filter, from, type Subscription } from "rxjs";
 import type { LocalDatabase } from "../collections";
 import { createPushGate, type ClaimCheck } from "./dependencies";
 import { matchIdOf, type PendingChanges } from "./pending-changes";
@@ -54,21 +54,30 @@ export class MatchSync {
       });
       this.states.set(table, state);
       this.subscriptions.push(
-        state.sent$.subscribe((doc) => void this.deps.pending.onSent(table, doc as any)),
+        state.sent$.subscribe((doc) => {
+          this.deps.pending.onSent(table, doc as any).catch((error) => this.warn(table, "could not clear the pending entry", error));
+        }),
         state.active$
           .pipe(
             filter((active) => !active),
-            switchMap(() => {
+            // Not switchMap: the promise below cannot be cancelled, so ignore idle signals while a check is running.
+            exhaustMap(() => {
               const before = new Date().toISOString();
-              return from(state.awaitInSync().then(() => this.deps.pending.clearSettled(this.matchId, table, before)));
+              return from(
+                state
+                  .awaitInSync()
+                  .then(() => this.deps.pending.clearSettled(this.matchId, table, before))
+                  // Keep the error inside the inner stream so the outer subscription survives.
+                  .catch((error) => this.warn(table, "settle check failed", error))
+              );
             })
           )
-          .subscribe({ error: (error) => console.warn(`[sync] ${table} ${this.matchId}: settle check failed`, error) }),
+          .subscribe(),
         state.error$.subscribe((error) => console.debug(`[sync] ${table} ${this.matchId}:`, error))
       );
     }
     void Promise.all([...this.states.values()].map((state) => state.awaitInitialReplication())).then(
-      () => this.deps.onSynced(this.matchId),
+      () => this.deps.onSynced(this.matchId).catch((error) => this.warn("match", "onSynced failed", error)),
       () => undefined
     );
   }
@@ -87,6 +96,10 @@ export class MatchSync {
     const states = [...this.states.values()];
     this.states.clear();
     await Promise.all(states.map((state) => state.cancel()));
+  }
+
+  private warn(scope: string, message: string, error: unknown): void {
+    console.warn(`[sync] ${scope} ${this.matchId}: ${message}`, error);
   }
 
   private reporter(table: MatchCollectionName): PushReporter {

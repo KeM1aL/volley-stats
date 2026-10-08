@@ -67,6 +67,25 @@ describe("MatchSync", () => {
     expect(await db.sets.findOne(set.id).exec()).not.toBeNull();
   });
 
+  it("pulls only the rows of its own match", async () => {
+    const otherMatchId = seedServerMatch(server);
+    const mine = server.seed("sets", aSet(matchId));
+    const theirs = server.seed("sets", aSet(otherMatchId));
+    const { synced } = startMatchSync(matchId);
+    await waitFor(() => synced.includes(matchId), { message: "match synced" });
+    expect(await db.sets.findOne(mine.id).exec()).not.toBeNull();
+    expect(await db.sets.findOne(theirs.id).exec()).toBeNull();
+    expect(await db.matches.findOne(otherMatchId).exec()).toBeNull();
+  });
+
+  it("clears a leftover pending entry once the replications are idle and in sync", async () => {
+    const leftoverId = aSet(matchId).id;
+    await pending.markPending("sets", { id: leftoverId, match_id: matchId, updated_at: new Date().toISOString() } as any);
+    expect(await pending.count({ matchId })).toBe(1);
+    startMatchSync(matchId);
+    await waitFor(async () => (await pending.count({ matchId })) === 0, { message: "leftover entry cleared" });
+  });
+
   it("clears pending entries once the rows are uploaded", async () => {
     const { sync } = startMatchSync(matchId);
     const set = aSet(matchId);
