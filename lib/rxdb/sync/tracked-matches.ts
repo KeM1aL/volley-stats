@@ -71,10 +71,17 @@ export class TrackedMatches {
   /** Read-modify-write, serialized within this tab. */
   private modify(change: (matches: TrackedMatchMap) => TrackedMatchMap): Promise<void> {
     const run = async () => {
-      const doc = await this.db.getLocal<TrackedDoc>(DOC_ID);
+      let doc = await this.db.getLocal<TrackedDoc>(DOC_ID);
       if (!doc) {
-        await this.db.upsertLocal<TrackedDoc>(DOC_ID, { matches: change({}) });
-        return;
+        try {
+          // insertLocal, not upsertLocal: upsert overwrites a list another tab just created.
+          await this.db.insertLocal<TrackedDoc>(DOC_ID, { matches: change({}) });
+          return;
+        } catch (err) {
+          if ((err as { status?: number })?.status !== 409) throw err;
+          doc = await this.db.getLocal<TrackedDoc>(DOC_ID);
+          if (!doc) throw err;
+        }
       }
       await doc.incrementalModify((data: TrackedDoc) => ({ ...data, matches: change({ ...data.matches }) }));
     };

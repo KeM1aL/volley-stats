@@ -51,4 +51,11 @@ describe("tracked matches", () => {
     await Promise.all(["a", "b", "c", "d", "e"].map((id) => tracked.track(id, "user-1")));
     expect(Object.keys(await tracked.get()).sort()).toEqual(["a", "b", "c", "d", "e"]);
   });
+
+  it("keeps both entries when two tabs create the list at the same time", async () => {
+    const tabA = new TrackedMatches(db);
+    const tabB = new TrackedMatches(db);
+    await Promise.all([tabA.track("m1", "user-1"), tabB.track("m2", "user-1")]);
+    expect(Object.keys(await tracked.get()).sort()).toEqual(["m1", "m2"]);
+  });
 });
