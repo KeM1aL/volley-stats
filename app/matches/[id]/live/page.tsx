@@ -49,6 +49,11 @@ import { BarChart3, WifiOff } from "lucide-react";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
 import { useLandscape } from "@/hooks/use-landscape";
 import { set } from "lodash";
+import { SyncBadge } from "@/components/sync/sync-badge";
+import { ScorerClaimDialog, type ClaimPrompt } from "@/components/sync/scorer-claim-dialog";
+import { TakenOverBanner } from "@/components/sync/taken-over-banner";
+import { useBeforeUnloadWhenUnsent, useMatchUnsentCount } from "@/hooks/use-unsent-guard";
+import type { ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
 
@@ -85,6 +90,13 @@ export default function LiveMatchPage() {
   const [loadingStep, setLoadingStep] = useState(0);
   const { history, canUndo, canRedo } = useCommandHistory();
 
+  // Scoring device (spec section 7): a prompt blocks scoring until answered; a lost claim makes the page read-only.
+  const [claimPrompt, setClaimPrompt] = useState<ClaimPrompt | null>(null);
+  const [claimBusy, setClaimBusy] = useState(false);
+  const [lostClaim, setLostClaim] = useState<{ holder: ScorerInfo | null } | null>(null);
+  const unsentCount = useMatchUnsentCount(matchId);
+  useBeforeUnloadWhenUnsent(unsentCount > 0);
+
   const LOADING_STEPS = useMemo(
     () => [
       { label: t("live.syncingMatchData"), description: t("live.ensuringLatestData") },
@@ -100,6 +112,22 @@ export default function LiveMatchPage() {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [navExpanded, setNavExpanded] = useState(false);
   const isLandscape = useLandscape();
+
+  const ensureScorerClaim = useCallback(async () => {
+    if (!db) return;
+    const entry = await db.syncManager.tracked.entry(matchId);
+    if (entry?.claim === "lost") return; // read-only, see the effect below
+    if (navigator.onLine) {
+      try {
+        const result = await db.syncManager.claimMatch(matchId);
+        if (!result.claimed) setClaimPrompt({ kind: "taken", holder: result.holder });
+        return;
+      } catch (error) {
+        console.warn("Could not check who scores this match, continuing as offline:", error);
+      }
+    }
+    if (entry?.claim !== "held" && entry?.claim !== "pending-force") setClaimPrompt({ kind: "offline" });
+  }, [db, matchId]);
 
   // Memoized data loading function
   const loadMatchData = useCallback(async () => {
@@ -173,6 +201,7 @@ export default function LiveMatchPage() {
       }
       const format = formatDoc.toMutableJSON();
       match.match_formats = format as MatchFormat;
+      if (match.status !== "completed") await ensureScorerClaim();
 
       const teamDocs = await db.teams
         .findByIds([match.home_team_id, match.away_team_id])
@@ -295,11 +324,39 @@ export default function LiveMatchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [db, matchId, router, t, searchParams]);
+  }, [db, matchId, router, t, searchParams, ensureScorerClaim]);
 
   useEffect(() => {
     loadMatchData();
   }, [loadMatchData]);
+
+  useEffect(() => {
+    if (!db) return;
+    const subscription = db.syncManager.tracked.get$().subscribe((matches) => {
+      const entry = matches[matchId];
+      setLostClaim(entry?.claim === "lost" ? { holder: entry.lostTo } : null);
+    });
+    return () => subscription.unsubscribe();
+  }, [db, matchId]);
+
+  const handleClaimConfirm = async () => {
+    if (!db || !claimPrompt) return;
+    setClaimBusy(true);
+    try {
+      if (claimPrompt.kind === "taken") {
+        const result = await db.syncManager.claimMatch(matchId, true);
+        if (result.claimed) setClaimPrompt(null);
+      } else {
+        await db.syncManager.claimMatchOffline(matchId);
+        setClaimPrompt(null);
+      }
+    } catch (error) {
+      console.warn("Takeover failed, the server can't be reached:", error);
+      setClaimPrompt({ kind: "offline" });
+    } finally {
+      setClaimBusy(false);
+    }
+  };
 
   const onSetSetupComplete = useCallback(
     async (newSet: Set) => {
@@ -605,6 +662,8 @@ export default function LiveMatchPage() {
   // Helper to render main content
   const renderMainContent = () => {
     if (!matchState.match) return null;
+    if (lostClaim) return <TakenOverBanner holder={lostClaim.holder} />;
+    if (claimPrompt) return null;
 
     if (!matchState.currentSet || matchState.currentSet.status === "completed") {
       return (
@@ -658,13 +717,25 @@ export default function LiveMatchPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Row 1: Header - Full Width */}
-      <div className="w-full shrink-0">
-        <MatchScoreDetails
-          match={matchState.match}
-          sets={matchState.sets}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-        />
+      <div className="w-full shrink-0 flex items-start gap-1">
+        <div className="flex-1 min-w-0">
+          <MatchScoreDetails
+            match={matchState.match}
+            sets={matchState.sets}
+            homeTeam={homeTeam}
+            awayTeam={awayTeam}
+          />
+        </div>
+        <SyncBadge compact />
+        {matchState.currentSet && (
+          <span
+            hidden
+            data-testid="live-score"
+            data-set-id={matchState.currentSet.id}
+            data-home={matchState.score.home}
+            data-away={matchState.score.away}
+          />
+        )}
       </div>
 
       {/* Row 2: Content - Responsive Layout */}
@@ -782,6 +853,13 @@ export default function LiveMatchPage() {
           )}
         </div>
       </div>
+
+      <ScorerClaimDialog
+        prompt={claimPrompt}
+        busy={claimBusy}
+        onCancel={() => router.push("/matches")}
+        onConfirm={() => void handleClaimConfirm()}
+      />
     </div>
   );
 }
