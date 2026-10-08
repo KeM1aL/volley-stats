@@ -21,6 +21,7 @@ export function LocalDatabaseProvider({
 }) {
   const tUi = useTranslations("common.ui");
   const tErrors = useTranslations("common.errors.database");
+  const tSync = useTranslations("sync");
   const { user, isLoading: authLoading } = useAuth();
   const database = useLocalDatabase(!!user && !authLoading);
   const router = useRouter();
@@ -59,6 +60,9 @@ export function LocalDatabaseProvider({
         <p className="text-destructive font-semibold">
           {tErrors("initFailed")}
         </p>
+        {database.error.message === "unsentChangesBlockReset" && (
+          <p className="text-sm text-muted-foreground max-w-md text-center">{tSync("guards.resetBlocked")}</p>
+        )}
         {isSchemaError && (
           <div className="text-sm text-muted-foreground max-w-md text-center">
             <p>

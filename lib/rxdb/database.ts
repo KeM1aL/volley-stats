@@ -9,6 +9,8 @@ import type { PendingChanges } from "./sync/pending-changes";
 import { SyncManager } from "./sync/manager";
 import { createWebPlatform } from "./sync/platform/web";
 import { supabase } from "@/lib/supabase/client";
+import { readUnsentHint } from "./pending-hint";
+import { decideDatabaseReset } from "./reset-policy";
 
 export type { DatabaseCollections } from "./collections";
 
@@ -127,20 +129,21 @@ const createDatabase = async (): Promise<VolleyballDatabase> => {
           error.message?.includes("schema") ||
           error.message?.includes("version");
 
-        if (isSchemaError) {
-          console.warn("Schema version conflict detected. Database needs to be reset.");
-
-          // Auto-remove in development or if flag is set
-          if (inDevEnvironment || removeDbFlag === "true") {
-            console.log("Removing old database and reinitializing...");
-            await removeRxDatabase(getDatabaseName(), getRxStorageDexie());
-
-            // Reset the promise to allow recreation
-            dbPromise = null;
-
-            // Recursively retry database creation
-            return getDatabase();
-          }
+        const decision = decideDatabaseReset({
+          isSchemaError,
+          devEnvironment: inDevEnvironment,
+          removeFlag: removeDbFlag === "true",
+          unsentCount: readUnsentHint(),
+        });
+        if (decision === "blocked") {
+          // Error identifier maps to translation key: sync.guards.resetBlocked
+          throw new Error("unsentChangesBlockReset");
+        }
+        if (decision === "reset") {
+          console.warn("Schema version conflict detected. Removing the local database and reinitializing...");
+          await removeRxDatabase(getDatabaseName(), getRxStorageDexie());
+          dbPromise = null;
+          return getDatabase();
         }
       }
       throw error;
