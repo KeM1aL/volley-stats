@@ -147,6 +147,22 @@ describe("pending changes", () => {
     expect((await pending.get("sets", set.id))?.status).toBe("pending");
   });
 
+  it("retryRejected re-queues parents before their children", async () => {
+    const set = aSet(MATCH);
+    const point = aScorePoint(MATCH, set.id, 1);
+    await db.sets.insert(set as any);
+    await db.score_points.insert(point as any);
+    const queued: string[] = [];
+    pending.collection.$.subscribe((change) => {
+      if (change.documentData.status === "pending") queued.push(change.documentData.table_name);
+    });
+    await pending.reject("score_points", point, { kind: "permanent", code: "parent_rejected" }, { neverUploaded: true });
+    await pending.reject("sets", set, { kind: "permanent", code: "rls" }, { neverUploaded: true });
+    queued.length = 0;
+    expect(await pending.retryRejected(db)).toBe(2);
+    expect(queued).toEqual(["sets", "score_points"]);
+  });
+
   it("counts entries by match, table and status", async () => {
     await db.sets.insert(aSet(MATCH) as any);
     await db.sets.insert(aSet("20000000-0000-4000-8000-000000000002") as any);

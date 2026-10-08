@@ -220,9 +220,15 @@ export class PendingChanges {
     return this.collection.find().$.pipe(map((docs) => docs.map((doc) => doc.toJSON() as PendingChange)));
   }
 
-  /** Re-queues rejected rows: bumping updated_at runs the hooks, which mark them pending. */
+  /**
+   * Re-queues rejected rows: bumping updated_at runs the hooks, which mark them pending.
+   * Parents go first: a child queued while its rejected parent still waits would be
+   * rejected again at once as `parent_rejected`.
+   */
   async retryRejected(db: RxDatabase<any>, matchId?: string): Promise<number> {
-    const entries = await this.collection.find({ selector: toSelector({ matchId, statuses: ["rejected"] }) }).exec();
+    const entries = (await this.collection.find({ selector: toSelector({ matchId, statuses: ["rejected"] }) }).exec()).sort(
+      (a, b) => MATCH_COLLECTIONS.indexOf(a.table_name) - MATCH_COLLECTIONS.indexOf(b.table_name)
+    );
     let retried = 0;
     for (const entry of entries) {
       const doc = await db.collections[entry.table_name].findOne(entry.doc_id).exec();

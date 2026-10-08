@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { LoadingSpinner } from "../ui/loading-spinner";
-import { useOnlineStatus } from "@/hooks/use-online-status";
+import { toSyncUser } from "@/lib/rxdb/sync/manager";
 
 const LocalDatabaseContext = createContext<ReturnType<
   typeof useLocalDatabase
@@ -25,52 +25,12 @@ export function LocalDatabaseProvider({
   const database = useLocalDatabase(!!user && !authLoading);
   const router = useRouter();
 
-  // useEffect(() => {
-  //   if (database.localDb && user) {
-  //     const syncHandler = new SyncHandler();
-  //     const collections = new Map<CollectionName, RxCollection>([
-  //       ['championships', database.localDb.championships],
-  //       ['seasons', database.localDb.seasons],
-  //       ['match_formats', database.localDb.match_formats],
-  //       ['clubs', database.localDb.clubs],
-  //       ['club_members', database.localDb.club_members],
-  //       ['teams', database.localDb.teams],
-  //       ['team_members', database.localDb.team_members],
-  //       ['matches', database.localDb.matches],
-  //       ['sets', database.localDb.sets],
-  //       ['events', database.localDb.events],
-  //       ['score_points', database.localDb.score_points],
-  //       ['player_stats', database.localDb.player_stats],
-  //     ]);
-
-  //     syncHandler.initializeSync(collections);
-
-  //     return () => {
-  //       syncHandler.cleanup();
-  //     };
-  //   }
-  // }, [database.localDb, user]);
-
   useEffect(() => {
-    if (database.localDb) {
-        // Pass user to SyncManager
-        console.debug('LocalDatabaseProvider: Setting user for SyncManager', user);
-        if ((database.localDb as any).syncManager) {
-            (database.localDb as any).syncManager.setUser(user);
-            return () => {
-                (database.localDb as any).syncManager.cleanup();
-            };
-        }
-    }
+    const manager = database.localDb?.syncManager;
+    if (!manager) return;
+    // A refreshed profile for the same user is a no-op; signing out keeps local data.
+    void manager.setUser(user ? toSyncUser(user) : null);
   }, [database.localDb, user]);
-
-  const { isOnline } = useOnlineStatus();
-
-  useEffect(() => {
-      if (database.localDb && (database.localDb as any).syncManager) {
-          (database.localDb as any).syncManager.setOnlineStatus(isOnline);
-      }
-  }, [database.localDb, isOnline]);
 
   const clearLocalDatabase = () => {
     const params = new URLSearchParams();
