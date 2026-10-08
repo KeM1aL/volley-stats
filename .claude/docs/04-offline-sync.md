@@ -2,7 +2,7 @@
 
 Only live match tracking works offline. It reads and writes RxDB, and `SyncManager` replicates RxDB with Supabase. Every other screen reads and writes live Supabase data through the API layer hooks (see [03-code-patterns.md](03-code-patterns.md)).
 
-Keep local data scoped to what a match needs. Reference data is synced at login, and match data is pulled one match at a time with `syncMatch(matchId)`. Don't add whole-table syncs of match data: the app shouldn't load all data onto the device.
+Keep local data scoped to what a match needs. Reference data is synced at sign-in, and match data is replicated per tracked match (`syncMatch(matchId)` tracks a match). Don't add whole-table syncs of match data: the app shouldn't load all data onto the device.
 
 ## RxDB Configuration
 
@@ -12,7 +12,7 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 
 **Access**: `useLocalDb()` from [components/providers/local-database-provider.tsx](components/providers/local-database-provider.tsx) returns `{ localDb, isLoading, error }`. `localDb.syncManager` is the `SyncManager` instance.
 
-**Collections** (12, mirroring every Supabase table except `profiles`):
+**Collections** (13: the 12 mirroring every Supabase table except `profiles`, plus the local-only `pending_changes`):
 1. clubs
 2. club_members
 3. teams
@@ -25,6 +25,7 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 10. score_points
 11. player_stats
 12. events (includes substitutions, as `event_type: 'substitution'`)
+13. pending_changes (local only: unsent rows, see Synchronization Mechanism)
 
 **Schema Features**:
 - Primary keys: UUID strings on all tables
@@ -33,76 +34,68 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 - Validation: JSON Schema via AJV (`wrappedValidateAjvStorage`)
 - Timestamps: `preInsert` hook fills missing `created_at`/`updated_at`; Supabase triggers set `updated_at` server-side on update
 - Schema errors (version mismatch) in development, or with `?remove-database=true`, drop and recreate the local database
-- **Database generation**: the local database is named `volleystats_db_v17` (`DB_GENERATION` in [database.ts](lib/rxdb/database.ts)). RxDB major versions do not share an on-disk format, so when upgrading RxDB's major version, bump `DB_GENERATION`: older databases are deleted on startup and the live match re-syncs from Supabase (unsynced local data from the old version is lost). Covered by `tests/e2e/04c-rxdb-legacy.spec.ts`.
+- **Database generation**: the local database is named `volleystats_db_v17` (`DB_GENERATION` in [database.ts](lib/rxdb/database.ts)). RxDB major versions do not share an on-disk format, so when upgrading RxDB's major version, bump `DB_GENERATION`: older databases are deleted on startup and the live match re-syncs from Supabase (unsynced local data from the old version is lost). Never bump it while devices may hold unsent rows; see Data-loss guards. Covered by `tests/e2e/04c-rxdb-legacy.spec.ts`.
 
 ---
 
 ## Synchronization Mechanism
 
-**Location**:
-- [lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts) — `SyncManager`: decides what to replicate and tracks per-match sync state
-- [lib/rxdb/sync/index.ts](lib/rxdb/sync/index.ts) — `replicateSupabase()`: RxDB replication plugin adapter for Supabase (pull and push handlers)
+Design: [docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md](../../docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md).
 
-`getDatabase()` creates the `SyncManager` and attaches it to the database. `LocalDatabaseProvider` calls `syncManager.setUser(user)` when auth changes (stops all replications, then starts them for the new user) and `syncManager.setOnlineStatus(isOnline)` when connectivity changes (pauses replications offline, restarts them online).
+**Location**: [lib/rxdb/sync/](../../lib/rxdb/sync/)
 
-### What Gets Synced
+| File | Role |
+|---|---|
+| `manager.ts` | `SyncManager`: signed-in user, tracked matches, scorer claim, resume on reconnect/foreground |
+| `match-sync.ts` | The five replications of one match (`matches`, `sets`, `player_stats`, `score_points`, `events`) |
+| `reference-sync.ts` | Pull-only replications of reference tables |
+| `replication.ts` | `replicateSupabase()`: RxDB <-> Supabase adapter (pull by `_modified` checkpoint, push row by row) |
+| `pending-changes.ts` | `pending_changes` local collection: every unsent row, filled by collection hooks |
+| `dependencies.ts` | Parent-first gate (foreign keys) and claim gate |
+| `errors.ts` | Push error classification (temporary / permanent / superseded) |
+| `conflict-handler.ts` | The scoring device wins conflicts on match data |
+| `tracked-matches.ts`, `sync-state.ts` | Local documents shared by every tab |
+| `scorer-claim.ts` | `claim_match_scorer` / `get_match_scorer` RPCs |
+| `platform/` | `SyncPlatform` (connectivity, foreground, device id); `web.ts` for the browser |
+| `status.ts` | Sync badge state |
 
-1. **At login** (`startSync`, one replication per collection):
-   - `championships`, `seasons`, `match_formats`, `clubs`, `teams` — every row the user can read (RLS applies)
-   - `club_members` — filtered to the clubs in `user.clubMembers`
-   - `team_members` — filtered to the teams in `user.teamMembers`
+### What gets synced
 
-2. **On demand per match** (`syncMatch(matchId)`, called by [app/matches/[id]/live/page.tsx](app/matches/[id]/live/page.tsx) when the live page loads):
-   - `matches` filtered by `id = matchId`; `sets`, `score_points`, `player_stats`, `events` filtered by `match_id = matchId`
-   - Replication identifiers: `sync_<collection>_chunk_<matchId>`
-   - Sync state is stored in the RxDB local document `sync-state-<matchId>` (`never-synced` → `syncing` → `synced`, or `error`)
-   - `syncMatch` resolves `true` once all five collections are in sync, or immediately if the match is already `synced`; it resolves `false` on error or after a 30 s timeout (`SYNC_TIMEOUT_MS`). The live page shows a toast either way and continues with local data.
+- **Reference tables** (`championships`, `seasons`, `match_formats`, `clubs`, `teams`, and `club_members`/`team_members` of the user's clubs/teams): pull-only, from sign-in.
+- **Match data**: one pull+push replication per (table, tracked match), identifier `sync2_<table>_match_<matchId>`, filtered to the match; a push modifier drops other matches' rows. A match is tracked once the live page calls `syncMatch(matchId)`. Tracked matches live in the `tracked-matches` local document and are replicated **from app start on every screen**, by the leader tab only. A match leaves the list 14 days after it was last opened, once nothing of it is unsent.
+- `syncMatch(matchId)` waits (bounded by its timeout) for the user to be set, because the live page can call it before the provider's `setUser`.
 
-### Replication (`replicateSupabase`)
+### Local database
 
-- **Pull**: queries the table ordered by `updated_at, id`, using a checkpoint `{ modified: updated_at, id }` and the collection's filter. Pulls run when a replication starts or re-syncs.
-- **Push**: local writes are pushed as they happen. New documents are upserted; on an insert conflict (Postgres `23505`) the server row is returned as a conflict. Updates only apply if the server row still equals the assumed master state; otherwise the server row is returned as a conflict.
-- **Conflicts**: no custom conflict handler is configured, so RxDB's default handler applies (server state wins).
-- **Deletes**: soft delete via `_deleted`; Supabase realtime `DELETE` events are not used. `SupabaseDataStore.delete()` in the API layer issues a hard `DELETE`, which replication does not see.
-- **Realtime**: the Supabase realtime pull stream in `replicateSupabase` is commented out, so remote changes from other clients arrive on the next pull (replication start or re-sync), not live.
-- **Retries**: failed replication requests retry after RxDB's `retryTime` (5 s default).
-- **Multi-tab**: replication waits for leader election (`waitForLeadership: true`), so only one tab replicates.
+- The local database has exactly 13 collections: the 12 tables plus `pending_changes`. RxDB's free edition refuses more than 13 open collections per JavaScript process (error COL23; each browser tab is its own process), so adding a collection requires RxDB Premium or removing one.
+- The database is created with `allowSlowCount: true`, because `pending_changes` counts filter on non-indexed fields / `$in`, which RxDB rejects on Dexie otherwise.
 
-### Sync Flow Diagram
+### Server columns and triggers
 
-```
-┌─────────────────────────────────────────────────────────┐
-│          Live match action (Command execute/undo)       │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-                  ┌─────────────┐
-                  │    RxDB     │
-                  └──────┬──────┘
-                         │
-          RxDB replication (replicateSupabase)
-                         │
-          ┌──────────────┴──────────┐
-          │                         │
-     ┌────▼────┐               ┌────▼─────┐
-     │ Online  │               │ Offline  │
-     └────┬────┘               └────┬─────┘
-          │                         │
-          ▼                         ▼
-    ┌────────────┐          ┌──────────────────┐
-    │  Supabase  │          │ Replication      │
-    │  - Upsert  │          │ paused; local    │
-    │  - Update  │          │ writes pushed    │
-    └────────────┘          │ when back online │
-                            └──────────────────┘
-```
+- `_modified` (all 12 tables): server-clock checkpoint, set on every insert/update. Not in local schemas; `pickSchemaFields` drops it and any other column the local schema doesn't know.
+- `updated_at`: time of the last edit. Requests with `x-device-id` (sync) keep the device's value; other requests (API layer) get `now()`.
+- `matches.scorer_*` + `claim_match_scorer` / `get_match_scorer`: one scoring device per match. A trigger refuses sync writes from another device (`P0001 scorer_mismatch`).
 
-### Implementation Notes
+### Push rules
 
-- Live match components query RxDB via `useLocalDb()`; other screens use the API layer
-- Existing RxDB readers outside the live page: the match stats page (`app/matches/[id]/stats`) loads from Supabase when online and falls back to the local copy of a synced match when offline, and Settings has a manual "sync match" tool that pushes one match's local rows to Supabase
-- To make a new screen work offline, scope its data to a match and load it through `syncMatch`, not a new whole-table replication
-- `SyncManager` has unused helpers for syncing the user's last N matches (`updateLastMatches`, `restartDynamicSync`); their calls are commented out
+- Rows are sent one at a time. A row waits (up to 5 s, then retried) while a parent insert of the same match is unsent (`sets -> matches`, `player_stats/score_points/events -> sets`).
+- A batch stops at the first row that must wait (for a parent insert or for an offline claim); the remaining rows are retried with the batch.
+- Rows that reached a final outcome (uploaded, rejected, superseded) are not sent or reported again when their batch is retried.
+- Conflicts on match data: if the device knew a previous server version, the device wins; otherwise the later `updated_at` wins.
+- Errors: network/auth/server errors retry forever without counting; `parent_missing`/unknown errors count, and are rejected after 20 attempts; RLS, invalid data, schema mismatch, a missing external reference or a row deleted on the server are rejected at once and never block later rows. `scorer_mismatch` marks the match's unsent rows `superseded`.
+- Rejected rows stay in `pending_changes` with a reason; the badge's **Retry** re-queues them.
+- After a claim is lost, the live page is read-only: scoring, set setup, substitutions/events and undo are blocked, because the match is no longer replicated.
+
+### Not paused offline
+
+Replications are never paused: RxDB's retry waits for the `online` event. Reconnecting or coming back to the foreground calls `reSync()` and re-checks scorer claims.
+
+### Data-loss guards
+
+- Settings "clear local data" buttons are disabled while their tables have unsent rows.
+- A schema-error database reset (`?remove-database=true` or dev auto-reset) is refused while the unsent hint (`volleystats:unsent-changes` in localStorage) is non-zero. The sync badge, mounted in the navigation on every page, keeps the hint up to date.
+- **A future `DB_GENERATION` bump must not delete a database that still has unsent rows**: keep the old database until its `pending_changes` is empty (open it with the old schema, let its replications finish, then delete it).
+- Sign-out with unsent changes asks first; local data is kept and uploads when the same user signs back in.
 
 ---
 
@@ -134,5 +127,6 @@ Keep local data scoped to what a match needs. Reference data is synced at login,
 **Saved profile** ([lib/auth/user-cache.ts](lib/auth/user-cache.ts)): after each successful profile load, `AuthProvider` stores the user (profile + team/club memberships) in `localStorage` (`volleystats:cached-user`). It is only used when loading fails because the network is unavailable, and only for the same user id as the current session; when the connection returns the profile is reloaded in the background. It is removed on sign-out and whenever the app starts without a session.
 
 **User Experience**:
-- The live page shows a toast after `syncMatch`: ready for offline, or sync timed out / failed
-- Local writes are pushed automatically when connectivity is restored; no manual sync required
+- The sync badge (header and live page) shows "All saved", "Saving N changes...", "N changes saved on this device", "N changes couldn't be saved" (with **Retry**), or "changes from another account".
+- Matches with unsent changes are flagged in the match list.
+- Opening a match another device scores asks before taking over; the previous device becomes read-only and keeps its unsent changes as "not uploaded".

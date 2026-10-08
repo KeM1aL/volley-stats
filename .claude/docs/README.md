@@ -45,7 +45,7 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 - Understanding conflict handling
 
 **Contains**:
-- RxDB configuration (12 collections, everything except `profiles`)
+- RxDB configuration (13 collections: everything except `profiles`, plus `pending_changes`)
 - SyncManager (login-time reference sync, per-match `syncMatch`) and `replicateSupabase`
 - Pull/push replication, conflicts and soft deletes
 - What works offline vs. online

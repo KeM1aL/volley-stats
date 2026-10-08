@@ -127,7 +127,7 @@ volley-stats/
 │   │   ├── sync/
 │   │   │   ├── manager.ts       # SyncManager (what to sync, syncMatch)
 │   │   │   └── index.ts         # replicateSupabase (RxDB ↔ Supabase replication)
-│   │   ├── database.ts          # RxDB setup (12 collections)
+│   │   ├── database.ts          # RxDB setup (13 collections)
 │   │   └── schema.ts            # RxDB schemas
 │   ├── stats/                    # Statistics calculation
 │   ├── supabase/                 # Supabase client setup

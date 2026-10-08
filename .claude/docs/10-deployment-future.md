@@ -103,7 +103,7 @@ pnpm test:e2e:ui     # Playwright UI mode
 ### Key File Locations
 - API Layer: [lib/api/](lib/api/)
 - RxDB Setup: [lib/rxdb/database.ts](lib/rxdb/database.ts)
-- Sync Logic: [lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts) (SyncManager), [lib/rxdb/sync/index.ts](lib/rxdb/sync/index.ts) (replicateSupabase)
+- Sync Logic: [lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts) (SyncManager), [lib/rxdb/sync/replication.ts](lib/rxdb/sync/replication.ts) (replicateSupabase)
 - Auth Context: [contexts/auth-context.tsx](contexts/auth-context.tsx)
 - Local DB Provider: [components/providers/local-database-provider.tsx](components/providers/local-database-provider.tsx) (`useLocalDb`)
 - Supabase Client: [lib/supabase/client.ts](lib/supabase/client.ts)

@@ -48,6 +48,7 @@ pnpm dev              # Development server
 pnpm build           # Production build
 pnpm start           # Production server
 pnpm lint            # ESLint (flat config: eslint.config.mjs)
+pnpm test           # Unit tests (Vitest; sync layer)
 # E2E: pnpm build && pnpm start -p 3100, then
 CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e
 ```
@@ -56,7 +57,7 @@ CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e
 - `app/` - Next.js App Router pages
 - `components/` - React components (feature-based)
 - `lib/api/` - API layer (Repository pattern)
-- `lib/rxdb/` - RxDB setup and sync (12 collections: every Supabase table except `profiles`)
+- `lib/rxdb/` - RxDB setup and sync (13 collections: every Supabase table except `profiles`, plus the local `pending_changes`)
 - `lib/commands/` - Command pattern (undo/redo)
 - `.claude/docs/` - Detailed technical documentation
 
@@ -64,7 +65,7 @@ CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e
 
 ### Essential Patterns
 1. **Data Access**: Screens other than the live match read and write live data through the API layer via hooks (e.g., `useTeamApi()`), which call Supabase directly.
-2. **Offline live match**: Live match tracking must work offline, so it writes to RxDB (`useLocalDb` + `lib/commands`) and `SyncManager` replicates to Supabase. Keep local data scoped to what a match needs (`syncMatch(matchId)` pulls one match on demand) rather than syncing whole tables, because the app shouldn't load all data onto the device.
+2. **Offline live match**: Live match tracking must work offline, so it writes to RxDB (`useLocalDb` + `lib/commands`) and `SyncManager` replicates to Supabase. A match is replicated once opened (`syncMatch(matchId)` tracks it) and from then on at every app start, on every screen, until it is fully uploaded; don't add whole-table syncs of match data. Unsent rows are listed in the `pending_changes` collection, which drives the sync badge. See [.claude/docs/04-offline-sync.md](.claude/docs/04-offline-sync.md).
 3. **Error Handling**: Try-catch with toast notifications
 4. **Type Safety**: Use types from [lib/types.ts](lib/types.ts)
 
