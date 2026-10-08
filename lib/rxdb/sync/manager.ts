@@ -7,7 +7,7 @@ import { MatchSync } from "./match-sync";
 import type { PendingChanges } from "./pending-changes";
 import type { SyncPlatform } from "./platform/types";
 import { ReferenceSync } from "./reference-sync";
-import type { ScorerInfo } from "./scorer-claim";
+import { claimMatchScorer, getMatchScorer, type ClaimResult, type ScorerInfo } from "./scorer-claim";
 import { SyncStates } from "./sync-state";
 import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatchMap } from "./tracked-matches";
 import type { SyncUser } from "./types";
@@ -143,6 +143,41 @@ export class SyncManager {
     return this.pendingChanges.retryRejected(this.options.db, matchId);
   }
 
+  /** Claims the match for this device (spec section 7). Throws ScorerRpcError when the server can't be reached. */
+  async claimMatch(matchId: string, force = false): Promise<ClaimResult> {
+    if (this.user) await this.tracked.track(matchId, this.user.id);
+    const result = await claimMatchScorer(this.options.client, {
+      matchId,
+      deviceId: await this.deviceId,
+      label: this.options.platform.getDeviceLabel(),
+      force,
+    });
+    if (result.claimed) await this.tracked.setClaim(matchId, "held");
+    return result;
+  }
+
+  /** Scoring offline without being able to check: the claim is forced before the match's first upload. */
+  async claimMatchOffline(matchId: string): Promise<void> {
+    if (this.user) await this.tracked.track(matchId, this.user.id);
+    await this.tracked.setClaim(matchId, "pending-force");
+  }
+
+  /** Has another device taken over a match this device holds? */
+  async checkClaims(): Promise<void> {
+    const user = this.user;
+    if (!user) return;
+    const deviceId = await this.deviceId;
+    for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
+      if (entry.userId !== user.id || entry.claim !== "held") continue;
+      try {
+        const holder = await getMatchScorer(this.options.client, matchId, deviceId);
+        if (holder.deviceId && holder.deviceId !== deviceId) await this.markLost(matchId, holder);
+      } catch {
+        // Offline: checked again on the next resume.
+      }
+    }
+  }
+
   async awaitMatchInSync(matchId: string): Promise<void> {
     await this.matches.get(matchId)?.awaitInSync();
   }
@@ -235,13 +270,37 @@ export class SyncManager {
   private resume(): void {
     this.reference.reSync();
     for (const sync of this.matches.values()) sync.reSync();
+    void this.checkClaims();
   }
 
-  private readonly claimCheck: ClaimCheck = async (matchId) =>
-    (await this.tracked.entry(matchId))?.claim === "lost" ? "lost" : "ok";
+  private readonly claiming = new Map<string, Promise<"ok" | "unavailable">>();
+
+  private readonly claimCheck: ClaimCheck = async (matchId) => {
+    const entry = await this.tracked.entry(matchId);
+    if (!entry || entry.claim === null || entry.claim === "held") return "ok";
+    if (entry.claim === "lost") return "lost";
+    // pending-force: one RPC at a time per match, shared by the five replications.
+    let inFlight = this.claiming.get(matchId);
+    if (!inFlight) {
+      inFlight = this.claimMatch(matchId, true)
+        .then(
+          (result): "ok" | "unavailable" => (result.claimed ? "ok" : "unavailable"),
+          (): "unavailable" => "unavailable"
+        )
+        .finally(() => this.claiming.delete(matchId));
+      this.claiming.set(matchId, inFlight);
+    }
+    return inFlight;
+  };
 
   private async onSuperseded(matchId: string): Promise<void> {
-    await this.markLost(matchId, null);
+    let holder: ScorerInfo | null = null;
+    try {
+      holder = await getMatchScorer(this.options.client, matchId, await this.deviceId);
+    } catch {
+      // Offline: the banner shows "another scorer" without a name.
+    }
+    await this.markLost(matchId, holder);
   }
 
   private async markLost(matchId: string, holder: ScorerInfo | null): Promise<void> {
