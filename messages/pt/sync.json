@@ -9,7 +9,7 @@
     "matchLine": "{pending} pendentes · {rejected} não guardadas",
     "superseded": "Não enviado: {name} assumiu o registo às {time}",
     "unknownScorer": "outro marcador",
-    "allSavedToast": "Todos os dados do jogo estão guardados no servidor",
+    "allSavedToast": "Todos os dados da partida estão guardados no servidor",
     "noIssues": "Tudo o que foi registado neste dispositivo está no servidor."
   },
   "flag": {
@@ -29,8 +29,8 @@
     "unknown": "Erro desconhecido do servidor."
   },
   "tables": {
-    "matches": "jogo",
-    "sets": "set",
+    "matches": "partida",
+    "sets": "jogo",
     "player_stats": "estatística",
     "score_points": "ponto",
     "events": "evento",
@@ -42,13 +42,13 @@
     "unknown": "registo"
   },
   "claim": {
-    "takenTitle": "Outra pessoa está a registar este jogo",
-    "takenBody": "{name} está a registar este jogo em {device} (últimos dados recebidos às {time}).",
+    "takenTitle": "Outra pessoa está a registar esta partida",
+    "takenBody": "{name} está a registar esta partida em {device} (últimos dados recebidos às {time}).",
     "takenWarning": "Se assumir o registo, as alterações que esse dispositivo ainda não enviou não serão guardadas.",
     "takeOver": "Assumir o registo",
     "cancel": "Cancelar",
     "offlineTitle": "Não é possível verificar quem regista",
-    "offlineBody": "Está offline, por isso a aplicação não consegue verificar se outra pessoa está a registar este jogo. Registar neste dispositivo?",
+    "offlineBody": "Está offline, por isso a aplicação não consegue verificar se outra pessoa está a registar esta partida. Registar neste dispositivo?",
     "offlineConfirm": "Registar neste dispositivo",
     "takenOverBanner": "O registo foi assumido por {name} em {device} às {time}.",
     "never": "nunca"
