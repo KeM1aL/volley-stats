@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { pickSchemaFields } from "@/lib/rxdb/sync/helper";
 import { TrackedMatches } from "@/lib/rxdb/sync/tracked-matches";
 import type { FakeSupabaseServer } from "../fakes/fake-supabase";
@@ -285,6 +285,41 @@ describe("SyncManager", () => {
     await d.signIn();
     expect(await tracked.entry(matchId)).toBeNull();
     expect(await tracked.entry(otherMatchId)).not.toBeNull();
+  });
+
+  it("tracks a match opened before sign-in completes", async () => {
+    const d = await device();
+    const opened = d.openMatch(matchId); // the live page's effect runs before the provider's setUser
+    await d.signIn();
+    expect(await opened).toBe(true);
+    await waitFor(() => d.manager.isTracking(matchId), { message: "the match is tracked" });
+  });
+
+  it("still replicates tracked matches when the upgrade seeding fails", async () => {
+    const d = await device();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const getLocal = d.db.getLocal.bind(d.db);
+    let failed = false;
+    vi.spyOn(d.db, "getLocal").mockImplementation(((id: string) => {
+      if (id === "sync-upgrade" && !failed) {
+        failed = true;
+        return Promise.reject(new Error("storage unavailable"));
+      }
+      return getLocal(id);
+    }) as typeof d.db.getLocal);
+    try {
+      await new TrackedMatches(d.db).track(matchId, USER_ID);
+      await d.signIn();
+      expect(failed).toBe(true);
+      await waitFor(() => d.manager.isTracking(matchId), { message: "the match is tracked" });
+      const set = await d.startSet(matchId);
+      await d.recordPoint(matchId, set.id, 1);
+      await d.settle(matchId);
+      await expectServerEqualsDevice(d, matchId);
+      expect(warn).toHaveBeenCalledWith("[sync] upgrade seeding failed:", expect.any(Error));
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it("asks the platform to keep local data", async () => {

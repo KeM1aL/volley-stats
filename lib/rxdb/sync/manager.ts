@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { distinctUntilChanged, filter, type Subscription } from "rxjs";
+import { BehaviorSubject, distinctUntilChanged, filter, firstValueFrom, of, timeout, type Subscription } from "rxjs";
 import type { User } from "@/lib/types";
 import type { LocalDatabase } from "../collections";
 import type { ClaimCheck } from "./dependencies";
@@ -55,6 +55,8 @@ export class SyncManager {
   readonly syncStates: SyncStates;
   readonly pendingChanges: PendingChanges;
   private user: SyncUser | null = null;
+  /** Mirrors `user`, so a screen that asks for a match before sign-in completes can wait for it. */
+  private readonly user$ = new BehaviorSubject<SyncUser | null>(null);
   private readonly reference: ReferenceSync;
   private readonly matches = new Map<string, MatchSync>();
   private trackedSubscription: Subscription | null = null;
@@ -97,17 +99,17 @@ export class SyncManager {
   setUser(user: SyncUser | null): Promise<void> {
     return this.enqueue(async () => {
       if (sameSyncUser(user, this.user)) {
-        this.user = user;
+        this.assignUser(user);
         return;
       }
       if (user && this.user && user.id === this.user.id) {
-        this.user = user;
+        this.assignUser(user);
         await this.reference.stop();
         this.reference.start(user);
         return;
       }
       await this.stopAll();
-      this.user = user;
+      this.assignUser(user);
       if (user) await this.startAll(user);
     });
   }
@@ -117,7 +119,14 @@ export class SyncManager {
    * true at once if the match was already synced here, false after `timeoutMs`.
    */
   async syncMatch(matchId: string, timeoutMs: number = SYNC_TIMEOUT_MS): Promise<boolean> {
-    const user = this.user;
+    const user =
+      this.user ??
+      (await firstValueFrom(
+        this.user$.pipe(
+          filter((candidate): candidate is SyncUser => candidate !== null),
+          timeout({ first: timeoutMs, with: () => of(null) })
+        )
+      ));
     if (!user) return false;
     const alreadySynced = (await this.syncStates.get(matchId))?.status === "synced";
     if (!alreadySynced) await this.syncStates.set(matchId, "syncing");
@@ -143,13 +152,27 @@ export class SyncManager {
     await this.enqueue(() => this.stopAll());
   }
 
+  private assignUser(user: SyncUser | null): void {
+    this.user = user;
+    this.user$.next(user);
+  }
+
   private async startAll(user: SyncUser): Promise<void> {
     this.reference.start(user);
-    await runSyncUpgrade(this.options.db, this.tracked, user.id);
-    await this.pruneTracked(user.id);
+    // Subscribed first: the upgrade and the pruning are best effort and must not keep matches from replicating.
     this.trackedSubscription = this.tracked.get$().subscribe((matches) => {
       void this.enqueue(() => this.reconcile(matches));
     });
+    try {
+      await runSyncUpgrade(this.options.db, this.tracked, user.id);
+    } catch (error) {
+      console.warn("[sync] upgrade seeding failed:", error);
+    }
+    try {
+      await this.pruneTracked(user.id);
+    } catch (error) {
+      console.warn("[sync] pruning tracked matches failed:", error);
+    }
     void this.options.platform.requestPersistentStorage();
   }
 
@@ -158,7 +181,10 @@ export class SyncManager {
     this.trackedSubscription = null;
     const syncs = [...this.matches.values()];
     this.matches.clear();
-    await Promise.all(syncs.map((sync) => sync.cancel()));
+    const results = await Promise.allSettled(syncs.map((sync) => sync.cancel()));
+    for (const result of results) {
+      if (result.status === "rejected") console.warn("[sync] stopping a match replication failed:", result.reason);
+    }
     await this.reference.stop();
   }
 
@@ -227,7 +253,7 @@ export class SyncManager {
   /** Serializes lifecycle changes within this tab. */
   private enqueue<T>(task: () => Promise<T>): Promise<T> {
     const run = this.queue.then(task, task);
-    this.queue = run.catch(() => undefined);
+    this.queue = run.catch((error) => console.warn("[sync] lifecycle task failed:", error));
     return run;
   }
 }
