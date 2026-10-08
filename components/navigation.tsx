@@ -22,10 +22,30 @@ import { ThemeToggle } from "./theme-toggle";
 import { FullScreenToggle } from "./fullscreen-toggle";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLandscape } from "@/hooks/use-landscape";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { SyncBadge } from "@/components/sync/sync-badge";
+import { useSyncStatus } from "@/hooks/use-sync-status";
 
 export function Navigation() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const tSync = useTranslations("sync");
+  const syncStatus = useSyncStatus();
+  const unsentCount = (syncStatus?.pendingCount ?? 0) + (syncStatus?.rejectedCount ?? 0);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const handleSignOut = () => {
+    if (unsentCount > 0) setConfirmSignOut(true);
+    else void signOut();
+  };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isLandscape = useLandscape();
   const t = useTranslations('navigation');
@@ -103,6 +123,7 @@ export function Navigation() {
             </Link>
           </div>
           <div className="flex items-center gap-1">
+            {user && <SyncBadge compact />}
             <FullScreenToggle />
             <LanguageSwitcher />
             <ThemeToggle />
@@ -183,17 +204,37 @@ export function Navigation() {
           )}
         </div>
         <div className="flex items-center">
+          {user && <SyncBadge />}
           <FullScreenToggle />
           <LanguageSwitcher />
           <ThemeToggle />
           {user && (
-            <Button variant="ghost" size="sm" onClick={signOut} className="px-2 md:px-3 text-xs md:text-sm">
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="px-2 md:px-3 text-xs md:text-sm">
               <LogOut className="h-4 w-4 mr-1 md:mr-2" />
               <span>{t('actions.signOut')}</span>
             </Button>
           )}
         </div>
       </div>
+      <AlertDialog open={confirmSignOut} onOpenChange={setConfirmSignOut}>
+        <AlertDialogContent data-testid="sign-out-warning">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tSync("guards.signOutTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{tSync("guards.signOutBody", { count: unsentCount })}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tSync("claim.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmSignOut(false);
+                void signOut();
+              }}
+            >
+              {tSync("guards.signOutConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 }
