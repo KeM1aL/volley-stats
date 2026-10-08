@@ -1,0 +1,63 @@
+{
+  "badge": {
+    "saved": "Tudo guardado",
+    "uploading": "A guardar {count, plural, one {# alteração} other {# alterações}}…",
+    "waiting": "{count, plural, one {# alteração guardada} other {# alterações guardadas}} neste dispositivo, serão enviadas quando voltar a ligação",
+    "problem": "{count, plural, one {# alteração não pôde ser guardada} other {# alterações não puderam ser guardadas}}",
+    "otherAccount": "Há alterações de outra conta à espera neste dispositivo",
+    "retry": "Tentar novamente",
+    "matchLine": "{pending} pendentes · {rejected} não guardadas",
+    "superseded": "Não enviado: {name} assumiu o registo às {time}",
+    "unknownScorer": "outro marcador",
+    "allSavedToast": "Todos os dados do jogo estão guardados no servidor",
+    "noIssues": "Tudo o que foi registado neste dispositivo está no servidor."
+  },
+  "flag": {
+    "pending": "Ainda não enviado",
+    "problem": "Algumas alterações não puderam ser guardadas"
+  },
+  "errors": {
+    "rls": "O servidor recusou esta alteração (sem permissão).",
+    "invalid_data": "O servidor recusou dados inválidos.",
+    "schema_mismatch": "A aplicação precisa de ser atualizada para guardar esta alteração.",
+    "duplicate": "Já existe um registo em conflito no servidor.",
+    "reference_missing": "Algo a que se refere ({table}) foi eliminado no servidor.",
+    "deleted_on_server": "Este registo foi eliminado no servidor.",
+    "parent_rejected": "Depende de um registo ({table}) que não pôde ser guardado.",
+    "too_many_attempts": "Não foi possível guardar após várias tentativas.",
+    "scorer_mismatch": "Outro dispositivo assumiu o registo.",
+    "unknown": "Erro desconhecido do servidor."
+  },
+  "tables": {
+    "matches": "jogo",
+    "sets": "set",
+    "player_stats": "estatística",
+    "score_points": "ponto",
+    "events": "evento",
+    "team_members": "jogador",
+    "teams": "equipa",
+    "match_formats": "formato de jogo",
+    "championships": "campeonato",
+    "seasons": "época",
+    "unknown": "registo"
+  },
+  "claim": {
+    "takenTitle": "Outra pessoa está a registar este jogo",
+    "takenBody": "{name} está a registar este jogo em {device} (últimos dados recebidos às {time}).",
+    "takenWarning": "Se assumir o registo, as alterações que esse dispositivo ainda não enviou não serão guardadas.",
+    "takeOver": "Assumir o registo",
+    "cancel": "Cancelar",
+    "offlineTitle": "Não é possível verificar quem regista",
+    "offlineBody": "Está offline, por isso a aplicação não consegue verificar se outra pessoa está a registar este jogo. Registar neste dispositivo?",
+    "offlineConfirm": "Registar neste dispositivo",
+    "takenOverBanner": "O registo foi assumido por {name} em {device} às {time}.",
+    "never": "nunca"
+  },
+  "guards": {
+    "signOutTitle": "Alterações ainda não enviadas",
+    "signOutBody": "{count, plural, one {# alteração deste dispositivo não foi enviada} other {# alterações deste dispositivo não foram enviadas}}. Ficam neste dispositivo e serão enviadas quando voltar a iniciar sessão.",
+    "signOutConfirm": "Terminar sessão mesmo assim",
+    "clearBlocked": "Parte destes dados ainda não foi enviada. Aguarde até o indicador de sincronização mostrar «Tudo guardado».",
+    "resetBlocked": "A base de dados local ainda tem alterações não enviadas, por isso não foi reposta. Volte a ligar-se e aguarde até tudo estar guardado."
+  }
+}

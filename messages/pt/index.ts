@@ -13,6 +13,7 @@ import matchFormats from './match-formats.json';
 import stats from './stats.json';
 import debug from './debug.json';
 import errors from './errors.json';
+import sync from './sync.json';
 
 export default {
   common,
@@ -30,4 +31,5 @@ export default {
   stats,
   debug,
   errors,
+  sync,
 };

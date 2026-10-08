@@ -1,0 +1,63 @@
+{
+  "badge": {
+    "saved": "Tutto salvato",
+    "uploading": "Salvataggio di {count, plural, one {# modifica} other {# modifiche}}…",
+    "waiting": "{count, plural, one {# modifica salvata} other {# modifiche salvate}} su questo dispositivo, verranno inviate al ritorno della connessione",
+    "problem": "{count, plural, one {# modifica non è stata salvata} other {# modifiche non sono state salvate}}",
+    "otherAccount": "Su questo dispositivo ci sono modifiche di un altro account in attesa",
+    "retry": "Riprova",
+    "matchLine": "{pending} in attesa · {rejected} non salvate",
+    "superseded": "Non inviato: {name} ha preso in carico il punteggio alle {time}",
+    "unknownScorer": "un altro segnapunti",
+    "allSavedToast": "Tutti i dati della partita sono salvati sul server",
+    "noIssues": "Tutto ciò che è stato registrato su questo dispositivo è sul server."
+  },
+  "flag": {
+    "pending": "Non ancora inviato",
+    "problem": "Alcune modifiche non sono state salvate"
+  },
+  "errors": {
+    "rls": "Il server ha rifiutato questa modifica (permessi insufficienti).",
+    "invalid_data": "Il server ha rifiutato dati non validi.",
+    "schema_mismatch": "L'app deve essere aggiornata per salvare questa modifica.",
+    "duplicate": "Sul server esiste già un record in conflitto.",
+    "reference_missing": "Un elemento collegato ({table}) è stato eliminato sul server.",
+    "deleted_on_server": "Questo record è stato eliminato sul server.",
+    "parent_rejected": "Dipende da un elemento ({table}) che non è stato possibile salvare.",
+    "too_many_attempts": "Impossibile salvare dopo vari tentativi.",
+    "scorer_mismatch": "Un altro dispositivo ha preso in carico il punteggio.",
+    "unknown": "Errore sconosciuto del server."
+  },
+  "tables": {
+    "matches": "partita",
+    "sets": "set",
+    "player_stats": "statistica",
+    "score_points": "punto",
+    "events": "evento",
+    "team_members": "giocatore",
+    "teams": "squadra",
+    "match_formats": "formato partita",
+    "championships": "campionato",
+    "seasons": "stagione",
+    "unknown": "record"
+  },
+  "claim": {
+    "takenTitle": "Qualcun altro sta segnando questa partita",
+    "takenBody": "{name} sta segnando questa partita su {device} (ultimi dati ricevuti alle {time}).",
+    "takenWarning": "Se prendi il controllo, le modifiche non ancora inviate da quel dispositivo non verranno salvate.",
+    "takeOver": "Prendi il controllo del punteggio",
+    "cancel": "Annulla",
+    "offlineTitle": "Impossibile verificare chi sta segnando",
+    "offlineBody": "Sei offline, quindi l'app non può verificare se qualcun altro sta segnando questa partita. Segnare su questo dispositivo?",
+    "offlineConfirm": "Segna su questo dispositivo",
+    "takenOverBanner": "Il punteggio è stato preso in carico da {name} su {device} alle {time}.",
+    "never": "mai"
+  },
+  "guards": {
+    "signOutTitle": "Modifiche non ancora inviate",
+    "signOutBody": "{count, plural, one {# modifica di questo dispositivo non è stata inviata} other {# modifiche di questo dispositivo non sono state inviate}}. Restano su questo dispositivo e verranno inviate quando accederai di nuovo.",
+    "signOutConfirm": "Esci comunque",
+    "clearBlocked": "Alcuni di questi dati non sono ancora stati inviati. Attendi che l'indicatore di sincronizzazione mostri «Tutto salvato».",
+    "resetBlocked": "Il database locale contiene ancora modifiche non inviate, quindi non è stato reimpostato. Torna online e attendi che tutto sia salvato."
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "badge": {
+    "saved": "All saved",
+    "uploading": "Saving {count, plural, one {# change} other {# changes}}…",
+    "waiting": "{count, plural, one {# change} other {# changes}} saved on this device, will upload when online",
+    "problem": "{count, plural, one {# change} other {# changes}} couldn't be saved",
+    "otherAccount": "Changes from another account are waiting on this device",
+    "retry": "Retry",
+    "matchLine": "{pending} waiting · {rejected} not saved",
+    "superseded": "Not uploaded: {name} took over scoring at {time}",
+    "unknownScorer": "another scorer",
+    "allSavedToast": "All your match data is saved to the server",
+    "noIssues": "Everything recorded on this device is on the server."
+  },
+  "flag": {
+    "pending": "Not uploaded yet",
+    "problem": "Some changes couldn't be saved"
+  },
+  "errors": {
+    "rls": "The server refused this change (no permission).",
+    "invalid_data": "The server rejected invalid data.",
+    "schema_mismatch": "The app needs an update to save this change.",
+    "duplicate": "A conflicting record already exists on the server.",
+    "reference_missing": "Something it refers to ({table}) was deleted on the server.",
+    "deleted_on_server": "This record was deleted on the server.",
+    "parent_rejected": "It depends on a {table} that couldn't be saved.",
+    "too_many_attempts": "It couldn't be saved after repeated attempts.",
+    "scorer_mismatch": "Another device took over scoring.",
+    "unknown": "Unknown server error."
+  },
+  "tables": {
+    "matches": "match",
+    "sets": "set",
+    "player_stats": "stat",
+    "score_points": "point",
+    "events": "event",
+    "team_members": "player",
+    "teams": "team",
+    "match_formats": "match format",
+    "championships": "championship",
+    "seasons": "season",
+    "unknown": "record"
+  },
+  "claim": {
+    "takenTitle": "Someone else is scoring this match",
+    "takenBody": "{name} is scoring this match on {device} (last data received at {time}).",
+    "takenWarning": "If you take over, changes that device hasn't uploaded yet won't be saved.",
+    "takeOver": "Take over scoring",
+    "cancel": "Cancel",
+    "offlineTitle": "Can't check who's scoring",
+    "offlineBody": "You're offline, so the app can't check whether someone else is scoring this match. Score on this device?",
+    "offlineConfirm": "Score on this device",
+    "takenOverBanner": "Scoring was taken over by {name} on {device} at {time}.",
+    "never": "never"
+  },
+  "guards": {
+    "signOutTitle": "Changes not uploaded yet",
+    "signOutBody": "{count, plural, one {# change} other {# changes}} from this device haven't been uploaded. They stay on this device and upload when you sign back in.",
+    "signOutConfirm": "Sign out anyway",
+    "clearBlocked": "Some of this data hasn't been uploaded yet. Wait until the sync badge shows “All saved”.",
+    "resetBlocked": "The local database still has changes that haven't been uploaded, so it wasn't reset. Go back online and wait until everything is saved."
+  }
+}
