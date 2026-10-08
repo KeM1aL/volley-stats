@@ -190,6 +190,29 @@ describe("replicateSupabase", () => {
     await waitFor(() => !!server.row("sets", set.id), { message: "set uploaded once the gate opened" });
   });
 
+  it("does not resend or re-report a rejected row when another row of its batch is retried", async () => {
+    await setup();
+    const { reporter, calls } = recordingReporter();
+    server.denyWrites("sets", (row) => row.set_number === 1);
+    let ready = false;
+    const gate: PushGate = {
+      check: async (doc) =>
+        doc.set_number === 2 && !ready ? { kind: "wait", reason: "parents" } : { kind: "send" },
+    };
+    const state = replicate("sets", { reporter, gate });
+    await state.awaitInitialReplication();
+    const first = aSet(matchId, { set_number: 1 });
+    const second = aSet(matchId, { set_number: 2 });
+    // bulkInsert so that both rows are in the same push batch
+    await db.sets.bulkInsert([first as any, second as any]);
+    await sleep(300); // several retry cycles while the second set waits
+    expect(calls.rejected).toEqual([{ id: first.id, code: "rls", neverUploaded: true }]);
+    expect(server.log.filter((entry) => entry.table === "sets" && entry.op === "insert" && entry.ids.includes(first.id))).toHaveLength(1);
+    ready = true;
+    await waitFor(() => !!server.row("sets", second.id), { message: "second set uploaded once the gate opened" });
+    expect(calls.rejected).toHaveLength(1);
+  });
+
   it("reports rows refused because another device scores the match", async () => {
     await setup();
     server.setScorer(matchId, { deviceId: "device-b" });

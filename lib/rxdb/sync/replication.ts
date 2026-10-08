@@ -127,8 +127,10 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
       }
     : undefined;
 
-  // Rows accepted during a batch that is then retried: not sent again.
-  const accepted = new Map<string, string>();
+  // Rows (by id, with the JSON of the state) that reached a final outcome during a batch that is
+  // then retried: accepted, rejected or superseded. They are not sent or reported again.
+  // Conflicts are not final (RxDB resolves them), so they are not recorded.
+  const settled = new Map<string, string>();
 
   const push: ReplicationPushOptions<any> | undefined = options.push
     ? {
@@ -142,7 +144,8 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
           for (const row of rows) {
             const doc = row.newDocumentState as WithDeleted<any>;
             const id = doc[primaryPath] as string;
-            if (accepted.get(id) === JSON.stringify(doc)) continue;
+            const docState = JSON.stringify(doc);
+            if (settled.get(id) === docState) continue;
 
             const decision = gate ? await gate.check(doc) : ({ kind: "send" } as const);
             if (decision.kind === "wait") {
@@ -152,10 +155,12 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
             }
             if (decision.kind === "supersede") {
               await reporter?.superseded(doc);
+              settled.set(id, docState);
               continue;
             }
             if (decision.kind === "reject") {
               await reporter?.rejected(doc, decision.error, { neverUploaded: !row.assumedMasterState });
+              settled.set(id, docState);
               continue;
             }
 
@@ -163,7 +168,7 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
               ? await update(doc, row.assumedMasterState as WithDeleted<any>)
               : await insert(doc);
             if (outcome.kind === "ok") {
-              accepted.set(id, JSON.stringify(doc));
+              settled.set(id, docState);
               continue;
             }
             if (outcome.kind === "conflict") {
@@ -174,10 +179,12 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
             const classified = classifyPushError(outcome.error, outcome.status);
             if (classified.kind === "superseded") {
               await reporter?.superseded(doc);
+              settled.set(id, docState);
               continue;
             }
             if (classified.kind === "permanent") {
               await reporter?.rejected(doc, classified, { neverUploaded: outcome.phase === "insert" });
+              settled.set(id, docState);
               continue;
             }
             if (reporter && countsTowardsAttemptLimit(classified.code)) {
@@ -188,6 +195,7 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
                   { kind: "permanent", code: "too_many_attempts", params: { last: classified.code } },
                   { neverUploaded: outcome.phase === "insert" }
                 );
+                settled.set(id, docState);
                 continue;
               }
             }
@@ -196,7 +204,7 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
           }
 
           if (retryReasons.length > 0) throw new PushRetryError(retryReasons);
-          for (const row of rows) accepted.delete((row.newDocumentState as any)[primaryPath]);
+          for (const row of rows) settled.delete((row.newDocumentState as any)[primaryPath]);
           return conflicts;
         },
       }
