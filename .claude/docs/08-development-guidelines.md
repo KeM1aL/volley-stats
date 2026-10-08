@@ -190,8 +190,8 @@ Screens other than the live match use the API layer only (direct Supabase). Only
 - [ ] Create custom hook `hooks/use-<domain>-api.ts` returning `getApi().<domain>`
 
 ### 3. Offline Live Match Data (only if the live match needs it)
-- [ ] Add RxDB schema in [lib/rxdb/schema.ts](lib/rxdb/schema.ts), the `CollectionName` union, and the collection in [lib/rxdb/database.ts](lib/rxdb/database.ts)
-- [ ] Scope sync to a match: add the collection to `dynamicCollections` in [lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts) (filtered by `match_id`) and to the per-match sync state (`SyncStateDocument` in [lib/rxdb/sync/types.ts](lib/rxdb/sync/types.ts), `initMatchSyncState`); don't add a whole-table replication
+- [ ] Add the RxDB schema in [lib/rxdb/schema.ts](lib/rxdb/schema.ts) and the collection in [lib/rxdb/collections.ts](lib/rxdb/collections.ts). The local database has exactly 13 collections and RxDB's free edition refuses more (error COL23), so a new collection needs RxDB Premium or removing one
+- [ ] Scope sync to a match: add the table to `MATCH_COLLECTIONS` in [lib/rxdb/sync/types.ts](lib/rxdb/sync/types.ts) (filtered by `match_id`) and, if it references another match table, to `PARENT_FIELDS` in [lib/rxdb/sync/dependencies.ts](lib/rxdb/sync/dependencies.ts); don't add a whole-table replication
 - [ ] Write through a Command in [lib/commands/match-commands.ts](lib/commands/match-commands.ts) so it supports undo
 - [ ] Test offline and reconnect sync
 
