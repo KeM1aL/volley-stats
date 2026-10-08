@@ -1,7 +1,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ReplicationOptions, ReplicationPullOptions, ReplicationPushOptions } from 'rxdb';
-import type { WithDeleted } from "rxdb";
+import type { RxCollection, WithDeleted } from "rxdb";
 import type { ClassifiedError } from "./errors";
 
 /** Tables replicated per match; pushes and pending changes only concern these. */
@@ -99,4 +99,31 @@ export type GateDecision =
 
 export interface PushGate {
   check(doc: WithDeleted<any>): Promise<GateDecision>;
+}
+
+export interface PushReporter {
+  rejected(doc: WithDeleted<any>, error: ClassifiedError, opts: { neverUploaded: boolean }): Promise<void>;
+  superseded(doc: WithDeleted<any>): Promise<void>;
+  /** Called for failures that count towards MAX_TEMPORARY_ATTEMPTS; returns the attempts so far. */
+  temporaryFailure(doc: WithDeleted<any>, error: ClassifiedError): Promise<number>;
+  neverUploaded(docId: string): Promise<boolean>;
+}
+
+export interface SupabaseReplicationOptions {
+  replicationIdentifier: string;
+  collection: RxCollection<any>;
+  client: SupabaseClient<any>;
+  tableName: string;
+  deviceId?: string;
+  live?: boolean;
+  retryTime?: number;
+  waitForLeadership?: boolean;
+  autoStart?: boolean;
+  pull?: { batchSize?: number; queryBuilder?: (query: any) => any };
+  push?: {
+    batchSize?: number;
+    modifier?: (doc: WithDeleted<any>) => WithDeleted<any> | null;
+    gate?: PushGate;
+    reporter?: PushReporter;
+  };
 }
