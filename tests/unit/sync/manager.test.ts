@@ -504,6 +504,52 @@ describe("SyncManager", () => {
     expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
   });
 
+  it("resolves a match opened before sign-in as not synced when the manager is destroyed", async () => {
+    const d = await device();
+    const opened = d.openMatch(matchId); // waits up to 5 s for a user
+    const start = Date.now();
+    await d.manager.destroy();
+    expect(await opened).toBe(false);
+    expect(Date.now() - start).toBeLessThan(1000);
+    expect(await d.manager.tracked.entry(matchId)).toBeNull();
+  });
+
+  it("starts nothing for a match being opened when the manager is destroyed", async () => {
+    const d = await device();
+    await d.signIn();
+    const opened = d.manager.syncMatch(matchId, 5000);
+    await d.manager.destroy();
+    expect(await opened).toBe(false);
+    await sleep(100);
+    expect(d.manager.isTracking(matchId)).toBe(false);
+    await d.manager.setUser(testUser());
+    expect(d.manager.userId).toBeNull();
+    expect(await d.manager.syncMatch(matchId, 5000)).toBe(false);
+    expect(d.manager.isTracking(matchId)).toBe(false);
+  });
+
+  it("does not turn a synced match back into syncing (the first pull may finish while it is opened)", async () => {
+    const d = await device();
+    await d.signIn();
+    expect(await d.openMatch(matchId)).toBe(true);
+    // Opened again: the status is read just before the first pull's "synced" lands.
+    vi.spyOn(d.manager.syncStates, "get").mockResolvedValueOnce(null);
+    try {
+      expect(await d.manager.syncMatch(matchId, 500)).toBe(true);
+      expect((await d.manager.syncStates.get(matchId))?.status).toBe("synced");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("tells whether a match it waits on is replicated", async () => {
+    const d = await device();
+    await d.signIn();
+    expect(await d.manager.awaitMatchInSync(matchId)).toBe(false);
+    await d.openMatch(matchId);
+    expect(await d.manager.awaitMatchInSync(matchId)).toBe(true);
+  });
+
   it("tracks a match opened before sign-in completes", async () => {
     const d = await device();
     const opened = d.openMatch(matchId); // the live page's effect runs before the provider's setUser

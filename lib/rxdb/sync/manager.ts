@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { BehaviorSubject, distinctUntilChanged, filter, firstValueFrom, of, timeout, type Subscription } from "rxjs";
+import { BehaviorSubject, distinctUntilChanged, filter, firstValueFrom, of, timeout, type Observable, type Subscription } from "rxjs";
 import type { User } from "@/lib/types";
 import type { LocalDatabase } from "../collections";
 import type { ClaimCheck } from "./dependencies";
@@ -64,6 +64,8 @@ export class SyncManager {
   private readonly platformSubscriptions: Subscription[];
   private queue: Promise<unknown> = Promise.resolve();
   private readonly deviceId: Promise<string>;
+  /** Set by destroy(): nothing starts afterwards, and a pending syncMatch resolves false. */
+  private readonly destroyed$ = new BehaviorSubject(false);
 
   constructor(private readonly options: SyncManagerOptions) {
     this.tracked = new TrackedMatches(options.db);
@@ -92,13 +94,24 @@ export class SyncManager {
     return this.user?.id ?? null;
   }
 
+  /** Whether the match's replications run (true until their cancellation has finished). */
   isTracking(matchId: string): boolean {
     return this.matches.has(matchId);
   }
 
+  private get destroyed(): boolean {
+    return this.destroyed$.value;
+  }
+
+  private get whenDestroyed$(): Observable<boolean> {
+    return this.destroyed$.pipe(filter(Boolean));
+  }
+
   /** A refreshed profile for the same user (same memberships) changes nothing. */
   setUser(user: SyncUser | null): Promise<void> {
+    if (this.destroyed) return Promise.resolve();
     return this.enqueue(async () => {
+      if (this.destroyed) return;
       if (sameSyncUser(user, this.user)) {
         this.assignUser(user);
         return;
@@ -117,28 +130,35 @@ export class SyncManager {
 
   /**
    * Tracks the match on this device and waits for its first pull. Resolves
-   * true at once if the match was already synced here, false after `timeoutMs`.
+   * true at once if the match was already synced here, false after `timeoutMs`
+   * or once the manager is destroyed.
    */
   async syncMatch(matchId: string, timeoutMs: number = SYNC_TIMEOUT_MS): Promise<boolean> {
+    if (this.destroyed) return false;
     const user =
       this.user ??
+      // user$ completes on destroy: then null.
       (await firstValueFrom(
         this.user$.pipe(
           filter((candidate): candidate is SyncUser => candidate !== null),
           timeout({ first: timeoutMs, with: () => of(null) })
-        )
+        ),
+        { defaultValue: null }
       ));
-    if (!user) return false;
+    if (!user || this.destroyed) return false;
     const alreadySynced = (await this.syncStates.get(matchId))?.status === "synced";
+    if (this.destroyed) return false;
     // Another account's unsent changes to it: that account keeps it (the badge shows them).
     if (!(await this.trackFor(matchId, user.id))) return alreadySynced;
-    if (!alreadySynced) await this.syncStates.set(matchId, "syncing");
+    // Re-checked atomically: a first pull that completed meanwhile is not turned back into "syncing".
+    const synced = await this.syncStates.markSyncing(matchId);
     await this.enqueue(async () => this.reconcile(await this.tracked.get()));
-    if (alreadySynced) {
+    if (this.destroyed) return false;
+    if (synced) {
       this.matches.get(matchId)?.reSync();
       return true;
     }
-    return this.syncStates.waitForSynced(matchId, timeoutMs);
+    return this.syncStates.waitForSynced(matchId, timeoutMs, this.whenDestroyed$);
   }
 
   retryRejected(matchId?: string): Promise<number> {
@@ -211,11 +231,15 @@ export class SyncManager {
     await this.tracked.setClaim(matchId, "held");
   }
 
+  /** Stops the match's replications; it stays in `matches` (isTracking) until they are cancelled. */
   private async stopMatch(matchId: string): Promise<void> {
     const running = this.matches.get(matchId);
     if (!running) return;
-    this.matches.delete(matchId);
-    await running.cancel();
+    try {
+      await running.cancel();
+    } finally {
+      if (this.matches.get(matchId) === running) this.matches.delete(matchId);
+    }
   }
 
   /** Scoring offline without being able to check: the claim is forced before the match's first upload. */
@@ -283,12 +307,22 @@ export class SyncManager {
     }
   }
 
-  async awaitMatchInSync(matchId: string): Promise<void> {
-    await this.matches.get(matchId)?.awaitInSync();
+  /** Waits until the match's replications are in sync; false if the match isn't replicated here. */
+  async awaitMatchInSync(matchId: string): Promise<boolean> {
+    const sync = this.matches.get(matchId);
+    if (!sync) return false;
+    await sync.awaitInSync();
+    return true;
   }
 
   async destroy(): Promise<void> {
-    this.platformSubscriptions.forEach((subscription) => subscription.unsubscribe());
+    if (!this.destroyed) {
+      this.destroyed$.next(true);
+      this.platformSubscriptions.forEach((subscription) => subscription.unsubscribe());
+      // Synchronously, so a reconcile already queued starts nothing.
+      this.assignUser(null);
+      this.user$.complete();
+    }
     await this.enqueue(() => this.stopAll());
   }
 
@@ -319,9 +353,12 @@ export class SyncManager {
   private async stopAll(): Promise<void> {
     this.trackedSubscription?.unsubscribe();
     this.trackedSubscription = null;
-    const syncs = [...this.matches.values()];
-    this.matches.clear();
-    const results = await Promise.allSettled(syncs.map((sync) => sync.cancel()));
+    // Removed from the map once cancelled, so isTracking stays true while they stop.
+    const syncs = [...this.matches];
+    const results = await Promise.allSettled(syncs.map(([, sync]) => sync.cancel()));
+    for (const [matchId, sync] of syncs) {
+      if (this.matches.get(matchId) === sync) this.matches.delete(matchId);
+    }
     for (const result of results) {
       if (result.status === "rejected") console.warn("[sync] stopping a match replication failed:", result.reason);
     }
@@ -337,10 +374,8 @@ export class SyncManager {
         .filter(([, entry]) => entry.userId === user.id && entry.claim !== "lost")
         .map(([matchId]) => matchId)
     );
-    for (const [matchId, sync] of [...this.matches]) {
-      if (wanted.has(matchId)) continue;
-      this.matches.delete(matchId);
-      await sync.cancel();
+    for (const matchId of [...this.matches.keys()]) {
+      if (!wanted.has(matchId)) await this.stopMatch(matchId);
     }
     const deviceId = await this.deviceId;
     for (const matchId of wanted) {
