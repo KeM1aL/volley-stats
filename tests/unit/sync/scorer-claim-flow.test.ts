@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FakeSupabaseServer } from "../fakes/fake-supabase";
 import { createFakeServer } from "../helpers/server";
 import { aSet, anEvent, seedServerMatch, seedTeams } from "../helpers/fixtures";
@@ -61,6 +61,79 @@ describe("scoring device claim", () => {
     expect(claimIndex).toBeGreaterThanOrEqual(0);
     expect(claimIndex).toBeLessThan(firstSetWrite);
     await expectServerEqualsDevice(a, matchId);
+  });
+
+  it("forces an offline claim once for the rows of all five tables", async () => {
+    const a = await device();
+    await a.openMatch(matchId);
+    a.goOffline();
+    await a.manager.claimMatchOffline(matchId);
+    await a.db.matches.findOne(matchId).update({ $set: { home_score: 1 } });
+    const set = await a.startSet(matchId);
+    await a.recordPoint(matchId, set.id, 1);
+    await a.db.events.insert(anEvent(matchId, set.id) as any);
+    // Slow local reads (IndexedDB): a replication may read "pending-force" just before another one's
+    // claim lands, and only look for an in-flight claim once that claim has finished.
+    const entry = a.manager.tracked.entry.bind(a.manager.tracked);
+    vi.spyOn(a.manager.tracked, "entry").mockImplementation(async (id) => {
+      const read = await entry(id);
+      await sleep(20 + Math.random() * 30);
+      return read;
+    });
+    try {
+      const logStart = server.log.length; // offline, each retry tried (and failed) one claim
+      a.goOnline();
+      await a.settle(matchId);
+      const forcedClaims = server.log.slice(logStart).filter((log) => log.table === "rpc:claim_match_scorer");
+      expect(forcedClaims).toHaveLength(1);
+      expect((await a.manager.tracked.entry(matchId))?.claim).toBe("held");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("does not force the claim again after a stale read of a claim that just landed", async () => {
+    const a = await device();
+    await a.openMatch(matchId);
+    a.goOffline();
+    await a.manager.claimMatchOffline(matchId);
+    const stale = await a.manager.tracked.entry(matchId);
+    expect(stale?.claim).toBe("pending-force");
+    a.online = true; // requests go through, without a resume
+    const claimCheck = (a.manager as any).claimCheck as (id: string) => Promise<string>;
+    expect(await claimCheck(matchId)).toBe("ok");
+    // Another replication read the entry before that claim landed, and looks for an in-flight claim after.
+    vi.spyOn(a.manager.tracked, "entry").mockResolvedValueOnce(stale);
+    try {
+      expect(await claimCheck(matchId)).toBe("ok");
+    } finally {
+      vi.restoreAllMocks();
+    }
+    expect(server.log.filter((entry) => entry.table === "rpc:claim_match_scorer" && entry.status === 200)).toHaveLength(1);
+  });
+
+  it("logs, instead of hiding, a claim check that fails locally", async () => {
+    const a = await device();
+    await a.openMatch(matchId);
+    await a.manager.claimMatch(matchId);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      // The takeover can't be recorded on this device.
+      vi.spyOn(a.pending, "supersedeMatch").mockRejectedValueOnce(new Error("storage unavailable"));
+      server.setScorer(matchId, { deviceId: "device-b", name: "Sam" });
+      a.platform.foreground();
+      await waitFor(() => warn.mock.calls.some(([message]) => String(message).includes("updating the claim failed")), {
+        message: "local failure logged",
+      });
+      // The whole check failing (the tracked list can't be read) is logged too, not left unhandled.
+      vi.spyOn(a.manager.tracked, "get").mockRejectedValueOnce(new Error("storage unavailable"));
+      a.platform.foreground();
+      await waitFor(() => warn.mock.calls.some(([message]) => String(message).includes("checking the claims failed")), {
+        message: "failed check logged",
+      });
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it("keeps the previous device's unsent changes on that device after a takeover", async () => {

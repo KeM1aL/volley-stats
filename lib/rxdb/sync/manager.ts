@@ -10,7 +10,7 @@ import { ReferenceSync } from "./reference-sync";
 import { claimMatchScorer, getMatchScorer, isClaimForbidden, type ClaimResult, type ScorerInfo } from "./scorer-claim";
 import { SyncStates } from "./sync-state";
 import { discardSupersededChanges } from "./take-back";
-import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatchMap } from "./tracked-matches";
+import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatch, type TrackedMatchMap } from "./tracked-matches";
 import type { SyncUser } from "./types";
 import { runSyncUpgrade } from "./upgrade";
 
@@ -40,6 +40,12 @@ function sameIds(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
   const sorted = [...b].sort();
   return [...a].sort().every((value, index) => value === sorted[index]);
+}
+
+/** The push gate's answer from the tracked entry alone; null for a pending-force claim (the server decides). */
+function claimDecision(entry: TrackedMatch | null): "ok" | "lost" | null {
+  if (!entry || entry.claim === null || entry.claim === "held") return "ok";
+  return entry.claim === "lost" ? "lost" : null;
 }
 
 export function sameSyncUser(a: SyncUser | null, b: SyncUser | null): boolean {
@@ -428,27 +434,35 @@ export class SyncManager {
   private resume(): void {
     this.reference.reSync();
     for (const sync of this.matches.values()) sync.reSync();
-    void this.checkClaims();
+    void this.checkClaims().catch((error) => console.warn("[sync] checking the claims failed:", error));
   }
 
   private readonly claiming = new Map<string, Promise<"ok" | "unavailable">>();
 
   private readonly claimCheck: ClaimCheck = async (matchId) => {
-    const entry = await this.tracked.entry(matchId);
-    if (!entry || entry.claim === null || entry.claim === "held") return "ok";
-    if (entry.claim === "lost") return "lost";
+    const settled = claimDecision(await this.tracked.entry(matchId));
+    if (settled) return settled;
     // pending-force: one RPC at a time per match, shared by the five replications.
-    let inFlight = this.claiming.get(matchId);
-    if (!inFlight) {
-      inFlight = this.claimMatch(matchId, true)
+    const inFlight = this.claiming.get(matchId);
+    if (inFlight) {
+      const result = await inFlight;
+      return claimDecision(await this.tracked.entry(matchId)) ?? result;
+    }
+    // None in flight: the entry read above may predate a claim that landed since. Read it again
+    // before forcing (no await between that read and starting the claim).
+    const fresh = claimDecision(await this.tracked.entry(matchId));
+    if (fresh) return fresh;
+    let next = this.claiming.get(matchId);
+    if (!next) {
+      next = this.claimMatch(matchId, true)
         .then(
           (result): "ok" | "unavailable" => (result.claimed ? "ok" : "unavailable"),
           (): "unavailable" => "unavailable"
         )
         .finally(() => this.claiming.delete(matchId));
-      this.claiming.set(matchId, inFlight);
+      this.claiming.set(matchId, next);
     }
-    return inFlight;
+    return next;
   };
 
   private readonly superseding = new Map<string, Promise<void>>();
