@@ -198,6 +198,8 @@ export class SyncManager {
   /** Scoring offline without being able to check: the claim is forced before the match's first upload. */
   async claimMatchOffline(matchId: string): Promise<void> {
     if (this.user) await this.tracked.track(matchId, this.user.id);
+    // A lost claim is only taken back online: takeBackMatch must discard the superseded changes first.
+    if ((await this.tracked.entry(matchId))?.claim === "lost") return;
     await this.tracked.setClaim(matchId, "pending-force");
   }
 

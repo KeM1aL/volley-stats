@@ -130,6 +130,20 @@ describe("scoring device claim", () => {
     expect(a.manager.isTracking(matchId)).toBe(true);
   });
 
+  it("keeps a lost claim lost when asked to score offline (taking back needs the server)", async () => {
+    const a = await device();
+    await a.openMatch(matchId);
+    await a.manager.claimMatch(matchId);
+    server.setScorer(matchId, { deviceId: "device-b", name: "Sam" });
+    a.platform.foreground();
+    await waitFor(async () => (await a.manager.tracked.entry(matchId))?.claim === "lost", { message: "takeover noticed" });
+    a.goOffline();
+    await expect(a.manager.takeBackMatch(matchId)).rejects.toThrow();
+    await a.manager.claimMatchOffline(matchId);
+    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("lost");
+    expect(a.manager.isTracking(matchId)).toBe(false);
+  });
+
   it("takes scoring back after a takeover that superseded unsent changes: device = server, then scores again", async () => {
     const a = await device({ deviceId: "device-a", userName: "Alex" });
     await a.openMatch(matchId);
