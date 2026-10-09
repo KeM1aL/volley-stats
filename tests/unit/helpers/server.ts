@@ -40,6 +40,8 @@ export const SCORER_COLUMNS = [
 /** The real foreign keys of the match tables (spec, "Verification findings"). */
 export const FOREIGN_KEYS: ForeignKey[] = [
   { table: "sets", column: "match_id", refTable: "matches" },
+  { table: "sets", column: "server_team_id", refTable: "teams" },
+  { table: "sets", column: "first_server_team_id", refTable: "teams" },
   { table: "player_stats", column: "match_id", refTable: "matches" },
   { table: "player_stats", column: "set_id", refTable: "sets" },
   { table: "player_stats", column: "player_id", refTable: "team_members" },
@@ -47,9 +49,12 @@ export const FOREIGN_KEYS: ForeignKey[] = [
   { table: "score_points", column: "match_id", refTable: "matches" },
   { table: "score_points", column: "set_id", refTable: "sets" },
   { table: "score_points", column: "player_id", refTable: "team_members" },
+  { table: "score_points", column: "scoring_team_id", refTable: "teams" },
+  { table: "score_points", column: "action_team_id", refTable: "teams" },
   { table: "events", column: "match_id", refTable: "matches" },
   { table: "events", column: "set_id", refTable: "sets" },
   { table: "events", column: "player_id", refTable: "team_members" },
+  { table: "events", column: "team_id", refTable: "teams" },
 ];
 
 export function createFakeServer(): FakeSupabaseServer {

@@ -203,7 +203,7 @@ export class FakeSupabaseServer {
   private readonly faults: Fault[] = [];
   private readonly writeFaults: Fault[] = [];
   private readonly tableFaults = new Map<string, Fault[]>();
-  private readonly lostResponses = new Set<string>();
+  private readonly lostResponses = new Map<string, number>();
   private readonly writeDenials = new Map<string, (row: Row) => boolean>();
   private readonly updateHidden = new Map<string, HiddenRows>();
   private lastMicros = 0;
@@ -258,8 +258,9 @@ export class FakeSupabaseServer {
     this.writeFaults.length = 0;
     this.tableFaults.clear();
   }
-  loseNextResponse(table: string): void {
-    this.lostResponses.add(table);
+  /** The next `count` writes to this table commit, but their responses are lost (status 0). */
+  loseNextResponse(table: string, count = 1): void {
+    this.lostResponses.set(table, (this.lostResponses.get(table) ?? 0) + count);
   }
   denyWrites(table: string, predicate: (row: Row) => boolean): void {
     this.writeDenials.set(table, predicate);
@@ -411,7 +412,7 @@ export class FakeSupabaseServer {
     const now = this.now();
     const row: Row = { _deleted: false, created_at: now, updated_at: now, ...input, _modified: now };
     table.set(row.id, row);
-    if (this.lostResponses.delete(query.table)) return networkError();
+    if (this.consumeLostResponse(query.table)) return networkError();
     return ok(query.returnRows ? [{ ...row }] : null, 201);
   }
 
@@ -426,16 +427,21 @@ export class FakeSupabaseServer {
     if (hidden && targets.length < matching.length && targets.length === 0) {
       return { data: query.returnRows ? [] : null, error: null, status: 200 };
     }
-    const updated: Row[] = [];
-    for (const previous of targets) {
-      const next: Row = { ...previous, ...patch };
+    // One statement: every row is checked before any is written, so a refused row leaves all untouched.
+    const changes = targets.map((previous) => ({ previous, next: { ...previous, ...patch } as Row }));
+    const patched = new Set(Object.keys(patch));
+    for (const { previous, next } of changes) {
       const scorerFault = this.checkScorer(query.table, next, previous, deviceId);
       if (scorerFault) return scorerFault;
       if (this.writeDenials.get(query.table)?.(next)) {
         return fail(403, "42501", `new row violates row-level security policy for table "${query.table}"`);
       }
-      const fkFault = this.checkForeignKeys(query.table, next);
+      // Postgres checks a foreign key only when its column is part of the UPDATE.
+      const fkFault = this.checkForeignKeys(query.table, next, patched);
       if (fkFault) return fkFault;
+    }
+    const updated: Row[] = [];
+    for (const { next } of changes) {
       const now = this.now();
       // update_updated_at_column(): only requests without x-device-id get the server time.
       if (!deviceId) next.updated_at = now;
@@ -443,7 +449,7 @@ export class FakeSupabaseServer {
       table.set(next.id, next);
       updated.push({ ...next });
     }
-    if (updated.length > 0 && this.lostResponses.delete(query.table)) return networkError();
+    if (updated.length > 0 && this.consumeLostResponse(query.table)) return networkError();
     return ok(query.returnRows ? updated : null);
   }
 
@@ -503,9 +509,19 @@ export class FakeSupabaseServer {
     return scorer && scorer !== deviceId ? mismatch : null;
   }
 
-  private checkForeignKeys(table: string, row: Row): FakeResponse | null {
+  private consumeLostResponse(table: string): boolean {
+    const left = this.lostResponses.get(table) ?? 0;
+    if (left <= 0) return false;
+    if (left === 1) this.lostResponses.delete(table);
+    else this.lostResponses.set(table, left - 1);
+    return true;
+  }
+
+  /** `columns`: only the foreign keys of these columns are checked (an UPDATE's patch); default all. */
+  private checkForeignKeys(table: string, row: Row, columns?: ReadonlySet<string>): FakeResponse | null {
     for (const fk of this.options.foreignKeys ?? []) {
       if (fk.table !== table) continue;
+      if (columns && !columns.has(fk.column)) continue;
       const value = row[fk.column];
       if (value === null || value === undefined) continue;
       if (!this.tables.get(fk.refTable)?.has(value)) {
