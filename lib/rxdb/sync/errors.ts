@@ -50,13 +50,14 @@ export function classifyPushError(error: PostgrestLikeError, status: number): Cl
     if (table && IN_MATCH_TABLES.has(table)) return { kind: "temporary", code: "parent_missing", params: { table } };
     return { kind: "permanent", code: "reference_missing", params: { table: table ?? "unknown" } };
   }
+  // Before 42501: a request sent with the anon key (refresh failed, no session) gets 401 + 42501.
+  if (status === 401 || code === "PGRST301" || code === "PGRST303" || /jwt expired/i.test(message)) {
+    return { kind: "temporary", code: "auth" };
+  }
   if (code === "42501") return { kind: "permanent", code: "rls" };
   if (code === "23505") return { kind: "permanent", code: "duplicate" };
   if (code === "42703" || code === "PGRST204") return { kind: "permanent", code: "schema_mismatch" };
   if (code === "23514" || code === "23502" || code.startsWith("22")) return { kind: "permanent", code: "invalid_data" };
-  if (status === 401 || code === "PGRST301" || code === "PGRST303" || /jwt expired/i.test(message)) {
-    return { kind: "temporary", code: "auth" };
-  }
   if (status === 0 || status === 408) return { kind: "temporary", code: "network" };
   if (status === 429 || status >= 500) return { kind: "temporary", code: "server" };
   return { kind: "temporary", code: "unknown" };

@@ -29,7 +29,8 @@ export interface ClientContext {
   userId?: string;
   userName?: string | null;
 }
-export type Fault = "network" | "timeout" | "jwt-expired" | "server-error";
+/** `anon-rls`: the request went out with the anon key (no session) and RLS refused it. */
+export type Fault = "network" | "timeout" | "jwt-expired" | "anon-rls" | "server-error";
 export interface LoggedRequest {
   table: string;
   op: string;
@@ -40,6 +41,14 @@ export interface LoggedRequest {
 }
 
 type Filter = (row: Row) => boolean;
+
+/** Rows an RLS `USING` clause hides from UPDATE (and, if unreadable, from SELECT too). */
+interface HiddenRows {
+  predicate: (row: Row) => boolean;
+  /** Status of the UPDATE that silently matched nothing (401 when sent with the anon key). */
+  status: number;
+  unreadable: boolean;
+}
 
 function compare(a: unknown, b: unknown): number {
   if (a === null || a === undefined || b === null || b === undefined) {
@@ -80,6 +89,8 @@ function faultResponse(fault: Fault): FakeResponse {
       return fail(0, "20", "AbortError: The operation was aborted.");
     case "jwt-expired":
       return fail(401, "PGRST303", "JWT expired");
+    case "anon-rls":
+      return fail(401, "42501", "permission denied for table");
     case "server-error":
       return fail(503, "", "Service Unavailable");
   }
@@ -190,8 +201,10 @@ export class FakeSupabaseServer {
   latencyMs = 0;
   private readonly columns = new Map<string, Set<string>>();
   private readonly faults: Fault[] = [];
+  private readonly writeFaults: Fault[] = [];
   private readonly lostResponses = new Set<string>();
   private readonly writeDenials = new Map<string, (row: Row) => boolean>();
+  private readonly updateHidden = new Map<string, HiddenRows>();
   private lastMicros = 0;
 
   constructor(private readonly options: FakeServerOptions) {
@@ -224,6 +237,10 @@ export class FakeSupabaseServer {
   failNext(...faults: Fault[]): void {
     this.faults.push(...faults);
   }
+  /** Like failNext, but only inserts and updates get the faults (pulls go through). */
+  failNextWrites(...faults: Fault[]): void {
+    this.writeFaults.push(...faults);
+  }
   loseNextResponse(table: string): void {
     this.lostResponses.add(table);
   }
@@ -232,6 +249,20 @@ export class FakeSupabaseServer {
   }
   allowWrites(table: string): void {
     this.writeDenials.delete(table);
+  }
+  /**
+   * RLS `USING` filters these rows out of UPDATEs: PostgREST answers `[]`
+   * (no error), as for a non-owner or a request sent with the anon key.
+   */
+  hideFromUpdates(
+    table: string,
+    predicate: (row: Row) => boolean,
+    options: { status?: number; unreadable?: boolean } = {}
+  ): void {
+    this.updateHidden.set(table, { predicate, status: options.status ?? 200, unreadable: options.unreadable ?? false });
+  }
+  showToUpdates(table: string): void {
+    this.updateHidden.delete(table);
   }
   dropColumn(table: string, column: string): void {
     this.columns.get(table)!.delete(column);
@@ -316,12 +347,17 @@ export class FakeSupabaseServer {
     const table = this.tables.get(query.table);
     if (!table) return fail(404, "42P01", `relation "public.${query.table}" does not exist`);
     if (query.op === "select") return this.select(query, table);
+    const writeFault = this.writeFaults.shift();
+    if (writeFault) return faultResponse(writeFault);
     if (query.op === "insert") return this.insert(query, table);
     return this.update(query, table);
   }
 
   private select(query: FakeQuery, table: Map<string, Row>): FakeResponse {
-    let rows = [...table.values()].filter((row) => query.filters.every((filter) => filter(row)));
+    const hidden = this.updateHidden.get(query.table);
+    let rows = [...table.values()].filter(
+      (row) => query.filters.every((filter) => filter(row)) && !(hidden?.unreadable && hidden.predicate(row))
+    );
     for (const { column, ascending } of [...query.orders].reverse()) {
       rows.sort((a, b) => (ascending ? 1 : -1) * (compare(a[column], b[column]) || 0));
     }
@@ -356,7 +392,12 @@ export class FakeSupabaseServer {
     const patch = query.payload as Row;
     const unknown = this.unknownColumn(query.table, patch);
     if (unknown) return fail(400, "PGRST204", `Could not find the '${unknown}' column of '${query.table}' in the schema cache`);
-    const targets = [...table.values()].filter((row) => query.filters.every((filter) => filter(row)));
+    const hidden = this.updateHidden.get(query.table);
+    const matching = [...table.values()].filter((row) => query.filters.every((filter) => filter(row)));
+    const targets = matching.filter((row) => !hidden?.predicate(row));
+    if (hidden && targets.length < matching.length && targets.length === 0) {
+      return { data: query.returnRows ? [] : null, error: null, status: hidden.status };
+    }
     const updated: Row[] = [];
     for (const previous of targets) {
       const next: Row = { ...previous, ...patch };

@@ -8,6 +8,8 @@ describe("classifyPushError", () => {
     [{ code: "", message: "Request Timeout" }, 408, "temporary", "network"],
     [{ code: "PGRST303", message: "JWT expired" }, 401, "temporary", "auth"],
     [{ code: "PGRST301", message: "JWSError" }, 401, "temporary", "auth"],
+    // The anon key after a failed token refresh: PostgREST answers 401 with the RLS code.
+    [{ code: "42501", message: "rls" }, 401, "temporary", "auth"],
     [{ code: "", message: "Service Unavailable" }, 503, "temporary", "server"],
     [{ code: "", message: "Too Many Requests" }, 429, "temporary", "server"],
     [{ code: "23503", message: "fk", details: 'Key (set_id)=(x) is not present in table "sets".' }, 409, "temporary", "parent_missing"],

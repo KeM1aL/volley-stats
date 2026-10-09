@@ -26,6 +26,9 @@ export class PushRetryError extends Error {
   }
 }
 
+/** An UPDATE that matched no row although the server row is the assumed one (classified as `rls`, or `auth` on 401). */
+const UPDATE_REFUSED: PostgrestLikeError = { code: "42501", message: "update_refused" };
+
 type WriteOutcome =
   | { kind: "ok" }
   | { kind: "conflict"; master: WithDeleted<any> }
@@ -88,15 +91,24 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
     const { data, error, status } = await withDevice(query.select());
     if (error) return { kind: "error", error, status, phase: "update" };
     if (data && data.length > 0) return { kind: "ok" };
+    // No row matched. A write refused by RLS `USING` (not an owner, or the anon key after a failed
+    // refresh) looks the same as a changed row: PostgREST answers `[]`, not an error.
+    const refused: WriteOutcome = { kind: "error", error: UPDATE_REFUSED, status, phase: "update" };
     const found = await fetchById(id);
     if ("error" in found) return { kind: "error", error: found.error, status: found.status, phase: "update" };
     if (!found.doc) {
+      // Sent without a session: the row may just be hidden from the anon role.
+      if (status === 401) return refused;
       // Never accepted by the server (rejected insert being retried): insert it.
       if (await options.push?.reporter?.neverUploaded(id)) return insert(doc);
       // Deleted on the server: never re-create it silently.
       return { kind: "error", error: { code: "row_missing", message: "row_missing" }, status: 404, phase: "update" };
     }
-    return docsEqual(found.doc, doc) ? { kind: "ok" } : { kind: "conflict", master: found.doc };
+    if (docsEqual(found.doc, doc)) return { kind: "ok" };
+    // The server still has the version this device knew, so the equality filter matched it: the write
+    // was refused, not overtaken. A conflict here would be resolved and re-pushed in a loop.
+    if (docsEqual(found.doc, assumed)) return refused;
+    return { kind: "conflict", master: found.doc };
   }
 
   const pull: ReplicationPullOptions<any, SupabaseCheckpoint> | undefined = options.pull

@@ -267,6 +267,47 @@ describe("replicateSupabase", () => {
     expect(server.row("sets", set.id)).toBeUndefined();
   });
 
+  it("rejects an update the server silently refuses (RLS), without a request loop", async () => {
+    await setup();
+    const { reporter, calls } = recordingReporter();
+    const state = replicate("sets", { reporter });
+    await state.awaitInitialReplication();
+    const set = aSet(matchId);
+    await db.sets.insert(set as any);
+    await waitFor(() => !!server.row("sets", set.id), { message: "set uploaded" });
+    await state.awaitInSync();
+    server.hideFromUpdates("sets", (row) => row.id === set.id);
+    const updates = () => server.log.filter((entry) => entry.table === "sets" && entry.op === "update").length;
+    const before = updates();
+    await db.sets.findOne(set.id).update({ $set: { home_score: 2 } });
+    await waitFor(() => calls.rejected.some((call) => call.id === set.id), { message: "update rejected" });
+    await sleep(300);
+    // One UPDATE is sent and its refusal is final, so the row is not sent again. The margin of 2 allows
+    // for a push RxDB may already have queued; a conflict loop sends dozens in 300 ms (no retryTime applies).
+    expect(updates() - before).toBeLessThanOrEqual(3);
+    expect(calls.rejected).toEqual([{ id: set.id, code: "rls", neverUploaded: false }]);
+    expect(server.row("sets", set.id)!.home_score).toBe(0);
+  });
+
+  it("waits, instead of rejecting, when an update without a session finds no row it can read", async () => {
+    await setup();
+    const { reporter, calls } = recordingReporter();
+    const state = replicate("sets", { reporter });
+    await state.awaitInitialReplication();
+    const set = aSet(matchId);
+    await db.sets.insert(set as any);
+    await waitFor(() => !!server.row("sets", set.id), { message: "set uploaded" });
+    await state.awaitInSync();
+    // The anon key: RLS hides the row from the UPDATE and from the read-back.
+    server.hideFromUpdates("sets", (row) => row.id === set.id, { status: 401, unreadable: true });
+    await db.sets.findOne(set.id).update({ $set: { home_score: 2 } });
+    await sleep(300);
+    expect(calls.rejected).toEqual([]);
+    server.showToUpdates("sets");
+    await waitFor(() => server.row("sets", set.id)?.home_score === 2, { message: "update uploaded once signed in again" });
+    expect(calls.rejected).toEqual([]);
+  });
+
   it("inserts a row the server never accepted when it is retried", async () => {
     await setup();
     const neverUploaded = new Set<string>();

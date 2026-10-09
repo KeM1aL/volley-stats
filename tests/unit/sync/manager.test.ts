@@ -178,6 +178,21 @@ describe("SyncManager", () => {
     expect(await d.pending.count({ matchId, statuses: ["rejected"] })).toBe(0);
   });
 
+  it("continues after requests went out with the anon key (session lost, RLS answers 401)", async () => {
+    const d = await device();
+    await d.signIn();
+    await d.openMatch(matchId);
+    d.goOffline();
+    const set = await d.startSet(matchId);
+    await d.recordPoint(matchId, set.id, 1);
+    await d.recordPoint(matchId, set.id, 2);
+    server.failNextWrites("anon-rls", "anon-rls", "anon-rls");
+    d.goOnline();
+    await d.settle(matchId);
+    await expectServerEqualsDevice(d, matchId);
+    expect(await d.pending.count({ matchId, statuses: ["rejected"] })).toBe(0);
+  });
+
   it("names a player deleted on the server and uploads the rest", async () => {
     const d = await device();
     await d.signIn();
