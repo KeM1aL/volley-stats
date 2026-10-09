@@ -124,8 +124,7 @@ export class SyncManager {
       }
       if (user && this.user && user.id === this.user.id) {
         this.assignUser(user);
-        await this.reference.stop();
-        this.reference.start(user);
+        await this.reference.start(user);
         return;
       }
       await this.stopAll();
@@ -338,7 +337,7 @@ export class SyncManager {
   }
 
   private async startAll(user: SyncUser): Promise<void> {
-    this.reference.start(user);
+    await this.reference.start(user);
     // Subscribed first: the upgrade and the pruning are best effort and must not keep matches from replicating.
     this.trackedSubscription = this.tracked.get$().subscribe((matches) => {
       void this.enqueue(() => this.reconcile(matches));

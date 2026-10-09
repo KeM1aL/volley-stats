@@ -1,8 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { RxReplicationState } from "rxdb/plugins/replication";
 import type { LocalDatabase } from "@/lib/rxdb/collections";
 import { MatchSync, type MatchSyncDeps } from "@/lib/rxdb/sync/match-sync";
 import type { PendingChanges } from "@/lib/rxdb/sync/pending-changes";
-import { ReferenceSync } from "@/lib/rxdb/sync/reference-sync";
+import { ReferenceSync, filterKey } from "@/lib/rxdb/sync/reference-sync";
 import type { FakeSupabaseServer } from "../fakes/fake-supabase";
 import { createTestDb } from "../helpers/test-db";
 import { createFakeServer } from "../helpers/server";
@@ -90,6 +91,36 @@ describe("MatchSync", () => {
     await waitFor(async () => (await pending.count({ matchId })) === 0, { message: "leftover entry cleared" });
   });
 
+  it("keeps clearing leftover entries after one settle check failed", async () => {
+    const leftoverId = aSet(matchId).id;
+    await pending.markPending("sets", { id: leftoverId, match_id: matchId, updated_at: new Date().toISOString() } as any);
+    await pending.collection
+      .findOne(`sets:${leftoverId}`)
+      .incrementalPatch({ updated_at: new Date(Date.now() - 60_000).toISOString() });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const real = pending.clearSettled.bind(pending);
+    let failed = false;
+    const spy = vi.spyOn(pending, "clearSettled").mockImplementation((...args) => {
+      if (args[2] === "sets" && !failed) {
+        failed = true;
+        return Promise.reject(new Error("boom"));
+      }
+      return real(...args);
+    });
+    try {
+      startMatchSync(matchId);
+      await waitFor(() => failed, { message: "the first settle check of sets failed" });
+      await waitFor(() => warn.mock.calls.some((call) => String(call[0]).includes("settle check failed")), { message: "failure logged" });
+      expect(await pending.count({ matchId })).toBe(1);
+      // Another idle period of the sets replication: its settle check must still run.
+      await db.sets.insert(aSet(matchId) as any);
+      await waitFor(async () => (await pending.count({ matchId })) === 0, { message: "leftover cleared by a later check" });
+    } finally {
+      spy.mockRestore();
+      warn.mockRestore();
+    }
+  });
+
   it("clears pending entries once the rows are uploaded", async () => {
     const { sync } = startMatchSync(matchId);
     const set = aSet(matchId);
@@ -142,10 +173,44 @@ describe("MatchSync", () => {
   });
 });
 
+describe("filterKey", () => {
+  it("does not depend on the order of the values", () => {
+    expect(filterKey(["a", "b", "c"])).toBe(filterKey(["c", "a", "b"]));
+  });
+
+  it("tells apart filters whose djb2 hash is the same", () => {
+    // 65 * 33 + 98 = 66 * 33 + 65: the two strings collide in djb2 alone.
+    expect(filterKey(["Ab"])).not.toBe(filterKey(["BA"]));
+  });
+
+  it("differs between different sets of ids", () => {
+    const keys = new Set(
+      ["t1", "t2", "t3", "t1,t2", "t1,t3", "t2,t3", "t1,t2,t3", ""].map((ids) => filterKey(ids ? ids.split(",") : []))
+    );
+    expect(keys.size).toBe(8);
+  });
+});
+
 describe("ReferenceSync", () => {
-  it("pulls teams and only the members of the user's teams", async () => {
-    const server = createFakeServer();
+  let server: FakeSupabaseServer;
+  let db: LocalDatabase;
+  let reference: ReferenceSync;
+  const user = { id: USER_ID, teamIds: [HOME_TEAM_ID], clubIds: [] };
+
+  beforeEach(async () => {
+    server = createFakeServer();
     seedTeams(server);
+    ({ db } = await createTestDb());
+    reference = new ReferenceSync({ db, client: server.client(), waitForLeadership: false, retryTime: 50 });
+  });
+  afterEach(async () => {
+    await reference.stop();
+    await db.remove();
+  });
+
+  const statesOf = () => [...(reference as any).states] as RxReplicationState<any, any>[];
+
+  it("pulls teams and only the members of the user's teams", async () => {
     server.seed("team_members", {
       id: "30000000-0000-4000-8000-000000000009",
       team_id: AWAY_TEAM_ID,
@@ -153,15 +218,29 @@ describe("ReferenceSync", () => {
       number: 9,
       role: "player",
     });
-    const { db } = await createTestDb();
-    const reference = new ReferenceSync({ db, client: server.client(), waitForLeadership: false, retryTime: 50 });
-    reference.start({ id: USER_ID, teamIds: [HOME_TEAM_ID], clubIds: [] });
+    await reference.start(user);
     await waitFor(
       async () => (await db.teams.find().exec()).length === 2 && (await db.team_members.find().exec()).length === 1,
       { message: "reference data pulled" }
     );
     expect((await db.team_members.find().exec())[0].id).toBe(PLAYER_ID);
-    await reference.stop();
-    await db.remove();
+  });
+
+  it("stops the replications of an earlier start when it is started again", async () => {
+    await reference.start(user);
+    const first = statesOf();
+    expect(first).toHaveLength(6);
+    await reference.start({ ...user, teamIds: [AWAY_TEAM_ID] });
+    expect(first.every((state) => state.isStopped())).toBe(true);
+    expect(statesOf()).toHaveLength(6);
+    expect(statesOf().every((state) => !state.isStopped())).toBe(true);
+  });
+
+  it("keeps one set of replications when started twice without waiting", async () => {
+    const first = reference.start(user);
+    const second = reference.start(user);
+    await Promise.all([first, second]);
+    expect(statesOf()).toHaveLength(6);
+    expect(statesOf().every((state) => !state.isStopped())).toBe(true);
   });
 });
