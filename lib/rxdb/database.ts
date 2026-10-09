@@ -9,7 +9,7 @@ import type { PendingChanges } from "./sync/pending-changes";
 import { SyncManager } from "./sync/manager";
 import { createWebPlatform } from "./sync/platform/web";
 import { supabase } from "@/lib/supabase/client";
-import { readUnsentHint, writeUnsentHint } from "./pending-hint";
+import { readUnsentHint } from "./pending-hint";
 import { decideDatabaseReset } from "./reset-policy";
 
 export type { DatabaseCollections } from "./collections";
@@ -83,6 +83,17 @@ export function getDatabaseName() {
   return ret;
 }
 
+/** Removes `remove-database` from the address (same page, no reload). */
+function stripRemoveDatabaseParam(): void {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("remove-database");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  } catch (error) {
+    console.warn("Could not remove the remove-database parameter from the address:", error);
+  }
+}
+
 // The shared promise is assigned synchronously, before any await, so concurrent
 // callers always get the same database instead of racing to create two.
 export const getDatabase = (): Promise<VolleyballDatabase> => {
@@ -143,6 +154,8 @@ const createDatabase = async (): Promise<VolleyballDatabase> => {
         if (decision === "reset") {
           console.warn("Schema version conflict detected. Removing the local database and reinitializing...");
           await removeRxDatabase(getDatabaseName(), getRxStorageDexie());
+          // A later reload must not reset again without the user's confirmation.
+          if (removeDbFlag === "true" || removeDbFlag === "force") stripRemoveDatabaseParam();
           dbPromise = null;
           return getDatabase();
         }

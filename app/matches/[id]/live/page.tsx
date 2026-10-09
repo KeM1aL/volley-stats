@@ -365,6 +365,8 @@ export default function LiveMatchPage() {
    */
   const refreshAfterClaim = useCallback(
     async (refreshed?: boolean) => {
+      // A second call while one runs is dropped: the running one ends in the same state (loaded, or
+      // blocked with a retry), and a later call (the retry, or another background completion) starts a new refresh.
       if (!db || refreshRunning.current) return;
       refreshRunning.current = true;
       setRefreshing(true);
@@ -393,6 +395,7 @@ export default function LiveMatchPage() {
 
   useEffect(() => {
     if (!db) return;
+    previousClaim.current = undefined; // another database or match: nothing seen yet
     const subscription = db.syncManager.tracked.get$().subscribe((matches) => {
       const entry = matches[matchId];
       setLostClaim(entry?.claim === "lost" ? { holder: entry.lostTo } : null);
@@ -427,7 +430,7 @@ export default function LiveMatchPage() {
         setClaimPrompt({ kind: "offline" });
         return;
       }
-      if (claimFollowUp(result.claimed, true) === "not-claimed") {
+      if (!result.claimed) {
         setRefreshing(false);
         setClaimPrompt({ kind: "taken", holder: result.holder });
         toast({ variant: "destructive", title: tSync("claim.takeOverFailed") });
@@ -450,8 +453,14 @@ export default function LiveMatchPage() {
         await db.syncManager.claimMatchOffline(matchId);
         setClaimPrompt(null);
         // A lost claim stays lost offline: say so instead of closing the prompt as if nothing happened.
-        const entry = await db.syncManager.tracked.entry(matchId);
-        if (offlineConfirmFollowUp(entry?.claim) === "needs-connection") {
+        let claim: ClaimState | null | undefined;
+        try {
+          claim = (await db.syncManager.tracked.entry(matchId))?.claim;
+        } catch (error) {
+          // Unreadable: treated like the offline case, scoring goes on here.
+          console.warn("Reading the claim after confirming offline scoring failed:", error);
+        }
+        if (offlineConfirmFollowUp(claim) === "needs-connection") {
           toast({ variant: "destructive", title: tSync("claim.takeBackNeedsConnection") });
         }
       }
@@ -484,14 +493,17 @@ export default function LiveMatchPage() {
         setClaimPrompt({ kind: "offline" });
         return;
       }
-      if (claimFollowUp(outcome.claim.claimed, outcome.refreshed) === "not-claimed") {
+      const followUp = claimFollowUp(outcome.claim.claimed, outcome.refreshed);
+      if (followUp === "not-claimed") {
         setRefreshing(false);
         toast({ variant: "destructive", title: tSync("claim.takeOverFailed") });
         return;
       }
       // The held claim may reach the subscription after this flow ended: it isn't a background completion.
       previousClaim.current = "held";
-      await refreshAfterClaim(outcome.refreshed);
+      // "reload": the take-back pulled the match, load it. "refresh-failed": the pull timed out; refreshAfterClaim
+      // reports it and keeps scoring blocked until a retry succeeds.
+      await refreshAfterClaim(followUp === "reload");
     } finally {
       ownClaimFlow.current = false;
       setClaimBusy(false);

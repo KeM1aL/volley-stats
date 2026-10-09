@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useLocalDatabase } from "@/hooks/use-local-database";
 import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +35,6 @@ export function LocalDatabaseProvider({
   const tActions = useTranslations("common.actions");
   const { user, isLoading: authLoading } = useAuth();
   const database = useLocalDatabase(!!user && !authLoading);
-  const router = useRouter();
 
   useEffect(() => {
     const manager = database.localDb?.syncManager;
@@ -45,14 +43,11 @@ export function LocalDatabaseProvider({
     void manager.setUser(user ? toSyncUser(user) : null);
   }, [database.localDb, user]);
 
+  // A full load, not a client-side navigation: the database is opened again, reading the flag from the address.
   const clearLocalDatabase = () => {
-    const params = new URLSearchParams();
-    params.set("remove-database", "true");
-
-    router.push(`/?${params.toString()}`);
+    window.location.assign(new URL("/?remove-database=true", window.location.origin).href);
   };
 
-  // A full load, not a client-side navigation: the database is opened again, reading the flag from the address.
   const forceClearLocalDatabase = () => {
     window.location.assign(new URL("/?remove-database=force", window.location.origin).href);
   };
