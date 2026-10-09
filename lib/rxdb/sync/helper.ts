@@ -38,9 +38,9 @@ export function addDocEqualityToQuery<RxDocType>(
             query = query.is(key, v);
         } else if (type === 'undefined') {
             query = query.is(key, null);
-        } else {
-            console.warn(`[addDocEqualityToQuery] ${key} ignored for equality, unknown how to handle type: ${type}`)
         }
+        // Objects and arrays (lineups, player lists) can't be compared in a PostgREST filter:
+        // they are left out of the equality check, on purpose.
     }
 
     const schemaProps: Record<string, any> = jsonSchema.properties;

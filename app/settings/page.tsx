@@ -86,8 +86,11 @@ const emailChangeSchema = z.object({
 export default function SettingsPage() {
   const t = useTranslations('settings');
   const tSync = useTranslations("sync");
+  // null (not counted yet) blocks too: clearing stays disabled until nothing unsent is confirmed.
   const unsentStats = useUnsentCountFor(STATS_TABLES);
   const unsentMatchData = useUnsentCountFor(MATCH_COLLECTIONS);
+  const statsClearBlocked = unsentStats !== 0;
+  const matchDataClearBlocked = unsentMatchData !== 0;
   const { localDb: db } = useLocalDb();
   const { theme, setTheme } = useTheme();
   const { session, reloadUser, user } = useAuth();
@@ -636,7 +639,7 @@ export default function SettingsPage() {
           <CardContent className="p-6">
             <div className="space-y-4">
               <Label>{t('localData.title')}</Label>
-              {unsentMatchData > 0 && (
+              {(unsentMatchData ?? 0) > 0 && (
                 <p className="text-sm text-destructive" data-testid="clear-blocked">
                   {tSync("guards.clearBlocked")}
                 </p>
@@ -656,7 +659,7 @@ export default function SettingsPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleResetLocalStats()}
-                    disabled={unsentStats > 0}
+                    disabled={statsClearBlocked}
                     className="w-full sm:w-auto"
                   >
                     {t('localData.clear')}
@@ -676,7 +679,7 @@ export default function SettingsPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleResetLocalMatches()}
-                    disabled={unsentMatchData > 0}
+                    disabled={matchDataClearBlocked}
                     className="w-full sm:w-auto"
                   >
                     {t('localData.clear')}
@@ -696,7 +699,7 @@ export default function SettingsPage() {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleResetLocalTeams()}
-                    disabled={unsentMatchData > 0}
+                    disabled={matchDataClearBlocked}
                     className="w-full sm:w-auto"
                   >
                     {t('localData.clear')}
@@ -707,7 +710,7 @@ export default function SettingsPage() {
                 <Button
                   type="button"
                   variant="destructive"
-                  disabled={isDeletingCache || unsentMatchData > 0}
+                  disabled={isDeletingCache || matchDataClearBlocked}
                   onClick={() => handleResetLocalCache()}
                 >
                   {isDeletingCache ? (

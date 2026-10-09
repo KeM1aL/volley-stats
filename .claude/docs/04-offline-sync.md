@@ -32,8 +32,8 @@ Keep local data scoped to what a match needs. Reference data is synced at sign-i
 - Every schema has `created_at`, `updated_at` and `_deleted`
 - Indexes: `created_at`, `updated_at` + domain-specific indexes (`match_id`, `set_id`, `team_id`, …)
 - Validation: JSON Schema via AJV (`wrappedValidateAjvStorage`)
-- Timestamps: `preInsert` hook fills missing `created_at`/`updated_at`; Supabase triggers set `updated_at` server-side on update
-- Schema errors (version mismatch) in development, or with `?remove-database=true`, drop and recreate the local database
+- Timestamps: `preInsert` hook fills missing `created_at`/`updated_at`; on update, Supabase triggers set `updated_at` server-side only for requests without `x-device-id` (API layer); sync requests keep the device's value
+- Schema errors (version mismatch) in development, or with `?remove-database=true`, drop and recreate the local database, except while it holds unsent changes: the reset is then refused (`sync.guards.resetBlocked`)
 - **Database generation**: the local database is named `volleystats_db_v17` (`DB_GENERATION` in [database.ts](lib/rxdb/database.ts)). RxDB major versions do not share an on-disk format, so when upgrading RxDB's major version, bump `DB_GENERATION`: older databases are deleted on startup and the live match re-syncs from Supabase (unsynced local data from the old version is lost). Never bump it while devices may hold unsent rows; see Data-loss guards. Covered by `tests/e2e/04c-rxdb-legacy.spec.ts`.
 
 ---

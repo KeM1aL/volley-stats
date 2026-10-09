@@ -281,6 +281,15 @@ export class FakeSupabaseServer {
     this.tables.get(table)!.set(row.id, full);
     return { ...full };
   }
+  /**
+   * Like seed, with a given `_modified`: several rows can share one (right after the
+   * migration every existing row has the same `_modified`).
+   */
+  seedAt(table: string, row: Row, modified: string): Row {
+    const full = { _deleted: false, created_at: modified, updated_at: modified, ...row, _modified: modified };
+    this.tables.get(table)!.set(row.id, full);
+    return { ...full };
+  }
   /** An edit made from another screen (API layer: no x-device-id header, so updated_at is bumped). */
   editAsWebsite(table: string, id: string, patch: Row): void {
     const row = this.tables.get(table)!.get(id);

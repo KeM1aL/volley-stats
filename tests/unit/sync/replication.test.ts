@@ -47,7 +47,7 @@ describe("replicateSupabase", () => {
 
   function replicate(
     table: "matches" | "sets",
-    extra: { identifier?: string; gate?: PushGate; reporter?: PushReporter } = {}
+    extra: { identifier?: string; gate?: PushGate; reporter?: PushReporter; pullBatchSize?: number } = {}
   ) {
     const state = replicateSupabase({
       replicationIdentifier: extra.identifier ?? `test_${table}`,
@@ -58,7 +58,10 @@ describe("replicateSupabase", () => {
       live: true,
       retryTime: 50,
       waitForLeadership: false,
-      pull: { queryBuilder: (query) => (table === "matches" ? query.eq("id", matchId) : query.eq("match_id", matchId)) },
+      pull: {
+        batchSize: extra.pullBatchSize,
+        queryBuilder: (query) => (table === "matches" ? query.eq("id", matchId) : query.eq("match_id", matchId)),
+      },
       push: { gate: extra.gate, reporter: extra.reporter },
     });
     states.push(state);
@@ -119,6 +122,17 @@ describe("replicateSupabase", () => {
     server.seed("sets", aSet(matchId, { set_number: 2 }));
     state.reSync();
     await waitFor(async () => (await db.sets.find().exec()).length === 2, { message: "second set pulled" });
+  });
+
+  it("pulls every row when several share one _modified across batch boundaries", async () => {
+    await setup();
+    const shared = server.now(); // right after the migration, every existing row has the same _modified
+    const tied = [1, 2, 3, 4, 5].map((n) => server.seedAt("sets", aSet(matchId, { set_number: n }), shared));
+    const later = server.seed("sets", aSet(matchId, { set_number: 6 }));
+    const state = replicate("sets", { pullBatchSize: 2 });
+    await state.awaitInitialReplication();
+    const local = (await db.sets.find().exec()).map((doc) => doc.id).sort();
+    expect(local).toEqual([...tied.map((row) => row.id), later.id].sort());
   });
 
   it("does not raise a conflict when an insert's response was lost", async () => {

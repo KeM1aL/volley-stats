@@ -32,6 +32,29 @@ export function deviceLabelFromUserAgent(userAgent: string): string {
   return `${browser} · ${os}`;
 }
 
+/**
+ * A random v4 UUID. `crypto.randomUUID` only exists in secure contexts (not on
+ * `http://<LAN-IP>`), so fall back to `getRandomValues`, then to Math.random. Never throws.
+ */
+export function generateDeviceId(cryptoApi: Partial<Crypto> | undefined = globalThis.crypto): string {
+  try {
+    if (typeof cryptoApi?.randomUUID === "function") return cryptoApi.randomUUID();
+  } catch {
+    // fall through
+  }
+  const bytes = new Uint8Array(16);
+  try {
+    if (typeof cryptoApi?.getRandomValues !== "function") throw new Error("no getRandomValues");
+    cryptoApi.getRandomValues(bytes);
+  } catch {
+    for (let index = 0; index < bytes.length; index++) bytes[index] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10xx
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export function createWebPlatform(): SyncPlatform {
   const connectivity$: Observable<boolean> = defer(() =>
     merge(
@@ -59,12 +82,12 @@ export function createWebPlatform(): SyncPlatform {
       try {
         const saved = localStorage.getItem(DEVICE_ID_KEY);
         if (saved) return saved;
-        const id = crypto.randomUUID();
+        const id = generateDeviceId();
         localStorage.setItem(DEVICE_ID_KEY, id);
         return id;
       } catch {
         // Storage unavailable (private mode): one id for this page's lifetime.
-        memoryDeviceId ??= crypto.randomUUID();
+        memoryDeviceId ??= generateDeviceId();
         return memoryDeviceId;
       }
     },

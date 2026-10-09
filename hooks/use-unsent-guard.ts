@@ -17,10 +17,10 @@ export function useMatchUnsentCount(matchId: string): number {
   return count;
 }
 
-/** Unsent (pending or rejected) changes in these tables, all matches. */
-export function useUnsentCountFor(tables: readonly MatchCollectionName[]): number {
+/** Unsent (pending or rejected) changes in these tables, all matches; null until the first count is known. */
+export function useUnsentCountFor(tables: readonly MatchCollectionName[]): number | null {
   const { localDb } = useLocalDb();
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState<number | null>(null);
   const key = tables.join(",");
   useEffect(() => {
     const pending = localDb?.pendingChanges;
