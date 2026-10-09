@@ -9,7 +9,7 @@ import { createFakeServer } from "../helpers/server";
 import { aSet, seedServerMatch, seedTeams } from "../helpers/fixtures";
 import { sleep, waitFor } from "../helpers/wait";
 
-function recordingReporter(neverUploaded = new Set<string>()) {
+function recordingReporter(neverUploaded = new Set<string>(), withoutPendingEntry = new Set<string>()) {
   const calls = {
     rejected: [] as Array<{ id: string; code: string; neverUploaded: boolean }>,
     superseded: [] as string[],
@@ -27,6 +27,7 @@ function recordingReporter(neverUploaded = new Set<string>()) {
       return calls.attempts.filter((id) => id === doc.id).length;
     },
     neverUploaded: async (id) => neverUploaded.has(id),
+    hasPendingEntry: async (id) => !withoutPendingEntry.has(id),
   };
   return { reporter, calls };
 }
@@ -174,6 +175,24 @@ describe("replicateSupabase", () => {
     await waitFor(() => !!server.row("sets", second.id), { message: "second set uploaded" });
     expect(server.row("sets", first.id)).toBeUndefined();
     expect(calls.rejected).toEqual([{ id: first.id, code: "rls", neverUploaded: true }]);
+  });
+
+  it("leaves alone an upgraded row the server already has when it refuses the write", async () => {
+    await setup();
+    // Copies an older app version left on the device (no pending entry), and an edit made on this device.
+    const upgraded = aSet(matchId, { set_number: 1, home_score: 7 });
+    const edited = aSet(matchId, { set_number: 2, home_score: 7 });
+    server.seed("sets", { ...upgraded, home_score: 9 });
+    server.seed("sets", { ...edited, home_score: 9 });
+    server.denyWrites("sets", () => true); // a club member who isn't the team owner
+    await db.sets.bulkInsert([upgraded as any, edited as any]);
+    const { reporter, calls } = recordingReporter(new Set(), new Set([upgraded.id]));
+    const state = replicate("sets", { reporter, identifier: "fresh_after_upgrade" });
+    await waitFor(() => calls.rejected.length > 0, { message: "the edited row rejected" });
+    await state.awaitInSync();
+    await sleep(200);
+    expect(calls.rejected).toEqual([{ id: edited.id, code: "rls", neverUploaded: true }]);
+    expect(calls.superseded).toEqual([]);
   });
 
   it("holds back rows the gate says must wait, without sending them", async () => {

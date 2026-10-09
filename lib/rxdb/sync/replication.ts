@@ -29,6 +29,9 @@ export class PushRetryError extends Error {
 /** An UPDATE that matched no row although the server row is the assumed one (classified as `rls`, or `auth` on 401). */
 const UPDATE_REFUSED: PostgrestLikeError = { code: "42501", message: "update_refused" };
 
+/** Insert errors raised before the unique check: RLS (`42501`) and the scorer trigger (`P0001`). */
+const WRITE_REFUSED_CODES = new Set(["42501", "P0001"]);
+
 type WriteOutcome =
   | { kind: "ok" }
   | { kind: "conflict"; master: WithDeleted<any> }
@@ -68,6 +71,13 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
   async function insert(doc: WithDeleted<any>): Promise<WriteOutcome> {
     const { error, status } = await withDevice(client.from(tableName).insert(doc));
     if (!error) return { kind: "ok" };
+    if (WRITE_REFUSED_CODES.has(error.code ?? "") && !(await options.push?.reporter?.hasPendingEntry(doc[primaryPath]))) {
+      // A copy an older version left on the device (upgrade, spec section 9): RLS and the scorer
+      // trigger run before the unique check, so a row the server has is refused, not a duplicate.
+      // If the server has it, there is nothing to rescue and nothing this device may write.
+      const found = await fetchById(doc[primaryPath]);
+      if (!("error" in found) && found.doc) return { kind: "ok" };
+    }
     if (error.code !== POSTGRES_INSERT_CONFLICT_CODE) return { kind: "error", error, status, phase: "insert" };
     const found = await fetchById(doc[primaryPath]);
     if ("error" in found) return { kind: "error", error: found.error, status: found.status, phase: "insert" };

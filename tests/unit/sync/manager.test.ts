@@ -3,7 +3,17 @@ import { pickSchemaFields } from "@/lib/rxdb/sync/helper";
 import { TrackedMatches } from "@/lib/rxdb/sync/tracked-matches";
 import type { FakeSupabaseServer } from "../fakes/fake-supabase";
 import { createFakeServer } from "../helpers/server";
-import { PLAYER_ID, USER_ID, aScorePoint, aSet, seedServerMatch, seedTeams } from "../helpers/fixtures";
+import {
+  AWAY_TEAM_ID,
+  FORMAT_ID,
+  HOME_TEAM_ID,
+  PLAYER_ID,
+  USER_ID,
+  aScorePoint,
+  aSet,
+  seedServerMatch,
+  seedTeams,
+} from "../helpers/fixtures";
 import { TestDevice, expectServerEqualsDevice, testUser } from "../helpers/test-device";
 import { sleep, waitFor } from "../helpers/wait";
 
@@ -306,6 +316,70 @@ describe("SyncManager", () => {
       message: "device takes the correction",
     });
     expect(server.row("sets", set.id)!.home_score).toBe(10);
+  });
+
+  it("upgrade: does not lose a match another device already scores", async () => {
+    const d = await device();
+    const { _deleted, ...matchDoc } = pickSchemaFields(
+      server.row("matches", matchId)!,
+      d.db.matches.schema.jsonSchema.properties as Record<string, unknown>
+    ) as Record<string, unknown>;
+    await d.db.matches.insert(matchDoc as any);
+    const set = aSet(matchId);
+    await d.db.sets.insert(set as any);
+    await d.pending.collection.find().remove(); // the old version had no pending_changes
+    server.seed("sets", { ...set });
+    server.setScorer(matchId, { deviceId: "device-b", name: "Sam" }); // the tablet upgraded first and claimed
+
+    await d.signIn();
+
+    await waitFor(async () => (await d.manager.tracked.entry(matchId)) !== null, { message: "the match is seeded" });
+    await sleep(500); // the seeded rows are pushed once
+    expect((await d.manager.tracked.entry(matchId))?.claim).not.toBe("lost");
+    expect(d.manager.isTracking(matchId)).toBe(true);
+    expect(await d.pending.count({ matchId })).toBe(0);
+  });
+
+  async function leaveOldLocalMatch(d: TestDevice, id: string) {
+    const now = new Date().toISOString();
+    await d.db.matches.insert({
+      id,
+      date: now,
+      home_team_id: HOME_TEAM_ID,
+      away_team_id: AWAY_TEAM_ID,
+      match_format_id: FORMAT_ID,
+      status: "completed",
+      home_score: 0,
+      away_score: 0,
+      created_at: now,
+      updated_at: now,
+    } as any);
+    await d.pending.collection.find().remove(); // the old version had no pending_changes
+  }
+
+  it("upgrade: does not re-create a match deleted on the server", async () => {
+    const d = await device();
+    const deletedMatchId = "20000000-0000-4000-8000-0000000000dd";
+    await leaveOldLocalMatch(d, deletedMatchId);
+    await d.signIn();
+    await waitFor(async () => !!(await d.db.getLocal("sync-upgrade")), { message: "upgrade done" });
+    await sleep(200);
+    expect(await d.manager.tracked.entry(deletedMatchId)).toBeNull();
+    expect(server.row("matches", deletedMatchId)).toBeUndefined();
+  });
+
+  it("upgrade: seeds nothing offline and runs again at the next start", async () => {
+    const d = await device();
+    await leaveOldLocalMatch(d, matchId);
+    d.goOffline();
+    await d.signIn();
+    expect(await d.manager.tracked.entry(matchId)).toBeNull();
+    expect(await d.db.getLocal("sync-upgrade")).toBeNull();
+    await d.restart();
+    d.goOnline();
+    await d.signIn();
+    expect(await d.manager.tracked.entry(matchId)).not.toBeNull();
+    expect(await d.db.getLocal("sync-upgrade")).not.toBeNull();
   });
 
   it("forgets matches unopened for 14 days once nothing is unsent", async () => {

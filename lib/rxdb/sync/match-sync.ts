@@ -112,6 +112,7 @@ export class MatchSync {
       },
       temporaryFailure: (doc) => pending.recordAttempt(table, doc),
       neverUploaded: (docId) => pending.isNeverUploaded(table, docId),
+      hasPendingEntry: async (docId) => (await pending.get(table, docId)) !== null,
     };
   }
 }
