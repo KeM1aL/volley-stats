@@ -37,8 +37,10 @@ describe("replicateSupabase", () => {
   let server: FakeSupabaseServer;
   let matchId: string;
   const states: RxReplicationState<any, any>[] = [];
+  let signedIn = true;
 
   async function setup() {
+    signedIn = true;
     server = createFakeServer();
     seedTeams(server);
     matchId = seedServerMatch(server);
@@ -52,7 +54,7 @@ describe("replicateSupabase", () => {
     const state = replicateSupabase({
       replicationIdentifier: extra.identifier ?? `test_${table}`,
       collection: db[table] as any,
-      client: server.client(),
+      client: server.client({ signedIn: () => signedIn }),
       tableName: table,
       deviceId: "device-a",
       live: true,
@@ -331,11 +333,13 @@ describe("replicateSupabase", () => {
     await db.sets.insert(set as any);
     await waitFor(() => !!server.row("sets", set.id), { message: "set uploaded" });
     await state.awaitInSync();
-    // The anon key: RLS hides the row from the UPDATE and from the read-back.
-    server.hideFromUpdates("sets", (row) => row.id === set.id, { status: 401, unreadable: true });
+    // The anon key (no session): RLS hides the row from the UPDATE (200, `[]`) and from the read-back.
+    signedIn = false;
+    server.hideFromUpdates("sets", (row) => row.id === set.id, { unreadable: true });
     await db.sets.findOne(set.id).update({ $set: { home_score: 2 } });
     await sleep(300);
     expect(calls.rejected).toEqual([]);
+    signedIn = true;
     server.showToUpdates("sets");
     await waitFor(() => server.row("sets", set.id)?.home_score === 2, { message: "update uploaded once signed in again" });
     expect(calls.rejected).toEqual([]);

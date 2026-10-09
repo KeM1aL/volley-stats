@@ -28,6 +28,8 @@ export interface ClientContext {
   online?: () => boolean;
   userId?: string;
   userName?: string | null;
+  /** Whether the client holds a session (default true); without one supabase-js sends the anon key. */
+  signedIn?: () => boolean;
 }
 /** `anon-rls`: the request went out with the anon key (no session) and RLS refused it. */
 export type Fault = "network" | "timeout" | "jwt-expired" | "anon-rls" | "server-error";
@@ -45,8 +47,6 @@ type Filter = (row: Row) => boolean;
 /** Rows an RLS `USING` clause hides from UPDATE (and, if unreadable, from SELECT too). */
 interface HiddenRows {
   predicate: (row: Row) => boolean;
-  /** Status of the UPDATE that silently matched nothing (401 when sent with the anon key). */
-  status: number;
   unreadable: boolean;
 }
 
@@ -226,6 +226,12 @@ export class FakeSupabaseServer {
     return {
       from: (table: string) => new FakeQuery(this, table, context),
       rpc: (name: string, params: Record<string, any>) => new FakeRpc(this, name, params, context),
+      auth: {
+        getSession: async () => ({
+          data: { session: (context.signedIn?.() ?? true) ? { access_token: "x" } : null },
+          error: null,
+        }),
+      },
     };
   }
 
@@ -252,14 +258,14 @@ export class FakeSupabaseServer {
   }
   /**
    * RLS `USING` filters these rows out of UPDATEs: PostgREST answers `[]`
-   * (no error), as for a non-owner or a request sent with the anon key.
+   * (no error, status 200), as for a non-owner or a request sent with the anon key.
    */
   hideFromUpdates(
     table: string,
     predicate: (row: Row) => boolean,
-    options: { status?: number; unreadable?: boolean } = {}
+    options: { unreadable?: boolean } = {}
   ): void {
-    this.updateHidden.set(table, { predicate, status: options.status ?? 200, unreadable: options.unreadable ?? false });
+    this.updateHidden.set(table, { predicate, unreadable: options.unreadable ?? false });
   }
   showToUpdates(table: string): void {
     this.updateHidden.delete(table);
@@ -405,7 +411,7 @@ export class FakeSupabaseServer {
     const matching = [...table.values()].filter((row) => query.filters.every((filter) => filter(row)));
     const targets = matching.filter((row) => !hidden?.predicate(row));
     if (hidden && targets.length < matching.length && targets.length === 0) {
-      return { data: query.returnRows ? [] : null, error: null, status: hidden.status };
+      return { data: query.returnRows ? [] : null, error: null, status: 200 };
     }
     const updated: Row[] = [];
     for (const previous of targets) {

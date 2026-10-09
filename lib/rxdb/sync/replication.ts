@@ -26,8 +26,11 @@ export class PushRetryError extends Error {
   }
 }
 
-/** An UPDATE that matched no row although the server row is the assumed one (classified as `rls`, or `auth` on 401). */
+/** An UPDATE that matched no row although the server row is the assumed one (classified as `rls`). */
 const UPDATE_REFUSED: PostgrestLikeError = { code: "42501", message: "update_refused" };
+
+/** The client has no session, so its requests carry the anon key (classified as a temporary `auth` error). */
+const NO_SESSION: PostgrestLikeError = { code: "PGRST301", message: "no_session" };
 
 /** Insert errors raised before the unique check: RLS (`42501`) and the scorer trigger (`P0001`). */
 const WRITE_REFUSED_CODES = new Set(["42501", "P0001"]);
@@ -66,6 +69,13 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
     const { data, error, status } = await withDevice(client.from(tableName).select("*").eq(primaryPath, id).limit(1));
     if (error) return { error, status };
     return { doc: data && data.length === 1 ? rowToDoc(data[0]) : null };
+  }
+
+  async function hasSession(): Promise<boolean> {
+    // Clients without `auth` (test fakes) count as signed in.
+    if (!client.auth) return true;
+    const { data } = await client.auth.getSession();
+    return !!data.session;
   }
 
   async function insert(doc: WithDeleted<any>): Promise<WriteOutcome> {
@@ -107,8 +117,9 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
     const found = await fetchById(id);
     if ("error" in found) return { kind: "error", error: found.error, status: found.status, phase: "update" };
     if (!found.doc) {
-      // Sent without a session: the row may just be hidden from the anon role.
-      if (status === 401) return refused;
+      // Sent without a session (anon key): RLS answers 200 `[]` to the UPDATE and to the read-back, so
+      // the row may just be hidden from the anon role. Wait for the session instead of deciding.
+      if (!(await hasSession())) return { kind: "error", error: NO_SESSION, status: 401, phase: "update" };
       // Never accepted by the server (rejected insert being retried): insert it.
       if (await options.push?.reporter?.neverUploaded(id)) return insert(doc);
       // Deleted on the server: never re-create it silently.
