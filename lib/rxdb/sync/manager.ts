@@ -7,7 +7,7 @@ import { MatchSync } from "./match-sync";
 import type { PendingChanges } from "./pending-changes";
 import type { SyncPlatform } from "./platform/types";
 import { ReferenceSync } from "./reference-sync";
-import { claimMatchScorer, getMatchScorer, type ClaimResult, type ScorerInfo } from "./scorer-claim";
+import { claimMatchScorer, getMatchScorer, isClaimForbidden, type ClaimResult, type ScorerInfo } from "./scorer-claim";
 import { SyncStates } from "./sync-state";
 import { discardSupersededChanges } from "./take-back";
 import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatchMap } from "./tracked-matches";
@@ -148,13 +148,21 @@ export class SyncManager {
   /** Claims the match for this device (spec section 7). Throws ScorerRpcError when the server can't be reached. */
   async claimMatch(matchId: string, force = false): Promise<ClaimResult> {
     const user = this.user;
+    const trackedBefore = (await this.tracked.entry(matchId)) !== null;
     const tracked = user ? await this.trackFor(matchId, user.id) : true;
-    const result = await claimMatchScorer(this.options.client, {
-      matchId,
-      deviceId: await this.deviceId,
-      label: this.options.platform.getDeviceLabel(),
-      force,
-    });
+    let result: ClaimResult;
+    try {
+      result = await claimMatchScorer(this.options.client, {
+        matchId,
+        deviceId: await this.deviceId,
+        label: this.options.platform.getDeviceLabel(),
+        force,
+      });
+    } catch (error) {
+      // Refused (no right to score it, or no such match): a match tracked only for this claim isn't replicated.
+      if (!trackedBefore && isClaimForbidden(error)) await this.tracked.remove(matchId);
+      throw error;
+    }
     // The claim state belongs to the account the match is tracked for.
     if (result.claimed && tracked) await this.tracked.setClaim(matchId, "held");
     return result;

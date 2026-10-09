@@ -104,6 +104,18 @@ describe("scoring device claim", () => {
     expect(holderRequests()).toBe(1);
   });
 
+  it("does not keep tracking a match whose claim the server refuses", async () => {
+    const a = await device();
+    const unknownMatchId = "20000000-0000-4000-8000-0000000000ee"; // not on the server for this user: P0002
+    await expect(a.manager.claimMatch(unknownMatchId)).rejects.toMatchObject({ code: "P0002" });
+    expect(await a.manager.tracked.entry(unknownMatchId)).toBeNull();
+    // A match tracked before the refusal stays tracked.
+    await a.openMatch(matchId);
+    server.hardDelete("matches", matchId);
+    await expect(a.manager.claimMatch(matchId)).rejects.toMatchObject({ code: "P0002" });
+    expect(await a.manager.tracked.entry(matchId)).not.toBeNull();
+  });
+
   it("notices a takeover when the app comes back to the foreground", async () => {
     const a = await device();
     await a.openMatch(matchId);
