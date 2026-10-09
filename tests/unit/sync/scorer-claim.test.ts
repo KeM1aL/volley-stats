@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { claimMatchScorer, getMatchScorer } from "@/lib/rxdb/sync/scorer-claim";
+import { ScorerRpcError, claimMatchScorer, getMatchScorer, isClaimForbidden } from "@/lib/rxdb/sync/scorer-claim";
 import { createFakeServer } from "../helpers/server";
 import { seedServerMatch, seedTeams } from "../helpers/fixtures";
 
@@ -54,5 +54,30 @@ describe("scorer RPC client", () => {
       name: "ScorerRpcError",
       status: 0,
     });
+  });
+});
+
+describe("isClaimForbidden", () => {
+  it.each([
+    [new ScorerRpcError("P0002", "match_not_found", 400), true],
+    [new ScorerRpcError("42501", "permission denied", 403), true],
+    [new ScorerRpcError("", "TypeError: Failed to fetch", 0), false],
+    [new ScorerRpcError("42501", "permission denied", 401), false], // anon key: an auth problem, not a refusal
+    [new ScorerRpcError("PGRST303", "JWT expired", 401), false],
+    [new ScorerRpcError("", "Service Unavailable", 503), false],
+    [new Error("boom"), false],
+  ])("%o → %s", (error, forbidden) => {
+    expect(isClaimForbidden(error)).toBe(forbidden);
+  });
+
+  it("is what a non-existent (or unwritable) match gives", async () => {
+    const { server } = setup();
+    const error = await claimMatchScorer(server.client(), {
+      matchId: "20000000-0000-4000-8000-0000000000ff",
+      deviceId: "device-a",
+      label: "x",
+      force: false,
+    }).catch((caught: unknown) => caught);
+    expect(isClaimForbidden(error)).toBe(true);
   });
 });

@@ -95,4 +95,19 @@ describe("scoring device claim", () => {
     await waitFor(async () => (await a.manager.tracked.entry(matchId))?.claim === "lost", { message: "takeover noticed" });
     await waitFor(() => !a.manager.isTracking(matchId), { message: "replication stopped" });
   });
+
+  it("replicates the match again after taking scoring back", async () => {
+    const a = await device();
+    await a.openMatch(matchId);
+    await a.manager.claimMatch(matchId);
+    server.setScorer(matchId, { deviceId: "device-b", name: "Sam" });
+    a.platform.foreground();
+    await waitFor(() => !a.manager.isTracking(matchId), { message: "replication stopped after the takeover" });
+    expect((await a.manager.claimMatch(matchId, true)).claimed).toBe(true);
+    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("held");
+    await waitFor(() => a.manager.isTracking(matchId), { message: "replication restarted" });
+    const set = await a.startSet(matchId);
+    await a.settle(matchId);
+    expect(server.row("sets", set.id)).toBeDefined();
+  });
 });

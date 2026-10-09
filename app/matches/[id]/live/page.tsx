@@ -53,7 +53,7 @@ import { SyncBadge } from "@/components/sync/sync-badge";
 import { ScorerClaimDialog, type ClaimPrompt } from "@/components/sync/scorer-claim-dialog";
 import { TakenOverBanner } from "@/components/sync/taken-over-banner";
 import { useBeforeUnloadWhenUnsent, useMatchUnsentCount } from "@/hooks/use-unsent-guard";
-import type { ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
+import { isClaimForbidden, type ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
 
@@ -123,6 +123,10 @@ export default function LiveMatchPage() {
         if (!result.claimed) setClaimPrompt({ kind: "taken", holder: result.holder });
         return;
       } catch (error) {
+        if (isClaimForbidden(error)) {
+          setClaimPrompt({ kind: "forbidden" });
+          return;
+        }
         console.warn("Could not check who scores this match, continuing as offline:", error);
       }
     }
@@ -339,20 +343,47 @@ export default function LiveMatchPage() {
     return () => subscription.unsubscribe();
   }, [db, matchId]);
 
+  /**
+   * Forces the claim (the "taken" dialog, or the banner after a takeover), then pulls the match
+   * again so rows the other device pushed meanwhile are here before scoring resumes.
+   */
+  const forceClaim = async () => {
+    if (!db) return;
+    try {
+      const result = await db.syncManager.claimMatch(matchId, true);
+      if (!result.claimed) return;
+      setClaimPrompt(null);
+      await db.syncManager.refreshMatch(matchId);
+      await loadMatchData();
+    } catch (error) {
+      if (isClaimForbidden(error)) {
+        setClaimPrompt({ kind: "forbidden" });
+        return;
+      }
+      console.warn("Takeover failed, the server can't be reached:", error);
+      setClaimPrompt({ kind: "offline" });
+    }
+  };
+
   const handleClaimConfirm = async () => {
     if (!db || !claimPrompt) return;
     setClaimBusy(true);
     try {
       if (claimPrompt.kind === "taken") {
-        const result = await db.syncManager.claimMatch(matchId, true);
-        if (result.claimed) setClaimPrompt(null);
+        await forceClaim();
       } else {
         await db.syncManager.claimMatchOffline(matchId);
         setClaimPrompt(null);
       }
-    } catch (error) {
-      console.warn("Takeover failed, the server can't be reached:", error);
-      setClaimPrompt({ kind: "offline" });
+    } finally {
+      setClaimBusy(false);
+    }
+  };
+
+  const handleTakeBack = async () => {
+    setClaimBusy(true);
+    try {
+      await forceClaim();
     } finally {
       setClaimBusy(false);
     }
@@ -665,7 +696,11 @@ export default function LiveMatchPage() {
   // Helper to render main content
   const renderMainContent = () => {
     if (!matchState.match) return null;
-    if (lostClaim) return <TakenOverBanner holder={lostClaim.holder} />;
+    if (lostClaim) {
+      return (
+        <TakenOverBanner holder={lostClaim.holder} busy={claimBusy} onTakeBack={() => void handleTakeBack()} />
+      );
+    }
     if (claimPrompt) return null;
 
     if (!matchState.currentSet || matchState.currentSet.status === "completed") {

@@ -26,6 +26,20 @@ export class ScorerRpcError extends Error {
   }
 }
 
+/**
+ * The server answered and refused the claim: `P0002` (the match doesn't exist for this user, e.g.
+ * no UPDATE right) or `42501`. Not a network failure (status 0) nor a lost session (401): those
+ * fall back to the offline prompt.
+ */
+export function isClaimForbidden(error: unknown): boolean {
+  return (
+    error instanceof ScorerRpcError &&
+    error.status !== 0 &&
+    error.status !== 401 &&
+    (error.code === "P0002" || error.code === "42501")
+  );
+}
+
 type ScorerRow = {
   claimed?: boolean;
   scorer_device_id: string | null;

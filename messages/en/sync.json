@@ -51,7 +51,9 @@
     "offlineBody": "You're offline, so the app can't check whether someone else is scoring this match. Score on this device?",
     "offlineConfirm": "Score on this device",
     "takenOverBanner": "Scoring was taken over by {name} on {device} at {time}.",
-    "never": "never"
+    "never": "never",
+    "forbiddenTitle": "You can't score this match",
+    "forbiddenBody": "Only the owner of one of the two teams can record this match."
   },
   "guards": {
     "signOutTitle": "Changes not uploaded yet",

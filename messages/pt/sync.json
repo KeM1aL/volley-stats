@@ -51,7 +51,9 @@
     "offlineBody": "Está offline, por isso a aplicação não consegue verificar se outra pessoa está a registar esta partida. Registar neste dispositivo?",
     "offlineConfirm": "Registar neste dispositivo",
     "takenOverBanner": "O registo foi assumido por {name} em {device} às {time}.",
-    "never": "nunca"
+    "never": "nunca",
+    "forbiddenTitle": "Não pode registar esta partida",
+    "forbiddenBody": "Só o proprietário de uma das duas equipas pode registar esta partida."
   },
   "guards": {
     "signOutTitle": "Alterações ainda não enviadas",

@@ -51,7 +51,9 @@
     "offlineBody": "Estás sin conexión, así que la aplicación no puede comprobar si otra persona está registrando este partido. ¿Registrar en este dispositivo?",
     "offlineConfirm": "Registrar en este dispositivo",
     "takenOverBanner": "{name} tomó el control del registro en {device} a las {time}.",
-    "never": "nunca"
+    "never": "nunca",
+    "forbiddenTitle": "No puedes registrar este partido",
+    "forbiddenBody": "Solo el propietario de uno de los dos equipos puede registrar este partido."
   },
   "guards": {
     "signOutTitle": "Cambios aún no enviados",

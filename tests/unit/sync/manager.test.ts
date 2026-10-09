@@ -357,6 +357,27 @@ describe("SyncManager", () => {
     }
   });
 
+  it("refreshes a synced match on demand (rows pushed by another device since the last pull)", async () => {
+    const d = await device();
+    await d.signIn();
+    expect(await d.openMatch(matchId)).toBe(true);
+    await d.manager.awaitMatchInSync(matchId);
+    const set = server.seed("sets", aSet(matchId, { set_number: 2 }));
+    await sleep(100);
+    expect(await d.db.sets.findOne(set.id).exec()).toBeNull(); // no realtime stream: only a pull brings it
+    expect(await d.manager.refreshMatch(matchId)).toBe(true);
+    expect(await d.db.sets.findOne(set.id).exec()).not.toBeNull();
+  });
+
+  it("reports a refresh that can't finish in time", async () => {
+    const d = await device();
+    await d.signIn();
+    await d.openMatch(matchId);
+    d.goOffline();
+    await d.startSet(matchId);
+    expect(await d.manager.refreshMatch(matchId, 200)).toBe(false);
+  });
+
   it("asks the platform to keep local data", async () => {
     const d = await device();
     await d.signIn();

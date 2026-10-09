@@ -178,6 +178,28 @@ export class SyncManager {
     }
   }
 
+  /**
+   * Pulls the match again and waits until its replications are in sync, e.g. after a
+   * forced takeover, so rows the previous device pushed are here before scoring.
+   * Resolves false if that takes longer than `timeoutMs` (offline) or the match isn't replicated.
+   */
+  async refreshMatch(matchId: string, timeoutMs = 10_000): Promise<boolean> {
+    // A claim that was just taken back restarts the replications through the tracked$ subscription.
+    await this.enqueue(async () => this.reconcile(await this.tracked.get()));
+    const sync = this.matches.get(matchId);
+    if (!sync) return false;
+    sync.reSync();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<false>((resolve) => {
+      timer = setTimeout(() => resolve(false), timeoutMs);
+    });
+    try {
+      return await Promise.race([sync.awaitInSync().then(() => true, () => false), timedOut]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async awaitMatchInSync(matchId: string): Promise<void> {
     await this.matches.get(matchId)?.awaitInSync();
   }
