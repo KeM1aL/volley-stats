@@ -29,6 +29,8 @@ export interface DiscardSupersededOptions {
   pending: PendingChanges;
   deviceId: string;
   matchId: string;
+  /** Checked before each table and before writing what was read: true stops the discard there (tables done stay done). */
+  shouldStop?: () => boolean;
 }
 
 /**
@@ -45,14 +47,23 @@ export interface DiscardSupersededOptions {
  *
  * Throws if the server can't be read; nothing local is changed for a table whose rows couldn't be fetched.
  */
-export async function discardSupersededChanges({ db, client, pending, deviceId, matchId }: DiscardSupersededOptions): Promise<void> {
+export async function discardSupersededChanges({
+  db,
+  client,
+  pending,
+  deviceId,
+  matchId,
+  shouldStop,
+}: DiscardSupersededOptions): Promise<void> {
   const entries = await pending.list({ matchId, statuses: ["superseded"] });
   for (const table of MATCH_COLLECTIONS) {
+    if (shouldStop?.()) return;
     const tableEntries = entries.filter((entry) => entry.table_name === table);
     if (tableEntries.length === 0) continue;
     const collection = db[table] as unknown as RxCollection<any>;
     const ids = tableEntries.map((entry) => entry.doc_id);
     const serverDocs = await fetchServerDocs(client, collection, table, ids, deviceId);
+    if (shouldStop?.()) return;
     await alignRows(db, collection, matchReplicationIdentifier(table, matchId), ids, serverDocs);
     await pending.removeEntries(tableEntries.map((entry: PendingChange) => entry.id));
   }

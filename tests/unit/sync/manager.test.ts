@@ -710,6 +710,28 @@ describe("SyncManager", () => {
       }
     });
 
+    it("stops aligning once the account changes or the manager is destroyed, before writing anything more", async () => {
+      const d = await device();
+      const { tracked, set, point } = await leaveLostMatch(d, matchId, daysAgo(15), true);
+      // The first table's read hangs: the run is in flight when the account changes.
+      server.hang("sets", (query) => query.ids().length > 0);
+      try {
+        await d.signIn();
+        await waitFor(() => server.hungCount > 0, { message: "the alignment reads the lost match's sets" });
+        await d.manager.setUser(testUser("user-2"));
+        server.releaseHung();
+        await d.manager.destroy();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Nothing aligned or untracked for the previous account: its next start does it.
+        expect((await d.pending.get("sets", set.id))?.status).toBe("superseded");
+        expect((await d.pending.get("score_points", point.id))?.status).toBe("superseded");
+        expect(await d.db.sets.findOne(set.id).exec()).not.toBeNull();
+        expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost", userId: USER_ID });
+      } finally {
+        server.releaseHung();
+      }
+    });
+
     it("is kept when something of it is still unsent", async () => {
       const d = await device();
       const { tracked } = await leaveLostMatch(d, matchId, daysAgo(15));

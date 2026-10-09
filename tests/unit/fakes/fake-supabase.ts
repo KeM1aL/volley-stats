@@ -252,6 +252,10 @@ export class FakeSupabaseServer {
   hang(target: string, when: (query: FakeQuery) => boolean = () => true): void {
     this.hung.set(target, when);
   }
+  /** How many requests are waiting for releaseHung(). */
+  get hungCount(): number {
+    return this.hungRequests.length;
+  }
   /** Stops hanging and lets the hung requests through. */
   releaseHung(): void {
     this.hung.clear();

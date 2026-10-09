@@ -74,7 +74,7 @@ export class SyncManager {
   private readonly platformSubscriptions: Subscription[];
   private queue: Promise<unknown> = Promise.resolve();
   /** Lost matches being aligned with the server for pruning (outside the lifecycle queue). */
-  private readonly pruning = new Map<string, Promise<void>>();
+  private readonly pruning = new Map<string, { cancel: () => void }>();
   private readonly deviceId: Promise<string>;
   /** Set by destroy(): nothing starts afterwards, and a pending syncMatch resolves false. */
   private readonly destroyed$ = new BehaviorSubject(false);
@@ -232,6 +232,8 @@ export class SyncManager {
    * Runs inside the lifecycle queue, with the match's replications stopped.
    */
   private async resetTakenBackMatch(matchId: string, deviceId: string): Promise<void> {
+    // A pruning alignment of the same match stops before its next table: the take-back aligns it now.
+    this.pruning.get(matchId)?.cancel();
     await discardSupersededChanges({
       db: this.options.db,
       client: this.options.client,
@@ -453,47 +455,50 @@ export class SyncManager {
    * stops tracking it. Best effort and outside the lifecycle queue: one run per match at a time,
    * bounded by `pruneAlignTimeoutMs`. Offline, on a server error or on a timeout the match stays
    * tracked and this is retried at the next start. Only the leader tab aligns (two tabs writing the
-   * same rows would conflict), so a follower tab waits for leadership, within the same bound.
+   * same rows would conflict), so a follower tab waits for leadership, within the same bound. A timeout,
+   * a take-back of the match, a sign-out, another account or destroy() stops it before its next write.
    */
   private pruneLostMatch(matchId: string, userId: string): void {
     if (this.pruning.has(matchId)) return;
     const { db } = this.options;
     const limit = this.options.pruneAlignTimeoutMs ?? PRUNE_ALIGN_TIMEOUT_MS;
-    let abandoned = false;
+    let cancelled = false;
+    // Given up (timeout, take-back), destroyed or signed out / another account: stop before the next write.
+    const stopped = () => cancelled || this.destroyed || this.user?.id !== userId;
     const work = (async () => {
       if (this.options.waitForLeadership !== false) await db.waitForLeadership();
-      if (this.destroyed || abandoned) return;
+      if (stopped()) return;
       await discardSupersededChanges({
         db,
         client: this.options.client,
         pending: this.pendingChanges,
         deviceId: await this.deviceId,
         matchId,
+        shouldStop: stopped,
       });
-      if (this.destroyed || abandoned) return;
+      if (stopped()) return;
       await this.enqueue(async () => {
         // Opened, taken back or written to while the server was asked: then it is no longer a candidate.
+        if (stopped()) return;
         const entry = await this.tracked.entry(matchId);
         if (!entry || entry.userId !== userId || entry.claim !== "lost" || !this.unopenedForTtl(entry)) return;
         if ((await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected"] })) > 0) return;
         await this.tracked.remove(matchId);
       });
     })();
-    work.catch(() => undefined); // reported through the race below, or ignored once abandoned
+    // Registered until the run itself ends, even after a timeout: a later start doesn't run a second one beside it.
+    this.pruning.set(matchId, { cancel: () => (cancelled = true) });
+    void work.catch(() => undefined).finally(() => this.pruning.delete(matchId));
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timedOut = new Promise<never>((_, reject) => {
       timer = setTimeout(() => {
-        abandoned = true;
+        cancelled = true;
         reject(new Error(`timed out after ${limit} ms`));
       }, limit);
     });
-    const task = Promise.race([work, timedOut])
+    void Promise.race([work, timedOut])
       .catch((error) => console.warn(`[sync] match ${matchId}: aligning it before pruning failed, kept for the next start`, error))
-      .finally(() => {
-        clearTimeout(timer);
-        this.pruning.delete(matchId);
-      });
-    this.pruning.set(matchId, task);
+      .finally(() => clearTimeout(timer));
   }
 
   private resume(): void {
