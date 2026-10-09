@@ -1,4 +1,4 @@
-import { toTypedRxJsonSchema, type RxCollection, type RxDatabase } from "rxdb";
+import { toTypedRxJsonSchema, type RxCollection, type RxDatabase, type RxDocumentData } from "rxdb";
 import { filter, firstValueFrom, map, of, timeout, type Observable } from "rxjs";
 import type { ClassifiedError } from "./errors";
 import { isoToMicros } from "./timestamps";
@@ -271,7 +271,8 @@ export class PendingChanges {
    * Re-queues rejected rows: bumping updated_at runs the hooks, which mark them pending.
    * Parents go first: a child queued while its rejected parent still waits would be
    * rejected again at once as `parent_rejected`. A rejected removal is written again as a
-   * new revision of the deleted row. An entry whose row is gone from this device stays rejected.
+   * new revision of the deleted row. An entry whose row is gone from this device entirely (neither
+   * live nor removed) is dropped with a warning: there is nothing left to upload.
    */
   async retryRejected(db: RxDatabase<any>, matchId?: string): Promise<number> {
     const entries = (await this.collection.find({ selector: toSelector({ matchId, statuses: ["rejected"] }) }).exec()).sort(
@@ -284,7 +285,13 @@ export class PendingChanges {
       if (doc) {
         await doc.incrementalPatch({ updated_at: this.now() });
         retried += 1;
-      } else if (await this.retryRemoval(collection, entry.toJSON() as PendingChange)) {
+        continue;
+      }
+      const [stored] = await collection.storageInstance.findDocumentsById([entry.doc_id], true);
+      if (!stored) {
+        console.warn(`[sync] ${entry.table_name} ${entry.doc_id}: the rejected row is gone from this device, dropping its entry`);
+        await this.collection.bulkRemove([entry]);
+      } else if (await this.retryRemoval(collection, entry.toJSON() as PendingChange, stored)) {
         retried += 1;
       }
     }
@@ -297,9 +304,12 @@ export class PendingChanges {
    * storage instance (which sets `_rev` and `_meta`, as `bulkRemove` does) and bypasses the
    * hooks: the entry is marked pending here.
    */
-  private async retryRemoval(collection: RxCollection<any>, entry: PendingChange): Promise<boolean> {
-    const [previous] = await collection.storageInstance.findDocumentsById([entry.doc_id], true);
-    if (!previous?._deleted) return false;
+  private async retryRemoval(
+    collection: RxCollection<any>,
+    entry: PendingChange,
+    previous: RxDocumentData<any>
+  ): Promise<boolean> {
+    if (!previous._deleted) return false;
     const document = { ...previous, updated_at: this.now() };
     await this.markPending(entry.table_name, document);
     const result = await collection.storageInstance.bulkWrite([{ previous, document }], "sync-retry-removal");

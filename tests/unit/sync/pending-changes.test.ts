@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LocalDatabase } from "@/lib/rxdb/collections";
 import type { PendingChanges } from "@/lib/rxdb/sync/pending-changes";
 import { createTestDb } from "../helpers/test-db";
@@ -208,11 +208,17 @@ describe("pending changes", () => {
     expect((await pending.get("sets", set.id))?.status).toBe("pending");
   });
 
-  it("retryRejected keeps the entry of a row that is gone from this device", async () => {
+  it("retryRejected drops, with a warning, the entry of a row that is gone from this device entirely", async () => {
     const set = aSet(MATCH);
     await pending.reject("sets", set, { kind: "permanent", code: "rls" }, { neverUploaded: true });
-    expect(await pending.retryRejected(db)).toBe(0);
-    expect((await pending.get("sets", set.id))?.status).toBe("rejected");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      expect(await pending.retryRejected(db)).toBe(0);
+      expect(await pending.get("sets", set.id)).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining(`sets ${set.id}`));
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it("retryRejected re-queues parents before their children", async () => {
