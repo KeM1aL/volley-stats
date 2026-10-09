@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { setupCourtPositions } from '../helpers/court';
-import { acceptBeforeUnload, expectServerMatchesLiveScore, readLiveScore, waitForAllSaved } from '../helpers/sync';
+import { acceptBeforeUnload, expectServerMatchesDevice, expectServerStaysAt, readLiveScore, waitForAllSaved } from '../helpers/sync';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 const AUTH_STATE_PATH = path.join(__dirname, '../../playwright/.auth/user.json');
@@ -29,7 +29,7 @@ test('a second device takes over scoring, the first becomes read-only, then take
   // The badge may still say "saved" from before the click: wait for the page to show both points first.
   await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', '2');
   await waitForAllSaved(page);
-  await expectServerMatchesLiveScore(matchId, await readLiveScore(page));
+  await expectServerMatchesDevice(page, matchId);
 
   // Device B: same account, another browser context. The saved storage state carries this device's id
   // (and its unsent-changes hint), so strip them: B must be a different device.
@@ -56,13 +56,15 @@ test('a second device takes over scoring, the first becomes read-only, then take
   await expect(pageB.getByTestId('live-score')).toHaveAttribute('data-home', '3');
   await waitForAllSaved(pageB);
   const scoreB = await readLiveScore(pageB);
-  await expectServerMatchesLiveScore(matchId, scoreB);
+  await expectServerMatchesDevice(pageB, matchId);
 
   // Device A scores again: the server refuses it and A becomes read-only, without an error state.
   await pointA.click();
   await expect(page.getByTestId('taken-over-banner').first()).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('sync-badge').first()).not.toHaveAttribute('data-state', 'problem');
-  await expectServerMatchesLiveScore(matchId, scoreB);
+  // A's refused point never lands on the server, not even a moment later.
+  await expectServerStaysAt(matchId, scoreB);
+  await expectServerMatchesDevice(scoreB, matchId);
   await contextB.close();
 
   // Device A takes scoring back: its refused point is discarded, it shows the server's match, and its next point uploads.
@@ -76,5 +78,5 @@ test('a second device takes over scoring, the first becomes read-only, then take
   await pointA.click();
   await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', String(scoreB.home + 1));
   await waitForAllSaved(page);
-  await expectServerMatchesLiveScore(matchId, await readLiveScore(page));
+  await expectServerMatchesDevice(page, matchId);
 });

@@ -12,7 +12,7 @@ import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { setupCourtPositions } from '../helpers/court';
 import { goOffline, waitForServiceWorker } from '../helpers/network';
-import { acceptBeforeUnload, expectServerMatchesLiveScore, readLiveScore, waitForAllSaved } from '../helpers/sync';
+import { acceptBeforeUnload, expectServerMatchesDevice, readLiveScore, waitForAllSaved } from '../helpers/sync';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 
@@ -45,8 +45,8 @@ test.describe('Sync — data recorded offline reaches the server', () => {
     await context.setOffline(false);
     const home = await context.newPage();
     await home.goto('/');
+    await expectServerMatchesDevice(score, matchId);
     await waitForAllSaved(home);
-    await expectServerMatchesLiveScore(matchId, score);
   });
 
   test('uploads from a live page that is not the leading tab', async ({ context }) => {
@@ -69,6 +69,6 @@ test.describe('Sync — data recorded offline reaches the server', () => {
     await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', '3');
     const score = await readLiveScore(page);
     await waitForAllSaved(page);
-    await expectServerMatchesLiveScore(matchId, score);
+    await expectServerMatchesDevice(score, matchId);
   });
 });

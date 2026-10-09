@@ -18,7 +18,7 @@ import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { setupCourtPositions } from '../helpers/court';
 import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
-import { acceptBeforeUnload, expectServerMatchesLiveScore, readLiveScore, waitForAllSaved } from '../helpers/sync';
+import { acceptBeforeUnload, expectServerMatchesDevice, waitForAllSaved } from '../helpers/sync';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 
@@ -117,8 +117,7 @@ test.describe('Live match — offline/reconnect', () => {
 
     // 5.6b Everything recorded offline reaches the server exactly as the device shows it.
     await waitForAllSaved(page);
-    const score = await readLiveScore(page);
-    await expectServerMatchesLiveScore(matchId, score);
+    await expectServerMatchesDevice(page, matchId);
 
     // 5.7 Reload and verify live match state is restored from RxDB
     await page.reload();
