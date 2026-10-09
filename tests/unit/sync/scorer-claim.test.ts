@@ -57,6 +57,19 @@ describe("scorer RPC client", () => {
   });
 });
 
+describe("an empty RPC answer", () => {
+  const emptyClient = {
+    rpc: () => ({ setHeader: async () => ({ data: null, error: null, status: 200 }) }),
+  } as any;
+
+  it("is a match_not_found error with status 404, not the 2xx of the response", async () => {
+    const error = await getMatchScorer(emptyClient, "m1", "device-a").catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ScorerRpcError);
+    expect(error).toMatchObject({ code: "P0002", message: "match_not_found", status: 404 });
+    expect(isClaimForbidden(error)).toBe(true);
+  });
+});
+
 describe("isClaimForbidden", () => {
   it.each([
     [new ScorerRpcError("P0002", "match_not_found", 400), true],

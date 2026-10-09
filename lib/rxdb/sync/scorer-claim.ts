@@ -69,7 +69,8 @@ async function callScorerRpc(
 ): Promise<ScorerRow> {
   const { data, error, status } = await client.rpc(name, params).setHeader("x-device-id", deviceId);
   if (error) throw new ScorerRpcError(error.code ?? "", error.message, status);
-  if (!data) throw new ScorerRpcError("P0002", "match_not_found", status);
+  // An empty answer means the match isn't visible to this user: the status of the response (2xx) says nothing about that.
+  if (!data) throw new ScorerRpcError("P0002", "match_not_found", 404);
   return data as ScorerRow;
 }
 

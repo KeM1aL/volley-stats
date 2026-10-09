@@ -47,6 +47,27 @@ describe("tracked matches", () => {
     expect((await next).m2.userId).toBe("user-1");
   });
 
+  describe("a stored document without matches", () => {
+    beforeEach(async () => {
+      await db.insertLocal("tracked-matches", {});
+    });
+
+    it("reads as an empty list", async () => {
+      expect(await tracked.get()).toEqual({});
+      expect(await tracked.entry("m1")).toBeNull();
+      expect(await firstValueFrom(tracked.get$())).toEqual({});
+    });
+
+    it("accepts changes", async () => {
+      await tracked.track("m1", "user-1", "2026-10-07T10:00:00.000Z");
+      expect(await tracked.get()).toEqual({
+        m1: { userId: "user-1", claim: null, lastOpenedAt: "2026-10-07T10:00:00.000Z", lostTo: null },
+      });
+      await tracked.remove("m1");
+      expect(await tracked.get()).toEqual({});
+    });
+  });
+
   it("serializes concurrent changes", async () => {
     await Promise.all(["a", "b", "c", "d", "e"].map((id) => tracked.track(id, "user-1")));
     expect(Object.keys(await tracked.get()).sort()).toEqual(["a", "b", "c", "d", "e"]);
