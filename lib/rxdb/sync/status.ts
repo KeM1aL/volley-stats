@@ -9,6 +9,19 @@ export interface SyncReasonInfo {
   params: Record<string, string>;
 }
 
+/**
+ * Translation keys (namespace "sync") that explain a reason. A code or table the messages don't know
+ * (an older app showing a newer entry) falls back to `errors.unknown` / `tables.unknown`.
+ */
+export function reasonKeys(reason: SyncReasonInfo, has: (key: string) => boolean): { message: string; table: string } {
+  const message = `errors.${reason.code}`;
+  const table = reason.params.table ? `tables.${reason.params.table}` : "";
+  return {
+    message: has(message) ? message : "errors.unknown",
+    table: table && has(table) ? table : "tables.unknown",
+  };
+}
+
 export interface MatchSyncSummary {
   matchId: string;
   pending: number;

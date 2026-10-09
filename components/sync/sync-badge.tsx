@@ -60,9 +60,15 @@ export function SyncBadge({ compact = false }: { compact?: boolean }) {
       toast({ title: t("badge.allSavedToast") });
     }
     setShowSavedLabel(true);
+  }, [state, compact, t, toast]);
+
+  // The "All saved" label fades after a moment. Its own effect: whatever re-runs the one above
+  // (a new `t`, `toast`...) must neither cancel the fade nor leave the label up for good.
+  useEffect(() => {
+    if (!showSavedLabel) return;
     const timer = setTimeout(() => setShowSavedLabel(false), 3000);
     return () => clearTimeout(timer);
-  }, [state, compact, t, toast]);
+  }, [showSavedLabel]);
 
   const labels = useMatchLabels(status?.matches.map((match) => match.matchId) ?? []);
   if (!status || !localDb) return null;

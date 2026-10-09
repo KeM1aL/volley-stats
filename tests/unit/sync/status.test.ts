@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PendingChange } from "@/lib/rxdb/sync/pending-changes";
-import { deriveSyncStatus } from "@/lib/rxdb/sync/status";
+import { deriveSyncStatus, reasonKeys } from "@/lib/rxdb/sync/status";
 import type { TrackedMatchMap } from "@/lib/rxdb/sync/tracked-matches";
 
 let counter = 0;
@@ -75,5 +75,28 @@ describe("deriveSyncStatus", () => {
       state: "uploading",
       pendingCount: 1,
     });
+  });
+});
+
+describe("reasonKeys", () => {
+  const has = (keys: string[]) => (key: string) => keys.includes(key);
+
+  it("uses the reason's own message and table when both are translated", () => {
+    expect(reasonKeys({ code: "reference_missing", params: { table: "sets" } }, has(["errors.reference_missing", "tables.sets"]))).toEqual({
+      message: "errors.reference_missing",
+      table: "tables.sets",
+    });
+  });
+
+  it("falls back to the unknown table when the table has no translation", () => {
+    expect(reasonKeys({ code: "parent_rejected", params: { table: "clubs" } }, has(["errors.parent_rejected", "tables.unknown"]))).toEqual({
+      message: "errors.parent_rejected",
+      table: "tables.unknown",
+    });
+    expect(reasonKeys({ code: "parent_rejected", params: {} }, has(["errors.parent_rejected"]))).toMatchObject({ table: "tables.unknown" });
+  });
+
+  it("falls back to the unknown error when the code has no translation", () => {
+    expect(reasonKeys({ code: "something_new", params: {} }, has(["errors.unknown"]))).toMatchObject({ message: "errors.unknown" });
   });
 });

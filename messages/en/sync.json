@@ -23,7 +23,7 @@
     "duplicate": "A conflicting record already exists on the server.",
     "reference_missing": "Something it refers to ({table}) was deleted on the server.",
     "deleted_on_server": "This record was deleted on the server.",
-    "parent_rejected": "It depends on a {table} that couldn't be saved.",
+    "parent_rejected": "A change it depends on ({table}) couldn't be saved.",
     "too_many_attempts": "It couldn't be saved after repeated attempts.",
     "scorer_mismatch": "Another device took over scoring.",
     "unknown": "Unknown server error."
