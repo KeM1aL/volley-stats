@@ -25,8 +25,24 @@ describe("classifyPushError", () => {
     [{ code: "23505", message: "duplicate" }, 409, "permanent", "duplicate"],
     [{ code: "row_missing", message: "row_missing" }, 404, "permanent", "deleted_on_server"],
     [{ code: "XX000", message: "internal" }, 400, "temporary", "unknown"],
+    [{ code: "XX000", message: "internal" }, 500, "temporary", "server"],
+    [{ code: "", message: "JWT expired" }, 400, "temporary", "auth"],
+    [{ code: "23503", message: "fk", details: null }, 409, "permanent", "reference_missing"],
+    [{ code: "22001", message: "value too long" }, 400, "permanent", "invalid_data"],
   ] as const)("%o with status %i is %s/%s", (error, status, kind, code) => {
     expect(classifyPushError(error, status)).toMatchObject({ kind, code });
+  });
+
+  it("names the missing parent table of the same match", () => {
+    const result = classifyPushError(
+      { code: "23503", message: "fk", details: 'Key (set_id)=(x) is not present in table "sets".' },
+      409
+    );
+    expect(result.params).toEqual({ table: "sets" });
+  });
+
+  it("names an unknown table when the foreign key error carries no details", () => {
+    expect(classifyPushError({ code: "23503", message: "fk", details: null }, 409).params).toEqual({ table: "unknown" });
   });
 
   it("names the missing external table", () => {
