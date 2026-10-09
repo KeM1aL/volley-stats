@@ -248,7 +248,7 @@ export class FakeSupabaseServer {
   failNextWrites(...faults: Fault[]): void {
     this.writeFaults.push(...faults);
   }
-  /** Like failNext, but only requests to this table get the faults. */
+  /** Like failNext, but only requests to this table (or RPC, as `rpc:<name>`) get the faults. */
   failNextOn(table: string, ...faults: Fault[]): void {
     this.tableFaults.set(table, [...(this.tableFaults.get(table) ?? []), ...faults]);
   }
@@ -456,6 +456,13 @@ export class FakeSupabaseServer {
   private runRpc(call: FakeRpc): FakeResponse {
     const blocked = this.unreachable(call.context);
     if (blocked) return blocked;
+    const rpcFault = this.tableFaults.get(`rpc:${call.name}`)?.shift();
+    if (rpcFault) return faultResponse(rpcFault);
+    // claim_match_scorer validates the device id before it looks at the match.
+    if (call.name === "claim_match_scorer") {
+      const deviceId = call.params.p_device_id;
+      if (typeof deviceId !== "string" || deviceId.trim() === "") return fail(400, "22023", "invalid_device_id");
+    }
     const match = this.tables.get("matches")!.get(call.params.p_match_id);
     if (!match) return fail(400, "P0002", "match_not_found");
     if (call.name === "get_match_scorer") return ok(this.scorerInfo(match));

@@ -227,6 +227,25 @@ describe("fake supabase server", () => {
       expect(server.row("matches", matchId)!.scorer_device_id).toBe("device-b");
     });
 
+    it("refuses a missing or blank device id with 22023 and changes nothing", async () => {
+      const { server, client, matchId } = setup();
+      for (const deviceId of [null, undefined, "", "   "]) {
+        const response = await claim(client, matchId, deviceId as any, true);
+        expect(response.error).toMatchObject({ code: "22023", message: "invalid_device_id" });
+      }
+      // Checked before the match is looked up, as in the SQL function.
+      expect((await claim(client, "20000000-0000-4000-8000-0000000000ff", "")).error?.code).toBe("22023");
+      expect(server.row("matches", matchId)!.scorer_device_id ?? null).toBeNull();
+    });
+
+    it("failNextOn('rpc:<name>') fails only that RPC", async () => {
+      const { server, client, matchId } = setup();
+      server.failNextOn("rpc:claim_match_scorer", "network");
+      expect((await client.rpc("get_match_scorer", { p_match_id: matchId })).error).toBeNull();
+      expect((await claim(client, matchId, "device-a")).error).not.toBeNull();
+      expect((await claim(client, matchId, "device-a")).data.claimed).toBe(true);
+    });
+
     it("answers P0002 for a match that doesn't exist", async () => {
       const { client } = setup();
       expect((await claim(client, "20000000-0000-4000-8000-0000000000ff", "device-a")).error?.code).toBe("P0002");

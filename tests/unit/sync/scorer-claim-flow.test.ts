@@ -63,6 +63,36 @@ describe("scoring device claim", () => {
     await expectServerEqualsDevice(a, matchId);
   });
 
+  it("holds the rows of an offline-scored match back while the claim can't be confirmed, and uploads them once it can", async () => {
+    server.setScorer(matchId, { deviceId: "device-b" });
+    const a = await device();
+    await a.openMatch(matchId);
+    a.goOffline();
+    await a.manager.claimMatchOffline(matchId);
+    const set = await a.startSet(matchId);
+    const { point } = await a.recordPoint(matchId, set.id, 1);
+    // Online again, but the claim RPC is unreachable (everything else answers).
+    server.failNextOn("rpc:claim_match_scorer", ...Array(500).fill("network"));
+    a.goOnline();
+    await waitFor(
+      () => server.log.filter((entry) => entry.table === "rpc:claim_match_scorer" && entry.status !== 200).length >= 3,
+      { message: "the claim tried and failed repeatedly" }
+    );
+    expect(server.row("sets", set.id)).toBeUndefined();
+    expect(server.row("score_points", point.id)).toBeUndefined();
+    expect(server.row("matches", matchId)!.scorer_device_id).toBe("device-b");
+    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("pending-force");
+    expect(await a.pending.count({ matchId, statuses: ["pending"] })).toBe(3); // set, stat and point: waiting, not rejected
+    expect(await a.pending.count({ matchId, statuses: ["rejected", "superseded"] })).toBe(0);
+
+    server.clearFaults();
+    await a.settle(matchId);
+    expect(server.row("matches", matchId)!.scorer_device_id).toBe("device-a");
+    expect(server.row("score_points", point.id)).toBeDefined();
+    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("held");
+    await expectServerEqualsDevice(a, matchId);
+  });
+
   it("forces an offline claim once for the rows of all five tables", async () => {
     const a = await device();
     await a.openMatch(matchId);
@@ -72,12 +102,13 @@ describe("scoring device claim", () => {
     const set = await a.startSet(matchId);
     await a.recordPoint(matchId, set.id, 1);
     await a.db.events.insert(anEvent(matchId, set.id) as any);
-    // Slow local reads (IndexedDB): a replication may read "pending-force" just before another one's
-    // claim lands, and only look for an in-flight claim once that claim has finished.
+    // The first read of the entry is slow (IndexedDB) and returns "pending-force" long after the other
+    // replications' claim has landed: it must not look for a claim in flight only to force a second one.
     const entry = a.manager.tracked.entry.bind(a.manager.tracked);
+    let reads = 0;
     vi.spyOn(a.manager.tracked, "entry").mockImplementation(async (id) => {
       const read = await entry(id);
-      await sleep(20 + Math.random() * 30);
+      await sleep(++reads === 1 ? 300 : 5);
       return read;
     });
     try {
@@ -97,19 +128,36 @@ describe("scoring device claim", () => {
     await a.openMatch(matchId);
     a.goOffline();
     await a.manager.claimMatchOffline(matchId);
-    const stale = await a.manager.tracked.entry(matchId);
-    expect(stale?.claim).toBe("pending-force");
-    a.online = true; // requests go through, without a resume
-    const claimCheck = (a.manager as any).claimCheck as (id: string) => Promise<string>;
-    expect(await claimCheck(matchId)).toBe("ok");
-    // Another replication read the entry before that claim landed, and looks for an in-flight claim after.
-    vi.spyOn(a.manager.tracked, "entry").mockResolvedValueOnce(stale);
+    // One replication's read of the entry ("pending-force") is held back until another replication's
+    // claim has landed, and only then answers: it must not force a second claim.
+    const entry = a.manager.tracked.entry.bind(a.manager.tracked);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let held = false;
+    vi.spyOn(a.manager.tracked, "entry").mockImplementation(async (id) => {
+      const read = await entry(id);
+      if (!held && read?.claim === "pending-force") {
+        held = true;
+        await gate;
+      }
+      return read;
+    });
     try {
-      expect(await claimCheck(matchId)).toBe("ok");
+      const set = await a.startSet(matchId);
+      await a.recordPoint(matchId, set.id, 1);
+      await waitFor(() => held, { message: "a replication reads the entry" });
+      const logStart = server.log.length;
+      a.goOnline();
+      await waitFor(async () => (await entry(matchId))?.claim === "held", { message: "the claim landed" });
+      release();
+      await a.settle(matchId);
+      const forced = server.log.slice(logStart).filter((log) => log.table === "rpc:claim_match_scorer" && log.status === 200);
+      expect(forced).toHaveLength(1);
     } finally {
+      release();
       vi.restoreAllMocks();
     }
-    expect(server.log.filter((entry) => entry.table === "rpc:claim_match_scorer" && entry.status === 200)).toHaveLength(1);
+    await expectServerEqualsDevice(a, matchId);
   });
 
   it("logs, instead of hiding, a claim check that fails locally", async () => {

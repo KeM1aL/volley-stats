@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { pickSchemaFields } from "@/lib/rxdb/sync/helper";
+import { MatchSync } from "@/lib/rxdb/sync/match-sync";
+import { ReferenceSync } from "@/lib/rxdb/sync/reference-sync";
 import { TrackedMatches } from "@/lib/rxdb/sync/tracked-matches";
 import type { FakeSupabaseServer } from "../fakes/fake-supabase";
 import { createFakeServer } from "../helpers/server";
@@ -64,6 +66,72 @@ describe("SyncManager", () => {
     d.goOnline();
     await d.settle(matchId);
     await expectServerEqualsDevice(d, matchId);
+  });
+
+  it("restarts nothing when the profile is refreshed for the same user (root cause 2)", async () => {
+    const d = await device();
+    await d.signIn();
+    await d.openMatch(matchId);
+    await d.manager.awaitMatchInSync(matchId);
+    const cancel = vi.spyOn(MatchSync.prototype, "cancel");
+    const start = vi.spyOn(MatchSync.prototype, "start");
+    const referenceStart = vi.spyOn(ReferenceSync.prototype, "start");
+    const referenceStop = vi.spyOn(ReferenceSync.prototype, "stop");
+    try {
+      let stoppedTracking = false;
+      const sampler = setInterval(() => {
+        if (!d.manager.isTracking(matchId)) stoppedTracking = true;
+      }, 1);
+      try {
+        // A new object with the same ids, as every profile refresh produces.
+        await d.manager.setUser({ ...testUser(), teamIds: [...testUser().teamIds], clubIds: [...testUser().clubIds] });
+        await d.manager.setUser(testUser());
+      } finally {
+        clearInterval(sampler);
+      }
+      expect(cancel).not.toHaveBeenCalled();
+      expect(start).not.toHaveBeenCalled();
+      expect(referenceStart).not.toHaveBeenCalled();
+      expect(referenceStop).not.toHaveBeenCalled();
+      expect(stoppedTracking).toBe(false);
+      expect(d.manager.isTracking(matchId)).toBe(true);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("restarts the reference replications but keeps the match replications when the memberships of the user change", async () => {
+    const d = await device();
+    await d.signIn();
+    await d.openMatch(matchId);
+    await d.manager.awaitMatchInSync(matchId);
+    const cancel = vi.spyOn(MatchSync.prototype, "cancel");
+    const start = vi.spyOn(MatchSync.prototype, "start");
+    const referenceStart = vi.spyOn(ReferenceSync.prototype, "start");
+    try {
+      let stoppedTracking = false;
+      const sampler = setInterval(() => {
+        if (!d.manager.isTracking(matchId)) stoppedTracking = true;
+      }, 1);
+      try {
+        await d.manager.setUser({ ...testUser(), teamIds: [HOME_TEAM_ID, AWAY_TEAM_ID] });
+      } finally {
+        clearInterval(sampler);
+      }
+      expect(referenceStart).toHaveBeenCalledTimes(1);
+      expect(referenceStart.mock.calls[0][0].teamIds).toEqual([HOME_TEAM_ID, AWAY_TEAM_ID]);
+      expect(cancel).not.toHaveBeenCalled();
+      expect(start).not.toHaveBeenCalled();
+      expect(stoppedTracking).toBe(false);
+      expect(d.manager.userId).toBe(USER_ID);
+      // The kept replications still upload.
+      const set = await d.startSet(matchId);
+      await d.recordPoint(matchId, set.id, 1);
+      await d.settle(matchId);
+      await expectServerEqualsDevice(d, matchId);
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it("uploads data recorded before the app was closed, without reopening the match (root cause 3)", async () => {
@@ -639,6 +707,32 @@ describe("SyncManager", () => {
       expect(await d.manager.syncMatch(matchId, 500)).toBe(true);
       expect((await d.manager.syncStates.get(matchId))?.status).toBe("synced");
     } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("keeps a match tracked while its replications are still being cancelled", async () => {
+    const d = await device();
+    await d.signIn();
+    await d.openMatch(matchId);
+    await d.manager.awaitMatchInSync(matchId);
+    const cancel = MatchSync.prototype.cancel;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const cancelling = vi.spyOn(MatchSync.prototype, "cancel").mockImplementation(async function (this: MatchSync) {
+      await gate;
+      return cancel.call(this);
+    });
+    try {
+      const signedOut = d.manager.setUser(null);
+      await waitFor(() => cancelling.mock.calls.length > 0, { message: "the cancellation started" });
+      await sleep(50);
+      expect(d.manager.isTracking(matchId)).toBe(true);
+      release();
+      await signedOut;
+      expect(d.manager.isTracking(matchId)).toBe(false);
+    } finally {
+      release();
       vi.restoreAllMocks();
     }
   });

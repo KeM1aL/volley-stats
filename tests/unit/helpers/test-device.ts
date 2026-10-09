@@ -94,10 +94,16 @@ export class TestDevice {
       timeoutMs,
       message: `match ${matchId} uploaded`,
     });
-    const inSync = await Promise.race([
-      this.manager.awaitMatchInSync(matchId),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("replications not in sync")), timeoutMs)),
-    ]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error("replications not in sync")), timeoutMs);
+    });
+    let inSync: boolean;
+    try {
+      inSync = await Promise.race([this.manager.awaitMatchInSync(matchId), timedOut]);
+    } finally {
+      clearTimeout(timer);
+    }
     if (!inSync) throw new Error(`match ${matchId} is not replicated on this device`);
   }
 
