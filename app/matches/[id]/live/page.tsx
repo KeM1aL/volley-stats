@@ -94,6 +94,9 @@ export default function LiveMatchPage() {
   const [claimPrompt, setClaimPrompt] = useState<ClaimPrompt | null>(null);
   const [claimBusy, setClaimBusy] = useState(false);
   const [lostClaim, setLostClaim] = useState<{ holder: ScorerInfo | null } | null>(null);
+  // True from a forced claim until the match was pulled again: the claim is held but the screen is stale.
+  const [refreshing, setRefreshing] = useState(false);
+  const scoringBlocked = !!lostClaim || !!claimPrompt || refreshing;
   const unsentCount = useMatchUnsentCount(matchId);
   useBeforeUnloadWhenUnsent(unsentCount > 0);
 
@@ -349,6 +352,7 @@ export default function LiveMatchPage() {
    */
   const forceClaim = async () => {
     if (!db) return;
+    setRefreshing(true);
     try {
       const result = await db.syncManager.claimMatch(matchId, true);
       if (!result.claimed) return;
@@ -362,6 +366,8 @@ export default function LiveMatchPage() {
       }
       console.warn("Takeover failed, the server can't be reached:", error);
       setClaimPrompt({ kind: "offline" });
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -391,7 +397,7 @@ export default function LiveMatchPage() {
 
   const onSetSetupComplete = useCallback(
     async (newSet: Set) => {
-      if (!db || lostClaim || claimPrompt) return;
+      if (!db || scoringBlocked) return;
       const command = new SetSetupCommand(matchState, newSet, db);
 
       try {
@@ -406,12 +412,12 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t, lostClaim, claimPrompt]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t, scoringBlocked]
   );
 
   const onSubstitutionRecorded = useCallback(
     async (substitution: Substitution) => {
-      if (!db || lostClaim || claimPrompt) return;
+      if (!db || scoringBlocked) return;
       const command = new SubstitutionCommand(matchState, substitution, db);
 
       try {
@@ -438,12 +444,12 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, teamPlayerById, t, lostClaim, claimPrompt]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, teamPlayerById, t, scoringBlocked]
   );
 
   const onPlayerStatRecorded = useCallback(
     async (stat: PlayerStat) => {
-      if (!db || lostClaim || claimPrompt) return;
+      if (!db || scoringBlocked) return;
 
       const command = new PlayerStatCommand(matchState, stat, db);
       try {
@@ -461,12 +467,12 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t, lostClaim, claimPrompt]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t, scoringBlocked]
   );
 
   const onPointRecorded = useCallback(
     async (point: ScorePoint) => {
-      if (!db || lostClaim || claimPrompt) return;
+      if (!db || scoringBlocked) return;
       if (!matchState.currentSet || !matchState.match) return;
 
       const myTeam = managedTeam!.id === point.scoring_team_id;
@@ -486,7 +492,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, managedTeam?.id, history, t, lostClaim, claimPrompt]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, managedTeam?.id, history, t, scoringBlocked]
   );
 
   const onMatchCompleted = () => {
@@ -509,7 +515,7 @@ export default function LiveMatchPage() {
   };
 
   const handleUndo = async () => {
-    if (lostClaim || claimPrompt) return;
+    if (scoringBlocked) return;
     try {
       const state = await history.undo();
       setMatchState(state);
@@ -645,8 +651,8 @@ export default function LiveMatchPage() {
       );
     }
     if (activePanel === "events") {
-      // Writes events and substitutions: not while another device holds the match or a claim prompt is open.
-      if (lostClaim || claimPrompt) return null;
+      // Writes events and substitutions: not while another device holds the match, a claim prompt is open or the match is being refreshed.
+      if (scoringBlocked) return null;
       return (
         <EventsPanel
           matchId={matchId}
@@ -702,6 +708,13 @@ export default function LiveMatchPage() {
       );
     }
     if (claimPrompt) return null;
+    if (refreshing) {
+      return (
+        <div className="h-full flex items-center justify-center" role="status" aria-busy="true">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+        </div>
+      );
+    }
 
     if (!matchState.currentSet || matchState.currentSet.status === "completed") {
       return (
