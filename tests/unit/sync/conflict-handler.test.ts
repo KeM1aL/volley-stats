@@ -32,6 +32,12 @@ describe("docsEqual", () => {
     expect(docsEqual(base, { ...base, _modified: "x", _meta: { lwt: 1 }, _rev: "1-a", _attachments: {} })).toBe(true);
   });
 
+  it("compares nested keys named like the ignored fields", () => {
+    expect(docsEqual({ ...base, payload: { _meta: 1 } }, { ...base, payload: { _meta: 2 } })).toBe(false);
+    expect(docsEqual({ ...base, payload: { _rev: "a" } }, { ...base, payload: {} })).toBe(false);
+    expect(docsEqual({ ...base, payload: { _rev: "a" } }, { ...base, payload: { _rev: "a" } })).toBe(true);
+  });
+
   it("treats a missing field and null as equal", () => {
     expect(docsEqual({ ...base, comment: null }, base)).toBe(true);
   });
@@ -52,6 +58,15 @@ describe("matchConflictHandler.resolve", () => {
     const local = { ...base, home_score: 5 };
     const resolved = await matchConflictHandler.resolve(
       { newDocumentState: local, assumedMasterState: { ...base }, realMasterState: server },
+      "test"
+    );
+    expect(resolved).toEqual(local);
+  });
+
+  it("keeps the device's version when the server row was deleted since", async () => {
+    const local = { ...base, home_score: 5 };
+    const resolved = await matchConflictHandler.resolve(
+      { newDocumentState: local, assumedMasterState: { ...base }, realMasterState: { ...server, _deleted: true } },
       "test"
     );
     expect(resolved).toEqual(local);

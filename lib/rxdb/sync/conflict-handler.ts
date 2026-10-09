@@ -3,15 +3,15 @@ import { isoToMicros } from "./timestamps";
 
 const IGNORED_FIELDS = new Set(["_meta", "_rev", "_attachments", "_modified"]);
 
-function normalize(value: unknown): unknown {
+function normalize(value: unknown, topLevel = false): unknown {
   if (value === null || value === undefined) return null;
   const micros = isoToMicros(value);
   if (micros !== null) return `ts:${micros}`;
-  if (Array.isArray(value)) return value.map(normalize);
+  if (Array.isArray(value)) return value.map((item) => normalize(item));
   if (typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const key of Object.keys(value as Record<string, unknown>).sort()) {
-      if (IGNORED_FIELDS.has(key)) continue;
+      if (topLevel && IGNORED_FIELDS.has(key)) continue;
       const normalized = normalize((value as Record<string, unknown>)[key]);
       if (normalized !== null) out[key] = normalized;
     }
@@ -24,10 +24,10 @@ function normalize(value: unknown): unknown {
  * Field-by-field equality of two row versions: timestamps compared as
  * instants (Postgres returns `+00:00` and microseconds, the device writes `Z`
  * and milliseconds), missing equals null, server-only and RxDB bookkeeping
- * fields ignored.
+ * fields ignored (at the top level of the document only: a nested JSON key named `_meta` is data).
  */
 export function docsEqual(a: unknown, b: unknown): boolean {
-  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
+  return JSON.stringify(normalize(a, true)) === JSON.stringify(normalize(b, true));
 }
 
 export function updatedAtMicros(doc: { updated_at?: unknown }): number {
