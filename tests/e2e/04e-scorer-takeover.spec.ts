@@ -1,6 +1,7 @@
 /**
  * Scoring device — a second device takes over a match.
- * The first device's later point never reaches the server and its page becomes read-only.
+ * The first device's later point never reaches the server and its page becomes read-only;
+ * it then takes scoring back, shows the server's match and scores again.
  */
 
 import { test, expect } from '@playwright/test';
@@ -13,7 +14,7 @@ import { acceptBeforeUnload, expectServerMatchesLiveScore, readLiveScore, waitFo
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 const AUTH_STATE_PATH = path.join(__dirname, '../../playwright/.auth/user.json');
 
-test('a second device takes over scoring and the first becomes read-only', async ({ page, browser }) => {
+test('a second device takes over scoring, the first becomes read-only, then takes scoring back', async ({ page, browser }) => {
   test.setTimeout(6 * 60_000);
   acceptBeforeUnload(page);
   const { teamName, playerNames } = JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
@@ -62,6 +63,18 @@ test('a second device takes over scoring and the first becomes read-only', async
   await expect(page.getByTestId('taken-over-banner').first()).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('sync-badge').first()).not.toHaveAttribute('data-state', 'problem');
   await expectServerMatchesLiveScore(matchId, scoreB);
-
   await contextB.close();
+
+  // Device A takes scoring back: its refused point is discarded, it shows the server's match, and its next point uploads.
+  await page.getByTestId('take-back-scoring').first().click();
+  const confirm = page.getByTestId('take-back-dialog');
+  await expect(confirm).toBeVisible();
+  await confirm.getByRole('button', { name: /take scoring back/i }).click();
+  await expect(page.getByTestId('taken-over-banner')).toHaveCount(0, { timeout: 60_000 });
+  await pointA.waitFor({ state: 'visible', timeout: 60_000 });
+  await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', String(scoreB.home));
+  await pointA.click();
+  await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', String(scoreB.home + 1));
+  await waitForAllSaved(page);
+  await expectServerMatchesLiveScore(matchId, await readLiveScore(page));
 });
