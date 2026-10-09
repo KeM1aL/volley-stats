@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { FakeSupabaseServer } from "../fakes/fake-supabase";
 import { createFakeServer } from "../helpers/server";
-import { aSet, seedServerMatch, seedTeams } from "../helpers/fixtures";
+import { aSet, anEvent, seedServerMatch, seedTeams } from "../helpers/fixtures";
 import { TestDevice, expectServerEqualsDevice } from "../helpers/test-device";
 import { sleep, waitFor } from "../helpers/wait";
 
@@ -84,6 +84,24 @@ describe("scoring device claim", () => {
     expect((await a.manager.tracked.entry(matchId))?.lostTo).toMatchObject({ deviceId: "device-b", name: "Sam" });
     expect(server.row("sets", setA.id)).toBeUndefined();
     expect(server.row("sets", setB.id)).toBeDefined();
+  });
+
+  it("asks the server who holds the match once for a burst of superseded rows", async () => {
+    const a = await device();
+    await a.openMatch(matchId);
+    await a.manager.claimMatch(matchId);
+    const set = await a.startSet(matchId);
+    await a.settle(matchId);
+    a.online = false; // requests fail; the platform isn't told, so no resume checks the claims
+    for (let n = 1; n <= 4; n++) await a.recordPoint(matchId, set.id, n);
+    await a.db.events.insert(anEvent(matchId, set.id) as any);
+    server.setScorer(matchId, { deviceId: "device-b", name: "Sam" });
+    const holderRequests = () => server.log.filter((entry) => entry.table === "rpc:get_match_scorer").length;
+    expect(holderRequests()).toBe(0);
+    a.online = true;
+    await waitFor(async () => (await a.manager.tracked.entry(matchId))?.claim === "lost", { message: "A sees the takeover" });
+    await sleep(300);
+    expect(holderRequests()).toBe(1);
   });
 
   it("notices a takeover when the app comes back to the foreground", async () => {

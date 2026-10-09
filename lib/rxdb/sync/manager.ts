@@ -377,7 +377,21 @@ export class SyncManager {
     return inFlight;
   };
 
-  private async onSuperseded(matchId: string): Promise<void> {
+  private readonly superseding = new Map<string, Promise<void>>();
+
+  /** A row was refused because another device scores the match: one check at a time per match. */
+  private onSuperseded(matchId: string): Promise<void> {
+    let inFlight = this.superseding.get(matchId);
+    if (!inFlight) {
+      inFlight = this.checkSuperseded(matchId).finally(() => this.superseding.delete(matchId));
+      this.superseding.set(matchId, inFlight);
+    }
+    return inFlight;
+  }
+
+  private async checkSuperseded(matchId: string): Promise<void> {
+    // Already lost: the rest of a burst of superseded rows has nothing new to ask the server.
+    if ((await this.tracked.entry(matchId))?.claim === "lost") return;
     const deviceId = await this.deviceId;
     let holder: ScorerInfo | null = null;
     try {
