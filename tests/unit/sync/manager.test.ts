@@ -491,6 +491,15 @@ describe("SyncManager", () => {
     expect(await tracked.entry(otherMatchId)).not.toBeNull();
   });
 
+  it("forgets a match whose last-opened date is unreadable", async () => {
+    const d = await device();
+    const tracked = new TrackedMatches(d.db);
+    await tracked.track(matchId, USER_ID, "not a date");
+    d.goOffline();
+    await d.signIn();
+    expect(await tracked.entry(matchId)).toBeNull();
+  });
+
   describe("a lost match nobody takes back", () => {
     const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
@@ -514,14 +523,58 @@ describe("SyncManager", () => {
       expect((await d.pending.get("sets", set.id))?.status).toBe("superseded");
     });
 
-    it("is pruned with its superseded entries once unopened for 14 days", async () => {
+    it("is aligned with the server and pruned once unopened for 14 days: the superseded rows never reach the server", async () => {
       const d = await device();
       const { tracked, set } = await leaveLostMatch(d, matchId, daysAgo(15));
-      d.goOffline();
       await d.signIn();
       expect(await tracked.entry(matchId)).toBeNull();
       expect(await d.pending.get("sets", set.id)).toBeNull();
       expect(await d.pending.count({ matchId })).toBe(0);
+      // The local-only row is gone from the device (a tombstone), and neither it nor a removal was sent.
+      expect(await d.db.sets.findOne(set.id).exec()).toBeNull();
+      expect(server.row("sets", set.id)).toBeUndefined();
+      expect(server.log.filter((entry) => entry.table === "sets" && entry.op !== "select")).toEqual([]);
+      await d.restart();
+      await d.signIn();
+      expect(server.log.filter((entry) => entry.table === "sets" && entry.op !== "select")).toEqual([]);
+    });
+
+    it("is replaced by the server's version of a superseded row", async () => {
+      const d = await device();
+      const onServer = server.seed("sets", aSet(matchId, { home_score: 7 }));
+      const tracked = new TrackedMatches(d.db);
+      await tracked.track(matchId, USER_ID, daysAgo(15));
+      await tracked.setClaim(matchId, "lost", null);
+      const { _deleted, ...doc } = pickSchemaFields(onServer, d.db.sets.schema.jsonSchema.properties as Record<string, unknown>);
+      await d.db.sets.insert({ ...doc, home_score: 2 } as any);
+      await d.pending.supersedeMatch(matchId);
+      await d.signIn();
+      expect(await tracked.entry(matchId)).toBeNull();
+      expect(await d.pending.count({ matchId })).toBe(0);
+      expect((await d.db.sets.findOne(onServer.id).exec())?.home_score).toBe(7);
+      expect(server.row("sets", onServer.id)!.home_score).toBe(7);
+    });
+
+    it("stays tracked, with its superseded changes, while the server can't be reached (retried at the next start)", async () => {
+      const d = await device();
+      const { tracked, set } = await leaveLostMatch(d, matchId, daysAgo(15));
+      d.goOffline();
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      try {
+        await d.signIn();
+        expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
+        expect((await d.pending.get("sets", set.id))?.status).toBe("superseded");
+        expect(await d.db.sets.findOne(set.id).exec()).not.toBeNull();
+        d.goOnline();
+        await d.restart();
+        await d.signIn();
+        expect(await tracked.entry(matchId)).toBeNull();
+        expect(await d.pending.get("sets", set.id)).toBeNull();
+        expect(await d.db.sets.findOne(set.id).exec()).toBeNull();
+        expect(server.row("sets", set.id)).toBeUndefined();
+      } finally {
+        warn.mockRestore();
+      }
     });
 
     it("is kept when something of it is still unsent", async () => {

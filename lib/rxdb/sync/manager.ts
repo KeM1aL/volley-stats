@@ -419,14 +419,15 @@ export class SyncManager {
   }
 
   private unopenedForTtl(entry: TrackedMatch): boolean {
-    return Date.parse(entry.lastOpenedAt) < Date.now() - TRACKED_MATCH_TTL_MS;
+    // An unreadable date counts as old, so a corrupt entry is pruned rather than kept forever.
+    return !(Date.parse(entry.lastOpenedAt) >= Date.now() - TRACKED_MATCH_TTL_MS);
   }
 
   /**
    * Drops matches unopened for TRACKED_MATCH_TTL_MS once nothing of theirs is unsent. Superseded
    * changes of a lost match only matter while the take-back is offered, which is while the match is
-   * tracked and was opened recently: past the TTL a lost match goes too, and its superseded entries
-   * are deleted with it (they were never going to upload).
+   * tracked and was opened recently: past the TTL a lost match goes too, after its superseded rows
+   * were aligned with the server and their entries deleted (they were never going to upload).
    */
   private async pruneTracked(userId: string): Promise<void> {
     for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
@@ -434,7 +435,23 @@ export class SyncManager {
       const unsent: PendingStatus[] = entry.claim === "lost" ? ["pending", "rejected"] : ["pending", "rejected", "superseded"];
       if ((await this.pendingChanges.count({ matchId, statuses: unsent })) > 0) continue;
       if (entry.claim === "lost") {
-        await this.pendingChanges.removeEntries((await this.pendingChanges.list({ matchId, statuses: ["superseded"] })).map((change) => change.id));
+        // Aligned with the server first, as a take-back would (its rows become the server's version, or a
+        // local tombstone that is never pushed), so the device doesn't keep showing changes the server never got.
+        // The entries are deleted by the alignment. Offline or on a server error the match stays tracked
+        // and this is retried at the next start.
+        try {
+          await this.stopMatch(matchId);
+          await discardSupersededChanges({
+            db: this.options.db,
+            client: this.options.client,
+            pending: this.pendingChanges,
+            deviceId: await this.deviceId,
+            matchId,
+          });
+        } catch (error) {
+          console.warn(`[sync] match ${matchId}: aligning it before pruning failed, kept for the next start`, error);
+          continue;
+        }
       }
       await this.tracked.remove(matchId);
     }
