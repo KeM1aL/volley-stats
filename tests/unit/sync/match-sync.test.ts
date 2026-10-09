@@ -81,6 +81,10 @@ describe("MatchSync", () => {
   it("clears a leftover pending entry once the replications are idle and in sync", async () => {
     const leftoverId = aSet(matchId).id;
     await pending.markPending("sets", { id: leftoverId, match_id: matchId, updated_at: new Date().toISOString() } as any);
+    // Its write failed: the row never reached the database, and the entry is older than SETTLE_GRACE_MS.
+    await pending.collection
+      .findOne(`sets:${leftoverId}`)
+      .incrementalPatch({ updated_at: new Date(Date.now() - 60_000).toISOString() });
     expect(await pending.count({ matchId })).toBe(1);
     startMatchSync(matchId);
     await waitFor(async () => (await pending.count({ matchId })) === 0, { message: "leftover entry cleared" });

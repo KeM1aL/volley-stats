@@ -79,6 +79,9 @@ export type ParentStatus =
   | { kind: "pending"; refs: ParentRef[] }
   | { kind: "rejected" | "superseded"; ref: ParentRef };
 
+/** A pending entry this old whose version never reached the local row comes from a write that failed. */
+export const SETTLE_GRACE_MS = 30_000;
+
 export const pendingId = (table: MatchCollectionName, docId: string): string => `${table}:${docId}`;
 
 export const matchIdOf = (table: MatchCollectionName, doc: PendingDoc): string =>
@@ -199,14 +202,37 @@ export class PendingChanges {
   }
 
   /**
-   * Removes `pending` entries marked before `before`, once the table's
-   * replication for the match is idle and in sync: they come from writes that
-   * failed after the entry was created.
+   * Called once the table's replication for the match is idle and in sync: removes the `pending`
+   * entries marked before `before` whose version is settled. That is when the local row (live or
+   * removed) has the marked version, so the replication has pushed it, or a later one written by
+   * the replication (the server's version won a conflict); or when the entry is older than
+   * SETTLE_GRACE_MS (its write failed after the hook marked it). An entry whose write hasn't landed
+   * yet (the hook runs before the write) is kept.
    */
-  async clearSettled(matchId: string, table: MatchCollectionName, before: string): Promise<void> {
-    await this.collection
+  async clearSettled(db: RxDatabase<any>, matchId: string, table: MatchCollectionName, before: string): Promise<void> {
+    const entries = await this.collection
       .find({ selector: { match_id: matchId, table_name: table, status: "pending", updated_at: { $lt: before } } })
-      .remove();
+      .exec();
+    if (entries.length === 0) return;
+    const collection = db.collections[table] as RxCollection<any>;
+    const primaryPath = collection.schema.primaryPath as string;
+    const local = new Map(
+      (await collection.storageInstance.findDocumentsById(entries.map((entry) => entry.doc_id), true)).map((doc) => [
+        doc[primaryPath] as string,
+        doc,
+      ])
+    );
+    const failedBefore = Date.parse(this.now()) - SETTLE_GRACE_MS;
+    const settled = entries.filter((entry) => {
+      if (Date.parse(entry.updated_at) < failedBefore) return true;
+      const doc = local.get(entry.doc_id);
+      if (!doc) return false;
+      const written = isoToMicros(doc.updated_at) ?? 0;
+      const marked = isoToMicros(entry.doc_updated_at) ?? 0;
+      return written === marked || (written > marked && !doc._deleted);
+    });
+    // An entry marked again meanwhile no longer matches its read revision: bulkRemove leaves it.
+    if (settled.length > 0) await this.collection.bulkRemove(settled);
   }
 
   async list(filter: PendingFilter = {}): Promise<PendingChange[]> {

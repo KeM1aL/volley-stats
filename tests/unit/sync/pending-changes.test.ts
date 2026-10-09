@@ -134,12 +134,52 @@ describe("pending changes", () => {
     expect(await pending.get("sets", set.id)).toMatchObject({ status: "superseded", error_code: "scorer_mismatch", attempts: 1 });
   });
 
-  it("clears pending entries marked before a point in time", async () => {
+  const LATER = "2999-01-01T00:00:00.000Z";
+  const ageEntry = (table: "sets", id: string, ms: number) =>
+    pending.collection.findOne(`${table}:${id}`).incrementalPatch({ updated_at: new Date(Date.now() - ms).toISOString() });
+
+  it("clears pending entries marked before a point in time once their version is written", async () => {
     const set = aSet(MATCH);
     await db.sets.insert(set as any);
-    await pending.clearSettled(MATCH, "sets", "2000-01-01T00:00:00.000Z");
+    await pending.clearSettled(db, MATCH, "sets", "2000-01-01T00:00:00.000Z");
     expect(await pending.get("sets", set.id)).not.toBeNull();
-    await pending.clearSettled(MATCH, "sets", "2999-01-01T00:00:00.000Z");
+    await pending.clearSettled(db, MATCH, "sets", LATER);
+    expect(await pending.get("sets", set.id)).toBeNull();
+  });
+
+  it("keeps a recent entry whose write hasn't landed yet", async () => {
+    const set = aSet(MATCH);
+    await db.sets.insert(set as any);
+    // The hook marked a newer version; the write itself is still on its way.
+    await pending.markPending("sets", { ...set, updated_at: new Date(Date.now() + 1000).toISOString() });
+    await pending.clearSettled(db, MATCH, "sets", LATER);
+    expect(await pending.get("sets", set.id)).not.toBeNull();
+  });
+
+  it("clears an entry whose write failed (older than 30 s)", async () => {
+    const set = aSet(MATCH);
+    await db.sets.insert(set as any);
+    await pending.markPending("sets", { ...set, updated_at: new Date(Date.now() + 1000).toISOString() });
+    await ageEntry("sets", set.id, 31_000);
+    await pending.clearSettled(db, MATCH, "sets", LATER);
+    expect(await pending.get("sets", set.id)).toBeNull();
+  });
+
+  it("clears the entry of a removal once the removal is written", async () => {
+    const set = aSet(MATCH);
+    await db.sets.insert(set as any);
+    await db.sets.findOne(set.id).remove();
+    await pending.clearSettled(db, MATCH, "sets", LATER);
+    expect(await pending.get("sets", set.id)).toBeNull();
+  });
+
+  it("keeps a recent entry of a row not written at all yet, until 30 s have passed", async () => {
+    const set = aSet(MATCH);
+    await pending.markPending("sets", set, { insert: true });
+    await pending.clearSettled(db, MATCH, "sets", LATER);
+    expect(await pending.get("sets", set.id)).not.toBeNull();
+    await ageEntry("sets", set.id, 31_000);
+    await pending.clearSettled(db, MATCH, "sets", LATER);
     expect(await pending.get("sets", set.id)).toBeNull();
   });
 

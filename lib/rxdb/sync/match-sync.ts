@@ -66,7 +66,7 @@ export class MatchSync {
               return from(
                 state
                   .awaitInSync()
-                  .then(() => this.deps.pending.clearSettled(this.matchId, table, before))
+                  .then(() => this.deps.pending.clearSettled(this.deps.db, this.matchId, table, before))
                   // Keep the error inside the inner stream so the outer subscription survives.
                   .catch((error) => this.warn(table, "settle check failed", error))
               );
