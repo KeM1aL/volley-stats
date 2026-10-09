@@ -225,6 +225,42 @@ describe("replicateSupabase", () => {
     await waitFor(() => !!server.row("sets", set.id), { message: "set uploaded once the gate opened" });
   });
 
+  it("asks the gate about the first row of a batch only, and sends nothing of the batch while it waits", async () => {
+    await setup();
+    let ready = false;
+    const asked: string[] = [];
+    const gate: PushGate = {
+      check: async (doc) => {
+        asked.push(doc.id);
+        return ready ? { kind: "send" } : { kind: "wait", reason: "parents" };
+      },
+    };
+    const state = replicate("sets", { gate });
+    await state.awaitInitialReplication();
+    const rows = [1, 2, 3].map((set_number) => aSet(matchId, { set_number }));
+    await db.sets.bulkInsert(rows as any); // one push batch
+    await waitFor(() => asked.length >= 3, { message: "several attempts while the gate waits" });
+    // Every attempt stops at the first row: the later rows of the batch are never asked about.
+    expect(new Set(asked).size).toBe(1);
+    expect(rows.map((row) => row.id)).toContain(asked[0]);
+    expect(server.log.some((entry) => entry.table === "sets" && entry.op === "insert")).toBe(false);
+    ready = true;
+    await waitFor(() => rows.every((row) => !!server.row("sets", row.id)), { message: "the whole batch uploaded once the gate opened" });
+  });
+
+  it("refuses a replication with neither pull nor push", async () => {
+    await setup();
+    expect(() =>
+      replicateSupabase({
+        replicationIdentifier: "nothing",
+        collection: db.sets as any,
+        client: server.client({ signedIn: () => true }),
+        tableName: "sets",
+        waitForLeadership: false,
+      })
+    ).toThrow(/at least one of pull and push/);
+  });
+
   it("does not resend or re-report a rejected row when another row of its batch is retried", async () => {
     await setup();
     const { reporter, calls } = recordingReporter();

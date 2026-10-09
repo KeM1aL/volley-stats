@@ -50,8 +50,12 @@ type FetchOutcome = { doc: WithDeleted<any> | null } | { error: PostgrestLikeErr
  * sync requests carry `x-device-id`.
  */
 export function replicateSupabase(options: SupabaseReplicationOptions): RxReplicationState<any, SupabaseCheckpoint> {
-  addRxPlugin(RxDBLeaderElectionPlugin);
   const { collection, client, tableName, deviceId } = options;
+  if (!options.pull && !options.push) {
+    // Same check as RxDB's replicateRxCollection (UT3): a replication with neither direction is a config mistake.
+    throw new Error(`replicateSupabase(${options.replicationIdentifier}): configure at least one of pull and push`);
+  }
+  addRxPlugin(RxDBLeaderElectionPlugin);
   const primaryPath = collection.schema.primaryPath as string;
   const schemaProperties = collection.schema.jsonSchema.properties as Record<string, unknown>;
 
@@ -259,6 +263,7 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
     options.autoStart ?? true,
     false // keep replicating in the background tab that holds leadership
   );
+  state.onCancel.push(() => settled.clear());
   startReplicationOnLeaderShip(options.waitForLeadership ?? true, state);
   return state;
 }
