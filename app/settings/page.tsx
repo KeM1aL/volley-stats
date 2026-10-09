@@ -39,7 +39,7 @@ import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useUnsentCountFor } from "@/hooks/use-unsent-guard";
-import { MATCH_COLLECTIONS } from "@/lib/rxdb/sync/types";
+import { MATCH_COLLECTIONS, type MatchCollectionName } from "@/lib/rxdb/sync/types";
 import { useAuth } from "@/contexts/auth-context";
 import {
   PasswordStrengthIndicator,
@@ -191,67 +191,93 @@ export default function SettingsPage() {
     }
   };
 
-  const handleResetLocalStats = (loadingIndicator: boolean = true) => {
-    if (loadingIndicator) setIsDeletingCache(true);
+  /**
+   * Whether changes of these tables are still unsent. Counted again right before deleting: the count
+   * the buttons were enabled from may be stale (a change recorded or rejected since).
+   */
+  const hasUnsentChanges = async (tables: readonly MatchCollectionName[]): Promise<boolean> =>
+    (await db!.pendingChanges.count({ tables: [...tables], statuses: ["pending", "rejected"] })) > 0;
+
+  const notifyClearBlocked = () =>
+    toast({ variant: "destructive", title: t("errors.generic"), description: tSync("guards.clearBlocked") });
+
+  const handleResetLocalStats = async () => {
+    setIsDeletingCache(true);
     try {
-      db!.events?.remove();
-      db!.score_points?.remove();
-      db!.player_stats?.remove();
-      if (loadingIndicator) {
-        toast({
-          title: t('toast.cacheCleared'),
-          description: t('localData.clearLocalStatsDesc'),
-        });
+      if (await hasUnsentChanges(STATS_TABLES)) {
+        notifyClearBlocked();
+        return;
       }
+      await db!.events?.remove();
+      await db!.score_points?.remove();
+      await db!.player_stats?.remove();
+      toast({
+        title: t('toast.cacheCleared'),
+        description: t('localData.clearLocalStatsDesc'),
+      });
     } catch (error) {
       console.error("Error resetting local stats:", error);
     } finally {
-      if (loadingIndicator) setIsDeletingCache(false);
+      setIsDeletingCache(false);
     }
   };
 
-  const handleResetLocalMatches = (loadingIndicator: boolean = true) => {
-    if (loadingIndicator) setIsDeletingCache(true);
+  const handleResetLocalMatches = async () => {
+    setIsDeletingCache(true);
     try {
-      handleResetLocalStats(false);
-      db!.matches?.remove();
-      db!.sets?.remove();
-      if (loadingIndicator) {
-        toast({
-          title: t('toast.cacheCleared'),
-          description: t('localData.clearLocalMatchesDesc'),
-        });
+      if (await hasUnsentChanges(MATCH_COLLECTIONS)) {
+        notifyClearBlocked();
+        return;
       }
+      await db!.events?.remove();
+      await db!.score_points?.remove();
+      await db!.player_stats?.remove();
+      await db!.matches?.remove();
+      await db!.sets?.remove();
+      toast({
+        title: t('toast.cacheCleared'),
+        description: t('localData.clearLocalMatchesDesc'),
+      });
     } catch (error) {
       console.error("Error resetting local matches:", error);
     } finally {
-      if (loadingIndicator) setIsDeletingCache(false);
+      setIsDeletingCache(false);
     }
   };
 
-  const handleResetLocalTeams = (loadingIndicator: boolean = true) => {
-    if (loadingIndicator) setIsDeletingCache(true);
+  const handleResetLocalTeams = async () => {
+    setIsDeletingCache(true);
     try {
-      handleResetLocalMatches(false);
-      db!.teams?.remove();
-      db!.team_members?.remove();
-      if (loadingIndicator) {
-        toast({
-          title: t('toast.cacheCleared'),
-          description: t('localData.clearLocalTeamsDesc'),
-        });
+      if (await hasUnsentChanges(MATCH_COLLECTIONS)) {
+        notifyClearBlocked();
+        return;
       }
+      await db!.events?.remove();
+      await db!.score_points?.remove();
+      await db!.player_stats?.remove();
+      await db!.matches?.remove();
+      await db!.sets?.remove();
+      await db!.teams?.remove();
+      await db!.team_members?.remove();
+      toast({
+        title: t('toast.cacheCleared'),
+        description: t('localData.clearLocalTeamsDesc'),
+      });
     } catch (error) {
       console.error("Error resetting local teams:", error);
     } finally {
-      if (loadingIndicator) setIsDeletingCache(false);
+      setIsDeletingCache(false);
     }
   };
 
-  const handleResetLocalCache = () => {
+  const handleResetLocalCache = async () => {
     setIsDeletingCache(true);
     try {
-      removeRxDatabase(getDatabaseName(), getStorage());
+      if (await hasUnsentChanges(MATCH_COLLECTIONS)) {
+        notifyClearBlocked();
+        return;
+      }
+      await removeRxDatabase(getDatabaseName(), getStorage());
 
       toast({
         title: t('toast.cacheCleared'),
@@ -658,7 +684,7 @@ export default function SettingsPage() {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleResetLocalStats()}
+                    onClick={() => void handleResetLocalStats()}
                     disabled={statsClearBlocked}
                     className="w-full sm:w-auto"
                   >
@@ -678,7 +704,7 @@ export default function SettingsPage() {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleResetLocalMatches()}
+                    onClick={() => void handleResetLocalMatches()}
                     disabled={matchDataClearBlocked}
                     className="w-full sm:w-auto"
                   >
@@ -698,7 +724,7 @@ export default function SettingsPage() {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleResetLocalTeams()}
+                    onClick={() => void handleResetLocalTeams()}
                     disabled={matchDataClearBlocked}
                     className="w-full sm:w-auto"
                   >
@@ -711,7 +737,7 @@ export default function SettingsPage() {
                   type="button"
                   variant="destructive"
                   disabled={isDeletingCache || matchDataClearBlocked}
-                  onClick={() => handleResetLocalCache()}
+                  onClick={() => void handleResetLocalCache()}
                 >
                   {isDeletingCache ? (
                     <>
