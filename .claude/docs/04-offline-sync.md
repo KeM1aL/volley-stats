@@ -33,7 +33,7 @@ Keep local data scoped to what a match needs. Reference data is synced at sign-i
 - Indexes: `created_at`, `updated_at` + domain-specific indexes (`match_id`, `set_id`, `team_id`, …)
 - Validation: JSON Schema via AJV (`wrappedValidateAjvStorage`)
 - Timestamps: `preInsert` hook fills missing `created_at`/`updated_at`; on update, Supabase triggers set `updated_at` server-side only for requests without `x-device-id` (API layer); sync requests keep the device's value
-- Schema errors (version mismatch) in development, or with `?remove-database=true`, drop and recreate the local database, except while it holds unsent changes: the reset is then refused (`sync.guards.resetBlocked`)
+- Schema errors (version mismatch) in development, or with `?remove-database=true`, drop and recreate the local database, except while it holds unsent changes: the reset is then refused (`sync.guards.resetBlocked`); the error screen then offers "Delete local data anyway" behind a confirmation, which reloads with `?remove-database=force` and resets despite the unsent changes
 - **Database generation**: the local database is named `volleystats_db_v17` (`DB_GENERATION` in [database.ts](lib/rxdb/database.ts)). RxDB major versions do not share an on-disk format, so when upgrading RxDB's major version, bump `DB_GENERATION`: older databases are deleted on startup and the live match re-syncs from Supabase (unsynced local data from the old version is lost). Never bump it while devices may hold unsent rows; see Data-loss guards. Covered by `tests/e2e/04c-rxdb-legacy.spec.ts`.
 
 ---
@@ -95,7 +95,7 @@ Replications are never paused: RxDB's retry waits for the `online` event. Reconn
 ### Data-loss guards
 
 - Settings "clear local data" buttons are disabled while their tables have unsent rows.
-- A schema-error database reset (`?remove-database=true` or dev auto-reset) is refused while the unsent hint (`volleystats:unsent-changes` in localStorage) is non-zero. The sync badge, mounted in the navigation on every page, keeps the hint up to date.
+- A schema-error database reset (`?remove-database=true` or dev auto-reset) is refused while the unsent hint (`volleystats:unsent-changes` in localStorage) is non-zero. `SyncStatusProvider` (in `app/layout.tsx`, inside `LocalDatabaseProvider`) computes the sync status once for the badges and flags (`useSyncStatus()`) and keeps the hint up to date.
 - **A future `DB_GENERATION` bump must not delete a database that still has unsent rows**: keep the old database until its `pending_changes` is empty (open it with the old schema, let its replications finish, then delete it).
 - Sign-out with unsent changes asks first; local data is kept and uploads when the same user signs back in.
 
