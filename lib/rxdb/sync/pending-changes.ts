@@ -209,6 +209,16 @@ export class PendingChanges {
       .remove();
   }
 
+  async list(filter: PendingFilter = {}): Promise<PendingChange[]> {
+    const docs = await this.collection.find({ selector: toSelector(filter) }).exec();
+    return docs.map((doc) => doc.toJSON() as PendingChange);
+  }
+
+  /** Deletes entries by id (taking scoring back discards the superseded ones). */
+  async removeEntries(ids: string[]): Promise<void> {
+    if (ids.length > 0) await this.collection.bulkRemove(ids);
+  }
+
   count(filter: PendingFilter = {}): Promise<number> {
     return this.collection.count({ selector: toSelector(filter) }).exec();
   }

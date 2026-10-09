@@ -3,7 +3,7 @@ import type { FakeSupabaseServer } from "../fakes/fake-supabase";
 import { createFakeServer } from "../helpers/server";
 import { aSet, seedServerMatch, seedTeams } from "../helpers/fixtures";
 import { TestDevice, expectServerEqualsDevice } from "../helpers/test-device";
-import { waitFor } from "../helpers/wait";
+import { sleep, waitFor } from "../helpers/wait";
 
 describe("scoring device claim", () => {
   let server: FakeSupabaseServer;
@@ -109,5 +109,87 @@ describe("scoring device claim", () => {
     const set = await a.startSet(matchId);
     await a.settle(matchId);
     expect(server.row("sets", set.id)).toBeDefined();
+  });
+
+  it("does not mark the match lost when the server says this device holds it", async () => {
+    const a = await device({ deviceId: "device-a" });
+    await a.openMatch(matchId);
+    await a.manager.claimMatch(matchId);
+    a.goOffline();
+    const set = await a.startSet(matchId);
+    // A superseded parent left over from an earlier takeover: its children are superseded by the gate.
+    await a.pending.supersede("sets", set);
+    const { point } = await a.recordPoint(matchId, set.id, 1);
+    a.goOnline();
+    await waitFor(async () => (await a.pending.get("score_points", point.id))?.status === "superseded", {
+      message: "the point superseded behind its parent",
+    });
+    await waitFor(() => server.log.some((entry) => entry.table === "rpc:get_match_scorer"), { message: "holder fetched" });
+    await sleep(200);
+    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("held");
+    expect(a.manager.isTracking(matchId)).toBe(true);
+  });
+
+  it("takes scoring back after a takeover that superseded unsent changes: device = server, then scores again", async () => {
+    const a = await device({ deviceId: "device-a", userName: "Alex" });
+    await a.openMatch(matchId);
+    await a.manager.claimMatch(matchId);
+    const set1 = await a.startSet(matchId);
+    await a.settle(matchId);
+
+    // Offline: a point in the uploaded set (the set row changes too) and a new set with a point.
+    a.goOffline();
+    const offline1 = await a.recordPoint(matchId, set1.id, 1);
+    const set2 = await a.startSet(matchId, { set_number: 2 });
+    const offline2 = await a.recordPoint(matchId, set2.id, 1);
+    const neverUploaded = [
+      ["player_stats", offline1.stat.id],
+      ["score_points", offline1.point.id],
+      ["sets", set2.id],
+      ["player_stats", offline2.stat.id],
+      ["score_points", offline2.point.id],
+    ] as const;
+
+    // Device B takes over and scores a set (played on the server, see the takeover test above).
+    server.setScorer(matchId, { deviceId: "device-b", name: "Sam" });
+    const setB = server.seed("sets", { ...aSet(matchId, { set_number: 2 }), home_score: 4 });
+
+    a.goOnline();
+    await waitFor(async () => (await a.manager.tracked.entry(matchId))?.claim === "lost", { message: "A sees the takeover" });
+    await waitFor(async () => (await a.pending.count({ matchId, statuses: ["pending"] })) === 0, { message: "nothing pending on A" });
+    expect(await a.pending.count({ matchId, statuses: ["superseded"] })).toBeGreaterThan(0);
+
+    const logBefore = server.log.length;
+    const result = await a.manager.takeBackMatch(matchId);
+    expect(result).toMatchObject({ claim: { claimed: true }, refreshed: true });
+    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("held");
+    expect(a.manager.isTracking(matchId)).toBe(true);
+    expect(await a.pending.count({ matchId, statuses: ["superseded"] })).toBe(0);
+    expect(server.row("matches", matchId)!.scorer_device_id).toBe("device-a");
+
+    // This device's superseded changes are gone: it shows the match as the server has it.
+    await expectServerEqualsDevice(a, matchId);
+    expect(server.row("sets", set1.id)!.home_score).toBe(0);
+    expect((await a.db.sets.findOne(set1.id).exec())?.home_score).toBe(0);
+    expect(await a.db.sets.findOne(setB.id).exec()).not.toBeNull();
+    for (const [table, id] of neverUploaded) {
+      expect(server.row(table, id), `${table} ${id} not on the server`).toBeUndefined();
+      expect(await (a.db[table] as any).findOne(id).exec(), `${table} ${id} removed locally`).toBeNull();
+    }
+    // Nothing of the discarded changes was sent: no insert, no tombstone.
+    const discardedIds = new Set<string>(neverUploaded.map(([, id]) => id));
+    const writesAfter = server.log
+      .slice(logBefore)
+      .filter((entry) => entry.op !== "select" && entry.op !== "rpc" && entry.ids.some((id) => discardedIds.has(id)));
+    expect(writesAfter).toEqual([]);
+
+    // The claim stays held and a new point uploads.
+    const next = await a.recordPoint(matchId, setB.id, 5);
+    await a.settle(matchId);
+    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("held");
+    expect(server.row("score_points", next.point.id)).toBeDefined();
+    expect(server.row("player_stats", next.stat.id)).toBeDefined();
+    expect(server.row("sets", setB.id)!.home_score).toBe(5);
+    await expectServerEqualsDevice(a, matchId);
   });
 });

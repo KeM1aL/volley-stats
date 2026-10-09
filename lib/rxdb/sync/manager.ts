@@ -9,6 +9,7 @@ import type { SyncPlatform } from "./platform/types";
 import { ReferenceSync } from "./reference-sync";
 import { claimMatchScorer, getMatchScorer, type ClaimResult, type ScorerInfo } from "./scorer-claim";
 import { SyncStates } from "./sync-state";
+import { discardSupersededChanges } from "./take-back";
 import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatchMap } from "./tracked-matches";
 import type { SyncUser } from "./types";
 import { runSyncUpgrade } from "./upgrade";
@@ -154,6 +155,44 @@ export class SyncManager {
     });
     if (result.claimed) await this.tracked.setClaim(matchId, "held");
     return result;
+  }
+
+  /**
+   * Takes scoring back after another device took the match over (the banner). Forces the claim, then
+   * discards this device's superseded changes to the match so it shows the match as the server has it
+   * (controller ruling, closing review N1), and only then marks the claim held: the replications restart
+   * on aligned rows. Finally pulls the match again (`refreshed` false: the refresh timed out).
+   * Throws ScorerRpcError when the claim fails, or the server's error when its rows can't be read;
+   * the claim then stays lost on this device and the take-back can be tried again.
+   */
+  async takeBackMatch(matchId: string): Promise<{ claim: ClaimResult; refreshed: boolean }> {
+    const claim = await this.enqueue(async () => {
+      // Normally already stopped by the loss; nothing of this match may push while it is reset.
+      const running = this.matches.get(matchId);
+      if (running) {
+        this.matches.delete(matchId);
+        await running.cancel();
+      }
+      if (this.user) await this.tracked.track(matchId, this.user.id);
+      const deviceId = await this.deviceId;
+      const result = await claimMatchScorer(this.options.client, {
+        matchId,
+        deviceId,
+        label: this.options.platform.getDeviceLabel(),
+        force: true,
+      });
+      if (!result.claimed) return result;
+      await discardSupersededChanges({
+        db: this.options.db,
+        client: this.options.client,
+        pending: this.pendingChanges,
+        deviceId,
+        matchId,
+      });
+      await this.tracked.setClaim(matchId, "held");
+      return result;
+    });
+    return { claim, refreshed: claim.claimed ? await this.refreshMatch(matchId) : false };
   }
 
   /** Scoring offline without being able to check: the claim is forced before the match's first upload. */
@@ -316,12 +355,17 @@ export class SyncManager {
   };
 
   private async onSuperseded(matchId: string): Promise<void> {
+    const deviceId = await this.deviceId;
     let holder: ScorerInfo | null = null;
     try {
-      holder = await getMatchScorer(this.options.client, matchId, await this.deviceId);
+      holder = await getMatchScorer(this.options.client, matchId, deviceId);
     } catch {
-      // Offline: the banner shows "another scorer" without a name.
+      // A held claim isn't given up on a guess: the next resume's checkClaims decides.
+      if ((await this.tracked.entry(matchId))?.claim === "held") return;
+      // Otherwise the banner shows "another scorer" without a name.
     }
+    // This device holds the match (e.g. a row behind a parent superseded before a take-back): not lost.
+    if (holder?.deviceId === deviceId) return;
     await this.markLost(matchId, holder);
   }
 
