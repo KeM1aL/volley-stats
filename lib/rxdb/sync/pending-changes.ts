@@ -149,8 +149,12 @@ export class PendingChanges {
           updated_at: now,
         });
       }
-      // A conflict means a hook marked that row meanwhile: its entry is the newer one.
-      if (entries.length > 0) await this.collection.bulkInsert(entries);
+      if (entries.length === 0) continue;
+      const { error } = await this.collection.bulkInsert(entries);
+      // A conflict means a hook marked that row meanwhile: its entry is the newer one. Anything else
+      // is a failed write: throw, so the upgrade runs again at the next start instead of tracking unmarked rows.
+      const failed = error.find((writeError) => writeError.status !== 409);
+      if (failed) throw new Error(`could not mark ${error.length} row(s) pending (status ${failed.status})`);
     }
   }
 

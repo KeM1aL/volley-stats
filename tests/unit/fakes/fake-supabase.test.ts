@@ -296,13 +296,17 @@ describe("fake supabase server", () => {
 
   it("latencyMs delays every request", async () => {
     const { server, client } = setup();
+    const timeRequests = async () => {
+      const started = performance.now();
+      for (let n = 0; n < 3; n++) await client.from("sets").select("*");
+      return performance.now() - started;
+    };
+    await timeRequests(); // warm up
+    const unlatenced = await timeRequests();
     server.latencyMs = 60;
-    const started = Date.now();
-    await client.from("sets").select("*");
-    expect(Date.now() - started).toBeGreaterThanOrEqual(55);
+    const latenced = await timeRequests();
     server.latencyMs = 0;
-    const fast = Date.now();
-    await client.from("sets").select("*");
-    expect(Date.now() - fast).toBeLessThan(55);
+    // Three requests at 60 ms each: compared with the same requests without latency, not with a wall-clock bound.
+    expect(latenced - unlatenced).toBeGreaterThanOrEqual(3 * 55);
   });
 });

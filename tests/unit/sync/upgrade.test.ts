@@ -73,6 +73,32 @@ describe("runSyncUpgrade", () => {
     expect(await pending.count({ matchId: second.matchId })).toBe(4);
   });
 
+  it("throws when marking the rows fails, tracking nothing, so the upgrade runs again at the next start", async () => {
+    const { matchId } = await leaveMatch(2);
+    const bulkInsert = vi
+      .spyOn(pending.collection, "bulkInsert")
+      .mockResolvedValueOnce({ success: [], error: [{ status: 500, isError: true } as any] } as any);
+    await expect(runSyncUpgrade(db, tracked, pending, USER_ID, server.client())).rejects.toThrow(/could not mark/);
+    expect(await tracked.entry(matchId)).toBeNull();
+    expect(await db.getLocal("sync-upgrade")).toBeNull();
+    bulkInsert.mockRestore();
+    expect(await runSyncUpgrade(db, tracked, pending, USER_ID, server.client())).toBe(1);
+    expect(await pending.count({ matchId })).toBe(4);
+  });
+
+  it("accepts a conflict when marking: a hook marked that row meanwhile", async () => {
+    const { matchId, set } = await leaveMatch(2);
+    // A hook marks the set right before the bulk write reaches the collection.
+    const bulkInsert = pending.collection.bulkInsert.bind(pending.collection);
+    vi.spyOn(pending.collection, "bulkInsert").mockImplementationOnce(async (entries: any) => {
+      await pending.markPending("sets", set);
+      return bulkInsert(entries);
+    });
+    expect(await runSyncUpgrade(db, tracked, pending, USER_ID, server.client())).toBe(1);
+    expect(await tracked.entry(matchId)).not.toBeNull();
+    expect(await pending.count({ matchId })).toBe(4);
+  });
+
   it("leaves an entry that already exists as it is", async () => {
     const { set, rows } = await leaveMatch(2);
     await pending.reject("score_points", rows[0], { kind: "permanent", code: "rls" }, { neverUploaded: true });
