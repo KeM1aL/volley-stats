@@ -319,12 +319,15 @@ export class SyncManager {
     }
   }
 
-  /** Drops matches unopened for TRACKED_MATCH_TTL_MS once nothing of theirs is unsent. */
+  /**
+   * Drops matches unopened for TRACKED_MATCH_TTL_MS once nothing of theirs is unsent. Superseded
+   * changes keep a lost match too: taking scoring back must still discard them.
+   */
   private async pruneTracked(userId: string): Promise<void> {
     const cutoff = Date.now() - TRACKED_MATCH_TTL_MS;
     for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
       if (entry.userId !== userId || Date.parse(entry.lastOpenedAt) >= cutoff) continue;
-      if ((await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected"] })) === 0) {
+      if ((await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected", "superseded"] })) === 0) {
         await this.tracked.remove(matchId);
       }
     }

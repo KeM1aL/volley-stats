@@ -459,6 +459,19 @@ describe("SyncManager", () => {
     expect(await tracked.entry(otherMatchId)).not.toBeNull();
   });
 
+  it("keeps a lost match unopened for 14 days while it has superseded changes (the take-back needs them)", async () => {
+    const d = await device();
+    const tracked = new TrackedMatches(d.db);
+    const longAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString();
+    await tracked.track(matchId, USER_ID, longAgo);
+    await tracked.setClaim(matchId, "lost", null);
+    await d.db.sets.insert(aSet(matchId) as any);
+    await d.pending.supersedeMatch(matchId);
+    d.goOffline();
+    await d.signIn();
+    expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
+  });
+
   it("tracks a match opened before sign-in completes", async () => {
     const d = await device();
     const opened = d.openMatch(matchId); // the live page's effect runs before the provider's setUser
