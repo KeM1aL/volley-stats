@@ -345,6 +345,30 @@ describe("replicateSupabase", () => {
     expect(calls.rejected).toEqual([]);
   });
 
+  it("waits, instead of rejecting, when an update without a session reads back the unchanged row", async () => {
+    await setup();
+    const { reporter, calls } = recordingReporter();
+    const state = replicate("sets", { reporter });
+    await state.awaitInitialReplication();
+    const set = aSet(matchId);
+    await db.sets.insert(set as any);
+    await waitFor(() => !!server.row("sets", set.id), { message: "set uploaded" });
+    await state.awaitInSync();
+    // Lost session: the UPDATE is refused (200, `[]`) but match tables are publicly readable, so the
+    // read-back finds the row unchanged. That is the anon key, not a permanent RLS refusal.
+    signedIn = false;
+    server.hideFromUpdates("sets", (row) => row.id === set.id);
+    const updates = () => server.log.filter((entry) => entry.table === "sets" && entry.op === "update").length;
+    const before = updates();
+    await db.sets.findOne(set.id).update({ $set: { home_score: 2 } });
+    await waitFor(() => updates() - before >= 2, { message: "update retried" });
+    expect(calls.rejected).toEqual([]);
+    signedIn = true;
+    server.showToUpdates("sets");
+    await waitFor(() => server.row("sets", set.id)?.home_score === 2, { message: "update uploaded once signed in again" });
+    expect(calls.rejected).toEqual([]);
+  });
+
   it("inserts a row the server never accepted when it is retried", async () => {
     await setup();
     const neverUploaded = new Set<string>();

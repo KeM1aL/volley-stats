@@ -128,7 +128,12 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
     if (docsEqual(found.doc, doc)) return { kind: "ok" };
     // The server still has the version this device knew, so the equality filter matched it: the write
     // was refused, not overtaken. A conflict here would be resolved and re-pushed in a loop.
-    if (docsEqual(found.doc, assumed)) return refused;
+    // Match tables are publicly readable, so a lost session (anon key) reads the row back unchanged
+    // too: that is temporary, wait for the session. With a session, RLS refused it for good.
+    if (docsEqual(found.doc, assumed)) {
+      if (!(await hasSession())) return { kind: "error", error: NO_SESSION, status: 401, phase: "update" };
+      return refused;
+    }
     return { kind: "conflict", master: found.doc };
   }
 
