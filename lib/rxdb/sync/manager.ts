@@ -130,8 +130,9 @@ export class SyncManager {
       ));
     if (!user) return false;
     const alreadySynced = (await this.syncStates.get(matchId))?.status === "synced";
+    // Another account's unsent changes to it: that account keeps it (the badge shows them).
+    if (!(await this.trackFor(matchId, user.id))) return alreadySynced;
     if (!alreadySynced) await this.syncStates.set(matchId, "syncing");
-    await this.tracked.track(matchId, user.id);
     await this.enqueue(async () => this.reconcile(await this.tracked.get()));
     if (alreadySynced) {
       this.matches.get(matchId)?.reSync();
@@ -146,14 +147,16 @@ export class SyncManager {
 
   /** Claims the match for this device (spec section 7). Throws ScorerRpcError when the server can't be reached. */
   async claimMatch(matchId: string, force = false): Promise<ClaimResult> {
-    if (this.user) await this.tracked.track(matchId, this.user.id);
+    const user = this.user;
+    const tracked = user ? await this.trackFor(matchId, user.id) : true;
     const result = await claimMatchScorer(this.options.client, {
       matchId,
       deviceId: await this.deviceId,
       label: this.options.platform.getDeviceLabel(),
       force,
     });
-    if (result.claimed) await this.tracked.setClaim(matchId, "held");
+    // The claim state belongs to the account the match is tracked for.
+    if (result.claimed && tracked) await this.tracked.setClaim(matchId, "held");
     return result;
   }
 
@@ -197,7 +200,7 @@ export class SyncManager {
 
   /** Scoring offline without being able to check: the claim is forced before the match's first upload. */
   async claimMatchOffline(matchId: string): Promise<void> {
-    if (this.user) await this.tracked.track(matchId, this.user.id);
+    if (this.user && !(await this.trackFor(matchId, this.user.id))) return;
     // A lost claim is only taken back online: takeBackMatch must discard the superseded changes first.
     if ((await this.tracked.entry(matchId))?.claim === "lost") return;
     await this.tracked.setClaim(matchId, "pending-force");
@@ -317,6 +320,21 @@ export class SyncManager {
       this.matches.set(matchId, sync);
       sync.start();
     }
+  }
+
+  /**
+   * Tracks the match for this user, unless the tracked entry belongs to another account and that
+   * account's changes to the match are still unsent on this device: it keeps the match then (they
+   * must not upload under this account). Returns whether the match is tracked for this user.
+   */
+  private async trackFor(matchId: string, userId: string): Promise<boolean> {
+    const entry = await this.tracked.entry(matchId);
+    if (entry && entry.userId !== userId) {
+      const unsent = await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected"] });
+      if (unsent > 0) return false;
+    }
+    await this.tracked.track(matchId, userId);
+    return true;
   }
 
   /**

@@ -173,6 +173,38 @@ describe("SyncManager", () => {
     expect(await d.pending.count({ matchId, statuses: ["pending"] })).toBeGreaterThan(0);
   });
 
+  it("does not hand another account's unsent match to the account that opens it", async () => {
+    const d = await device();
+    await d.signIn();
+    await d.openMatch(matchId);
+    d.goOffline();
+    const set = await d.startSet(matchId);
+    await d.recordPoint(matchId, set.id, 1);
+    await d.manager.setUser(null);
+    d.goOnline();
+    await d.signIn(testUser("user-2"));
+    await d.openMatch(matchId);
+    await d.manager.claimMatch(matchId).catch(() => undefined);
+    expect((await d.manager.tracked.entry(matchId))?.userId).toBe(USER_ID);
+    await sleep(300);
+    expect(d.manager.isTracking(matchId)).toBe(false);
+    expect(serverPoints()).toHaveLength(0);
+  });
+
+  it("hands a match to the account that opens it once nothing of it is unsent", async () => {
+    const d = await device();
+    await d.signIn();
+    await d.openMatch(matchId);
+    const set = await d.startSet(matchId);
+    await d.recordPoint(matchId, set.id, 1);
+    await d.settle(matchId);
+    await d.manager.setUser(null);
+    await d.signIn(testUser("user-2"));
+    await d.openMatch(matchId);
+    expect((await d.manager.tracked.entry(matchId))?.userId).toBe("user-2");
+    await waitFor(() => d.manager.isTracking(matchId), { message: "user-2 replicates the match" });
+  });
+
   it("continues after the access token expired during a long offline period", async () => {
     const d = await device();
     await d.signIn();
