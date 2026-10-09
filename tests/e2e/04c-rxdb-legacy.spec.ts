@@ -7,6 +7,7 @@
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
+import { takeOverScoringIfAsked } from '../helpers/sync';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 const LEGACY_STATE = path.join(__dirname, '../../playwright/.auth/rxdb-legacy-state.json');
@@ -40,6 +41,7 @@ test('live match opens on a device with RxDB v16 data', async ({ browser }) => {
   // Full URL incl. ?team=: the live page redirects to /matches without it.
   const { offlineMatchLiveUrl } = JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
   await page.goto(offlineMatchLiveUrl);
+  await takeOverScoringIfAsked(page);
   await expect(
     page.getByTestId('point-btn-managed-point').first()
       .or(page.getByTestId('set-setup').first())

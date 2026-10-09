@@ -7,6 +7,7 @@
 import { test, type Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
+import { takeOverScoringIfAsked } from '../helpers/sync';
 
 const LABEL = process.env.SCREENSHOT_LABEL;
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
@@ -47,6 +48,7 @@ test.describe('Screenshots', () => {
       for (const [name, url] of pages) {
         if (!url) continue;
         await page.goto(url);
+        if (url.includes('/live')) await takeOverScoringIfAsked(page);
         await shoot(page, `${theme}-${name}`);
       }
 
