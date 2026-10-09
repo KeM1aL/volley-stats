@@ -16,6 +16,8 @@ export const testUser = (id = USER_ID): SyncUser => ({ id, teamIds: [HOME_TEAM_I
 /** One device: its own local database, platform and sync manager, talking to the shared fake server. */
 export class TestDevice {
   online = true;
+  /** Whether the client holds a session; without one its requests carry the anon key. */
+  signedIn = true;
   manager: SyncManager;
   readonly platform: ReturnType<typeof createFakePlatform>;
 
@@ -38,7 +40,7 @@ export class TestDevice {
   private createManager(): SyncManager {
     return new SyncManager({
       db: this.db,
-      client: this.server.client({ online: () => this.online, userName: this.userName }),
+      client: this.server.client({ online: () => this.online, userName: this.userName, signedIn: () => this.signedIn }),
       platform: this.platform.platform,
       pending: this.pending,
       waitForLeadership: false,

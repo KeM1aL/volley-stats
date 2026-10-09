@@ -382,6 +382,69 @@ describe("SyncManager", () => {
     expect(await d.db.getLocal("sync-upgrade")).not.toBeNull();
   });
 
+  /** What an older app version left on this device: the server's match and set, and a point never uploaded. */
+  async function leaveRescuableMatch(d: TestDevice, id: string) {
+    const { _deleted, ...matchDoc } = pickSchemaFields(
+      server.row("matches", id)!,
+      d.db.matches.schema.jsonSchema.properties as Record<string, unknown>
+    ) as Record<string, unknown>;
+    await d.db.matches.insert(matchDoc as any);
+    const set = aSet(id);
+    await d.db.sets.insert(set as any);
+    server.seed("sets", { ...set });
+    const point = aScorePoint(id, set.id, 1);
+    await d.db.score_points.insert(point as any);
+    await d.pending.collection.find().remove(); // the old version had no pending_changes
+    return { set, point };
+  }
+
+  it("upgrade: shows the rescued rows as unsent until the server confirms them", async () => {
+    const d = await device();
+    const { point } = await leaveRescuableMatch(d, matchId);
+    const counts: number[] = [];
+    const subscription = d.pending.count$({ matchId, statuses: ["pending"] }).subscribe((count) => counts.push(count));
+    try {
+      await d.signIn();
+      await waitFor(() => !!server.row("score_points", point.id), { message: "point rescued" });
+      await d.settle(matchId);
+      expect(Math.max(...counts)).toBe(3); // the match, the set and the point
+      expect(await d.pending.count({ matchId })).toBe(0);
+    } finally {
+      subscription.unsubscribe();
+    }
+  });
+
+  it("upgrade: keeps an old match while its rescue runs, then forgets it", async () => {
+    const d = await device();
+    const oldMatchId = seedServerMatch(server, { date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() });
+    await leaveRescuableMatch(d, oldMatchId);
+    server.failNextWrites(...Array(1000).fill("network")); // the upgrade's read goes through, the rescue doesn't
+    await d.signIn();
+    expect(await d.manager.tracked.entry(oldMatchId)).not.toBeNull();
+    expect(await d.pending.count({ matchId: oldMatchId, statuses: ["pending"] })).toBe(3);
+    await d.restart();
+    await d.signIn();
+    expect(await d.manager.tracked.entry(oldMatchId)).not.toBeNull(); // still unsent: kept
+    server.clearFaults();
+    await d.settle(oldMatchId);
+    await d.restart();
+    await d.signIn();
+    expect(await d.manager.tracked.entry(oldMatchId)).toBeNull();
+  });
+
+  it("upgrade: seeds nothing without a session (the server would hide every match)", async () => {
+    const d = await device();
+    await leaveOldLocalMatch(d, matchId);
+    d.signedIn = false;
+    await d.signIn();
+    expect(await d.manager.tracked.entry(matchId)).toBeNull();
+    expect(await d.db.getLocal("sync-upgrade")).toBeNull();
+    d.signedIn = true;
+    await d.restart();
+    await d.signIn();
+    expect(await d.manager.tracked.entry(matchId)).not.toBeNull();
+  });
+
   it("forgets matches unopened for 14 days once nothing is unsent", async () => {
     const d = await device();
     const tracked = new TrackedMatches(d.db);

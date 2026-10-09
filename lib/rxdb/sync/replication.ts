@@ -81,7 +81,7 @@ export function replicateSupabase(options: SupabaseReplicationOptions): RxReplic
   async function insert(doc: WithDeleted<any>): Promise<WriteOutcome> {
     const { error, status } = await withDevice(client.from(tableName).insert(doc));
     if (!error) return { kind: "ok" };
-    if (WRITE_REFUSED_CODES.has(error.code ?? "") && !(await options.push?.reporter?.hasPendingEntry(doc[primaryPath]))) {
+    if (WRITE_REFUSED_CODES.has(error.code ?? "") && !(await options.push?.reporter?.createdHere(doc[primaryPath]))) {
       // A copy an older version left on the device (upgrade, spec section 9): RLS and the scorer
       // trigger run before the unique check, so a row the server has is refused, not a duplicate.
       // If the server has it, there is nothing to rescue and nothing this device may write.

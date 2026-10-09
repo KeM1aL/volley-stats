@@ -9,7 +9,7 @@ import { createFakeServer } from "../helpers/server";
 import { aSet, seedServerMatch, seedTeams } from "../helpers/fixtures";
 import { sleep, waitFor } from "../helpers/wait";
 
-function recordingReporter(neverUploaded = new Set<string>(), withoutPendingEntry = new Set<string>()) {
+function recordingReporter(neverUploaded = new Set<string>(), notCreatedHere = new Set<string>()) {
   const calls = {
     rejected: [] as Array<{ id: string; code: string; neverUploaded: boolean }>,
     superseded: [] as string[],
@@ -27,7 +27,7 @@ function recordingReporter(neverUploaded = new Set<string>(), withoutPendingEntr
       return calls.attempts.filter((id) => id === doc.id).length;
     },
     neverUploaded: async (id) => neverUploaded.has(id),
-    hasPendingEntry: async (id) => !withoutPendingEntry.has(id),
+    createdHere: async (id) => !notCreatedHere.has(id),
   };
   return { reporter, calls };
 }

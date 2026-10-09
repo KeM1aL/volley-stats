@@ -262,7 +262,7 @@ export class SyncManager {
       void this.enqueue(() => this.reconcile(matches));
     });
     try {
-      await runSyncUpgrade(this.options.db, this.tracked, user.id, this.options.client);
+      await runSyncUpgrade(this.options.db, this.tracked, this.pendingChanges, user.id, this.options.client);
     } catch (error) {
       console.warn("[sync] upgrade seeding failed:", error);
     }

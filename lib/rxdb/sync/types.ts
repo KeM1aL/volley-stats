@@ -45,8 +45,11 @@ export interface PushReporter {
   /** Called for failures that count towards MAX_TEMPORARY_ATTEMPTS; returns the attempts so far. */
   temporaryFailure(doc: WithDeleted<any>, error: ClassifiedError): Promise<number>;
   neverUploaded(docId: string): Promise<boolean>;
-  /** Whether this device has a pending_changes entry for the row (none: a copy left by an older version). */
-  hasPendingEntry(docId: string): Promise<boolean>;
+  /**
+   * Whether this device created the row and the server never accepted it (a pending or rejected insert).
+   * Otherwise an insert is a copy an older version left on the device (the upgrade's rescue).
+   */
+  createdHere(docId: string): Promise<boolean>;
 }
 
 export interface SupabaseReplicationOptions {

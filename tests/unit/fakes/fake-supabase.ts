@@ -247,6 +247,11 @@ export class FakeSupabaseServer {
   failNextWrites(...faults: Fault[]): void {
     this.writeFaults.push(...faults);
   }
+  /** Drops the faults queued by failNext and failNextWrites that haven't been used yet. */
+  clearFaults(): void {
+    this.faults.length = 0;
+    this.writeFaults.length = 0;
+  }
   loseNextResponse(table: string): void {
     this.lostResponses.add(table);
   }
