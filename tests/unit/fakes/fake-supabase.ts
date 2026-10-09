@@ -138,6 +138,7 @@ export class FakeQuery implements PromiseLike<FakeResponse> {
     return this;
   }
   in(column: string, values: unknown[]): this {
+    if (column === "id") this.idFilters.push(...values.map(String));
     this.filters.push((row) => values.some((value) => compare(row[column], value) === 0));
     return this;
   }
@@ -168,7 +169,7 @@ export class FakeQuery implements PromiseLike<FakeResponse> {
     onfulfilled?: ((value: FakeResponse) => A | PromiseLike<A>) | null,
     onrejected?: ((reason: unknown) => B | PromiseLike<B>) | null
   ): PromiseLike<A | B> {
-    return this.server.delay().then(() => this.server.execute(this)).then(onfulfilled, onrejected);
+    return this.server.delay(this.table, this).then(() => this.server.execute(this)).then(onfulfilled, onrejected);
   }
 }
 
@@ -188,7 +189,7 @@ export class FakeRpc implements PromiseLike<FakeResponse> {
     onfulfilled?: ((value: FakeResponse) => A | PromiseLike<A>) | null,
     onrejected?: ((reason: unknown) => B | PromiseLike<B>) | null
   ): PromiseLike<A | B> {
-    return this.server.delay().then(() => this.server.executeRpc(this)).then(onfulfilled, onrejected);
+    return this.server.delay(`rpc:${this.name}`).then(() => this.server.executeRpc(this)).then(onfulfilled, onrejected);
   }
 }
 
@@ -199,6 +200,8 @@ export class FakeSupabaseServer {
   offline = false;
   /** Delay before each request is processed. */
   latencyMs = 0;
+  private readonly hung = new Map<string, (query: FakeQuery) => boolean>();
+  private readonly hungRequests: Array<() => void> = [];
   private readonly columns = new Map<string, Set<string>>();
   private readonly faults: Fault[] = [];
   private readonly writeFaults: Fault[] = [];
@@ -236,8 +239,23 @@ export class FakeSupabaseServer {
     };
   }
 
-  delay(): Promise<void> {
+  delay(target?: string, query?: FakeQuery): Promise<void> {
+    const hang = target ? this.hung.get(target) : undefined;
+    if (hang && (!query || hang(query))) return new Promise((resolve) => this.hungRequests.push(resolve));
     return this.latencyMs > 0 ? new Promise((resolve) => setTimeout(resolve, this.latencyMs)) : Promise.resolve();
+  }
+
+  /**
+   * Requests to this table (or RPC, as `rpc:<name>`) are accepted but never answered until releaseHung().
+   * `when` narrows it to some requests of the table (default: all).
+   */
+  hang(target: string, when: (query: FakeQuery) => boolean = () => true): void {
+    this.hung.set(target, when);
+  }
+  /** Stops hanging and lets the hung requests through. */
+  releaseHung(): void {
+    this.hung.clear();
+    for (const release of this.hungRequests.splice(0)) release();
   }
 
   // ---- test controls ----

@@ -17,6 +17,8 @@ import { runSyncUpgrade } from "./upgrade";
 /** How long the live page waits for a match's first pull. */
 export const SYNC_TIMEOUT_MS = 30_000;
 const DEFAULT_RETRY_MS = 5_000;
+/** How long aligning a lost match with the server may take before pruning it is left for the next start. */
+export const PRUNE_ALIGN_TIMEOUT_MS = 10_000;
 
 export interface SyncManagerOptions {
   db: LocalDatabase;
@@ -26,6 +28,8 @@ export interface SyncManagerOptions {
   /** Only the leader tab replicates (default true; tests use false). */
   waitForLeadership?: boolean;
   retryTime?: number;
+  /** Bound of the server work that prunes a lost match (default PRUNE_ALIGN_TIMEOUT_MS). */
+  pruneAlignTimeoutMs?: number;
 }
 
 export function toSyncUser(user: User): SyncUser {
@@ -69,6 +73,8 @@ export class SyncManager {
   private trackedSubscription: Subscription | null = null;
   private readonly platformSubscriptions: Subscription[];
   private queue: Promise<unknown> = Promise.resolve();
+  /** Lost matches being aligned with the server for pruning (outside the lifecycle queue). */
+  private readonly pruning = new Map<string, Promise<void>>();
   private readonly deviceId: Promise<string>;
   /** Set by destroy(): nothing starts afterwards, and a pending syncMatch resolves false. */
   private readonly destroyed$ = new BehaviorSubject(false);
@@ -350,6 +356,7 @@ export class SyncManager {
       console.warn("[sync] upgrade seeding failed:", error);
     }
     try {
+      // Local work only; a lost match's alignment with the server runs detached from this queue.
       await this.pruneTracked(user.id);
     } catch (error) {
       console.warn("[sync] pruning tracked matches failed:", error);
@@ -426,35 +433,67 @@ export class SyncManager {
   /**
    * Drops matches unopened for TRACKED_MATCH_TTL_MS once nothing of theirs is unsent. Superseded
    * changes of a lost match only matter while the take-back is offered, which is while the match is
-   * tracked and was opened recently: past the TTL a lost match goes too, after its superseded rows
-   * were aligned with the server and their entries deleted (they were never going to upload).
+   * tracked and was opened recently: past the TTL a lost match goes too, but only after its superseded
+   * rows were aligned with the server (see pruneLostMatch). That needs the network, so it is started
+   * here and not awaited: the lifecycle queue never waits for the server.
    */
   private async pruneTracked(userId: string): Promise<void> {
     for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
       if (entry.userId !== userId || !this.unopenedForTtl(entry)) continue;
       const unsent: PendingStatus[] = entry.claim === "lost" ? ["pending", "rejected"] : ["pending", "rejected", "superseded"];
       if ((await this.pendingChanges.count({ matchId, statuses: unsent })) > 0) continue;
-      if (entry.claim === "lost") {
-        // Aligned with the server first, as a take-back would (its rows become the server's version, or a
-        // local tombstone that is never pushed), so the device doesn't keep showing changes the server never got.
-        // The entries are deleted by the alignment. Offline or on a server error the match stays tracked
-        // and this is retried at the next start.
-        try {
-          await this.stopMatch(matchId);
-          await discardSupersededChanges({
-            db: this.options.db,
-            client: this.options.client,
-            pending: this.pendingChanges,
-            deviceId: await this.deviceId,
-            matchId,
-          });
-        } catch (error) {
-          console.warn(`[sync] match ${matchId}: aligning it before pruning failed, kept for the next start`, error);
-          continue;
-        }
-      }
-      await this.tracked.remove(matchId);
+      if (entry.claim === "lost") this.pruneLostMatch(matchId, userId);
+      else await this.tracked.remove(matchId);
     }
+  }
+
+  /**
+   * Aligns a lost match past the TTL with the server as a take-back would (each superseded row becomes
+   * the server's version, or a local tombstone that is never pushed; the entries are deleted), then
+   * stops tracking it. Best effort and outside the lifecycle queue: one run per match at a time,
+   * bounded by `pruneAlignTimeoutMs`. Offline, on a server error or on a timeout the match stays
+   * tracked and this is retried at the next start. Only the leader tab aligns (two tabs writing the
+   * same rows would conflict), so a follower tab waits for leadership, within the same bound.
+   */
+  private pruneLostMatch(matchId: string, userId: string): void {
+    if (this.pruning.has(matchId)) return;
+    const { db } = this.options;
+    const limit = this.options.pruneAlignTimeoutMs ?? PRUNE_ALIGN_TIMEOUT_MS;
+    let abandoned = false;
+    const work = (async () => {
+      if (this.options.waitForLeadership !== false) await db.waitForLeadership();
+      if (this.destroyed || abandoned) return;
+      await discardSupersededChanges({
+        db,
+        client: this.options.client,
+        pending: this.pendingChanges,
+        deviceId: await this.deviceId,
+        matchId,
+      });
+      if (this.destroyed || abandoned) return;
+      await this.enqueue(async () => {
+        // Opened, taken back or written to while the server was asked: then it is no longer a candidate.
+        const entry = await this.tracked.entry(matchId);
+        if (!entry || entry.userId !== userId || entry.claim !== "lost" || !this.unopenedForTtl(entry)) return;
+        if ((await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected"] })) > 0) return;
+        await this.tracked.remove(matchId);
+      });
+    })();
+    work.catch(() => undefined); // reported through the race below, or ignored once abandoned
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        abandoned = true;
+        reject(new Error(`timed out after ${limit} ms`));
+      }, limit);
+    });
+    const task = Promise.race([work, timedOut])
+      .catch((error) => console.warn(`[sync] match ${matchId}: aligning it before pruning failed, kept for the next start`, error))
+      .finally(() => {
+        clearTimeout(timer);
+        this.pruning.delete(matchId);
+      });
+    this.pruning.set(matchId, task);
   }
 
   private resume(): void {

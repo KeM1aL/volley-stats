@@ -76,8 +76,10 @@ export async function expectServerStaysAt(matchId: string, score: LiveScore, win
 /**
  * A live page opened in another browser context either asks before taking over scoring or goes
  * straight to the live view (scoring controls, set setup, or the summary of a finished match).
- * Waits up to 20 s for whichever appears first and clicks only the dialog. Nothing appearing is not
- * an error here: the caller's own assertions say what it expected.
+ * Waits up to 20 s for whichever appears first. The claim check is asynchronous, so the controls can
+ * show before the dialog opens: when they appear first, the dialog gets a short grace period (3 s).
+ * Clicks only the dialog. Nothing appearing is not an error here: the caller's own assertions say
+ * what it expected.
  */
 export async function takeOverScoringIfAsked(page: Page): Promise<void> {
   const dialog = page.getByTestId('scorer-claim-dialog');
@@ -95,7 +97,14 @@ export async function takeOverScoringIfAsked(page: Page): Promise<void> {
       () => true,
       () => false
     );
-  if (appeared && (await dialog.isVisible())) {
+  if (!appeared) return;
+  const asked =
+    (await dialog.isVisible()) ||
+    (await dialog.waitFor({ state: 'visible', timeout: 3_000 }).then(
+      () => true,
+      () => false
+    ));
+  if (asked) {
     await dialog.getByRole('button', { name: /take over scoring|score on this device/i }).click();
     await expect(dialog).toBeHidden();
   }

@@ -2,7 +2,7 @@ import { expect } from "vitest";
 import type { LocalDatabase } from "@/lib/rxdb/collections";
 import { docsEqual } from "@/lib/rxdb/sync/conflict-handler";
 import { pickSchemaFields } from "@/lib/rxdb/sync/helper";
-import { SyncManager } from "@/lib/rxdb/sync/manager";
+import { SyncManager, type SyncManagerOptions } from "@/lib/rxdb/sync/manager";
 import type { PendingChanges } from "@/lib/rxdb/sync/pending-changes";
 import { MATCH_COLLECTIONS, type SyncUser } from "@/lib/rxdb/sync/types";
 import type { FakeSupabaseServer } from "../fakes/fake-supabase";
@@ -26,15 +26,19 @@ export class TestDevice {
     readonly db: LocalDatabase,
     readonly pending: PendingChanges,
     readonly deviceId: string,
-    private readonly userName: string
+    private readonly userName: string,
+    private readonly syncOptions: Partial<SyncManagerOptions> = {}
   ) {
     this.platform = createFakePlatform(deviceId);
     this.manager = this.createManager();
   }
 
-  static async create(server: FakeSupabaseServer, options: { deviceId?: string; userName?: string } = {}): Promise<TestDevice> {
+  static async create(
+    server: FakeSupabaseServer,
+    options: { deviceId?: string; userName?: string; syncOptions?: Partial<SyncManagerOptions> } = {}
+  ): Promise<TestDevice> {
     const { db, pending } = await createTestDb();
-    return new TestDevice(server, db, pending, options.deviceId ?? "device-a", options.userName ?? "Alex");
+    return new TestDevice(server, db, pending, options.deviceId ?? "device-a", options.userName ?? "Alex", options.syncOptions);
   }
 
   private createManager(): SyncManager {
@@ -45,6 +49,7 @@ export class TestDevice {
       pending: this.pending,
       waitForLeadership: false,
       retryTime: 50,
+      ...this.syncOptions,
     });
   }
 

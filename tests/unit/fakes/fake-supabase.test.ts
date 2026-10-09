@@ -313,6 +313,36 @@ describe("fake supabase server", () => {
     expect(server.rows("sets")).toHaveLength(1);
   });
 
+  it("hang() accepts requests to a table without answering until releaseHung()", async () => {
+    const { server, client } = setup();
+    server.hang("sets");
+    let answered = false;
+    const hung = Promise.resolve(client.from("sets").select("*")).then((response: any) => {
+      answered = true;
+      return response;
+    });
+    expect((await client.from("matches").select("*")).error).toBeNull(); // other tables answer
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(answered).toBe(false);
+    server.releaseHung();
+    expect((await hung).error).toBeNull();
+    expect((await client.from("sets").select("*")).error).toBeNull();
+  });
+
+  it("hang() can be narrowed to some requests of a table", async () => {
+    const { server, client } = setup();
+    server.hang("sets", (query) => query.ids().length > 0);
+    expect((await client.from("sets").select("*")).error).toBeNull(); // not narrowed out
+    let answered = false;
+    const hung = Promise.resolve(client.from("sets").select("*").in("id", ["20000000-0000-4000-8000-0000000000aa"])).then(() => {
+      answered = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(answered).toBe(false);
+    server.releaseHung();
+    await hung;
+  });
+
   it("latencyMs delays every request", async () => {
     const { server, client } = setup();
     const timeRequests = async () => {

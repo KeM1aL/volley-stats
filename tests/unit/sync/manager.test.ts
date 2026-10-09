@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { pickSchemaFields } from "@/lib/rxdb/sync/helper";
+import type { SyncManagerOptions } from "@/lib/rxdb/sync/manager";
 import { MatchSync } from "@/lib/rxdb/sync/match-sync";
 import { ReferenceSync } from "@/lib/rxdb/sync/reference-sync";
 import { TrackedMatches } from "@/lib/rxdb/sync/tracked-matches";
@@ -33,7 +34,7 @@ describe("SyncManager", () => {
     await Promise.all(devices.splice(0).map((device) => device.dispose()));
   });
 
-  async function device(options: { deviceId?: string; userName?: string } = {}) {
+  async function device(options: { deviceId?: string; userName?: string; syncOptions?: Partial<SyncManagerOptions> } = {}) {
     const created = await TestDevice.create(server, options);
     devices.push(created);
     return created;
@@ -571,16 +572,21 @@ describe("SyncManager", () => {
   describe("a lost match nobody takes back", () => {
     const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-    /** A match this device lost: tracked as lost with one superseded change. Offline, so nothing is pruned or checked yet. */
-    async function leaveLostMatch(d: TestDevice, id: string, openedAt: string) {
+    /** A match this device lost: tracked as lost with one superseded change (two with `withPoint`). Offline, so nothing is pruned or checked yet. */
+    async function leaveLostMatch(d: TestDevice, id: string, openedAt: string, withPoint = false) {
       const tracked = new TrackedMatches(d.db);
       await tracked.track(id, USER_ID, openedAt);
       await tracked.setClaim(id, "lost", null);
       const set = aSet(id);
       await d.db.sets.insert(set as any);
+      const point = aScorePoint(id, set.id, 1);
+      if (withPoint) await d.db.score_points.insert(point as any);
       await d.pending.supersedeMatch(id);
-      return { tracked, set };
+      return { tracked, set, point };
     }
+
+    const alignmentFailed = (warn: { mock: { calls: unknown[][] } }) =>
+      warn.mock.calls.some(([message]) => String(message).includes("aligning it before pruning failed"));
 
     it("is kept while it was opened within 14 days (the take-back needs its superseded changes)", async () => {
       const d = await device();
@@ -595,7 +601,7 @@ describe("SyncManager", () => {
       const d = await device();
       const { tracked, set } = await leaveLostMatch(d, matchId, daysAgo(15));
       await d.signIn();
-      expect(await tracked.entry(matchId)).toBeNull();
+      await waitFor(async () => (await tracked.entry(matchId)) === null, { message: "the lost match is pruned" });
       expect(await d.pending.get("sets", set.id)).toBeNull();
       expect(await d.pending.count({ matchId })).toBe(0);
       // The local-only row is gone from the device (a tombstone), and neither it nor a removal was sent.
@@ -617,7 +623,7 @@ describe("SyncManager", () => {
       await d.db.sets.insert({ ...doc, home_score: 2 } as any);
       await d.pending.supersedeMatch(matchId);
       await d.signIn();
-      expect(await tracked.entry(matchId)).toBeNull();
+      await waitFor(async () => (await tracked.entry(matchId)) === null, { message: "the lost match is pruned" });
       expect(await d.pending.count({ matchId })).toBe(0);
       expect((await d.db.sets.findOne(onServer.id).exec())?.home_score).toBe(7);
       expect(server.row("sets", onServer.id)!.home_score).toBe(7);
@@ -630,17 +636,76 @@ describe("SyncManager", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
       try {
         await d.signIn();
+        await waitFor(() => alignmentFailed(warn), { message: "the failed alignment is logged" });
         expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
         expect((await d.pending.get("sets", set.id))?.status).toBe("superseded");
         expect(await d.db.sets.findOne(set.id).exec()).not.toBeNull();
         d.goOnline();
         await d.restart();
         await d.signIn();
-        expect(await tracked.entry(matchId)).toBeNull();
+        await waitFor(async () => (await tracked.entry(matchId)) === null, { message: "pruned at the next start" });
         expect(await d.pending.get("sets", set.id)).toBeNull();
         expect(await d.db.sets.findOne(set.id).exec()).toBeNull();
         expect(server.row("sets", set.id)).toBeUndefined();
       } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it("aligns several tables, and a later table failing leaves the rest for the next start", async () => {
+      const d = await device();
+      const { tracked, set, point } = await leaveLostMatch(d, matchId, daysAgo(15), true);
+      expect(await d.pending.count({ matchId, statuses: ["superseded"] })).toBe(2);
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      try {
+        // Tables are aligned in sync order (sets before score_points): reading the second one fails once.
+        server.failNextOn("score_points", "network");
+        await d.signIn();
+        await waitFor(() => alignmentFailed(warn), { message: "the failed alignment is logged" });
+        expect(await d.pending.get("sets", set.id)).toBeNull(); // aligned, its entry deleted
+        expect(await d.db.sets.findOne(set.id).exec()).toBeNull();
+        expect((await d.pending.get("score_points", point.id))?.status).toBe("superseded"); // still to do
+        expect(await d.db.score_points.findOne(point.id).exec()).not.toBeNull();
+        expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
+
+        await d.restart();
+        await d.signIn();
+        await waitFor(async () => (await tracked.entry(matchId)) === null, { message: "pruned at the next start" });
+        expect(await d.pending.count({ matchId })).toBe(0);
+        expect(await d.db.score_points.findOne(point.id).exec()).toBeNull();
+        expect(server.rows("score_points", (row) => row.id === point.id)).toEqual([]);
+        expect(server.log.filter((entry) => ["sets", "score_points"].includes(entry.table) && entry.op !== "select")).toEqual([]);
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it("does not make anything wait for a server that never answers it: other matches open, the lost one stays tracked, a timeout is a failure", async () => {
+      const d = await device({ syncOptions: { pruneAlignTimeoutMs: 600 } });
+      const { tracked, set } = await leaveLostMatch(d, matchId, daysAgo(15));
+      const otherMatchId = seedServerMatch(server);
+      // The alignment reads the lost match's rows by id; pulls of other matches (by match_id) are not affected.
+      server.hang("sets", (query) => query.ids().length > 0);
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      try {
+        await d.signIn();
+        const started = Date.now();
+        expect(await d.manager.syncMatch(otherMatchId, 5000)).toBe(true);
+        expect(Date.now() - started).toBeLessThan(500); // before the alignment's own timeout
+        await d.manager.refreshMatch(otherMatchId);
+        await d.manager.setUser(testUser()); // the lifecycle queue is free
+        expect(alignmentFailed(warn)).toBe(false);
+        await waitFor(() => alignmentFailed(warn), { message: "the alignment gave up after its timeout" });
+        expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
+        expect((await d.pending.get("sets", set.id))?.status).toBe("superseded");
+
+        // The next start, with the server answering, finishes the pruning.
+        server.releaseHung();
+        await d.restart();
+        await d.signIn();
+        await waitFor(async () => (await tracked.entry(matchId)) === null, { message: "pruned at the next start" });
+      } finally {
+        server.releaseHung();
         warn.mockRestore();
       }
     });
