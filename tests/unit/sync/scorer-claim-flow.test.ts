@@ -174,6 +174,34 @@ describe("scoring device claim", () => {
     expect(a.manager.isTracking(matchId)).toBe(false);
   });
 
+  it("finishes a take-back whose reset failed after the forced claim, on the next resume", async () => {
+    const a = await device();
+    await a.openMatch(matchId);
+    await a.manager.claimMatch(matchId);
+    const set = await a.startSet(matchId);
+    await a.settle(matchId);
+    a.goOffline();
+    const offline = await a.recordPoint(matchId, set.id, 1);
+    server.setScorer(matchId, { deviceId: "device-b", name: "Sam" });
+    a.goOnline();
+    await waitFor(async () => (await a.manager.tracked.entry(matchId))?.claim === "lost", { message: "A sees the takeover" });
+    await waitFor(async () => (await a.pending.count({ matchId, statuses: ["pending"] })) === 0, { message: "nothing pending on A" });
+
+    // The forced claim goes through, reading the server's rows for the reset doesn't.
+    server.failNextOn("sets", "network");
+    await expect(a.manager.takeBackMatch(matchId)).rejects.toBeTruthy();
+    expect(server.row("matches", matchId)!.scorer_device_id).toBe("device-a");
+    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("lost");
+
+    a.platform.foreground();
+    await waitFor(async () => (await a.manager.tracked.entry(matchId))?.claim === "held", { message: "take-back finished" });
+    expect(await a.pending.count({ matchId, statuses: ["superseded"] })).toBe(0);
+    await waitFor(() => a.manager.isTracking(matchId), { message: "replication restarted" });
+    await a.settle(matchId);
+    expect(server.row("score_points", offline.point.id)).toBeUndefined();
+    await expectServerEqualsDevice(a, matchId);
+  });
+
   it("takes scoring back after a takeover that superseded unsent changes: device = server, then scores again", async () => {
     const a = await device({ deviceId: "device-a", userName: "Alex" });
     await a.openMatch(matchId);

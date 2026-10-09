@@ -202,6 +202,7 @@ export class FakeSupabaseServer {
   private readonly columns = new Map<string, Set<string>>();
   private readonly faults: Fault[] = [];
   private readonly writeFaults: Fault[] = [];
+  private readonly tableFaults = new Map<string, Fault[]>();
   private readonly lostResponses = new Set<string>();
   private readonly writeDenials = new Map<string, (row: Row) => boolean>();
   private readonly updateHidden = new Map<string, HiddenRows>();
@@ -247,10 +248,15 @@ export class FakeSupabaseServer {
   failNextWrites(...faults: Fault[]): void {
     this.writeFaults.push(...faults);
   }
-  /** Drops the faults queued by failNext and failNextWrites that haven't been used yet. */
+  /** Like failNext, but only requests to this table get the faults. */
+  failNextOn(table: string, ...faults: Fault[]): void {
+    this.tableFaults.set(table, [...(this.tableFaults.get(table) ?? []), ...faults]);
+  }
+  /** Drops the faults queued by failNext, failNextWrites and failNextOn that haven't been used yet. */
   clearFaults(): void {
     this.faults.length = 0;
     this.writeFaults.length = 0;
+    this.tableFaults.clear();
   }
   loseNextResponse(table: string): void {
     this.lostResponses.add(table);
@@ -364,6 +370,8 @@ export class FakeSupabaseServer {
   private run(query: FakeQuery): FakeResponse {
     const blocked = this.unreachable(query.context);
     if (blocked) return blocked;
+    const tableFault = this.tableFaults.get(query.table)?.shift();
+    if (tableFault) return faultResponse(tableFault);
     const table = this.tables.get(query.table);
     if (!table) return fail(404, "42P01", `relation "public.${query.table}" does not exist`);
     if (query.op === "select") return this.select(query, table);

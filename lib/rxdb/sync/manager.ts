@@ -179,11 +179,7 @@ export class SyncManager {
   async takeBackMatch(matchId: string): Promise<{ claim: ClaimResult; refreshed: boolean }> {
     const claim = await this.enqueue(async () => {
       // Normally already stopped by the loss; nothing of this match may push while it is reset.
-      const running = this.matches.get(matchId);
-      if (running) {
-        this.matches.delete(matchId);
-        await running.cancel();
-      }
+      await this.stopMatch(matchId);
       if (this.user) await this.tracked.track(matchId, this.user.id);
       const deviceId = await this.deviceId;
       const result = await claimMatchScorer(this.options.client, {
@@ -193,17 +189,33 @@ export class SyncManager {
         force: true,
       });
       if (!result.claimed) return result;
-      await discardSupersededChanges({
-        db: this.options.db,
-        client: this.options.client,
-        pending: this.pendingChanges,
-        deviceId,
-        matchId,
-      });
-      await this.tracked.setClaim(matchId, "held");
+      await this.resetTakenBackMatch(matchId, deviceId);
       return result;
     });
     return { claim, refreshed: claim.claimed ? await this.refreshMatch(matchId) : false };
+  }
+
+  /**
+   * The second half of a take-back, once the server names this device: discards its superseded
+   * changes to the match, then holds the claim (the replications restart through tracked$).
+   * Runs inside the lifecycle queue, with the match's replications stopped.
+   */
+  private async resetTakenBackMatch(matchId: string, deviceId: string): Promise<void> {
+    await discardSupersededChanges({
+      db: this.options.db,
+      client: this.options.client,
+      pending: this.pendingChanges,
+      deviceId,
+      matchId,
+    });
+    await this.tracked.setClaim(matchId, "held");
+  }
+
+  private async stopMatch(matchId: string): Promise<void> {
+    const running = this.matches.get(matchId);
+    if (!running) return;
+    this.matches.delete(matchId);
+    await running.cancel();
   }
 
   /** Scoring offline without being able to check: the claim is forced before the match's first upload. */
@@ -214,20 +226,39 @@ export class SyncManager {
     await this.tracked.setClaim(matchId, "pending-force");
   }
 
-  /** Has another device taken over a match this device holds? */
+  /**
+   * Has another device taken over a match this device holds? And does the server name this device
+   * for a match it lost (a take-back whose reset failed after the forced claim)? Then the take-back
+   * is finished here.
+   */
   async checkClaims(): Promise<void> {
     const user = this.user;
     if (!user) return;
     const deviceId = await this.deviceId;
     for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
-      if (entry.userId !== user.id || entry.claim !== "held") continue;
+      if (entry.userId !== user.id || (entry.claim !== "held" && entry.claim !== "lost")) continue;
+      let holder: ScorerInfo;
       try {
-        const holder = await getMatchScorer(this.options.client, matchId, deviceId);
-        if (holder.deviceId && holder.deviceId !== deviceId) await this.markLost(matchId, holder);
+        holder = await getMatchScorer(this.options.client, matchId, deviceId);
       } catch {
-        // Offline: checked again on the next resume.
+        continue; // Offline: checked again on the next resume.
+      }
+      try {
+        if (entry.claim === "held" && holder.deviceId && holder.deviceId !== deviceId) await this.markLost(matchId, holder);
+        if (entry.claim === "lost" && holder.deviceId === deviceId) await this.finishTakeBack(matchId, deviceId);
+      } catch (error) {
+        console.warn(`[sync] match ${matchId}: updating the claim failed`, error);
       }
     }
+  }
+
+  private finishTakeBack(matchId: string, deviceId: string): Promise<void> {
+    return this.enqueue(async () => {
+      // Taken back meanwhile (takeBackMatch), or lost again.
+      if ((await this.tracked.entry(matchId))?.claim !== "lost") return;
+      await this.stopMatch(matchId);
+      await this.resetTakenBackMatch(matchId, deviceId);
+    });
   }
 
   /**
