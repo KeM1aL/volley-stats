@@ -116,11 +116,21 @@ export class PendingChanges {
     });
   }
 
-  /** A replication reported the row as uploaded. */
+  /**
+   * A replication reported the row as uploaded. An older version than the one marked leaves the
+   * entry pending, but the row now exists on the server: it no longer holds children back.
+   */
   async onSent(table: MatchCollectionName, doc: PendingDoc): Promise<void> {
     const entry = await this.collection.findOne(pendingId(table, doc.id)).exec();
     if (!entry || entry.status !== "pending") return;
-    if ((isoToMicros(doc.updated_at) ?? 0) >= (isoToMicros(entry.doc_updated_at) ?? 0)) await entry.remove();
+    if ((isoToMicros(doc.updated_at) ?? 0) >= (isoToMicros(entry.doc_updated_at) ?? 0)) {
+      await entry.remove();
+      return;
+    }
+    if (!entry.is_insert && !entry.never_uploaded) return;
+    await entry.incrementalModify((data) =>
+      data.status === "pending" ? { ...data, is_insert: false, never_uploaded: false, updated_at: this.now() } : data
+    );
   }
 
   async reject(

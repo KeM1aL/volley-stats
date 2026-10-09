@@ -45,6 +45,17 @@ describe("pending changes", () => {
     expect((await pending.get("sets", set.id))?.is_insert).toBe(false);
   });
 
+  it("stops holding children back once an older version of an edited insert is accepted", async () => {
+    const set = aSet(MATCH);
+    await db.sets.insert(set as any);
+    const inserted = (await db.sets.findOne(set.id).exec())!.toJSON() as any;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await db.sets.findOne(set.id).update({ $set: { home_score: 1 } }); // edited before the insert's sent$
+    await pending.onSent("sets", inserted);
+    expect(await pending.get("sets", set.id)).toMatchObject({ status: "pending", is_insert: false, never_uploaded: false });
+    expect(await pending.parentStatus([{ table: "sets", docId: set.id }])).toEqual({ kind: "none" });
+  });
+
   it("uses the match's own id as match_id for matches rows", async () => {
     const now = new Date().toISOString();
     await db.matches.insert({
