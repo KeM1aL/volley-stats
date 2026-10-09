@@ -51,6 +51,9 @@
     "offlineBody": "Vous êtes hors ligne : l'application ne peut pas vérifier si quelqu'un d'autre saisit ce match. Saisir sur cet appareil ?",
     "offlineConfirm": "Saisir sur cet appareil",
     "takenOverBanner": "La saisie a été reprise par {name} sur {device} à {time}.",
+    "takeBackTitle": "Reprendre la saisie ?",
+    "takeBackBody": "Les modifications que cet appareil a enregistrées sans les envoyer avant que {name} reprenne la saisie seront supprimées, et cet appareil affichera le match tel qu'il est sur le serveur.",
+    "takeBackConfirm": "Reprendre la saisie",
     "never": "jamais",
     "forbiddenTitle": "Vous ne pouvez pas saisir ce match",
     "forbiddenBody": "Seul le propriétaire de l'une des deux équipes peut saisir ce match."

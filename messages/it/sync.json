@@ -51,6 +51,9 @@
     "offlineBody": "Sei offline, quindi l'app non può verificare se qualcun altro sta segnando questa partita. Segnare su questo dispositivo?",
     "offlineConfirm": "Segna su questo dispositivo",
     "takenOverBanner": "Il punteggio è stato preso in carico da {name} su {device} alle {time}.",
+    "takeBackTitle": "Riprendere il punteggio?",
+    "takeBackBody": "Le modifiche registrate da questo dispositivo ma non inviate prima che {name} prendesse il controllo verranno eliminate, e questo dispositivo mostrerà la partita così com'è sul server.",
+    "takeBackConfirm": "Riprendi il punteggio",
     "never": "mai",
     "forbiddenTitle": "Non puoi segnare questa partita",
     "forbiddenBody": "Solo il proprietario di una delle due squadre può segnare questa partita."

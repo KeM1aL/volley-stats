@@ -51,6 +51,9 @@
     "offlineBody": "You're offline, so the app can't check whether someone else is scoring this match. Score on this device?",
     "offlineConfirm": "Score on this device",
     "takenOverBanner": "Scoring was taken over by {name} on {device} at {time}.",
+    "takeBackTitle": "Take scoring back?",
+    "takeBackBody": "Changes this device recorded but never uploaded before {name} took over will be discarded, and this device will show the match as it is on the server.",
+    "takeBackConfirm": "Take scoring back",
     "never": "never",
     "forbiddenTitle": "You can't score this match",
     "forbiddenBody": "Only the owner of one of the two teams can record this match."

@@ -51,6 +51,9 @@
     "offlineBody": "Estás sin conexión, así que la aplicación no puede comprobar si otra persona está registrando este partido. ¿Registrar en este dispositivo?",
     "offlineConfirm": "Registrar en este dispositivo",
     "takenOverBanner": "{name} tomó el control del registro en {device} a las {time}.",
+    "takeBackTitle": "¿Recuperar el registro?",
+    "takeBackBody": "Los cambios que este dispositivo registró pero no envió antes de que {name} tomara el control se descartarán, y este dispositivo mostrará el partido tal como está en el servidor.",
+    "takeBackConfirm": "Recuperar el registro",
     "never": "nunca",
     "forbiddenTitle": "No puedes registrar este partido",
     "forbiddenBody": "Solo el propietario de uno de los dos equipos puede registrar este partido."

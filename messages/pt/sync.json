@@ -51,6 +51,9 @@
     "offlineBody": "Está offline, por isso a aplicação não consegue verificar se outra pessoa está a registar esta partida. Registar neste dispositivo?",
     "offlineConfirm": "Registar neste dispositivo",
     "takenOverBanner": "O registo foi assumido por {name} em {device} às {time}.",
+    "takeBackTitle": "Retomar o registo?",
+    "takeBackBody": "As alterações que este dispositivo registou mas não enviou antes de {name} assumir o registo serão descartadas, e este dispositivo mostrará a partida tal como está no servidor.",
+    "takeBackConfirm": "Retomar o registo",
     "never": "nunca",
     "forbiddenTitle": "Não pode registar esta partida",
     "forbiddenBody": "Só o proprietário de uma das duas equipas pode registar esta partida."

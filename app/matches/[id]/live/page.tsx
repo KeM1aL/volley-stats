@@ -347,7 +347,7 @@ export default function LiveMatchPage() {
   }, [db, matchId]);
 
   /**
-   * Forces the claim (the "taken" dialog, or the banner after a takeover), then pulls the match
+   * Forces the claim (the "taken" dialog), then pulls the match
    * again so rows the other device pushed meanwhile are here before scoring resumes.
    */
   const forceClaim = async () => {
@@ -386,11 +386,27 @@ export default function LiveMatchPage() {
     }
   };
 
+  /**
+   * The banner, after its confirmation: takes scoring back, discarding this device's changes the
+   * takeover superseded so it shows the match as the server has it. Scoring stays blocked until
+   * the match is reset, refreshed and loaded again.
+   */
   const handleTakeBack = async () => {
+    if (!db) return;
     setClaimBusy(true);
+    setRefreshing(true);
     try {
-      await forceClaim();
+      const { claim } = await db.syncManager.takeBackMatch(matchId);
+      if (claim.claimed) await loadMatchData();
+    } catch (error) {
+      if (isClaimForbidden(error)) {
+        setClaimPrompt({ kind: "forbidden" });
+        return;
+      }
+      console.warn("Taking scoring back failed, the server can't be reached:", error);
+      setClaimPrompt({ kind: "offline" });
     } finally {
+      setRefreshing(false);
       setClaimBusy(false);
     }
   };
