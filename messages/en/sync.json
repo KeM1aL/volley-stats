@@ -63,6 +63,10 @@
     "signOutBody": "{count, plural, one {# change} other {# changes}} from this device haven't been uploaded. They stay on this device and upload when you sign back in.",
     "signOutConfirm": "Sign out anyway",
     "clearBlocked": "Some of this data hasn't been uploaded yet. Wait until the sync badge shows “All saved”.",
-    "resetBlocked": "The local database still has changes that haven't been uploaded, so it wasn't reset. Go back online and wait until everything is saved."
+    "resetBlocked": "The local database still has changes that haven't been uploaded, so it wasn't reset. Go back online and wait until everything is saved.",
+    "forceReset": "Delete local data anyway",
+    "forceResetTitle": "Delete the local data?",
+    "forceResetBody": "Changes recorded on this device that were never uploaded will be lost for good. Only do this if you can't wait for them to be saved.",
+    "forceResetConfirm": "Delete local data"
   }
 }

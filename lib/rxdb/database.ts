@@ -9,7 +9,7 @@ import type { PendingChanges } from "./sync/pending-changes";
 import { SyncManager } from "./sync/manager";
 import { createWebPlatform } from "./sync/platform/web";
 import { supabase } from "@/lib/supabase/client";
-import { readUnsentHint } from "./pending-hint";
+import { readUnsentHint, writeUnsentHint } from "./pending-hint";
 import { decideDatabaseReset } from "./reset-policy";
 
 export type { DatabaseCollections } from "./collections";
@@ -133,6 +133,7 @@ const createDatabase = async (): Promise<VolleyballDatabase> => {
           isSchemaError,
           devEnvironment: inDevEnvironment,
           removeFlag: removeDbFlag === "true",
+          force: removeDbFlag === "force",
           unsentCount: readUnsentHint(),
         });
         if (decision === "blocked") {

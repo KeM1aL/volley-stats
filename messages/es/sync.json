@@ -63,6 +63,10 @@
     "signOutBody": "{count, plural, one {# cambio de este dispositivo no se ha enviado} other {# cambios de este dispositivo no se han enviado}}. Se quedan en este dispositivo y se enviarán cuando vuelvas a iniciar sesión.",
     "signOutConfirm": "Cerrar sesión de todos modos",
     "clearBlocked": "Parte de estos datos aún no se ha enviado. Espera a que el indicador de sincronización muestre «Todo guardado».",
-    "resetBlocked": "La base de datos local aún tiene cambios sin enviar, así que no se restableció. Vuelve a conectarte y espera a que todo esté guardado."
+    "resetBlocked": "La base de datos local aún tiene cambios sin enviar, así que no se restableció. Vuelve a conectarte y espera a que todo esté guardado.",
+    "forceReset": "Eliminar los datos locales de todos modos",
+    "forceResetTitle": "¿Eliminar los datos locales?",
+    "forceResetBody": "Los cambios registrados en este dispositivo que nunca se enviaron se perderán para siempre. Hazlo solo si no puedes esperar a que se guarden.",
+    "forceResetConfirm": "Eliminar los datos locales"
   }
 }

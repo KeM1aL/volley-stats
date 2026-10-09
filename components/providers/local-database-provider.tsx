@@ -5,6 +5,17 @@ import { useTranslations } from "next-intl";
 import { useLocalDatabase } from "@/hooks/use-local-database";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 import { Button } from "../ui/button";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { toSyncUser } from "@/lib/rxdb/sync/manager";
@@ -22,6 +33,7 @@ export function LocalDatabaseProvider({
   const tUi = useTranslations("common.ui");
   const tErrors = useTranslations("common.errors.database");
   const tSync = useTranslations("sync");
+  const tActions = useTranslations("common.actions");
   const { user, isLoading: authLoading } = useAuth();
   const database = useLocalDatabase(!!user && !authLoading);
   const router = useRouter();
@@ -40,6 +52,11 @@ export function LocalDatabaseProvider({
     router.push(`/?${params.toString()}`);
   };
 
+  // A full load, not a client-side navigation: the database is opened again, reading the flag from the address.
+  const forceClearLocalDatabase = () => {
+    window.location.assign(new URL("/?remove-database=force", window.location.origin).href);
+  };
+
   if (database.isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -55,12 +72,14 @@ export function LocalDatabaseProvider({
       errorString.includes("schema") ||
       errorString.includes("version");
 
+    const resetBlocked = database.error.message === "unsentChangesBlockReset";
+
     return (
       <div className="flex h-screen items-center justify-center flex-col gap-4 p-8">
         <p className="text-destructive font-semibold">
           {tErrors("initFailed")}
         </p>
-        {database.error.message === "unsentChangesBlockReset" && (
+        {resetBlocked && (
           <p className="text-sm text-muted-foreground max-w-md text-center">{tSync("guards.resetBlocked")}</p>
         )}
         {isSchemaError && (
@@ -77,6 +96,27 @@ export function LocalDatabaseProvider({
           <pre className="text-xs max-w-2xl overflow-auto">{errorString}</pre>
         )}
         <Button onClick={clearLocalDatabase}>{tUi("clearLocalDatabase")}</Button>
+        {resetBlocked && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" data-testid="force-reset-database">
+                {tSync("guards.forceReset")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{tSync("guards.forceResetTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>{tSync("guards.forceResetBody")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{tActions("cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={forceClearLocalDatabase} data-testid="force-reset-database-confirm">
+                  {tSync("guards.forceResetConfirm")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     );
   }

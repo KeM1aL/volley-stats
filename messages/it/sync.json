@@ -63,6 +63,10 @@
     "signOutBody": "{count, plural, one {# modifica di questo dispositivo non è stata inviata} other {# modifiche di questo dispositivo non sono state inviate}}. Restano su questo dispositivo e verranno inviate quando accederai di nuovo.",
     "signOutConfirm": "Esci comunque",
     "clearBlocked": "Alcuni di questi dati non sono ancora stati inviati. Attendi che l'indicatore di sincronizzazione mostri «Tutto salvato».",
-    "resetBlocked": "Il database locale contiene ancora modifiche non inviate, quindi non è stato reimpostato. Torna online e attendi che tutto sia salvato."
+    "resetBlocked": "Il database locale contiene ancora modifiche non inviate, quindi non è stato reimpostato. Torna online e attendi che tutto sia salvato.",
+    "forceReset": "Elimina comunque i dati locali",
+    "forceResetTitle": "Eliminare i dati locali?",
+    "forceResetBody": "Le modifiche registrate su questo dispositivo e mai inviate andranno perse per sempre. Fallo solo se non puoi aspettare che vengano salvate.",
+    "forceResetConfirm": "Elimina i dati locali"
   }
 }
