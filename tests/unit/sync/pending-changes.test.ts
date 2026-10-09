@@ -124,6 +124,16 @@ describe("pending changes", () => {
     expect((await pending.get("sets", set.id))?.status).toBe("superseded");
   });
 
+  it("keeps a superseded entry superseded when a push that was in flight reports back", async () => {
+    const set = aSet(MATCH);
+    await db.sets.insert(set as any);
+    await pending.recordAttempt("sets", set);
+    await pending.supersedeMatch(MATCH);
+    expect(await pending.recordAttempt("sets", set)).toBe(1);
+    await pending.reject("sets", set, { kind: "permanent", code: "rls" }, { neverUploaded: true });
+    expect(await pending.get("sets", set.id)).toMatchObject({ status: "superseded", error_code: "scorer_mismatch", attempts: 1 });
+  });
+
   it("clears pending entries marked before a point in time", async () => {
     const set = aSet(MATCH);
     await db.sets.insert(set as any);
@@ -145,6 +155,13 @@ describe("pending changes", () => {
     await pending.reject("sets", set, { kind: "permanent", code: "rls" }, { neverUploaded: true });
     expect(await pending.retryRejected(db)).toBe(1);
     expect((await pending.get("sets", set.id))?.status).toBe("pending");
+  });
+
+  it("retryRejected keeps the entry of a row that is gone from this device", async () => {
+    const set = aSet(MATCH);
+    await pending.reject("sets", set, { kind: "permanent", code: "rls" }, { neverUploaded: true });
+    expect(await pending.retryRejected(db)).toBe(0);
+    expect((await pending.get("sets", set.id))?.status).toBe("rejected");
   });
 
   it("retryRejected re-queues parents before their children", async () => {

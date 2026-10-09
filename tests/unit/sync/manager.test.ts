@@ -249,6 +249,26 @@ describe("SyncManager", () => {
     expect(server.row("score_points", point.id)!._deleted).toBe(true);
   });
 
+  it("re-sends a rejected removal when it is retried", async () => {
+    const d = await device();
+    await d.signIn();
+    await d.openMatch(matchId);
+    const set = await d.startSet(matchId);
+    const { point } = await d.recordPoint(matchId, set.id, 1);
+    await d.settle(matchId);
+    server.denyWrites("score_points", (row) => row._deleted === true);
+    await d.db.score_points.findOne(point.id).remove(); // undo
+    await waitFor(async () => (await d.pending.get("score_points", point.id))?.status === "rejected", {
+      message: "removal rejected",
+    });
+    expect(server.row("score_points", point.id)!._deleted).toBe(false);
+    server.allowWrites("score_points");
+    expect(await d.manager.retryRejected(matchId)).toBe(1);
+    await d.settle(matchId);
+    expect(server.row("score_points", point.id)!._deleted).toBe(true);
+    expect(await d.pending.count({ matchId })).toBe(0);
+  });
+
   it("never shows a point inserted and undone before its first upload as live on the server", async () => {
     const d = await device();
     await d.signIn();

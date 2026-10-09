@@ -153,6 +153,7 @@ export class PendingChanges {
   /** Counts a failure that connectivity can't explain; returns the attempts so far. */
   async recordAttempt(table: MatchCollectionName, doc: PendingDoc): Promise<number> {
     const existing = await this.get(table, doc.id);
+    if (existing?.status === "superseded") return existing.attempts;
     const attempts = (existing?.attempts ?? 0) + 1;
     await this.write(table, doc, { status: existing?.status === "rejected" ? "rejected" : "pending", attempts });
     return attempts;
@@ -223,7 +224,8 @@ export class PendingChanges {
   /**
    * Re-queues rejected rows: bumping updated_at runs the hooks, which mark them pending.
    * Parents go first: a child queued while its rejected parent still waits would be
-   * rejected again at once as `parent_rejected`.
+   * rejected again at once as `parent_rejected`. A rejected removal is written again as a
+   * new revision of the deleted row. An entry whose row is gone from this device stays rejected.
    */
   async retryRejected(db: RxDatabase<any>, matchId?: string): Promise<number> {
     const entries = (await this.collection.find({ selector: toSelector({ matchId, statuses: ["rejected"] }) }).exec()).sort(
@@ -231,23 +233,47 @@ export class PendingChanges {
     );
     let retried = 0;
     for (const entry of entries) {
-      const doc = await db.collections[entry.table_name].findOne(entry.doc_id).exec();
-      if (!doc) {
-        await entry.remove();
-        continue;
+      const collection = db.collections[entry.table_name];
+      const doc = await collection.findOne(entry.doc_id).exec();
+      if (doc) {
+        await doc.incrementalPatch({ updated_at: this.now() });
+        retried += 1;
+      } else if (await this.retryRemoval(collection, entry.toJSON() as PendingChange)) {
+        retried += 1;
       }
-      await doc.incrementalPatch({ updated_at: this.now() });
-      retried += 1;
     }
     return retried;
+  }
+
+  /**
+   * Writes a new revision of a row removed on this device, so the replication pushes the
+   * removal again. RxDB documents can't be edited once deleted, so this goes through the
+   * storage instance (which sets `_rev` and `_meta`, as `bulkRemove` does) and bypasses the
+   * hooks: the entry is marked pending here.
+   */
+  private async retryRemoval(collection: RxCollection<any>, entry: PendingChange): Promise<boolean> {
+    const [previous] = await collection.storageInstance.findDocumentsById([entry.doc_id], true);
+    if (!previous?._deleted) return false;
+    const document = { ...previous, updated_at: this.now() };
+    await this.markPending(entry.table_name, document);
+    const result = await collection.storageInstance.bulkWrite([{ previous, document }], "sync-retry-removal");
+    if (result.error.length === 0) return true;
+    // Written meanwhile: put the entry back as it was, so the user can retry again.
+    const { status, error_code, error_params, attempts, doc_updated_at } = entry;
+    await this.write(entry.table_name, document, { status, error_code, error_params, attempts, doc_updated_at });
+    return false;
   }
 
   private async write(table: MatchCollectionName, doc: PendingDoc, patch: Partial<PendingChange>): Promise<void> {
     const id = pendingId(table, doc.id);
     const now = this.now();
+    // A superseded entry stays superseded: a push that was in flight when the match was lost
+    // must not turn it back into pending or rejected (its replication is stopped, nothing would clear it).
+    const apply = (data: PendingChange): PendingChange =>
+      data.status === "superseded" && patch.status !== "superseded" ? data : { ...data, ...patch, updated_at: now };
     const existing = await this.collection.findOne(id).exec();
     if (existing) {
-      await existing.incrementalPatch({ ...patch, updated_at: now });
+      await existing.incrementalModify(apply);
       return;
     }
     const entry: PendingChange = {
@@ -272,7 +298,7 @@ export class PendingChanges {
       // Written concurrently by another hook call: patch that entry instead.
       const again = await this.collection.findOne(id).exec();
       if (!again) throw error;
-      await again.incrementalPatch({ ...patch, updated_at: now });
+      await again.incrementalModify(apply);
     }
   }
 }
