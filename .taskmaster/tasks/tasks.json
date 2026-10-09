@@ -77,12 +77,12 @@
   "offline-sync": {
     "tasks": [
       {
-        "id": 1,
+        "id": "1",
         "title": "Vitest and a pull that tolerates new server columns",
         "description": "Ship this commit to production on its own, before Task 3 applies the migration. Today's app rejects any row that has a column its local schema doesn't know, and the migration adds such columns.",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 1: Vitest and a pull that tolerates new server columns\" (#task-1-vitest-and-a-pull-that-tolerates-new-server-columns). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Modify: `package.json` (scripts, devDependency)\n- Create: `vitest.config.ts`\n- Modify: `lib/rxdb/sync/helper.ts`\n- Modify: `lib/rxdb/sync/index.ts` (`rowToDoc`)\n- Test: `tests/unit/sync/helper.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm add -D vitest@5.0.3; pnpm test; pnpm lint; pnpm build",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": [
@@ -92,8 +92,10 @@
             "description": "Plan Task 1, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.454Z"
           },
           {
             "id": 2,
@@ -103,8 +105,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.463Z"
           },
           {
             "id": 3,
@@ -114,8 +118,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.472Z"
           },
           {
             "id": 4,
@@ -125,8 +131,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.482Z"
           },
           {
             "id": 5,
@@ -136,8 +144,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.491Z"
           },
           {
             "id": 6,
@@ -147,8 +157,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.500Z"
           },
           {
             "id": 7,
@@ -158,8 +170,10 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.509Z"
           },
           {
             "id": 8,
@@ -169,8 +183,10 @@
               7
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 8.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.517Z"
           },
           {
             "id": 9,
@@ -180,20 +196,23 @@
               8
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 1, Step 9.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.525Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.525Z"
       },
       {
-        "id": 2,
+        "id": "2",
         "title": "Microsecond timestamps and a fake Supabase server for tests",
         "description": "Microsecond timestamps and a fake Supabase server for tests",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 2: Microsecond timestamps and a fake Supabase server for tests\" (#task-2-microsecond-timestamps-and-a-fake-supabase-server-for-tests). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `lib/rxdb/sync/timestamps.ts`\n- Test: `tests/unit/sync/timestamps.test.ts`\n- Create: `tests/unit/fakes/fake-supabase.ts`\n- Test: `tests/unit/fakes/fake-supabase.test.ts`\n- Create: `tests/unit/helpers/server.ts`, `tests/unit/helpers/fixtures.ts`, `tests/unit/helpers/wait.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/timestamps.test.ts; pnpm test",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          1
+          "1"
         ],
         "priority": "medium",
         "subtasks": [
@@ -203,8 +222,10 @@
             "description": "Plan Task 2, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.533Z"
           },
           {
             "id": 2,
@@ -214,8 +235,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.541Z"
           },
           {
             "id": 3,
@@ -225,8 +248,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.549Z"
           },
           {
             "id": 4,
@@ -236,8 +261,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.558Z"
           },
           {
             "id": 5,
@@ -247,8 +274,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.565Z"
           },
           {
             "id": 6,
@@ -258,8 +287,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.572Z"
           },
           {
             "id": 7,
@@ -269,8 +300,10 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.579Z"
           },
           {
             "id": 8,
@@ -280,8 +313,10 @@
               7
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 8.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.585Z"
           },
           {
             "id": 9,
@@ -291,20 +326,23 @@
               8
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 2, Step 9.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.593Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.593Z"
       },
       {
-        "id": 3,
+        "id": "3",
         "title": "Server migration (checkpoint column, edit-time rule, scorer claim)",
         "description": "Server migration (checkpoint column, edit-time rule, scorer claim)",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 3: Server migration (checkpoint column, edit-time rule, scorer claim)\" (#task-3-server-migration-checkpoint-column-edit-time-rule-scorer-claim). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `supabase/migrations/20261007000000_sync_reliability.sql`\n- Modify: `lib/supabase/database.types.ts` (regenerated)",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm build",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          1
+          "1"
         ],
         "priority": "high",
         "subtasks": [
@@ -314,8 +352,10 @@
             "description": "Plan Task 3, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 3, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.601Z"
           },
           {
             "id": 2,
@@ -325,8 +365,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 3, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.609Z"
           },
           {
             "id": 3,
@@ -336,8 +378,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 3, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.617Z"
           },
           {
             "id": 4,
@@ -347,8 +391,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 3, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.625Z"
           },
           {
             "id": 5,
@@ -358,8 +404,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 3, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.633Z"
           },
           {
             "id": 6,
@@ -369,8 +417,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 3, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.641Z"
           },
           {
             "id": 7,
@@ -380,20 +430,23 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 3, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.649Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.649Z"
       },
       {
-        "id": 4,
+        "id": "4",
         "title": "Classify push errors",
         "description": "Classify push errors",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 4: Classify push errors\" (#task-4-classify-push-errors). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `lib/rxdb/sync/errors.ts`\n- Test: `tests/unit/sync/errors.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/errors.test.ts",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          1
+          "1"
         ],
         "priority": "medium",
         "subtasks": [
@@ -403,8 +456,10 @@
             "description": "Plan Task 4, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 4, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.656Z"
           },
           {
             "id": 2,
@@ -414,8 +469,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 4, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.664Z"
           },
           {
             "id": 3,
@@ -425,8 +482,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 4, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.672Z"
           },
           {
             "id": 4,
@@ -436,8 +495,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 4, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.680Z"
           },
           {
             "id": 5,
@@ -447,20 +508,23 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 4, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.689Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.689Z"
       },
       {
-        "id": 5,
+        "id": "5",
         "title": "Conflict handler (the scoring device wins)",
         "description": "Conflict handler (the scoring device wins)",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 5: Conflict handler (the scoring device wins)\" (#task-5-conflict-handler-the-scoring-device-wins). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `lib/rxdb/sync/conflict-handler.ts`\n- Test: `tests/unit/sync/conflict-handler.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/conflict-handler.test.ts",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          2
+          "2"
         ],
         "priority": "medium",
         "subtasks": [
@@ -470,8 +534,10 @@
             "description": "Plan Task 5, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 5, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.696Z"
           },
           {
             "id": 2,
@@ -481,8 +547,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 5, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.710Z"
           },
           {
             "id": 3,
@@ -492,8 +560,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 5, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.718Z"
           },
           {
             "id": 4,
@@ -503,8 +573,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 5, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.726Z"
           },
           {
             "id": 5,
@@ -514,22 +586,25 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 5, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.734Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.734Z"
       },
       {
-        "id": 6,
+        "id": "6",
         "title": "Shared collection setup and the `pending_changes` store",
         "description": "Shared collection setup and the `pending_changes` store",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 6: Shared collection setup and the `pending_changes` store\" (#task-6-shared-collection-setup-and-the-pendingchanges-store). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Modify: `lib/rxdb/sync/types.ts` (add the shared constants and `SyncUser`; keep the old exports until Task 12)\n- Create: `lib/rxdb/sync/pending-changes.ts`\n- Create: `lib/rxdb/collections.ts`\n- Modify: `lib/rxdb/database.ts` (use `setupCollections`)\n- Create: `tests/unit/helpers/test-db.ts`\n- Test: `tests/unit/sync/pending-changes.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/pending-changes.test.ts; pnpm test; pnpm lint; pnpm build",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          2,
-          4,
-          5
+          "2",
+          "4",
+          "5"
         ],
         "priority": "high",
         "subtasks": [
@@ -539,8 +614,10 @@
             "description": "Plan Task 6, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.742Z"
           },
           {
             "id": 2,
@@ -550,8 +627,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.750Z"
           },
           {
             "id": 3,
@@ -561,8 +640,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.759Z"
           },
           {
             "id": 4,
@@ -572,8 +653,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.765Z"
           },
           {
             "id": 5,
@@ -583,8 +666,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.773Z"
           },
           {
             "id": 6,
@@ -594,8 +679,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.781Z"
           },
           {
             "id": 7,
@@ -605,8 +692,10 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.789Z"
           },
           {
             "id": 8,
@@ -616,8 +705,10 @@
               7
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 8.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.796Z"
           },
           {
             "id": 9,
@@ -627,20 +718,23 @@
               8
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 6, Step 9.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.805Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.805Z"
       },
       {
-        "id": 7,
+        "id": "7",
         "title": "Platform adapter",
         "description": "Platform adapter",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 7: Platform adapter\" (#task-7-platform-adapter). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `lib/rxdb/sync/platform/types.ts`\n- Create: `lib/rxdb/sync/platform/web.ts`\n- Create: `tests/unit/helpers/fake-platform.ts`\n- Test: `tests/unit/sync/platform-web.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/platform-web.test.ts",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          1
+          "1"
         ],
         "priority": "medium",
         "subtasks": [
@@ -650,8 +744,10 @@
             "description": "Plan Task 7, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 7, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.812Z"
           },
           {
             "id": 2,
@@ -661,8 +757,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 7, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.819Z"
           },
           {
             "id": 3,
@@ -672,8 +770,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 7, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.828Z"
           },
           {
             "id": 4,
@@ -683,8 +783,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 7, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.836Z"
           },
           {
             "id": 5,
@@ -694,21 +796,24 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 7, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.844Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.844Z"
       },
       {
-        "id": 8,
+        "id": "8",
         "title": "Tracked matches, sync state and the scorer RPC client",
         "description": "Tracked matches, sync state and the scorer RPC client",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 8: Tracked matches, sync state and the scorer RPC client\" (#task-8-tracked-matches-sync-state-and-the-scorer-rpc-client). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `lib/rxdb/sync/scorer-claim.ts`\n- Create: `lib/rxdb/sync/tracked-matches.ts`\n- Create: `lib/rxdb/sync/sync-state.ts`\n- Test: `tests/unit/sync/scorer-claim.test.ts`, `tests/unit/sync/tracked-matches.test.ts`, `tests/unit/sync/sync-state.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/scorer-claim.test.ts tests/unit/sync/tracked-matches.test.ts tests/unit/sync/sync-state.test.ts",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          2,
-          6
+          "2",
+          "6"
         ],
         "priority": "medium",
         "subtasks": [
@@ -718,8 +823,10 @@
             "description": "Plan Task 8, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 8, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.851Z"
           },
           {
             "id": 2,
@@ -729,8 +836,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 8, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.859Z"
           },
           {
             "id": 3,
@@ -740,8 +849,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 8, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.866Z"
           },
           {
             "id": 4,
@@ -751,8 +862,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 8, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.872Z"
           },
           {
             "id": 5,
@@ -762,8 +875,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 8, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.880Z"
           },
           {
             "id": 6,
@@ -773,8 +888,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 8, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.888Z"
           },
           {
             "id": 7,
@@ -784,20 +901,23 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 8, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.895Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.895Z"
       },
       {
-        "id": 9,
+        "id": "9",
         "title": "Parent-first gate (foreign keys)",
         "description": "Parent-first gate (foreign keys)",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 9: Parent-first gate (foreign keys)\" (#task-9-parent-first-gate-foreign-keys). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Modify: `lib/rxdb/sync/types.ts` (add `GateDecision`, `PushGate`)\n- Modify: `lib/rxdb/sync/pending-changes.ts` (add `ParentRef`, `ParentStatus`, `parentStatus`, `waitUntilSettled`)\n- Create: `lib/rxdb/sync/dependencies.ts`\n- Test: `tests/unit/sync/dependencies.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/dependencies.test.ts; pnpm test tests/unit/sync/dependencies.test.ts tests/unit/sync/pending-changes.test.ts",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          6
+          "6"
         ],
         "priority": "high",
         "subtasks": [
@@ -807,8 +927,10 @@
             "description": "Plan Task 9, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 9, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.904Z"
           },
           {
             "id": 2,
@@ -818,8 +940,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 9, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.911Z"
           },
           {
             "id": 3,
@@ -829,8 +953,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 9, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.919Z"
           },
           {
             "id": 4,
@@ -840,8 +966,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 9, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.927Z"
           },
           {
             "id": 5,
@@ -851,8 +979,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 9, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.935Z"
           },
           {
             "id": 6,
@@ -862,8 +992,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 9, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.943Z"
           },
           {
             "id": 7,
@@ -873,23 +1005,26 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 9, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.952Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:17.952Z"
       },
       {
-        "id": 10,
+        "id": "10",
         "title": "Replication adapter",
         "description": "Replication adapter",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 10: Replication adapter\" (#task-10-replication-adapter). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Modify: `lib/rxdb/sync/types.ts` (add `PushReporter`, `SupabaseReplicationOptions`)\n- Create: `lib/rxdb/sync/replication.ts` (the old `index.ts` stays until Task 12 removes it)\n- Test: `tests/unit/sync/replication.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/replication.test.ts",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          2,
-          4,
-          5,
-          9
+          "2",
+          "4",
+          "5",
+          "9"
         ],
         "priority": "high",
         "subtasks": [
@@ -899,8 +1034,10 @@
             "description": "Plan Task 10, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 10, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.961Z"
           },
           {
             "id": 2,
@@ -910,8 +1047,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 10, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.969Z"
           },
           {
             "id": 3,
@@ -921,8 +1060,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 10, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.977Z"
           },
           {
             "id": 4,
@@ -932,8 +1073,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 10, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.985Z"
           },
           {
             "id": 5,
@@ -943,8 +1086,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 10, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:17.993Z"
           },
           {
             "id": 6,
@@ -954,23 +1099,26 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 10, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.002Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.002Z"
       },
       {
-        "id": 11,
+        "id": "11",
         "title": "Per-match and reference replications",
         "description": "Per-match and reference replications",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 11: Per-match and reference replications\" (#task-11-per-match-and-reference-replications). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `lib/rxdb/sync/match-sync.ts`\n- Create: `lib/rxdb/sync/reference-sync.ts`\n- Test: `tests/unit/sync/match-sync.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/match-sync.test.ts",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          7,
-          8,
-          9,
-          10
+          "7",
+          "8",
+          "9",
+          "10"
         ],
         "priority": "high",
         "subtasks": [
@@ -980,8 +1128,10 @@
             "description": "Plan Task 11, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 11, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.010Z"
           },
           {
             "id": 2,
@@ -991,8 +1141,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 11, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.020Z"
           },
           {
             "id": 3,
@@ -1002,8 +1154,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 11, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.029Z"
           },
           {
             "id": 4,
@@ -1013,8 +1167,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 11, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.036Z"
           },
           {
             "id": 5,
@@ -1024,8 +1180,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 11, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.044Z"
           },
           {
             "id": 6,
@@ -1035,22 +1193,25 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 11, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.053Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.053Z"
       },
       {
-        "id": 12,
+        "id": "12",
         "title": "SyncManager rewrite, upgrade seeding and provider wiring",
         "description": "This task replaces the old manager and adapter, which removes root causes 2, 3, 4 and 6.",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 12: SyncManager rewrite, upgrade seeding and provider wiring\" (#task-12-syncmanager-rewrite-upgrade-seeding-and-provider-wiring). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Modify (rewrite): `lib/rxdb/sync/manager.ts`\n- Create: `lib/rxdb/sync/upgrade.ts`\n- Modify (rewrite): `lib/rxdb/sync/types.ts` (drop the old exports)\n- Delete: `lib/rxdb/sync/index.ts`\n- Modify: `lib/rxdb/database.ts` (construct the new manager)\n- Modify: `components/providers/local-database-provider.tsx`\n- Create: `tests/unit/helpers/test-device.ts`\n- Test: `tests/unit/sync/manager.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/manager.test.ts; git rm lib/rxdb/sync/index.ts; git grep -n \"setOnlineStatus\\|syncManager.cleanup\\|syncManager.initialize\\|rxdb/sync/index\\|DynamicCollectionName\\|SyncStateDocument\" -- app components lib hooks contexts; pnpm test; pnpm lint; pnpm build",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          7,
-          8,
-          11
+          "7",
+          "8",
+          "11"
         ],
         "priority": "high",
         "subtasks": [
@@ -1060,8 +1221,10 @@
             "description": "Plan Task 12, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.061Z"
           },
           {
             "id": 2,
@@ -1071,8 +1234,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.070Z"
           },
           {
             "id": 3,
@@ -1082,8 +1247,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.079Z"
           },
           {
             "id": 4,
@@ -1093,8 +1260,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.087Z"
           },
           {
             "id": 5,
@@ -1104,8 +1273,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.094Z"
           },
           {
             "id": 6,
@@ -1115,8 +1286,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.103Z"
           },
           {
             "id": 7,
@@ -1126,8 +1299,10 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.110Z"
           },
           {
             "id": 8,
@@ -1137,8 +1312,10 @@
               7
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 8.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.120Z"
           },
           {
             "id": 9,
@@ -1148,21 +1325,24 @@
               8
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 12, Step 9.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.127Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.127Z"
       },
       {
-        "id": 13,
+        "id": "13",
         "title": "Scoring-device claim in the manager",
         "description": "Scoring-device claim in the manager",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 13: Scoring-device claim in the manager\" (#task-13-scoring-device-claim-in-the-manager). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Modify: `lib/rxdb/sync/manager.ts`\n- Test: `tests/unit/sync/scorer-claim-flow.test.ts`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/scorer-claim-flow.test.ts; pnpm test",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          8,
-          12
+          "8",
+          "12"
         ],
         "priority": "high",
         "subtasks": [
@@ -1172,8 +1352,10 @@
             "description": "Plan Task 13, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 13, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.135Z"
           },
           {
             "id": 2,
@@ -1183,8 +1365,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 13, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.143Z"
           },
           {
             "id": 3,
@@ -1194,8 +1378,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 13, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.150Z"
           },
           {
             "id": 4,
@@ -1205,8 +1391,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 13, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.158Z"
           },
           {
             "id": 5,
@@ -1216,21 +1404,24 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 13, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.166Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.166Z"
       },
       {
-        "id": 14,
+        "id": "14",
         "title": "Sync status, strings and the sync badge",
         "description": "Sync status, strings and the sync badge",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 14: Sync status, strings and the sync badge\" (#task-14-sync-status-strings-and-the-sync-badge). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `lib/rxdb/sync/status.ts`, `lib/rxdb/pending-hint.ts`\n- Test: `tests/unit/sync/status.test.ts`, `tests/unit/sync/pending-hint.test.ts`\n- Create: `messages/en/sync.json`, `messages/fr/sync.json`, `messages/es/sync.json`, `messages/it/sync.json`, `messages/pt/sync.json`\n- Modify: `messages/{en,fr,es,it,pt}/index.ts`\n- Create: `hooks/use-sync-status.ts`\n- Create: `components/sync/format.ts`, `components/sync/sync-reason.tsx`, `components/sync/use-match-labels.ts`, `components/sync/sync-badge.tsx`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/status.test.ts tests/unit/sync/pending-hint.test.ts; pnpm i18n:check; pnpm test; pnpm lint; pnpm build",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          12,
-          13
+          "12",
+          "13"
         ],
         "priority": "medium",
         "subtasks": [
@@ -1240,8 +1431,10 @@
             "description": "Plan Task 14, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 14, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.174Z"
           },
           {
             "id": 2,
@@ -1251,8 +1444,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 14, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.183Z"
           },
           {
             "id": 3,
@@ -1262,8 +1457,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 14, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.190Z"
           },
           {
             "id": 4,
@@ -1273,8 +1470,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 14, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.199Z"
           },
           {
             "id": 5,
@@ -1284,8 +1483,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 14, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.207Z"
           },
           {
             "id": 6,
@@ -1295,8 +1496,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 14, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.214Z"
           },
           {
             "id": 7,
@@ -1306,8 +1509,10 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 14, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.222Z"
           },
           {
             "id": 8,
@@ -1317,21 +1522,24 @@
               7
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 14, Step 8.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.228Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.228Z"
       },
       {
-        "id": 15,
+        "id": "15",
         "title": "Live match page (claim dialogs, read-only mode, leave warning)",
         "description": "Live match page (claim dialogs, read-only mode, leave warning)",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 15: Live match page (claim dialogs, read-only mode, leave warning)\" (#task-15-live-match-page-claim-dialogs-read-only-mode-leave-warning). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `hooks/use-unsent-guard.ts`\n- Create: `components/sync/scorer-claim-dialog.tsx`, `components/sync/taken-over-banner.tsx`\n- Modify: `app/matches/[id]/live/page.tsx`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm build && pnpm start -p 3100; pnpm lint; pnpm build",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          13,
-          14
+          "13",
+          "14"
         ],
         "priority": "medium",
         "subtasks": [
@@ -1341,8 +1549,10 @@
             "description": "Plan Task 15, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 15, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.236Z"
           },
           {
             "id": 2,
@@ -1352,8 +1562,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 15, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.245Z"
           },
           {
             "id": 3,
@@ -1363,8 +1575,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 15, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.251Z"
           },
           {
             "id": 4,
@@ -1374,8 +1588,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 15, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.258Z"
           },
           {
             "id": 5,
@@ -1385,20 +1601,23 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 15, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.267Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.267Z"
       },
       {
-        "id": 16,
+        "id": "16",
         "title": "Navigation badge, sign-out warning and match-list flags",
         "description": "Navigation badge, sign-out warning and match-list flags",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 16: Navigation badge, sign-out warning and match-list flags\" (#task-16-navigation-badge-sign-out-warning-and-match-list-flags). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `components/sync/sync-flag.tsx`\n- Modify: `components/navigation.tsx`\n- Modify: `components/matches/history/match-history-table.tsx`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm lint; pnpm build",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          14
+          "14"
         ],
         "priority": "medium",
         "subtasks": [
@@ -1408,8 +1627,10 @@
             "description": "Plan Task 16, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 16, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.274Z"
           },
           {
             "id": 2,
@@ -1419,8 +1640,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 16, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.282Z"
           },
           {
             "id": 3,
@@ -1430,8 +1653,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 16, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.291Z"
           },
           {
             "id": 4,
@@ -1441,21 +1666,24 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 16, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.299Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.299Z"
       },
       {
-        "id": 17,
+        "id": "17",
         "title": "Guards against deleting unsent data, and removal of the manual sync tool",
         "description": "Guards against deleting unsent data, and removal of the manual sync tool",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 17: Guards against deleting unsent data, and removal of the manual sync tool\" (#task-17-guards-against-deleting-unsent-data-and-removal-of-the-manual-sync-tool). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `lib/rxdb/reset-policy.ts`\n- Test: `tests/unit/sync/reset-policy.test.ts`\n- Modify: `lib/rxdb/database.ts`\n- Modify: `components/providers/local-database-provider.tsx`\n- Modify: `app/settings/page.tsx`",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm test tests/unit/sync/reset-policy.test.ts; git grep -n \"performMatchSync\\|localData.syncMatch\\|TablesUpdate\" -- app/settings/page.tsx; pnpm test; pnpm lint; pnpm build",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          14,
-          15
+          "14",
+          "15"
         ],
         "priority": "medium",
         "subtasks": [
@@ -1465,8 +1693,10 @@
             "description": "Plan Task 17, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 17, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.308Z"
           },
           {
             "id": 2,
@@ -1476,8 +1706,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 17, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.317Z"
           },
           {
             "id": 3,
@@ -1487,8 +1719,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 17, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.325Z"
           },
           {
             "id": 4,
@@ -1498,8 +1732,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 17, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.334Z"
           },
           {
             "id": 5,
@@ -1509,8 +1745,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 17, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.342Z"
           },
           {
             "id": 6,
@@ -1520,23 +1758,26 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 17, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.350Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.350Z"
       },
       {
-        "id": 18,
+        "id": "18",
         "title": "End-to-end tests (server = device)",
         "description": "Requires the Task 3 migration to be applied. The e2e suite runs against the real Supabase project.",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 18: End-to-end tests (server = device)\" (#task-18-end-to-end-tests-server--device). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Create: `tests/helpers/server-data.ts`, `tests/helpers/sync.ts`\n- Modify: `tests/e2e/04-live-offline.spec.ts`\n- Create: `tests/e2e/04d-sync-reopen.spec.ts`, `tests/e2e/04e-scorer-takeover.spec.ts`, `tests/e2e/04f-sign-out-warning.spec.ts`\n- Modify: `tests/e2e/04c-rxdb-legacy.spec.ts`, `tests/e2e/06z-screenshots.spec.ts` (accept the scorer dialog)",
         "testStrategy": "Commands from the plan for this task, all expected to pass: pnpm build && pnpm start -p 3100",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          3,
-          15,
-          16,
-          17
+          "3",
+          "15",
+          "16",
+          "17"
         ],
         "priority": "medium",
         "subtasks": [
@@ -1546,8 +1787,10 @@
             "description": "Plan Task 18, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 18, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.359Z"
           },
           {
             "id": 2,
@@ -1557,8 +1800,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 18, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.367Z"
           },
           {
             "id": 3,
@@ -1568,8 +1813,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 18, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.374Z"
           },
           {
             "id": 4,
@@ -1579,8 +1826,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 18, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.382Z"
           },
           {
             "id": 5,
@@ -1590,8 +1839,10 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 18, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.391Z"
           },
           {
             "id": 6,
@@ -1601,8 +1852,10 @@
               5
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 18, Step 6.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.399Z"
           },
           {
             "id": 7,
@@ -1612,8 +1865,10 @@
               6
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 18, Step 7.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.407Z"
           },
           {
             "id": 8,
@@ -1623,20 +1878,23 @@
               7
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 18, Step 8.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.417Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.417Z"
       },
       {
-        "id": 19,
+        "id": "19",
         "title": "Documentation, full verification and release",
         "description": "Documentation, full verification and release",
         "details": "Implement exactly as written in docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, section \"Task 19: Documentation, full verification and release\" (#task-19-documentation-full-verification-and-release). Spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md.\n\nFiles:\n- Modify: `.claude/docs/04-offline-sync.md`\n- Modify: `CLAUDE.md`",
         "testStrategy": "See the plan section.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
-          18
+          "18"
         ],
         "priority": "medium",
         "subtasks": [
@@ -1646,8 +1904,10 @@
             "description": "Plan Task 19, Step 1.",
             "dependencies": [],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 19, Step 1.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.426Z"
           },
           {
             "id": 2,
@@ -1657,8 +1917,10 @@
               1
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 19, Step 2.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.434Z"
           },
           {
             "id": 3,
@@ -1668,8 +1930,10 @@
               2
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 19, Step 3.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.444Z"
           },
           {
             "id": 4,
@@ -1679,8 +1943,10 @@
               3
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 19, Step 4.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.452Z"
           },
           {
             "id": 5,
@@ -1690,16 +1956,23 @@
               4
             ],
             "details": "See docs/superpowers/plans/2026-10-07-offline-sync-reliability.md, Task 19, Step 5.",
-            "status": "pending",
-            "testStrategy": ""
+            "status": "done",
+            "testStrategy": "",
+            "parentId": "undefined",
+            "updatedAt": "2026-10-09T08:58:18.461Z"
           }
-        ]
+        ],
+        "updatedAt": "2026-10-09T08:58:18.461Z"
       }
     ],
     "metadata": {
-      "created": "2026-10-07T20:34:58.849899Z",
-      "updated": "2026-10-07T20:34:58.849899Z",
-      "description": "Offline sync reliability (PRD .taskmaster/docs/prd-offline-sync.txt, plan docs/superpowers/plans/2026-10-07-offline-sync-reliability.md)"
+      "version": "1.0.0",
+      "lastModified": "2026-10-09T08:58:18.461Z",
+      "taskCount": 19,
+      "completedCount": 19,
+      "tags": [
+        "offline-sync"
+      ]
     }
   }
 }

@@ -10,7 +10,7 @@
 
 **Spec:** [docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md](../specs/2026-10-07-offline-sync-reliability-design.md). Read it before starting; this plan implements it and cites its sections.
 
-**Tracking:** Every task below has a matching Task Master task (tag `offline-sync`, same number) and a matching section in [.taskmaster/docs/prd-offline-sync.txt](../../../.taskmaster/docs/prd-offline-sync.txt). At the start of a task run `npx -y --package=task-master-ai task-master set-status --id=<N> --status=in-progress --tag=offline-sync`; after its commit run it again with `--status=done`. Tick the plan checkboxes as you go.
+**Tracking:** Every task below has a matching Task Master task (tag `offline-sync`, same number) and a matching section in [.taskmaster/docs/prd-offline-sync.txt](../../../.taskmaster/docs/prd-offline-sync.txt). At the start of a task run `npx -y --package=task-master-ai task-master set-status <N> in-progress` (the current tag is `offline-sync`); after its commit run it again with `done`. Tick the plan checkboxes as you go.
 
 ## Global Constraints
 
