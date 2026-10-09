@@ -5,13 +5,15 @@ const DEVICE_ID_KEY = "volleystats:device-id";
 let memoryDeviceId: string | null = null;
 
 export function deviceLabelFromUserAgent(userAgent: string): string {
-  const browser = /Edg\//.test(userAgent)
+  // Order matters: the Chromium-based browsers also say Chrome/ and Safari/, and the iOS browsers
+  // (CriOS, FxiOS, EdgiOS) say Safari/ too.
+  const browser = /Edg(A|iOS)?\//.test(userAgent)
     ? "Edge"
     : /OPR\//.test(userAgent)
       ? "Opera"
-      : /Firefox\//.test(userAgent)
+      : /(Firefox|FxiOS)\//.test(userAgent)
         ? "Firefox"
-        : /Chrome\//.test(userAgent)
+        : /(Chrome|CriOS)\//.test(userAgent)
           ? "Chrome"
           : /Safari\//.test(userAgent)
             ? "Safari"
@@ -24,11 +26,13 @@ export function deviceLabelFromUserAgent(userAgent: string): string {
         ? "iPad"
         : /Windows/.test(userAgent)
           ? "Windows"
-          : /Mac OS X/.test(userAgent)
-            ? "macOS"
-            : /Linux/.test(userAgent)
-              ? "Linux"
-              : "device";
+          : /CrOS/.test(userAgent)
+            ? "ChromeOS"
+            : /Mac OS X/.test(userAgent)
+              ? "macOS"
+              : /Linux/.test(userAgent)
+                ? "Linux"
+                : "device";
   return `${browser} · ${os}`;
 }
 
