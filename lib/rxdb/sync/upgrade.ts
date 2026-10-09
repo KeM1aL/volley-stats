@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LocalDatabase } from "../collections";
 import type { PendingChanges, PendingDoc } from "./pending-changes";
 import type { TrackedMatches } from "./tracked-matches";
-import { MATCH_COLLECTIONS } from "./types";
+import { MATCH_COLLECTIONS, type MatchCollectionName } from "./types";
 
 const UPGRADE_DOC = "sync-upgrade";
 const ID_CHUNK = 100;
@@ -32,13 +32,18 @@ function lastOpenedAtFor(date: unknown, now: string): string {
   return time < Date.parse(now) ? new Date(time).toISOString() : now;
 }
 
-/** Every local row of the match is unsent until the server confirms it (sent$, or a settled outcome). */
-async function markMatchPending(db: LocalDatabase, pending: PendingChanges, matchId: string): Promise<void> {
+/** Every local row of the matches is unsent until the server confirms it (sent$, or a settled outcome). */
+async function markMatchesPending(db: LocalDatabase, pending: PendingChanges, matchIds: string[]): Promise<void> {
+  const items: Array<{ table: MatchCollectionName; doc: PendingDoc }> = [];
   for (const table of MATCH_COLLECTIONS) {
-    const selector = table === "matches" ? { id: matchId } : { match_id: matchId };
+    const selector = table === "matches" ? { id: { $in: matchIds } } : { match_id: { $in: matchIds } };
     const docs = await (db[table] as any).find({ selector }).exec();
-    for (const doc of docs) await pending.markPending(table, doc.toJSON() as PendingDoc);
+    for (const doc of docs) {
+      const { id, match_id, updated_at } = doc.toJSON() as PendingDoc;
+      items.push({ table, doc: { id, match_id, updated_at } });
+    }
   }
+  await pending.markManyPending(items);
 }
 
 /**
@@ -67,11 +72,10 @@ export async function runSyncUpgrade(
   if (!onServer) return 0;
   const seeded = localMatches.filter((doc) => onServer.has(doc.id));
   const now = new Date().toISOString();
-  for (const match of seeded) {
-    // Marked before the match is tracked: its replications start as soon as it is.
-    await markMatchPending(db, pending, match.id);
-    await tracked.track(match.id, userId, lastOpenedAtFor(match.date, now));
-  }
+  // Marked before any match is tracked (its replications start as soon as it is), in a few bulk
+  // writes: this runs inside the lifecycle queue, which a match opened meanwhile waits for.
+  await markMatchesPending(db, pending, seeded.map((match) => match.id));
+  for (const match of seeded) await tracked.track(match.id, userId, lastOpenedAtFor(match.date, now));
   await db.upsertLocal(UPGRADE_DOC, { version: 2, ranAt: now });
   return seeded.length;
 }

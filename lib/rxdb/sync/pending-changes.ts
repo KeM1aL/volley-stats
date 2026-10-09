@@ -82,6 +82,9 @@ export type ParentStatus =
 /** A pending entry this old whose version never reached the local row comes from a write that failed. */
 export const SETTLE_GRACE_MS = 30_000;
 
+/** Rows per lookup and bulk write in `markManyPending`. */
+const MARK_CHUNK = 1000;
+
 export const pendingId = (table: MatchCollectionName, docId: string): string => `${table}:${docId}`;
 
 export const matchIdOf = (table: MatchCollectionName, doc: PendingDoc): string =>
@@ -114,6 +117,41 @@ export class PendingChanges {
       is_insert: opts.insert || existing?.is_insert === true || existing?.never_uploaded === true,
       doc_updated_at: doc.updated_at ?? this.now(),
     });
+  }
+
+  /**
+   * Marks many rows pending at once (the upgrade marks every local row of its matches): one lookup
+   * and a few bulk writes instead of a read and a write per row. A row that already has an entry
+   * keeps it as it is (its status and attempts are not reset).
+   */
+  async markManyPending(items: ReadonlyArray<{ table: MatchCollectionName; doc: PendingDoc }>): Promise<void> {
+    for (let start = 0; start < items.length; start += MARK_CHUNK) {
+      const chunk = items.slice(start, start + MARK_CHUNK);
+      const existing = await this.collection.findByIds(chunk.map(({ table, doc }) => pendingId(table, doc.id))).exec();
+      const now = this.now();
+      const entries: PendingChange[] = [];
+      for (const { table, doc } of chunk) {
+        const id = pendingId(table, doc.id);
+        if (existing.has(id)) continue;
+        entries.push({
+          id,
+          table_name: table,
+          doc_id: doc.id,
+          match_id: matchIdOf(table, doc),
+          status: "pending",
+          attempts: 0,
+          error_code: null,
+          error_params: null,
+          never_uploaded: false,
+          is_insert: false,
+          doc_updated_at: doc.updated_at ?? now,
+          created_at: now,
+          updated_at: now,
+        });
+      }
+      // A conflict means a hook marked that row meanwhile: its entry is the newer one.
+      if (entries.length > 0) await this.collection.bulkInsert(entries);
+    }
   }
 
   /**
