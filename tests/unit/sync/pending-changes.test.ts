@@ -237,6 +237,94 @@ describe("pending changes", () => {
     expect(queued).toEqual(["sets", "score_points"]);
   });
 
+  describe("parentStatus", () => {
+    const refMatch = { table: "matches", docId: MATCH } as const;
+    const refSet = (id: string) => ({ table: "sets", docId: id }) as const;
+    const rls = { kind: "permanent", code: "rls" } as const;
+
+    /** An entry for a row the server already has, with an edit waiting. */
+    async function markEdit(table: "matches" | "sets", id: string) {
+      await pending.markPending(table, { id, match_id: MATCH }, { insert: false });
+    }
+
+    it("does not block on a rejected update of an uploaded parent", async () => {
+      const set = aSet(MATCH);
+      await markEdit("sets", set.id);
+      await pending.reject("sets", set, rls, { neverUploaded: false });
+      expect(await pending.get("sets", set.id)).toMatchObject({ status: "rejected", is_insert: false, never_uploaded: false });
+      expect(await pending.parentStatus([refSet(set.id)])).toEqual({ kind: "none" });
+    });
+
+    it("blocks on a rejected parent that is only known as an unsent insert", async () => {
+      const set = aSet(MATCH);
+      await db.sets.insert(set as any);
+      await pending.reject("sets", set, rls, { neverUploaded: false });
+      expect(await pending.get("sets", set.id)).toMatchObject({ status: "rejected", is_insert: true, never_uploaded: false });
+      expect(await pending.parentStatus([refSet(set.id)])).toEqual({ kind: "rejected", ref: refSet(set.id) });
+    });
+
+    it("blocks on a rejected parent the server never accepted", async () => {
+      const set = aSet(MATCH);
+      await markEdit("sets", set.id);
+      await pending.reject("sets", set, rls, { neverUploaded: true });
+      expect(await pending.parentStatus([refSet(set.id)])).toEqual({ kind: "rejected", ref: refSet(set.id) });
+    });
+
+    it("blocks on a superseded unsent insert", async () => {
+      const set = aSet(MATCH);
+      await db.sets.insert(set as any);
+      await pending.supersedeMatch(MATCH);
+      expect(await pending.parentStatus([refSet(set.id)])).toEqual({ kind: "superseded", ref: refSet(set.id) });
+    });
+
+    it("does not block on a superseded update of an uploaded parent", async () => {
+      const set = aSet(MATCH);
+      await markEdit("sets", set.id);
+      await pending.supersedeMatch(MATCH);
+      expect((await pending.get("sets", set.id))?.status).toBe("superseded");
+      expect(await pending.parentStatus([refSet(set.id)])).toEqual({ kind: "none" });
+    });
+
+    it("reports the one parent that blocks when a child has two", async () => {
+      const set = aSet(MATCH);
+      await markEdit("matches", MATCH);
+      await pending.reject("matches", { id: MATCH }, rls, { neverUploaded: false }); // uploaded: no block
+      await db.sets.insert(set as any);
+      await pending.reject("sets", set, rls, { neverUploaded: true }); // unsent: blocks
+      expect(await pending.parentStatus([refMatch, refSet(set.id)])).toEqual({ kind: "rejected", ref: refSet(set.id) });
+      expect(await pending.parentStatus([refSet(set.id), refMatch])).toEqual({ kind: "rejected", ref: refSet(set.id) });
+      expect(await pending.parentStatus([refMatch])).toEqual({ kind: "none" });
+    });
+  });
+
+  describe("waitUntilSettled", () => {
+    it("resolves true at once when nothing is pending", async () => {
+      expect(await pending.waitUntilSettled([{ table: "sets", docId: "nothing" }], 1000)).toBe(true);
+    });
+
+    it("resolves true when the pending entry settles in time", async () => {
+      const set = aSet(MATCH);
+      await db.sets.insert(set as any);
+      setTimeout(() => void pending.onSent("sets", { ...set, updated_at: "2999-01-01T00:00:00.000Z" }), 50);
+      expect(await pending.waitUntilSettled([{ table: "sets", docId: set.id }], 2000)).toBe(true);
+    });
+
+    it("resolves false after the timeout while an entry is still pending", async () => {
+      const set = aSet(MATCH);
+      await db.sets.insert(set as any);
+      const started = Date.now();
+      expect(await pending.waitUntilSettled([{ table: "sets", docId: set.id }], 100)).toBe(false);
+      expect(Date.now() - started).toBeGreaterThanOrEqual(90);
+    });
+
+    it("treats a rejected entry as settled", async () => {
+      const set = aSet(MATCH);
+      await db.sets.insert(set as any);
+      await pending.reject("sets", set, { kind: "permanent", code: "rls" }, { neverUploaded: true });
+      expect(await pending.waitUntilSettled([{ table: "sets", docId: set.id }], 1000)).toBe(true);
+    });
+  });
+
   it("counts entries by match, table and status", async () => {
     await db.sets.insert(aSet(MATCH) as any);
     await db.sets.insert(aSet("20000000-0000-4000-8000-000000000002") as any);

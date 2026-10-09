@@ -183,17 +183,19 @@ export class PendingChanges {
 
   /**
    * Whether these parents block a child row. Only rows the server doesn't have
-   * yet block: an unsent insert, or a rejected insert. A pending update of an
-   * uploaded parent doesn't.
+   * yet block: an unsent insert, or a rejected or superseded insert. A pending, rejected or
+   * superseded update of an uploaded parent doesn't (when the match's claim is lost, the claim
+   * check supersedes every row of the match anyway).
    */
   async parentStatus(refs: ParentRef[]): Promise<ParentStatus> {
     if (refs.length === 0) return { kind: "none" };
     const found = await this.collection.findByIds(refs.map((ref) => pendingId(ref.table, ref.docId))).exec();
     const entries = [...found.values()].map((doc) => doc.toJSON() as PendingChange);
     const toRef = (entry: PendingChange): ParentRef => ({ table: entry.table_name, docId: entry.doc_id });
-    const superseded = entries.find((entry) => entry.status === "superseded");
+    const notOnServer = (entry: PendingChange) => entry.is_insert || entry.never_uploaded;
+    const superseded = entries.find((entry) => entry.status === "superseded" && notOnServer(entry));
     if (superseded) return { kind: "superseded", ref: toRef(superseded) };
-    const rejected = entries.find((entry) => entry.status === "rejected" && (entry.is_insert || entry.never_uploaded));
+    const rejected = entries.find((entry) => entry.status === "rejected" && notOnServer(entry));
     if (rejected) return { kind: "rejected", ref: toRef(rejected) };
     const inserts = entries.filter((entry) => entry.status === "pending" && entry.is_insert);
     return inserts.length > 0 ? { kind: "pending", refs: inserts.map(toRef) } : { kind: "none" };
