@@ -1,544 +1,579 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { RxReplicationState } from 'rxdb/plugins/replication';
-import { DatabaseCollections } from '../database';
-import { RxDatabase } from 'rxdb';
-import { replicateSupabase } from './index';
-import { CollectionName } from '../schema';
-import { User } from '@/lib/types';
-import { mergeMap, map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
-import { SyncStateDocument, DynamicCollectionName } from './types';
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { BehaviorSubject, distinctUntilChanged, filter, firstValueFrom, of, timeout, type Observable, type Subscription } from "rxjs";
+import type { User } from "@/lib/types";
+import type { LocalDatabase } from "../collections";
+import type { ClaimCheck } from "./dependencies";
+import { MatchSync } from "./match-sync";
+import type { PendingChanges, PendingStatus } from "./pending-changes";
+import type { SyncPlatform } from "./platform/types";
+import { ReferenceSync } from "./reference-sync";
+import { claimMatchScorer, getMatchScorer, isClaimForbidden, type ClaimResult, type ScorerInfo } from "./scorer-claim";
+import { SyncStates } from "./sync-state";
+import { discardSupersededChanges } from "./take-back";
+import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatch, type TrackedMatchMap } from "./tracked-matches";
+import type { SyncUser } from "./types";
+import { runSyncUpgrade } from "./upgrade";
 
-const LAST_N_MATCHES = 5;
-const dynamicCollections: CollectionName[] = ['matches', 'sets', 'score_points', 'player_stats', 'events'];
-const SYNC_TIMEOUT_MS = 30 * 1000; // 30 seconds
-const MAX_SYNC_RETRIES = 3;
+/** How long the live page waits for a match's first pull. */
+export const SYNC_TIMEOUT_MS = 30_000;
+const DEFAULT_RETRY_MS = 5_000;
+/** How long aligning a lost match with the server may take before pruning it is left for the next start. */
+export const PRUNE_ALIGN_TIMEOUT_MS = 10_000;
 
+export interface SyncManagerOptions {
+  db: LocalDatabase;
+  client: SupabaseClient<any>;
+  platform: SyncPlatform;
+  pending: PendingChanges;
+  /** Only the leader tab replicates (default true; tests use false). */
+  waitForLeadership?: boolean;
+  retryTime?: number;
+  /** Bound of the server work that prunes a lost match (default PRUNE_ALIGN_TIMEOUT_MS). */
+  pruneAlignTimeoutMs?: number;
+}
+
+export function toSyncUser(user: User): SyncUser {
+  return {
+    id: user.id,
+    teamIds: (user.teamMembers ?? []).map((member) => member.team_id),
+    clubIds: (user.clubMembers ?? []).map((member) => member.club_id),
+  };
+}
+
+function sameIds(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sorted = [...b].sort();
+  return [...a].sort().every((value, index) => value === sorted[index]);
+}
+
+/** The push gate's answer from the tracked entry alone; null for a pending-force claim (the server decides). */
+function claimDecision(entry: TrackedMatch | null): "ok" | "lost" | null {
+  if (!entry || entry.claim === null || entry.claim === "held") return "ok";
+  return entry.claim === "lost" ? "lost" : null;
+}
+
+export function sameSyncUser(a: SyncUser | null, b: SyncUser | null): boolean {
+  if (!a || !b) return a === b;
+  return a.id === b.id && sameIds(a.teamIds, b.teamIds) && sameIds(a.clubIds, b.clubIds);
+}
+
+/**
+ * Decides what this device replicates (spec section 2): reference tables for
+ * the signed-in user, and every tracked match from app start, on any screen.
+ */
 export class SyncManager {
-  private db: RxDatabase<DatabaseCollections>;
-  private client: SupabaseClient;
-  private replicationStates: Map<string, RxReplicationState<any, any>> = new Map();
-  private activeMatchIds: Set<string> = new Set();
-  private userId: string | null = null;
+  readonly tracked: TrackedMatches;
+  readonly syncStates: SyncStates;
+  readonly pendingChanges: PendingChanges;
+  private user: SyncUser | null = null;
+  /** Mirrors `user`, so a screen that asks for a match before sign-in completes can wait for it. */
+  private readonly user$ = new BehaviorSubject<SyncUser | null>(null);
+  private readonly reference: ReferenceSync;
+  private readonly matches = new Map<string, MatchSync>();
+  private trackedSubscription: Subscription | null = null;
+  private readonly platformSubscriptions: Subscription[];
+  private queue: Promise<unknown> = Promise.resolve();
+  /** Lost matches being aligned with the server for pruning (outside the lifecycle queue). */
+  private readonly pruning = new Map<string, { cancel: () => void }>();
+  private readonly deviceId: Promise<string>;
+  /** Set by destroy(): nothing starts afterwards, and a pending syncMatch resolves false. */
+  private readonly destroyed$ = new BehaviorSubject(false);
 
-  private user: any | null = null; // Using any to avoid circular dependency or strict type issues for now, but ideally User type
-
-  constructor(db: RxDatabase<DatabaseCollections>, client: SupabaseClient) {
-    this.db = db;
-    this.client = client;
-  }
-
-  async initialize() {
-    //Nothing to do for now
-  }
-
-  public cleanup() {
-    this.stopSync();
-    //TODO Verify if we need to do anything else here
-  }
-
-  public async setUser(user: User | null) {
-    this.user = user;
-    this.userId = user?.id || null;
-    // Cancel existing
-    await this.stopSync();
-    if (user) {
-      await this.startSync();
-    }
-  }
-
-  private async stopSync() {
-    console.debug('SyncManager: Stopping sync...');
-    const promises: Promise<any>[] = [];
-    for (const state of this.replicationStates.values()) {
-      promises.push(state.cancel());
-    }
-    await Promise.all(promises);
-    this.replicationStates.clear();
-  }
-
-  public async setOnlineStatus(isOnline: boolean) {
-    console.log(`SyncManager: Network status changed to ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
-    const promises: Promise<any>[] = [];
-    if (isOnline) {
-      // When coming back online, we should try to refresh our active match list
-      // because initialization might have failed to fetch "Last N" from server or "My Matches".
-      // console.log('SyncManager: Refreshing active matches and restarting sync...');
-      // await this.updateLastMatches();
-      // await this.restartDynamicSync();
-
-      for (const state of this.replicationStates.values()) {
-        if (!state.isPaused()) return;
-        // state.reSync(); // Trigger resync when coming back online
-        promises.push(state.start());
-      }
-    } else {
-      // When going offline, we might want to pause replications to save resources
-      for (const state of this.replicationStates.values()) {
-        if (state.isPaused()) return;
-        promises.push(state.pause());
-      }
-    }
-    await Promise.all(promises);
-  }
-
-  async syncMatch(matchId: string): Promise<boolean> {
-    if (this.activeMatchIds.has(matchId)) {
-      console.log(`SyncManager: Match ${matchId} is already being synced.`);
-
-      // Check if we need to resync (never synced or error state only)
-      const syncState = await this.getMatchSyncState(matchId);
-      if (this.isSyncStateStale(syncState)) {
-        console.debug(`SyncManager: Match ${matchId} needs sync (status: ${syncState?.status || 'none'}), resyncing`);
-        this.reSyncMatch(matchId);
-      }
-
-      // Wait for sync completion (with timeout)
-      return this.waitForMatchSync(matchId);
-    }
-
-    this.activeMatchIds.add(matchId);
-    console.log(`Force syncing match: ${matchId}`);
-
-    // Start dynamic sync (non-blocking, uses observers)
-    await this.startDynamicSync(matchId);
-
-    // Wait for sync completion (with timeout)
-    const synced = await this.waitForMatchSync(matchId);
-
-    console.log(`SyncManager: Sync for match ${matchId} ${synced ? 'completed' : 'timed out or failed'}.`);
-    return synced;
-  }
-
-  private async startSync() {
-    console.debug('SyncManager: Starting sync...');
-    // 1. Static/User-Scoped Collections
-    this.startCollectionSync('championships');
-    this.startCollectionSync('seasons');
-    this.startCollectionSync('match_formats');
-    this.startCollectionSync('clubs');
-    this.startCollectionSync('teams');
-
-    // Restart user-scoped collections with new user
-    if (this.user.clubMembers && this.user.clubMembers.length > 0) {
-      this.startCollectionSync('club_members', this.getReplicationIdentifier('club_members'), ({ query }) => {
-        query.in('club_id', this.user.clubMembers!.map((cm: any) => cm.club_id));
-        return query;
-      });
-    }
-
-    if (this.user.teamMembers && this.user.teamMembers.length > 0) {
-      this.startCollectionSync('team_members', this.getReplicationIdentifier('team_members'), ({ query }) => {
-        query.in('team_id', this.user.teamMembers!.map((tm: any) => tm.team_id));
-        return query;
-      });
-    }
-
-    // await this.updateLastMatches();
-    // this.restartDynamicSync();
-  }
-
-  private async updateLastMatches() {
-    if (!this.user || !this.user.teamMembers) return;
-
-    try {
-      // 1. Get User's Teams from User Object
-      const teamIds = this.user.teamMembers.map((tm: any) => tm.team_id) || [];
-
-      if (teamIds.length === 0) return;
-
-      // 2. Fetch Matches for these teams
-      // We want matches where either home_team or away_team is in the user's teams.
-      // Supabase (PostgREST) supports `or` filter.
-      const { data: matches, error: mError } = await this.client
-        .from('matches')
-        .select('id')
-        .or(`home_team_id.in.(${teamIds.join(',')}),away_team_id.in.(${teamIds.join(',')})`)
-        .in('status', ['completed', 'live'])
-        .order('date', { ascending: false })
-        .limit(LAST_N_MATCHES);
-      if (mError) throw mError;
-
-      if (matches) {
-        matches.forEach(m => this.activeMatchIds.add(m.id));
-      }
-      console.debug(`Added ${matches?.length || 0} 'My Matches' to active sync set.`);
-
-    } catch (e) {
-      console.error("Failed to add 'My Matches' to active set:", e);
-    }
-  }
-
-  private async startDynamicSync(matchId: string) {
-    // Chain the execution to prevent race conditions where multiple calls
-    // create overlapping replication states, leading to memory leaks.
-    this.dynamicSyncPromise = this.dynamicSyncPromise.then(async () => {
-      console.debug(`SyncManager: Starting dynamic sync for match: ${matchId}`);
-
-      // Initialize or retrieve sync state
-      let syncState = await this.getMatchSyncState(matchId);
-      if (!syncState) {
-        syncState = await this.initMatchSyncState(matchId);
-        if (!syncState) {
-          // Failed to initialize sync state
-          syncState = await this.getMatchSyncState(matchId);
-        }
-      }
-
-      // Mark as syncing
-      await this.updateMatchSyncState(matchId, { status: 'syncing' });
-
-      const identifierSuffix = `_chunk_${matchId}`;
-
-      for (const collectionName of dynamicCollections) {
-        const replicationIdentifier = this.getReplicationIdentifier(collectionName, identifierSuffix);
-
-        // Cancel existing
-        const existing = this.replicationStates.get(replicationIdentifier);
-        if (existing) {
-          console.debug(`SyncManager: Cancelling existing sync for ${collectionName} and match ${matchId}.`);
-          await existing.remove();
-          this.replicationStates.delete(replicationIdentifier);
-        }
-
-        // Start new replication
-        let state: RxReplicationState<any, any> | undefined;
-
-        if (collectionName === 'matches') {
-          state = this.startCollectionSync(
-            collectionName,
-            replicationIdentifier,
-            ({ query }) => query.eq('id', matchId),
-            `id=eq.${matchId}`
-          );
-        } else {
-          state = this.startCollectionSync(
-            collectionName,
-            replicationIdentifier,
-            ({ query }) => query.eq('match_id', matchId),
-            `match_id=eq.${matchId}`
-          );
-        }
-
-        // Setup observer instead of awaiting (NON-BLOCKING!)
-        if (state) {
-          this.setupSyncStateObserver(matchId, collectionName as DynamicCollectionName, state);
-        }
-      }
-
-      console.debug(`SyncManager: Dynamic sync initiated for match: ${matchId}`);
+  constructor(private readonly options: SyncManagerOptions) {
+    this.tracked = new TrackedMatches(options.db);
+    this.syncStates = new SyncStates(options.db);
+    this.pendingChanges = options.pending;
+    this.reference = new ReferenceSync({
+      db: options.db,
+      client: options.client,
+      waitForLeadership: options.waitForLeadership ?? true,
+      retryTime: options.retryTime ?? DEFAULT_RETRY_MS,
     });
-
-    return this.dynamicSyncPromise;
+    this.deviceId = options.platform.getDeviceId();
+    // Never paused: RxDB's own retry waits for the connection. Coming back only re-syncs.
+    this.platformSubscriptions = [
+      options.platform.connectivity$
+        .pipe(
+          distinctUntilChanged(),
+          filter((online) => online)
+        )
+        .subscribe(() => this.resume()),
+      options.platform.foreground$.subscribe(() => this.resume()),
+    ];
   }
 
-  private async reSyncMatch(matchId: string) {
-    console.debug(`SyncManager: Resync for match: ${matchId}`);
-    const identifierSuffix = `_chunk_${matchId}`;
-    for (const collectionName of dynamicCollections) {
-      const replicationIdentifier = this.getReplicationIdentifier(collectionName, identifierSuffix);
+  get userId(): string | null {
+    return this.user?.id ?? null;
+  }
 
-      const existing = this.replicationStates.get(replicationIdentifier);
-      if (existing) {
-        existing.reSync();
-        console.debug(`SyncManager: Resyncing existing sync for collection ${collectionName} and match ${matchId}.`);
+  /** Whether the match's replications run (true until their cancellation has finished). */
+  isTracking(matchId: string): boolean {
+    return this.matches.has(matchId);
+  }
+
+  private get destroyed(): boolean {
+    return this.destroyed$.value;
+  }
+
+  private get whenDestroyed$(): Observable<boolean> {
+    return this.destroyed$.pipe(filter(Boolean));
+  }
+
+  /** A refreshed profile for the same user (same memberships) changes nothing. */
+  setUser(user: SyncUser | null): Promise<void> {
+    if (this.destroyed) return Promise.resolve();
+    return this.enqueue(async () => {
+      if (this.destroyed) return;
+      if (sameSyncUser(user, this.user)) {
+        this.assignUser(user);
+        return;
       }
-    }
-  }
-
-  private dynamicSyncPromise: Promise<void> = Promise.resolve();
-
-  private async restartDynamicSync() {
-    // Chain the execution to prevent race conditions where multiple calls
-    // create overlapping replication states, leading to memory leaks.
-    this.dynamicSyncPromise = this.dynamicSyncPromise.then(async () => {
-      const matchIds = Array.from(this.activeMatchIds);
-      console.debug(`SyncManager: Restarting dynamic sync for matches: ${matchIds.join(', ')}`);
-
-      for (const matchId of matchIds) {
-        // Initialize sync state if needed
-        let syncState = await this.getMatchSyncState(matchId);
-        if (!syncState) {
-          await this.initMatchSyncState(matchId);
-        }
-
-        await this.updateMatchSyncState(matchId, { status: 'syncing' });
-
-        const identifierSuffix = `_chunk_${matchId}`;
-
-        for (const collectionName of dynamicCollections) {
-          const replicationIdentifier = this.getReplicationIdentifier(collectionName, identifierSuffix);
-
-          const existing = this.replicationStates.get(replicationIdentifier);
-          if (existing) {
-            await existing.remove();
-            this.replicationStates.delete(replicationIdentifier);
-          }
-
-          let state: RxReplicationState<any, any> | undefined;
-
-          if (collectionName === 'matches') {
-            state = this.startCollectionSync(
-              collectionName,
-              replicationIdentifier,
-              ({ query }) => query.eq('id', matchId),
-              `id=eq.${matchId}`
-            );
-          } else {
-            state = this.startCollectionSync(
-              collectionName,
-              replicationIdentifier,
-              ({ query }) => query.eq('match_id', matchId),
-              `match_id=eq.${matchId}`
-            );
-          }
-
-          if (state) {
-            this.setupSyncStateObserver(matchId, collectionName as DynamicCollectionName, state);
-          }
-        }
+      if (user && this.user && user.id === this.user.id) {
+        this.assignUser(user);
+        await this.reference.start(user);
+        return;
       }
-
-      console.debug(`SyncManager: Restart initiated for all active matches`);
-    });
-
-    return this.dynamicSyncPromise;
-  }
-
-  private startCollectionSync(collectionName: string, replicationIdentifier: string = '', queryBuilder?: (q: any) => any, liveFilter?: string): RxReplicationState<any, any> | undefined {
-    const collection = this.db.collections[collectionName as CollectionName] as any;
-    if (!collection) return undefined;
-
-    if (!replicationIdentifier) {
-      replicationIdentifier = this.getReplicationIdentifier(collectionName);
-    }
-
-    // Extract matchId from replicationIdentifier if it's a chunked sync
-    const matchIdMatch = replicationIdentifier.match(/_chunk_(.+)$/);
-    const matchId = matchIdMatch ? matchIdMatch[1] : null;
-
-    // Enhanced query builder that respects last sync time
-    const enhancedQueryBuilder = matchId
-      ? async (params: any) => {
-          let query = params.query;
-
-          // Apply custom filter first
-          if (queryBuilder) {
-            const maybeNewQuery = queryBuilder({ query: params.query });
-            if (maybeNewQuery) {
-              query = maybeNewQuery;
-            }
-          }
-
-          // Optimize: only pull data updated since last sync (using server timestamp)
-          const syncState = await this.getMatchSyncState(matchId);
-          const lastUpdatedAt = syncState?.collections[collectionName as DynamicCollectionName]?.lastUpdatedAt;
-          if (lastUpdatedAt && lastUpdatedAt !== '') {
-            console.debug(`SyncManager: Optimizing pull for ${collectionName} - only fetching data newer than ${lastUpdatedAt}`);
-            query = query.gt('updated_at', lastUpdatedAt);
-          }
-
-          return query;
-        }
-      : queryBuilder;
-
-    const replicationState = replicateSupabase({
-      replicationIdentifier,
-      collection: collection,
-      client: this.client,
-      tableName: collectionName,
-      pull: {
-        queryBuilder: queryBuilder,
-        liveFilter: liveFilter
-      },
-      push: {}, // Default push
-      live: true,
-      autoStart: true,
-      modifiedField: "updated_at",
-      deletedField: "_deleted",
-    });
-
-    this.replicationStates.set(replicationIdentifier, replicationState);
-
-    replicationState.error$.subscribe(err => {
-      console.error(`Sync error for ${collectionName} (${replicationIdentifier}):`, err);
-    });
-
-    return replicationState;
-  }
-
-  private getReplicationIdentifier(collectionName: string, identifierSuffix: string = ''): string {
-    return `sync_${collectionName}${identifierSuffix}`;
-  }
-
-  private async getMatchSyncState(matchId: string): Promise<SyncStateDocument | null> {
-    const localDoc = await this.db.getLocal(`sync-state-${matchId}`);
-    return localDoc ? (localDoc.toMutableJSON().data as unknown as SyncStateDocument) : null;
-  }
-
-  private async initMatchSyncState(matchId: string): Promise<SyncStateDocument | null> {
-    const initialState: SyncStateDocument = {
-      matchId,
-      lastSyncTime: 0,
-      collections: {
-        matches: { lastUpdatedAt: '', hasSynced: false },
-        sets: { lastUpdatedAt: '', hasSynced: false },
-        score_points: { lastUpdatedAt: '', hasSynced: false },
-        player_stats: { lastUpdatedAt: '', hasSynced: false },
-        events: { lastUpdatedAt: '', hasSynced: false },
-      },
-      status: 'never-synced'
-    }
-    await this.db.insertLocal(`sync-state-${matchId}`, initialState).catch(() => {
-      // Already exists, ignore error
-      return null;
-    });
-    return initialState;
-  }
-
-  private async updateMatchSyncState(
-    matchId: string,
-    updates: Partial<SyncStateDocument>
-  ): Promise<void> {
-    let current = await this.getMatchSyncState(matchId);
-    if (!current) {
-      current = await this.initMatchSyncState(matchId);
-    }
-    await this.db.upsertLocal(`sync-state-${matchId}`, {
-      ...current,
-      ...updates,
-      lastSyncTime: Date.now()
+      await this.stopAll();
+      this.assignUser(user);
+      if (user) await this.startAll(user);
     });
   }
 
-  private async updateCollectionSyncTime(
-    matchId: string,
-    collectionName: DynamicCollectionName
-  ): Promise<void> {
-    const state = await this.getMatchSyncState(matchId);
-    if (!state) return;
-
-    // Get the max updated_at timestamp from the synced data (server-side timestamp)
-    const collection = this.db.collections[collectionName];
-    if (!collection) return;
-
-    let maxUpdatedAt = '';
-
-    try {
-      // Query for documents matching this match
-      const selector = collectionName === 'matches'
-        ? { id: matchId }
-        : { match_id: matchId };
-
-      const docs = await collection.find({ selector }).exec();
-
-      // Find the maximum updated_at timestamp (empty if no docs, which is fine!)
-      if (docs.length > 0) {
-        maxUpdatedAt = docs.reduce((max: string, doc: any) => {
-          const docUpdatedAt = doc.get('updated_at') || '';
-          return docUpdatedAt > max ? docUpdatedAt : max;
-        }, '');
-      }
-    } catch (error) {
-      console.error(`Error getting max updated_at for ${collectionName}:`, error);
-    }
-
-    // Mark as synced regardless of data presence - replication completed!
-    state.collections[collectionName] = { lastUpdatedAt: maxUpdatedAt, hasSynced: true };
-    await this.db.upsertLocal(`sync-state-${matchId}`, state);
-
-    // Check if all collections are synced
-    await this.checkAndUpdateMatchSyncStatus(matchId);
-  }
-
-  private async checkAndUpdateMatchSyncStatus(matchId: string): Promise<void> {
-    const state = await this.getMatchSyncState(matchId);
-    if (!state) return;
-
-    // Check if all collections have completed their initial replication
-    const allSynced = dynamicCollections.every(
-      col => state.collections[col as DynamicCollectionName].hasSynced
-    );
-
-    if (allSynced && state.status !== 'synced') {
-      await this.updateMatchSyncState(matchId, { status: 'synced' });
-      console.debug(`SyncManager: All collections synced for match ${matchId}`);
-    }
-  }
-
-  private isSyncStateStale(syncState: SyncStateDocument | null): boolean {
-    // For local-first: only re-sync if never synced or in error state
-    // Once synced, live replication keeps us updated automatically
-    if (!syncState) return true;
-    return syncState.status === 'never-synced' || syncState.status === 'error';
-  }
-
-  private setupSyncStateObserver(
-    matchId: string,
-    collectionName: DynamicCollectionName,
-    replicationState: RxReplicationState<any, any>
-  ): void {
-    replicationState.active$
-      .pipe(
-        mergeMap(async (isActive) => {
-          if (isActive) {
-            await replicationState.awaitInSync();
-            await this.updateCollectionSyncTime(matchId, collectionName);
-            console.debug(`SyncManager: Collection ${collectionName} synced for match ${matchId}`);
-          }
-        })
-      )
-      .subscribe({
-        error: (err) => {
-          console.error(`Sync state observer error for ${collectionName}:`, err);
-          this.updateMatchSyncState(matchId, {
-            status: 'error',
-            lastError: err.message,
-            lastErrorTime: Date.now()
-          });
-        }
-      });
-  }
-
-  public observeMatchSyncState$(matchId: string): Observable<SyncStateDocument | null> {
-    return this.db.getLocal$(`sync-state-${matchId}`)
-      .pipe(
-        map(localDoc => localDoc ? (localDoc.toMutableJSON().data as unknown as SyncStateDocument) : null)
-      );
-  }
-
-  public async waitForMatchSync(
-    matchId: string,
-    timeoutMs: number = SYNC_TIMEOUT_MS
-  ): Promise<boolean> {
-    const syncState = await this.getMatchSyncState(matchId);
-
-    // If already synced, return immediately (live replication keeps it updated)
-    if (syncState && syncState.status === 'synced') {
-      console.debug(`SyncManager: Match ${matchId} already synced, using local data`);
+  /**
+   * Tracks the match on this device and waits for its first pull. Resolves
+   * true at once if the match was already synced here, false after `timeoutMs`
+   * or once the manager is destroyed.
+   */
+  async syncMatch(matchId: string, timeoutMs: number = SYNC_TIMEOUT_MS): Promise<boolean> {
+    if (this.destroyed) return false;
+    const user =
+      this.user ??
+      // user$ completes on destroy: then null.
+      (await firstValueFrom(
+        this.user$.pipe(
+          filter((candidate): candidate is SyncUser => candidate !== null),
+          timeout({ first: timeoutMs, with: () => of(null) })
+        ),
+        { defaultValue: null }
+      ));
+    if (!user || this.destroyed) return false;
+    const alreadySynced = (await this.syncStates.get(matchId))?.status === "synced";
+    if (this.destroyed) return false;
+    // Another account's unsent changes to it: that account keeps it (the badge shows them).
+    if (!(await this.trackFor(matchId, user.id))) return alreadySynced;
+    // Re-checked atomically: a first pull that completed meanwhile is not turned back into "syncing".
+    const synced = await this.syncStates.markSyncing(matchId);
+    await this.enqueue(async () => this.reconcile(await this.tracked.get()));
+    if (this.destroyed) return false;
+    if (synced) {
+      this.matches.get(matchId)?.reSync();
       return true;
     }
+    return this.syncStates.waitForSynced(matchId, timeoutMs, this.whenDestroyed$);
+  }
 
-    // Wait for sync to complete with timeout
-    return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        console.warn(`SyncManager: Sync timeout for match ${matchId}, proceeding anyway`);
-        resolve(false);
-      }, timeoutMs);
+  retryRejected(matchId?: string): Promise<number> {
+    return this.pendingChanges.retryRejected(this.options.db, matchId);
+  }
 
-      const subscription = this.observeMatchSyncState$(matchId).subscribe(state => {
-        console.debug(`SyncManager: Observing sync state for match ${matchId}:`, state);
-        if (state && state.status === 'synced') {
-          clearTimeout(timeout);
-          subscription.unsubscribe();
-          resolve(true);
-        } else if (state && state.status === 'error') {
-          clearTimeout(timeout);
-          subscription.unsubscribe();
-          console.error(`Sync error for match ${matchId}:`, state.lastError);
-          resolve(false);
-        }
+  /** Claims the match for this device (spec section 7). Throws ScorerRpcError when the server can't be reached. */
+  async claimMatch(matchId: string, force = false): Promise<ClaimResult> {
+    const user = this.user;
+    const trackedBefore = (await this.tracked.entry(matchId)) !== null;
+    const tracked = user ? await this.trackFor(matchId, user.id) : true;
+    let result: ClaimResult;
+    try {
+      result = await claimMatchScorer(this.options.client, {
+        matchId,
+        deviceId: await this.deviceId,
+        label: this.options.platform.getDeviceLabel(),
+        force,
       });
+    } catch (error) {
+      // Refused (no right to score it, or no such match): a match tracked only for this claim isn't replicated.
+      if (!trackedBefore && isClaimForbidden(error)) await this.tracked.remove(matchId);
+      throw error;
+    }
+    // The claim state belongs to the account the match is tracked for.
+    if (result.claimed && tracked) await this.tracked.setClaim(matchId, "held");
+    return result;
+  }
+
+  /**
+   * Takes scoring back after another device took the match over (the banner). Forces the claim, then
+   * discards this device's superseded changes to the match so it shows the match as the server has it
+   * (controller ruling, closing review N1), and only then marks the claim held: the replications restart
+   * on aligned rows. Finally pulls the match again (`refreshed` false: the refresh timed out).
+   * Throws ScorerRpcError when the claim fails, or the server's error when its rows can't be read;
+   * the claim then stays lost on this device and the take-back can be tried again.
+   */
+  async takeBackMatch(matchId: string): Promise<{ claim: ClaimResult; refreshed: boolean }> {
+    const claim = await this.enqueue(async () => {
+      // Normally already stopped by the loss; nothing of this match may push while it is reset.
+      await this.stopMatch(matchId);
+      if (this.user) await this.tracked.track(matchId, this.user.id);
+      const deviceId = await this.deviceId;
+      const result = await claimMatchScorer(this.options.client, {
+        matchId,
+        deviceId,
+        label: this.options.platform.getDeviceLabel(),
+        force: true,
+      });
+      if (!result.claimed) return result;
+      await this.resetTakenBackMatch(matchId, deviceId);
+      return result;
     });
+    return { claim, refreshed: claim.claimed ? await this.refreshMatch(matchId) : false };
+  }
+
+  /**
+   * The second half of a take-back, once the server names this device: discards its superseded
+   * changes to the match, then holds the claim (the replications restart through tracked$).
+   * Runs inside the lifecycle queue, with the match's replications stopped.
+   */
+  private async resetTakenBackMatch(matchId: string, deviceId: string): Promise<void> {
+    // A pruning alignment of the same match stops before its next table: the take-back aligns it now.
+    this.pruning.get(matchId)?.cancel();
+    await discardSupersededChanges({
+      db: this.options.db,
+      client: this.options.client,
+      pending: this.pendingChanges,
+      deviceId,
+      matchId,
+    });
+    await this.tracked.setClaim(matchId, "held");
+  }
+
+  /** Stops the match's replications; it stays in `matches` (isTracking) until they are cancelled. */
+  private async stopMatch(matchId: string): Promise<void> {
+    const running = this.matches.get(matchId);
+    if (!running) return;
+    try {
+      await running.cancel();
+    } finally {
+      if (this.matches.get(matchId) === running) this.matches.delete(matchId);
+    }
+  }
+
+  /** Scoring offline without being able to check: the claim is forced before the match's first upload. */
+  async claimMatchOffline(matchId: string): Promise<void> {
+    if (this.user && !(await this.trackFor(matchId, this.user.id))) return;
+    // A lost claim is only taken back online: takeBackMatch must discard the superseded changes first.
+    if ((await this.tracked.entry(matchId))?.claim === "lost") return;
+    await this.tracked.setClaim(matchId, "pending-force");
+  }
+
+  /**
+   * Has another device taken over a match this device holds? And does the server name this device
+   * for a match it lost (a take-back whose reset failed after the forced claim)? Then the take-back
+   * is finished here.
+   */
+  async checkClaims(): Promise<void> {
+    const user = this.user;
+    if (!user) return;
+    const deviceId = await this.deviceId;
+    for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
+      if (entry.userId !== user.id || (entry.claim !== "held" && entry.claim !== "lost")) continue;
+      // A lost match nobody opened for the TTL is about to be pruned: no more calls for it.
+      if (entry.claim === "lost" && this.unopenedForTtl(entry)) continue;
+      let holder: ScorerInfo;
+      try {
+        holder = await getMatchScorer(this.options.client, matchId, deviceId);
+      } catch {
+        continue; // Offline: checked again on the next resume.
+      }
+      try {
+        if (entry.claim === "held" && holder.deviceId && holder.deviceId !== deviceId) await this.markLost(matchId, holder);
+        if (entry.claim === "lost" && holder.deviceId === deviceId) await this.finishTakeBack(matchId, deviceId);
+      } catch (error) {
+        console.warn(`[sync] match ${matchId}: updating the claim failed`, error);
+      }
+    }
+  }
+
+  private finishTakeBack(matchId: string, deviceId: string): Promise<void> {
+    return this.enqueue(async () => {
+      // Taken back meanwhile (takeBackMatch), or lost again.
+      if ((await this.tracked.entry(matchId))?.claim !== "lost") return;
+      await this.stopMatch(matchId);
+      await this.resetTakenBackMatch(matchId, deviceId);
+    });
+  }
+
+  /**
+   * Pulls the match again and waits until its replications are in sync, e.g. after a
+   * forced takeover, so rows the previous device pushed are here before scoring.
+   * Resolves false if that takes longer than `timeoutMs` (offline) or the match isn't replicated.
+   */
+  async refreshMatch(matchId: string, timeoutMs = 10_000): Promise<boolean> {
+    // A claim that was just taken back restarts the replications through the tracked$ subscription.
+    await this.enqueue(async () => this.reconcile(await this.tracked.get()));
+    const sync = this.matches.get(matchId);
+    if (!sync) return false;
+    sync.reSync();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<false>((resolve) => {
+      timer = setTimeout(() => resolve(false), timeoutMs);
+    });
+    try {
+      return await Promise.race([sync.awaitInSync().then(() => true, () => false), timedOut]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /** Waits until the match's replications are in sync; false if the match isn't replicated here. */
+  async awaitMatchInSync(matchId: string): Promise<boolean> {
+    const sync = this.matches.get(matchId);
+    if (!sync) return false;
+    await sync.awaitInSync();
+    return true;
+  }
+
+  async destroy(): Promise<void> {
+    if (!this.destroyed) {
+      this.destroyed$.next(true);
+      this.platformSubscriptions.forEach((subscription) => subscription.unsubscribe());
+      // Synchronously, so a reconcile already queued starts nothing.
+      this.assignUser(null);
+      this.user$.complete();
+    }
+    await this.enqueue(() => this.stopAll());
+  }
+
+  private assignUser(user: SyncUser | null): void {
+    this.user = user;
+    this.user$.next(user);
+  }
+
+  private async startAll(user: SyncUser): Promise<void> {
+    await this.reference.start(user);
+    // Subscribed first: the upgrade and the pruning are best effort and must not keep matches from replicating.
+    this.trackedSubscription = this.tracked.get$().subscribe((matches) => {
+      void this.enqueue(() => this.reconcile(matches));
+    });
+    try {
+      await runSyncUpgrade(this.options.db, this.tracked, this.pendingChanges, user.id, this.options.client);
+    } catch (error) {
+      console.warn("[sync] upgrade seeding failed:", error);
+    }
+    try {
+      // Local work only; a lost match's alignment with the server runs detached from this queue.
+      await this.pruneTracked(user.id);
+    } catch (error) {
+      console.warn("[sync] pruning tracked matches failed:", error);
+    }
+    void this.options.platform.requestPersistentStorage();
+  }
+
+  private async stopAll(): Promise<void> {
+    this.trackedSubscription?.unsubscribe();
+    this.trackedSubscription = null;
+    // Removed from the map once cancelled, so isTracking stays true while they stop.
+    const syncs = [...this.matches];
+    const results = await Promise.allSettled(syncs.map(([, sync]) => sync.cancel()));
+    for (const [matchId, sync] of syncs) {
+      if (this.matches.get(matchId) === sync) this.matches.delete(matchId);
+    }
+    for (const result of results) {
+      if (result.status === "rejected") console.warn("[sync] stopping a match replication failed:", result.reason);
+    }
+    await this.reference.stop();
+  }
+
+  /** Starts replications for the user's tracked matches and stops the others. */
+  private async reconcile(matches: TrackedMatchMap): Promise<void> {
+    const user = this.user;
+    if (!user) return;
+    const wanted = new Set(
+      Object.entries(matches)
+        .filter(([, entry]) => entry.userId === user.id && entry.claim !== "lost")
+        .map(([matchId]) => matchId)
+    );
+    for (const matchId of [...this.matches.keys()]) {
+      if (!wanted.has(matchId)) await this.stopMatch(matchId);
+    }
+    const deviceId = await this.deviceId;
+    for (const matchId of wanted) {
+      if (this.matches.has(matchId)) continue;
+      const sync = new MatchSync(matchId, {
+        db: this.options.db,
+        client: this.options.client,
+        pending: this.pendingChanges,
+        deviceId,
+        claim: this.claimCheck,
+        onSuperseded: (id) => this.onSuperseded(id),
+        onSynced: (id) => this.syncStates.set(id, "synced"),
+        waitForLeadership: this.options.waitForLeadership ?? true,
+        retryTime: this.options.retryTime ?? DEFAULT_RETRY_MS,
+      });
+      this.matches.set(matchId, sync);
+      sync.start();
+    }
+  }
+
+  /**
+   * Tracks the match for this user, unless the tracked entry belongs to another account and that
+   * account's changes to the match are still unsent on this device: it keeps the match then (they
+   * must not upload under this account). Returns whether the match is tracked for this user.
+   */
+  private async trackFor(matchId: string, userId: string): Promise<boolean> {
+    const entry = await this.tracked.entry(matchId);
+    if (entry && entry.userId !== userId) {
+      const unsent = await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected"] });
+      if (unsent > 0) return false;
+    }
+    await this.tracked.track(matchId, userId);
+    return true;
+  }
+
+  private unopenedForTtl(entry: TrackedMatch): boolean {
+    // An unreadable date counts as old, so a corrupt entry is pruned rather than kept forever.
+    return !(Date.parse(entry.lastOpenedAt) >= Date.now() - TRACKED_MATCH_TTL_MS);
+  }
+
+  /**
+   * Drops matches unopened for TRACKED_MATCH_TTL_MS once nothing of theirs is unsent. Superseded
+   * changes of a lost match only matter while the take-back is offered, which is while the match is
+   * tracked and was opened recently: past the TTL a lost match goes too, but only after its superseded
+   * rows were aligned with the server (see pruneLostMatch). That needs the network, so it is started
+   * here and not awaited: the lifecycle queue never waits for the server.
+   */
+  private async pruneTracked(userId: string): Promise<void> {
+    for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
+      if (entry.userId !== userId || !this.unopenedForTtl(entry)) continue;
+      const unsent: PendingStatus[] = entry.claim === "lost" ? ["pending", "rejected"] : ["pending", "rejected", "superseded"];
+      if ((await this.pendingChanges.count({ matchId, statuses: unsent })) > 0) continue;
+      if (entry.claim === "lost") this.pruneLostMatch(matchId, userId);
+      else await this.tracked.remove(matchId);
+    }
+  }
+
+  /**
+   * Aligns a lost match past the TTL with the server as a take-back would (each superseded row becomes
+   * the server's version, or a local tombstone that is never pushed; the entries are deleted), then
+   * stops tracking it. Best effort and outside the lifecycle queue: one run per match at a time,
+   * bounded by `pruneAlignTimeoutMs`. Offline, on a server error or on a timeout the match stays
+   * tracked and this is retried at the next start. Only the leader tab aligns (two tabs writing the
+   * same rows would conflict), so a follower tab waits for leadership, within the same bound. A timeout,
+   * a take-back of the match, a sign-out, another account or destroy() stops it before its next write.
+   */
+  private pruneLostMatch(matchId: string, userId: string): void {
+    if (this.pruning.has(matchId)) return;
+    const { db } = this.options;
+    const limit = this.options.pruneAlignTimeoutMs ?? PRUNE_ALIGN_TIMEOUT_MS;
+    let cancelled = false;
+    // Given up (timeout, take-back), destroyed or signed out / another account: stop before the next write.
+    const stopped = () => cancelled || this.destroyed || this.user?.id !== userId;
+    const work = (async () => {
+      if (this.options.waitForLeadership !== false) await db.waitForLeadership();
+      if (stopped()) return;
+      await discardSupersededChanges({
+        db,
+        client: this.options.client,
+        pending: this.pendingChanges,
+        deviceId: await this.deviceId,
+        matchId,
+        shouldStop: stopped,
+      });
+      if (stopped()) return;
+      await this.enqueue(async () => {
+        // Opened, taken back or written to while the server was asked: then it is no longer a candidate.
+        if (stopped()) return;
+        const entry = await this.tracked.entry(matchId);
+        if (!entry || entry.userId !== userId || entry.claim !== "lost" || !this.unopenedForTtl(entry)) return;
+        if ((await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected"] })) > 0) return;
+        await this.tracked.remove(matchId);
+      });
+    })();
+    // Registered until the run itself ends, even after a timeout: a later start doesn't run a second one beside it.
+    this.pruning.set(matchId, { cancel: () => (cancelled = true) });
+    void work.catch(() => undefined).finally(() => this.pruning.delete(matchId));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        cancelled = true;
+        reject(new Error(`timed out after ${limit} ms`));
+      }, limit);
+    });
+    void Promise.race([work, timedOut])
+      .catch((error) => console.warn(`[sync] match ${matchId}: aligning it before pruning failed, kept for the next start`, error))
+      .finally(() => clearTimeout(timer));
+  }
+
+  private resume(): void {
+    this.reference.reSync();
+    for (const sync of this.matches.values()) sync.reSync();
+    void this.checkClaims().catch((error) => console.warn("[sync] checking the claims failed:", error));
+  }
+
+  private readonly claiming = new Map<string, Promise<"ok" | "unavailable">>();
+
+  private readonly claimCheck: ClaimCheck = async (matchId) => {
+    const settled = claimDecision(await this.tracked.entry(matchId));
+    if (settled) return settled;
+    // pending-force: one RPC at a time per match, shared by the five replications.
+    const inFlight = this.claiming.get(matchId);
+    if (inFlight) {
+      const result = await inFlight;
+      return claimDecision(await this.tracked.entry(matchId)) ?? result;
+    }
+    // None in flight: the entry read above may predate a claim that landed since. Read it again
+    // before forcing (no await between that read and starting the claim).
+    const fresh = claimDecision(await this.tracked.entry(matchId));
+    if (fresh) return fresh;
+    let next = this.claiming.get(matchId);
+    if (!next) {
+      next = this.claimMatch(matchId, true)
+        .then(
+          (result): "ok" | "unavailable" => (result.claimed ? "ok" : "unavailable"),
+          (): "unavailable" => "unavailable"
+        )
+        .finally(() => this.claiming.delete(matchId));
+      this.claiming.set(matchId, next);
+    }
+    return next;
+  };
+
+  private readonly superseding = new Map<string, Promise<void>>();
+
+  /** A row was refused because another device scores the match: one check at a time per match. */
+  private onSuperseded(matchId: string): Promise<void> {
+    let inFlight = this.superseding.get(matchId);
+    if (!inFlight) {
+      inFlight = this.checkSuperseded(matchId).finally(() => this.superseding.delete(matchId));
+      this.superseding.set(matchId, inFlight);
+    }
+    return inFlight;
+  }
+
+  private async checkSuperseded(matchId: string): Promise<void> {
+    // Already lost: the rest of a burst of superseded rows has nothing new to ask the server.
+    if ((await this.tracked.entry(matchId))?.claim === "lost") return;
+    const deviceId = await this.deviceId;
+    let holder: ScorerInfo | null = null;
+    try {
+      holder = await getMatchScorer(this.options.client, matchId, deviceId);
+    } catch {
+      // A held claim isn't given up on a guess: the next resume's checkClaims decides.
+      if ((await this.tracked.entry(matchId))?.claim === "held") return;
+      // Otherwise the banner shows "another scorer" without a name.
+    }
+    // This device holds the match (e.g. a row behind a parent superseded before a take-back): not lost.
+    if (holder?.deviceId === deviceId) return;
+    await this.markLost(matchId, holder);
+  }
+
+  private async markLost(matchId: string, holder: ScorerInfo | null): Promise<void> {
+    if ((await this.tracked.entry(matchId))?.claim === "lost") return;
+    await this.pendingChanges.supersedeMatch(matchId);
+    await this.tracked.setClaim(matchId, "lost", holder);
+  }
+
+  /** Serializes lifecycle changes within this tab. */
+  private enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(task, task);
+    this.queue = run.catch((error) => console.warn("[sync] lifecycle task failed:", error));
+    return run;
   }
 }

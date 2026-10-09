@@ -152,7 +152,7 @@ setMatchState(state)
 
 ### Layer 1: Server State (Source of Truth)
 - **Supabase**: Remote PostgreSQL database. Screens other than the live match read and write it directly through the API layer hooks.
-- **RxDB**: Local IndexedDB copy, scoped to reference data plus the matches pulled with `syncMatch(matchId)`. Used by live match tracking.
+- **RxDB**: Local IndexedDB copy, scoped to reference data plus the matches tracked with `syncMatch(matchId)`. Used by live match tracking.
 - **Sync**: `SyncManager` ([lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts)) runs RxDB replication with Supabase
 
 ### Layer 2: Global State (React Context)

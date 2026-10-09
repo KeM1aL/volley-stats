@@ -101,15 +101,15 @@ auth: {
 ### 3. [lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts)
 **Purpose**: Orchestrates bidirectional sync between RxDB and Supabase
 
-**Current Issue**: No app lifecycle awareness (sync continues when backgrounded)
+**Current state**: The manager gets its platform signals from a `SyncPlatform` adapter ([lib/rxdb/sync/platform/types.ts](lib/rxdb/sync/platform/types.ts)); the web one is [platform/web.ts](lib/rxdb/sync/platform/web.ts). Replications are never paused: RxDB's own retry waits for the connection, and coming back online or to the foreground only re-syncs and re-checks the scorer claim.
 
-**Required Changes**:
-- Add `App.addListener('appStateChange')` for pause/resume
-- Call `setOnlineStatus(false)` when app backgrounds (pauses replications)
-- Call `setOnlineStatus(true)` when app foregrounds (resumes + reSync)
-- Listen for `resume` event to check pending changes
+**Required Changes**: Write a Capacitor `SyncPlatform` and pass it to the manager instead of the web one:
+- `connectivity$`: current status from `Network.getStatus()`, then `Network.addListener('networkStatusChange')`
+- `foreground$`: emit on `App.addListener('appStateChange')` when `isActive`
+- `getDeviceId()`: an id kept per install (e.g. Preferences); `getDeviceLabel()`: from `Device.getInfo()`
+- `requestPersistentStorage()`: resolve true (native storage isn't evicted)
 
-**Impact**: Battery preservation, ensures fresh data on app open
+**Impact**: Fresh data and claim checks on app open; the sync core stays unchanged
 
 ---
 
@@ -353,13 +353,16 @@ NEXT_PUBLIC_STORAGE_ENGINE=dexie
    - Use: `process.env.NEXT_PUBLIC_STORAGE_ENGINE || 'dexie'`
    - Add platform detection for future SQLite path
 
-6. **Add app lifecycle to SyncManager** ([lib/rxdb/sync/manager.ts](lib/rxdb/sync/manager.ts))
+6. **Provide a Capacitor `SyncPlatform`** ([lib/rxdb/sync/platform/types.ts](lib/rxdb/sync/platform/types.ts))
    ```typescript
-   App.addListener('appStateChange', ({ isActive }) => {
-     if (isActive) this.setOnlineStatus(true);  // Resume
-     else this.setOnlineStatus(false);          // Pause
+   const foreground$ = new Observable<void>((subscriber) => {
+     const handle = App.addListener('appStateChange', ({ isActive }) => {
+       if (isActive) subscriber.next();
+     });
+     return () => void handle.then((h) => h.remove());
    });
    ```
+   Same pattern for `connectivity$` with the Network plugin; see section 3.
 
 **Deliverables**: Network detection works, auth tokens secure, sync respects lifecycle
 

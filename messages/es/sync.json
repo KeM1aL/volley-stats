@@ -1,0 +1,75 @@
+{
+  "badge": {
+    "saved": "Todo guardado",
+    "uploading": "Guardando {count, plural, one {# cambio} other {# cambios}}…",
+    "waiting": "{count, plural, one {# cambio guardado} other {# cambios guardados}} en este dispositivo, se enviarán al volver la conexión",
+    "problem": "{count, plural, one {# cambio no se pudo guardar} other {# cambios no se pudieron guardar}}",
+    "otherAccount": "Hay cambios de otra cuenta esperando en este dispositivo",
+    "retry": "Reintentar",
+    "matchLine": "{pending} pendientes · {rejected} sin guardar",
+    "superseded": "No enviado: {name} tomó el control del registro a las {time}",
+    "unknownScorer": "otro anotador",
+    "allSavedToast": "Todos los datos del partido están guardados en el servidor",
+    "noIssues": "Todo lo registrado en este dispositivo está en el servidor."
+  },
+  "flag": {
+    "pending": "Aún no enviado",
+    "problem": "Algunos cambios no se pudieron guardar"
+  },
+  "errors": {
+    "rls": "El servidor rechazó este cambio (sin permiso).",
+    "invalid_data": "El servidor rechazó datos no válidos.",
+    "schema_mismatch": "La aplicación necesita actualizarse para guardar este cambio.",
+    "duplicate": "Ya existe un registro en conflicto en el servidor.",
+    "reference_missing": "Algo a lo que hace referencia ({table}) se eliminó en el servidor.",
+    "deleted_on_server": "Este registro se eliminó en el servidor.",
+    "parent_rejected": "Depende de un registro ({table}) que no se pudo guardar.",
+    "too_many_attempts": "No se pudo guardar tras varios intentos.",
+    "scorer_mismatch": "Otro dispositivo tomó el control del registro.",
+    "unknown": "Error desconocido del servidor."
+  },
+  "tables": {
+    "matches": "partido",
+    "sets": "set",
+    "player_stats": "estadística",
+    "score_points": "punto",
+    "events": "evento",
+    "team_members": "jugador",
+    "teams": "equipo",
+    "match_formats": "formato de partido",
+    "championships": "campeonato",
+    "seasons": "temporada",
+    "unknown": "registro"
+  },
+  "claim": {
+    "takenTitle": "Otra persona está registrando este partido",
+    "takenBody": "{name} está registrando este partido en {device} (últimos datos recibidos a las {time}).",
+    "takenWarning": "Si tomas el control, los cambios que ese dispositivo aún no ha enviado no se guardarán.",
+    "takeOver": "Tomar el control del registro",
+    "cancel": "Cancelar",
+    "offlineTitle": "No se puede comprobar quién registra",
+    "offlineBody": "Estás sin conexión, así que la aplicación no puede comprobar si otra persona está registrando este partido. ¿Registrar en este dispositivo?",
+    "offlineConfirm": "Registrar en este dispositivo",
+    "takenOverBanner": "{name} tomó el control del registro en {device} a las {time}.",
+    "takeBackTitle": "¿Recuperar el registro?",
+    "takeBackBody": "Los cambios que este dispositivo registró pero no envió antes de que {name} tomara el control se descartarán, y este dispositivo mostrará el partido tal como está en el servidor.",
+    "takeBackConfirm": "Recuperar el registro",
+    "never": "nunca",
+    "forbiddenTitle": "No puedes registrar este partido",
+    "forbiddenBody": "Solo el propietario de uno de los dos equipos puede registrar este partido.",
+    "refreshFailed": "El registro es tuyo, pero no se pudieron cargar los últimos datos — comprueba la conexión",
+    "takeBackNeedsConnection": "Recuperar el registro requiere conexión. Vuelve a conectarte e inténtalo de nuevo.",
+    "takeOverFailed": "No se pudo tomar el control: otro dispositivo está registrando este partido."
+  },
+  "guards": {
+    "signOutTitle": "Cambios aún no enviados",
+    "signOutBody": "{count, plural, one {# cambio de este dispositivo no se ha enviado} other {# cambios de este dispositivo no se han enviado}}. Se quedan en este dispositivo y se enviarán cuando vuelvas a iniciar sesión.",
+    "signOutConfirm": "Cerrar sesión de todos modos",
+    "clearBlocked": "Parte de estos datos aún no se ha enviado. Espera a que el indicador de sincronización muestre «Todo guardado».",
+    "resetBlocked": "La base de datos local aún tiene cambios sin enviar, así que no se restableció. Vuelve a conectarte y espera a que todo esté guardado.",
+    "forceReset": "Eliminar los datos locales de todos modos",
+    "forceResetTitle": "¿Eliminar los datos locales?",
+    "forceResetBody": "Los cambios registrados en este dispositivo que nunca se enviaron se perderán para siempre. Hazlo solo si no puedes esperar a que se guarden.",
+    "forceResetConfirm": "Eliminar los datos locales"
+  }
+}

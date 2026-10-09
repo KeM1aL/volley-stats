@@ -10,6 +10,8 @@
     "start": "next start",
     "start:inspect": "next start --inspect=0.0.0.0",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "i18n:check": "i18n-check -s en --locales messages",
     "supabase:types": "npx supabase gen types typescript --project-id gvtjccisbwrwpjtabnyd --schema public > lib/supabase/database.types.ts",
     "supabase:functions:deploy:send-email": "npx supabase functions deploy send-email --no-verify-jwt --project-ref 'gvtjccisbwrwpjtabnyd'",
@@ -112,7 +114,8 @@
     "esbuild": "0.28.2",
     "react-email": "6.11.0",
     "supabase": "^2.119.0",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "vitest": "5.0.3"
   },
   "engines": {
     "node": ">=24"

@@ -1,0 +1,88 @@
+<context>
+# Overview
+VolleyStats records live volleyball matches on a phone or tablet, often in gyms with poor or no network. Live match data is written to a local RxDB database and replicated to Supabase. Today some points, scores and related rows never reach the server, or reach it with different values. The read-only check on 2026-10-07 found 11 of the 96 sets that have points (in 10 matches) with a set score that disagrees with their points.
+
+This project makes offline sync reliable and visible. Every change recorded on a device reaches the server exactly as recorded, through network drops and multi-day offline periods. Users always see whether their data is saved.
+
+Design spec: docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md
+Implementation plan (source of truth for every task below): docs/superpowers/plans/2026-10-07-offline-sync-reliability.md
+Task Master tag: offline-sync. Task N here is Task N in the plan; subtasks are the plan's steps.
+
+# Core Features
+- Local edits are never discarded. Root cause: `updated_at` was used as the replication checkpoint while the server trigger rewrote it, so a second update to the same row became a false conflict, and the default handler dropped it. Fix: a server-only `_modified` checkpoint column, `updated_at` kept as the device's edit time, and a conflict handler where the scoring device wins.
+- Uploads run from app start, on every screen. Tracked matches are persisted and replicated by the leader tab. A profile refresh no longer cancels match replications. No pause/start loop.
+- `pending_changes` records every unsent row (written by collection hooks). It drives the UI and parent-first upload ordering.
+- Foreign keys are never an error source. Parent inserts upload first. Errors are classified per row: network, auth and server errors retry forever without counting; permanent errors are rejected with a reason and never block later rows; a missing external reference is named.
+- One scoring device per match. A claim RPC records the device, and a server trigger enforces it. A takeover goes through a confirm dialog, online or offline. The previous device becomes read-only and keeps its unsent changes as "superseded".
+- A sync badge in the header and on the live page, unsent flags in the match list, a sign-out warning, and a leave-page prompt. Destructive local-data actions are refused while data is unsent.
+- A platform adapter (connectivity, foreground, device id, persistent storage), so a later Capacitor/Expo build reuses the sync core.
+
+# User Experience
+- Scorer: scores offline without worry. The badge says "N changes saved on this device, will upload when online", then "All saved" and a toast once uploaded, even days later and from any screen.
+- Second device (e.g. the scorer's battery died): opening the live match shows "Alex is scoring this match on Chrome · Android (last data received 14:32)" with Take over / Cancel. When offline it asks "Score on this device?".
+- Previous device after a takeover: read-only banner. Its unsent changes are shown as "not uploaded", never as an error.
+- Problems: "3 changes couldn't be saved" with the reason and a Retry button.
+</context>
+<PRD>
+# Technical Architecture
+- Supabase migration 20261007000000_sync_reliability.sql:
+  - `_modified` column, index and trigger on 12 tables
+  - `request_device_id()` reads the `x-device-id` header
+  - `update_updated_at_column()` only stamps `now()` on requests without the header
+  - `matches.scorer_*` columns, the `claim_match_scorer` / `get_match_scorer` RPCs, and `enforce_match_scorer` triggers
+- `lib/rxdb/sync`:
+  - `replication.ts`: the adapter, rebased on rxdb/plugins/replication-supabase 17.6.0
+  - `match-sync.ts`: 5 replications per tracked match, push modifier per match
+  - `reference-sync.ts`: pull-only
+  - `manager.ts`
+  - `pending-changes.ts`, `dependencies.ts`, `errors.ts`, `conflict-handler.ts`
+  - `tracked-matches.ts`, `sync-state.ts`, `scorer-claim.ts`, `status.ts`, `upgrade.ts`
+  - `platform/`
+- `lib/rxdb/collections.ts`: shared collection setup (browser and tests).
+- UI:
+  - `components/sync/*`: badge, reason, flag, claim dialog, banner
+  - `hooks/use-sync-status.ts`, `hooks/use-unsent-guard.ts`
+  - `messages/*/sync.json`: en, fr, es, it, pt
+- Tests:
+  - Vitest with a fake Supabase server (`tests/unit`) covering every edge case, each ending with server rows = device rows
+  - Playwright specs asserting the server matches what the device shows
+
+# Development Roadmap
+Task 1 - Vitest and a pull that tolerates new server columns (ship to production before Task 3).
+Task 2 - Microsecond timestamps and a fake Supabase server for tests.
+Task 3 - Server migration: checkpoint column, edit-time rule, scorer claim. Applied to production only after explicit user confirmation.
+Task 4 - Classify push errors (temporary / permanent / superseded; attempt limit only for parent_missing/unknown).
+Task 5 - Conflict handler: the scoring device wins; timestamps compared as instants.
+Task 6 - Shared collection setup and the pending_changes store (hooks mark unsent rows; edit-time hook).
+Task 7 - Platform adapter (web implementation, fake for tests).
+Task 8 - Tracked matches, sync state and the scorer RPC client.
+Task 9 - Parent-first gate for foreign keys.
+Task 10 - Replication adapter: row-by-row push, error classification, no silent re-creation, x-device-id.
+Task 11 - Per-match and reference replications.
+Task 12 - SyncManager rewrite, upgrade seeding and provider wiring (fixes root causes 2, 3, 4, 6).
+Task 13 - Scoring-device claim in the manager (online, offline pending-force, takeover detection).
+Task 14 - Sync status, strings (5 languages) and the sync badge.
+Task 15 - Live match page: claim dialogs, read-only mode, leave warning.
+Task 16 - Navigation badge, sign-out warning and match-list flags.
+Task 17 - Guards against deleting unsent data; removal of the manual sync tool.
+Task 18 - End-to-end tests asserting server = device (reopen, multi-tab, takeover, sign-out).
+Task 19 - Documentation, full verification and release.
+
+# Logical Dependency Chain
+1 -> 2 -> (4, 5, 7) -> 6 -> (8, 9) -> 10 -> 11 -> 12 -> 13 -> 14 -> (15, 16) -> 17 -> 18 -> 19.
+Task 3 depends on Task 1 being deployed, and must be applied before Task 18.
+Tasks 4-13 only need the fake server, so they can proceed while Task 3 waits for confirmation.
+
+# Risks and Mitigations
+- Old app versions reject unknown columns: Task 1 ships first, and Task 3 asks for confirmation that it is deployed.
+- The production database is shared with e2e tests: the migration is backward-compatible (no header means old behaviour), and e2e data is cleaned up by the global teardown.
+- RxDB internals (conflict re-push, meta writes): covered by the adapter tests in Task 10. If a test fails, read upstream.js before changing the code.
+- Device clock skew affects only the no-known-master conflict path (retry after an interrupted push, or the upgrade). Normal edits are covered by "the scoring device wins".
+- Long offline periods: network, auth and server errors never count toward rejection; storage persistence is requested; sign-out keeps the data.
+
+# Appendix
+Verification findings (2026-10-07):
+- FKs: `match_id` and `set_id` are NO ACTION, except on events (CASCADE). `player_id` → team_members is NO ACTION (SET NULL on events). `score_points.player_stat_id` has no FK.
+- Unique constraints: primary keys only.
+- RLS: team owners write match data; profiles are readable by their owner only.
+</PRD>

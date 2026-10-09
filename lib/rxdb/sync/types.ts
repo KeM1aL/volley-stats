@@ -1,66 +1,73 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { RxCollection, WithDeleted } from "rxdb";
+import type { ClassifiedError } from "./errors";
 
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { ReplicationOptions, ReplicationPullOptions, ReplicationPushOptions } from 'rxdb';
+/** Tables replicated per match; pushes and pending changes only concern these. */
+export const MATCH_COLLECTIONS = ["matches", "sets", "player_stats", "score_points", "events"] as const;
+export type MatchCollectionName = (typeof MATCH_COLLECTIONS)[number];
 
-export type SupabasePullQueryBuilderParams = {
-    query: ReturnType<SupabaseClient['from']>['select'] extends (
-        ...args: any[]
-    ) => infer R
-        ? R
-        : never;
-    lastPulledCheckpoint: SupabaseCheckpoint | undefined;
-    batchSize: number;
-};
+/** Tables that are only pulled (edited online through the API layer). */
+export const REFERENCE_COLLECTIONS = [
+  "championships",
+  "seasons",
+  "match_formats",
+  "clubs",
+  "teams",
+  "club_members",
+  "team_members",
+] as const;
+export type ReferenceCollectionName = (typeof REFERENCE_COLLECTIONS)[number];
 
-export type SupabasePullQueryBuilder<RxDocType> = (
-    params: SupabasePullQueryBuilderParams
-) => SupabasePullQueryBuilderParams['query'] | void;
+/** Pull checkpoint: the server-only `_modified` column, then the id. */
+export type SupabaseCheckpoint = { id: string; modified: string };
 
-export type SyncOptionsSupabase<RxDocType> = Omit<
-    ReplicationOptions<RxDocType, SupabaseCheckpoint>,
-    'pull' | 'push'
-> & {
-    client: SupabaseClient;
-    tableName: string;
-
-    /**
-     * Modified field, default "_modified"
-     */
-    modifiedField?: '_modified' | string;
-
-    pull?: Omit<ReplicationPullOptions<RxDocType, SupabaseCheckpoint>, 'handler' | 'stream$'> & {
-        /**
-         * Allows modifying the PostgREST query before RxDB fetches remote changes.
-         * You can return a new builder instance or mutate the provided one.
-         */
-        queryBuilder?: SupabasePullQueryBuilder<RxDocType>;
-        
-        /**
-         * Allows modifying the live filter string used in the realtime subscription.
-         */
-        liveFilter?: string;
-    };
-    push?: Omit<ReplicationPushOptions<RxDocType>, 'handler'>;
-};
-
-export type SupabaseCheckpoint = {
-    id: string;
-    modified: string;
+/** What the sync layer needs to know about the signed-in user. */
+export interface SyncUser {
+  id: string;
+  teamIds: string[];
+  clubIds: string[];
 }
 
-export interface SyncStateDocument {
-  matchId: string;
-  lastSyncTime: number;  // Client timestamp when replication completed
-  collections: {
-    matches: { lastUpdatedAt: string; hasSynced: boolean };  // Server timestamp + sync completion flag
-    sets: { lastUpdatedAt: string; hasSynced: boolean };
-    score_points: { lastUpdatedAt: string; hasSynced: boolean };
-    player_stats: { lastUpdatedAt: string; hasSynced: boolean };
-    events: { lastUpdatedAt: string; hasSynced: boolean };
+/** What the push handler does with one row before sending it. */
+export type GateDecision =
+  | { kind: "send" }
+  | { kind: "wait"; reason: "claim" | "parents" }
+  | { kind: "reject"; error: ClassifiedError }
+  | { kind: "supersede" };
+
+export interface PushGate {
+  check(doc: WithDeleted<any>): Promise<GateDecision>;
+}
+
+export interface PushReporter {
+  rejected(doc: WithDeleted<any>, error: ClassifiedError, opts: { neverUploaded: boolean }): Promise<void>;
+  superseded(doc: WithDeleted<any>): Promise<void>;
+  /** Called for failures that count towards MAX_TEMPORARY_ATTEMPTS; returns the attempts so far. */
+  temporaryFailure(doc: WithDeleted<any>, error: ClassifiedError): Promise<number>;
+  neverUploaded(docId: string): Promise<boolean>;
+  /**
+   * Whether this device created the row and the server never accepted it (a pending or rejected insert).
+   * Otherwise an insert is a copy an older version left on the device (the upgrade's rescue).
+   */
+  createdHere(docId: string): Promise<boolean>;
+}
+
+export interface SupabaseReplicationOptions {
+  replicationIdentifier: string;
+  collection: RxCollection<any>;
+  client: SupabaseClient<any>;
+  tableName: string;
+  /** Sent as x-device-id on every request (match tables). */
+  deviceId?: string;
+  live?: boolean;
+  retryTime?: number;
+  waitForLeadership?: boolean;
+  autoStart?: boolean;
+  pull?: { batchSize?: number; queryBuilder?: (query: any) => any };
+  push?: {
+    batchSize?: number;
+    modifier?: (doc: WithDeleted<any>) => WithDeleted<any> | null;
+    gate?: PushGate;
+    reporter?: PushReporter;
   };
-  status: 'never-synced' | 'syncing' | 'synced' | 'error';
-  lastError?: string;
-  lastErrorTime?: number;
 }
-
-export type DynamicCollectionName = 'matches' | 'sets' | 'score_points' | 'player_stats' | 'events';

@@ -7,6 +7,7 @@
  * 5.4  Go offline
  * 5.5  Record stats + score 3 points offline (writes to RxDB/IndexedDB only)
  * 5.6  Reconnect
+ * 5.6b Wait for "All saved" and compare the server with the device
  * 5.7  Reload page — verify live match state is restored from RxDB
  * 5.8  Save offlineMatchId to fixture
  */
@@ -17,6 +18,7 @@ import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { setupCourtPositions } from '../helpers/court';
 import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
+import { acceptBeforeUnload, expectServerMatchesDevice, waitForAllSaved } from '../helpers/sync';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 
@@ -33,6 +35,7 @@ function saveFixture(data: Record<string, unknown>): void {
 test.describe('Live match — offline/reconnect', () => {
   test('record stats offline and verify persistence on reconnect', async ({ page }) => {
     test.setTimeout(8 * 60_000);
+    acceptBeforeUnload(page);
 
     const { teamName, playerNames } = loadFixture();
     expect(teamName, 'Team fixture not found — run 01-teams.spec.ts first').toBeTruthy();
@@ -111,6 +114,10 @@ test.describe('Live match — offline/reconnect', () => {
       ),
       'page reloaded when the connection came back'
     ).toBe(true);
+
+    // 5.6b Everything recorded offline reaches the server exactly as the device shows it.
+    await waitForAllSaved(page);
+    await expectServerMatchesDevice(page, matchId);
 
     // 5.7 Reload and verify live match state is restored from RxDB
     await page.reload();

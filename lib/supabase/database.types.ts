@@ -10,13 +10,14 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
       championships: {
         Row: {
           _deleted: boolean
+          _modified: string
           age_category: Database["public"]["Enums"]["age_category"]
           created_at: string
           default_match_format: string
@@ -32,6 +33,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           age_category: Database["public"]["Enums"]["age_category"]
           created_at?: string
           default_match_format: string
@@ -47,6 +49,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           age_category?: Database["public"]["Enums"]["age_category"]
           created_at?: string
           default_match_format?: string
@@ -80,6 +83,7 @@ export type Database = {
       club_members: {
         Row: {
           _deleted: boolean
+          _modified: string
           club_id: string
           created_at: string
           id: string
@@ -89,6 +93,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           club_id: string
           created_at?: string
           id?: string
@@ -98,6 +103,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           club_id?: string
           created_at?: string
           id?: string
@@ -118,6 +124,7 @@ export type Database = {
       clubs: {
         Row: {
           _deleted: boolean
+          _modified: string
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -129,6 +136,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -140,6 +148,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -154,6 +163,7 @@ export type Database = {
       events: {
         Row: {
           _deleted: boolean
+          _modified: string
           away_score: number | null
           comment: string | null
           created_at: string
@@ -172,6 +182,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           away_score?: number | null
           comment?: string | null
           created_at?: string
@@ -190,6 +201,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           away_score?: number | null
           comment?: string | null
           created_at?: string
@@ -261,6 +273,7 @@ export type Database = {
       match_formats: {
         Row: {
           _deleted: boolean
+          _modified: string
           created_at: string
           decisive_point: boolean
           description: string | null
@@ -274,6 +287,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           created_at?: string
           decisive_point: boolean
           description?: string | null
@@ -287,6 +301,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           created_at?: string
           decisive_point?: boolean
           description?: string | null
@@ -303,6 +318,7 @@ export type Database = {
       matches: {
         Row: {
           _deleted: boolean
+          _modified: string
           away_available_players: string[] | null
           away_score: number | null
           away_team_id: string
@@ -320,12 +336,18 @@ export type Database = {
           id: string
           location: string | null
           match_format_id: string
+          scorer_claimed_at: string | null
+          scorer_device_id: string | null
+          scorer_device_label: string | null
+          scorer_name: string | null
+          scorer_user_id: string | null
           season_id: string | null
           status: string
           updated_at: string
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           away_available_players?: string[] | null
           away_score?: number | null
           away_team_id: string
@@ -343,12 +365,18 @@ export type Database = {
           id?: string
           location?: string | null
           match_format_id: string
+          scorer_claimed_at?: string | null
+          scorer_device_id?: string | null
+          scorer_device_label?: string | null
+          scorer_name?: string | null
+          scorer_user_id?: string | null
           season_id?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           away_available_players?: string[] | null
           away_score?: number | null
           away_team_id?: string
@@ -366,6 +394,11 @@ export type Database = {
           id?: string
           location?: string | null
           match_format_id?: string
+          scorer_claimed_at?: string | null
+          scorer_device_id?: string | null
+          scorer_device_label?: string | null
+          scorer_name?: string | null
+          scorer_user_id?: string | null
           season_id?: string | null
           status?: string
           updated_at?: string
@@ -411,6 +444,7 @@ export type Database = {
       player_stats: {
         Row: {
           _deleted: boolean
+          _modified: string
           created_at: string
           id: string
           match_id: string
@@ -424,6 +458,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           created_at?: string
           id?: string
           match_id: string
@@ -437,6 +472,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           created_at?: string
           id?: string
           match_id?: string
@@ -524,6 +560,7 @@ export type Database = {
       score_points: {
         Row: {
           _deleted: boolean
+          _modified: string
           action_team_id: string
           away_score: number
           created_at: string
@@ -543,6 +580,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           action_team_id: string
           away_score: number
           created_at?: string
@@ -562,6 +600,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           action_team_id?: string
           away_score?: number
           created_at?: string
@@ -620,6 +659,7 @@ export type Database = {
       seasons: {
         Row: {
           _deleted: boolean
+          _modified: string
           created_at: string
           end_date: string
           id: string
@@ -629,6 +669,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           created_at?: string
           end_date: string
           id?: string
@@ -638,6 +679,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           created_at?: string
           end_date?: string
           id?: string
@@ -650,6 +692,7 @@ export type Database = {
       sets: {
         Row: {
           _deleted: boolean
+          _modified: string
           away_score: number
           created_at: string
           current_lineup: Json
@@ -666,6 +709,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           away_score?: number
           created_at?: string
           current_lineup?: Json
@@ -682,6 +726,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           away_score?: number
           created_at?: string
           current_lineup?: Json
@@ -723,6 +768,7 @@ export type Database = {
       team_members: {
         Row: {
           _deleted: boolean
+          _modified: string
           avatar_url: string | null
           comments: string | null
           created_at: string
@@ -734,9 +780,11 @@ export type Database = {
           team_id: string
           updated_at: string
           user_id: string | null
+          voice_aliases: string[] | null
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           avatar_url?: string | null
           comments?: string | null
           created_at?: string
@@ -748,9 +796,11 @@ export type Database = {
           team_id: string
           updated_at?: string
           user_id?: string | null
+          voice_aliases?: string[] | null
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           avatar_url?: string | null
           comments?: string | null
           created_at?: string
@@ -762,6 +812,7 @@ export type Database = {
           team_id?: string
           updated_at?: string
           user_id?: string | null
+          voice_aliases?: string[] | null
         }
         Relationships: [
           {
@@ -776,6 +827,7 @@ export type Database = {
       teams: {
         Row: {
           _deleted: boolean
+          _modified: string
           championship_id: string | null
           club_id: string | null
           created_at: string
@@ -789,6 +841,7 @@ export type Database = {
         }
         Insert: {
           _deleted?: boolean
+          _modified?: string
           championship_id?: string | null
           club_id?: string | null
           created_at?: string
@@ -802,6 +855,7 @@ export type Database = {
         }
         Update: {
           _deleted?: boolean
+          _modified?: string
           championship_id?: string | null
           club_id?: string | null
           created_at?: string
@@ -830,6 +884,50 @@ export type Database = {
           },
         ]
       }
+      voice_vocabulary: {
+        Row: {
+          canonical: string
+          created_at: string
+          id: string
+          language: string
+          scope: string
+          synonyms: string[]
+          team_id: string | null
+          term_type: string
+          updated_at: string
+        }
+        Insert: {
+          canonical: string
+          created_at?: string
+          id?: string
+          language?: string
+          scope: string
+          synonyms?: string[]
+          team_id?: string | null
+          term_type: string
+          updated_at?: string
+        }
+        Update: {
+          canonical?: string
+          created_at?: string
+          id?: string
+          language?: string
+          scope?: string
+          synonyms?: string[]
+          team_id?: string | null
+          term_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_vocabulary_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -839,6 +937,18 @@ export type Database = {
         Args: { p_club: string; p_user: string }
         Returns: boolean
       }
+      claim_match_scorer: {
+        Args: {
+          p_device_id: string
+          p_force?: boolean
+          p_label: string
+          p_match_id: string
+        }
+        Returns: Json
+      }
+      clean_match: { Args: { match_uuid: string }; Returns: undefined }
+      get_match_scorer: { Args: { p_match_id: string }; Returns: Json }
+      request_device_id: { Args: never; Returns: string }
     }
     Enums: {
       age_category: "U10" | "U12" | "U14" | "U16" | "U18" | "U21" | "senior"
@@ -864,12 +974,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -893,11 +1003,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -918,11 +1028,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -943,11 +1053,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -960,11 +1070,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

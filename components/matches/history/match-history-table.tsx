@@ -29,6 +29,8 @@ import MatchStatsDialog from "../match-stats-dialog";
 import MatchScoreDialog from "../match-score-dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
+import { SyncFlag } from "@/components/sync/sync-flag";
+import { useSyncStatus } from "@/hooks/use-sync-status";
 
 type SortField = "date" | "opponent" | "score";
 type SortDirection = "asc" | "desc";
@@ -47,6 +49,11 @@ export function MatchHistoryTable({
   const t = useTranslations("matches");
   const te = useTranslations("enums");
   const { user } = useAuth();
+  const syncStatus = useSyncStatus();
+  const syncByMatch = useMemo(
+    () => new Map((syncStatus?.matches ?? []).map((summary) => [summary.matchId, summary])),
+    [syncStatus]
+  );
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -168,8 +175,11 @@ export function MatchHistoryTable({
               <span className="text-sm text-muted-foreground">
                 {new Date(match.date).toLocaleDateString()}
               </span>
-              <span className="text-sm capitalize px-2 py-0.5 bg-muted rounded">
-                {te(`matchStatus.${match.status}`)}
+              <span className="flex items-center gap-1.5">
+                <SyncFlag summary={syncByMatch.get(match.id)} />
+                <span className="text-sm capitalize px-2 py-0.5 bg-muted rounded">
+                  {te(`matchStatus.${match.status}`)}
+                </span>
               </span>
             </div>
             <div className="space-y-1">
@@ -247,7 +257,10 @@ export function MatchHistoryTable({
                   {match.home_score} - {match.away_score}
                 </TableCell>
                 <TableCell>
-                  <span className="capitalize">{te(`matchStatus.${match.status}`)}</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="capitalize">{te(`matchStatus.${match.status}`)}</span>
+                    <SyncFlag summary={syncByMatch.get(match.id)} />
+                  </span>
                 </TableCell>
                 {user && isMemberOfTeamOrClub(match) && (
                   <TableCell>

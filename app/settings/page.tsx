@@ -33,14 +33,13 @@ import {
   settingsSchema,
   type Settings,
 } from "@/hooks/use-settings";
-import { removeRxDatabase, RxCollection } from "rxdb";
+import { removeRxDatabase } from "rxdb";
 import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
 import { Label } from "@/components/ui/label";
-import { CollectionName } from "@/lib/rxdb/schema";
 import { createClient } from "@/lib/supabase/client";
-import type { TablesUpdate } from "@/lib/supabase/database.types";
 import { Input } from "@/components/ui/input";
-import { chunk, delay } from "@/lib/utils";
+import { useUnsentCountFor } from "@/hooks/use-unsent-guard";
+import { MATCH_COLLECTIONS, type MatchCollectionName } from "@/lib/rxdb/sync/types";
 import { useAuth } from "@/contexts/auth-context";
 import {
   PasswordStrengthIndicator,
@@ -54,6 +53,8 @@ import { updateLocale } from "@/lib/i18n/actions";
 import { Locale } from "@/lib/i18n/config";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+
+const STATS_TABLES = ["events", "score_points", "player_stats"] as const;
 
 // Password change schema - Messages will be updated with translations in the component
 const createPasswordChangeSchema = (t: any) =>
@@ -84,15 +85,19 @@ const emailChangeSchema = z.object({
 
 export default function SettingsPage() {
   const t = useTranslations('settings');
+  const tSync = useTranslations("sync");
+  // null (not counted yet) blocks too: clearing stays disabled until nothing unsent is confirmed.
+  const unsentStats = useUnsentCountFor(STATS_TABLES);
+  const unsentMatchData = useUnsentCountFor(MATCH_COLLECTIONS);
+  const statsClearBlocked = unsentStats !== 0;
+  const matchDataClearBlocked = unsentMatchData !== 0;
   const { localDb: db } = useLocalDb();
   const { theme, setTheme } = useTheme();
   const { session, reloadUser, user } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [matchId, setMatchId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isChangingEmail, setIsChangingEmail] = useState(false);
 
@@ -148,94 +153,6 @@ export default function SettingsPage() {
     }
   }, [settings, isLoadingSettings, form]);
 
-  const performMatchSync = async () => {
-    if (!db) return;
-    if (!matchId) return;
-
-    setIsSyncing(true);
-    try {
-      const supabase = createClient();
-      const doc = await db.matches.findOne(matchId).exec();
-      if (doc) {
-        const { error: updateError } = await supabase
-          .from("matches")
-          .update(doc.toMutableJSON() as TablesUpdate<"matches">)
-          .eq("id", doc.id);
-        if (updateError) throw updateError;
-        toast({
-          title: t("sync.title"),
-          description: t("sync.matchSynced"),
-        });
-      }
-      const collections = new Map<CollectionName, RxCollection>([
-        ["matches", db.matches],
-        ["sets", db.sets],
-        ["player_stats", db.player_stats],
-        ["score_points", db.score_points],
-        ["events", db.events],
-      ]);
-      const entries = Array.from(collections.entries());
-      for (const [name, collection] of entries) {
-        let selector;
-        if (name === "matches") {
-          selector = {
-            id: matchId,
-          };
-        } else {
-          selector = {
-            match_id: matchId,
-          };
-        }
-        const docs = await collection
-          .find({
-            selector: selector,
-            sort: [{ created_at: "asc" }],
-          })
-          .exec();
-        toast({
-          title: t("sync.title"),
-          description: t("sync.dataToSync", { name, count: docs.length }),
-        });
-        if (docs) {
-          const data = Array.from(docs.values()).map((doc) => doc.toJSON());
-
-          const chunks = chunk(data, 20);
-          const chunkSize = chunks.length;
-          for (let index = 0; index < chunkSize; index++) {
-            const chunk = chunks[index];
-
-            const { error: updateError } = await supabase
-              .from(name as any)
-              .upsert(chunk)
-              .select();
-            if (updateError) throw updateError;
-            toast({
-              title: t("sync.title"),
-              description: t("sync.dataSynced", { name, index, chunkSize }),
-            });
-            await delay(1000);
-          }
-          await delay(1000);
-        }
-        toast({
-          title: t("sync.title"),
-          description: t("sync.allDataSynced"),
-        });
-      }
-    } catch (error) {
-      console.error("Error loading data:", error);
-      toast({
-        variant: "destructive",
-        title: t("errors.generic"),
-        description:
-          t("sync.error"),
-      });
-    } finally {
-      setMatchId(null);
-      setIsSyncing(false);
-    }
-  };
-
   const onSubmit = async (values: Settings) => {
     setIsSaving(true);
     try {
@@ -274,67 +191,93 @@ export default function SettingsPage() {
     }
   };
 
-  const handleResetLocalStats = (loadingIndicator: boolean = true) => {
-    if (loadingIndicator) setIsDeletingCache(true);
+  /**
+   * Whether changes of these tables are still unsent. Counted again right before deleting: the count
+   * the buttons were enabled from may be stale (a change recorded or rejected since).
+   */
+  const hasUnsentChanges = async (tables: readonly MatchCollectionName[]): Promise<boolean> =>
+    (await db!.pendingChanges.count({ tables: [...tables], statuses: ["pending", "rejected"] })) > 0;
+
+  const notifyClearBlocked = () =>
+    toast({ variant: "destructive", title: t("errors.generic"), description: tSync("guards.clearBlocked") });
+
+  const handleResetLocalStats = async () => {
+    setIsDeletingCache(true);
     try {
-      db!.events?.remove();
-      db!.score_points?.remove();
-      db!.player_stats?.remove();
-      if (loadingIndicator) {
-        toast({
-          title: t('toast.cacheCleared'),
-          description: t('localData.clearLocalStatsDesc'),
-        });
+      if (await hasUnsentChanges(STATS_TABLES)) {
+        notifyClearBlocked();
+        return;
       }
+      await db!.events?.remove();
+      await db!.score_points?.remove();
+      await db!.player_stats?.remove();
+      toast({
+        title: t('toast.cacheCleared'),
+        description: t('localData.clearLocalStatsDesc'),
+      });
     } catch (error) {
       console.error("Error resetting local stats:", error);
     } finally {
-      if (loadingIndicator) setIsDeletingCache(false);
+      setIsDeletingCache(false);
     }
   };
 
-  const handleResetLocalMatches = (loadingIndicator: boolean = true) => {
-    if (loadingIndicator) setIsDeletingCache(true);
+  const handleResetLocalMatches = async () => {
+    setIsDeletingCache(true);
     try {
-      handleResetLocalStats(false);
-      db!.matches?.remove();
-      db!.sets?.remove();
-      if (loadingIndicator) {
-        toast({
-          title: t('toast.cacheCleared'),
-          description: t('localData.clearLocalMatchesDesc'),
-        });
+      if (await hasUnsentChanges(MATCH_COLLECTIONS)) {
+        notifyClearBlocked();
+        return;
       }
+      await db!.events?.remove();
+      await db!.score_points?.remove();
+      await db!.player_stats?.remove();
+      await db!.matches?.remove();
+      await db!.sets?.remove();
+      toast({
+        title: t('toast.cacheCleared'),
+        description: t('localData.clearLocalMatchesDesc'),
+      });
     } catch (error) {
       console.error("Error resetting local matches:", error);
     } finally {
-      if (loadingIndicator) setIsDeletingCache(false);
+      setIsDeletingCache(false);
     }
   };
 
-  const handleResetLocalTeams = (loadingIndicator: boolean = true) => {
-    if (loadingIndicator) setIsDeletingCache(true);
+  const handleResetLocalTeams = async () => {
+    setIsDeletingCache(true);
     try {
-      handleResetLocalMatches(false);
-      db!.teams?.remove();
-      db!.team_members?.remove();
-      if (loadingIndicator) {
-        toast({
-          title: t('toast.cacheCleared'),
-          description: t('localData.clearLocalTeamsDesc'),
-        });
+      if (await hasUnsentChanges(MATCH_COLLECTIONS)) {
+        notifyClearBlocked();
+        return;
       }
+      await db!.events?.remove();
+      await db!.score_points?.remove();
+      await db!.player_stats?.remove();
+      await db!.matches?.remove();
+      await db!.sets?.remove();
+      await db!.teams?.remove();
+      await db!.team_members?.remove();
+      toast({
+        title: t('toast.cacheCleared'),
+        description: t('localData.clearLocalTeamsDesc'),
+      });
     } catch (error) {
       console.error("Error resetting local teams:", error);
     } finally {
-      if (loadingIndicator) setIsDeletingCache(false);
+      setIsDeletingCache(false);
     }
   };
 
-  const handleResetLocalCache = () => {
+  const handleResetLocalCache = async () => {
     setIsDeletingCache(true);
     try {
-      removeRxDatabase(getDatabaseName(), getStorage());
+      if (await hasUnsentChanges(MATCH_COLLECTIONS)) {
+        notifyClearBlocked();
+        return;
+      }
+      await removeRxDatabase(getDatabaseName(), getStorage());
 
       toast({
         title: t('toast.cacheCleared'),
@@ -722,28 +665,12 @@ export default function SettingsPage() {
           <CardContent className="p-6">
             <div className="space-y-4">
               <Label>{t('localData.title')}</Label>
+              {(unsentMatchData ?? 0) > 0 && (
+                <p className="text-sm text-destructive" data-testid="clear-blocked">
+                  {tSync("guards.clearBlocked")}
+                </p>
+              )}
               <div className="grid grid-cols-1 gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4 gap-3">
-                  <div className="space-y-2 flex-1">
-                    <Label className="text-sm font-medium">
-                      {t('localData.syncMatch')}
-                    </Label>
-                    <Input
-                      type="text"
-                      onChange={(e) => setMatchId(e.target.value)}
-                      placeholder={t('localData.matchId')}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={isSyncing && !matchId}
-                    onClick={() => matchId && performMatchSync()}
-                    className="w-full sm:w-auto sm:self-end"
-                  >
-                    {t('localData.synchronize')}
-                  </Button>
-                </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-3">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-medium">
@@ -757,7 +684,8 @@ export default function SettingsPage() {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleResetLocalStats()}
+                    onClick={() => void handleResetLocalStats()}
+                    disabled={statsClearBlocked}
                     className="w-full sm:w-auto"
                   >
                     {t('localData.clear')}
@@ -776,7 +704,8 @@ export default function SettingsPage() {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleResetLocalMatches()}
+                    onClick={() => void handleResetLocalMatches()}
+                    disabled={matchDataClearBlocked}
                     className="w-full sm:w-auto"
                   >
                     {t('localData.clear')}
@@ -795,7 +724,8 @@ export default function SettingsPage() {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleResetLocalTeams()}
+                    onClick={() => void handleResetLocalTeams()}
+                    disabled={matchDataClearBlocked}
                     className="w-full sm:w-auto"
                   >
                     {t('localData.clear')}
@@ -806,8 +736,8 @@ export default function SettingsPage() {
                 <Button
                   type="button"
                   variant="destructive"
-                  disabled={isDeletingCache}
-                  onClick={() => handleResetLocalCache()}
+                  disabled={isDeletingCache || matchDataClearBlocked}
+                  onClick={() => void handleResetLocalCache()}
                 >
                   {isDeletingCache ? (
                     <>

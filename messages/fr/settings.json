@@ -49,12 +49,6 @@
   },
   "localData": {
     "title": "Données locales",
-    "syncMatch": "Synchroniser le match",
-    "matchId": "ID du match",
-    "synchronize": "Synchroniser",
-    "matchSynchronization": "Synchronisation des matchs",
-    "matchesDataSynchronized": "Les données du match ont été synchronisées",
-    "allDataSynchronized": "Toutes les données ont été synchronisées",
     "clearLocalStats": "Effacer les stats locales",
     "clearLocalStatsDesc": "Effacer le cache des statistiques locales",
     "clearLocalMatches": "Effacer les matchs locaux",
@@ -106,12 +100,6 @@
     }
   },
   "sync": {
-    "title": "Synchronisation des matchs",
-    "matchSynced": "Les données du match ont été synchronisées",
-    "dataToSync": "{name} {count} données à synchroniser",
-    "dataSynced": "{name} {index}/{chunkSize} données ont été synchronisées",
-    "allDataSynced": "Toutes les données ont été synchronisées",
-    "error": "Échec de la synchronisation du match. Veuillez réessayer.",
     "failedUpdateLanguage": "Échec de la mise à jour de la langue"
   },
   "errors": {

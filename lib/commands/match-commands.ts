@@ -4,10 +4,20 @@ import { VolleyballDatabase } from "../rxdb/database";
 import { PointType, StatResult } from "../enums";
 import { SubstitutionDetails } from "../types/events";
 
+/**
+ * The document to insert when a command runs. A redo (execute after undo) re-inserts rows the undo
+ * removed, which bumped their edit time: the insert gets a fresh `updated_at` so the server's edit
+ * time never goes backwards. A first execution keeps the document as built.
+ */
+function forInsert<T extends { updated_at?: string }>(doc: T, redo: boolean): T {
+  return redo ? { ...doc, updated_at: new Date().toISOString() } : doc;
+}
+
 export class SetSetupCommand implements Command {
   private previousState: MatchState;
   private newState: MatchState;
   private db: VolleyballDatabase;
+  private executed = false;
 
   constructor(
     previousState: MatchState,
@@ -29,7 +39,8 @@ export class SetSetupCommand implements Command {
   }
 
   async execute(): Promise<MatchState> {
-    await this.db.sets.insert(this.newState.currentSet!);
+    await this.db.sets.insert(forInsert(this.newState.currentSet!, this.executed));
+    this.executed = true;
     return this.newState;
   }
 
@@ -45,6 +56,7 @@ export class SubstitutionCommand implements Command {
   private event: Event;
   private set: Partial<Set>;
   private db: VolleyballDatabase;
+  private executed = false;
 
   constructor(
     previousState: MatchState,
@@ -99,7 +111,8 @@ export class SubstitutionCommand implements Command {
 
   async execute(): Promise<MatchState> {
     // Write to events table only
-    await this.db.events.insert(this.event);
+    await this.db.events.insert(forInsert(this.event, this.executed));
+    this.executed = true;
     await this.db.sets.findOne(this.previousState.currentSet!!.id).update({
       $set: this.set,
     });
@@ -127,6 +140,7 @@ export class PlayerStatCommand implements Command {
   private stat: PlayerStat;
   private pointCommand?: ScorePointCommand;
   private db: VolleyballDatabase;
+  private executed = false;
 
   constructor(
     previousState: MatchState,
@@ -182,7 +196,8 @@ export class PlayerStatCommand implements Command {
   }
 
   async execute(): Promise<MatchState> {
-    await this.db.player_stats.insert(this.stat);
+    await this.db.player_stats.insert(forInsert(this.stat, this.executed));
+    this.executed = true;
     if (this.pointCommand) {
       return await this.pointCommand.execute();
     }
@@ -205,6 +220,7 @@ export class ScorePointCommand implements Command {
   private set: Partial<Set>;
   private match: Partial<Match> | null = null;
   private db: VolleyballDatabase;
+  private executed = false;
 
   constructor(
     previousState: MatchState,
@@ -314,7 +330,8 @@ export class ScorePointCommand implements Command {
   }
 
   async execute(): Promise<MatchState> {
-    await this.db.score_points.insert(this.point);
+    await this.db.score_points.insert(forInsert(this.point, this.executed));
+    this.executed = true;
 
     await this.db.sets.findOne(this.previousState.currentSet!!.id).update({
       $set: this.set,

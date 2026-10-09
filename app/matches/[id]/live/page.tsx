@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
@@ -8,6 +8,7 @@ import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { ScoreBoard } from "@/components/matches/live/score-board";
 import { StatTracker } from "@/components/matches/live/stat-tracker";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import {
   Tooltip,
@@ -49,6 +50,13 @@ import { BarChart3, WifiOff } from "lucide-react";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
 import { useLandscape } from "@/hooks/use-landscape";
 import { set } from "lodash";
+import { SyncBadge } from "@/components/sync/sync-badge";
+import { ScorerClaimDialog, type ClaimPrompt } from "@/components/sync/scorer-claim-dialog";
+import { TakenOverBanner } from "@/components/sync/taken-over-banner";
+import { useBeforeUnloadWhenUnsent, useMatchUnsentCount } from "@/hooks/use-unsent-guard";
+import { isClaimForbidden, type ClaimResult, type ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
+import { claimBecameHeld, claimFollowUp, offlineConfirmFollowUp } from "@/lib/rxdb/sync/claim-flow";
+import type { ClaimState } from "@/lib/rxdb/sync/tracked-matches";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
 
@@ -67,6 +75,7 @@ const initialMatchState: MatchState = {
 
 export default function LiveMatchPage() {
   const t = useTranslations("matches");
+  const tSync = useTranslations("sync");
   const { id: matchId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const { isOnline, wasOffline } = useOnlineStatus();
@@ -85,6 +94,24 @@ export default function LiveMatchPage() {
   const [loadingStep, setLoadingStep] = useState(0);
   const { history, canUndo, canRedo } = useCommandHistory();
 
+  // Scoring device (spec section 7): a prompt blocks scoring until answered; a lost claim makes the page read-only.
+  const [claimPrompt, setClaimPrompt] = useState<ClaimPrompt | null>(null);
+  const [claimBusy, setClaimBusy] = useState(false);
+  const [lostClaim, setLostClaim] = useState<{ holder: ScorerInfo | null } | null>(null);
+  // True from a forced claim until the match was pulled again: the claim is held but the screen is stale.
+  const [refreshing, setRefreshing] = useState(false);
+  // The claim is held but the match couldn't be pulled again: the screen may be stale, so scoring stays
+  // blocked (with a retry) until a refresh succeeds.
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const scoringBlocked = !!lostClaim || !!claimPrompt || refreshing || refreshFailed;
+  // True while this page runs its own claim flow (forced claim, take-back): the background detection
+  // of a completed take-back leaves those alone. `refreshRunning` allows one refresh at a time.
+  const ownClaimFlow = useRef(false);
+  const refreshRunning = useRef(false);
+  const previousClaim = useRef<ClaimState | null | undefined>(undefined);
+  const unsentCount = useMatchUnsentCount(matchId);
+  useBeforeUnloadWhenUnsent(unsentCount > 0);
+
   const LOADING_STEPS = useMemo(
     () => [
       { label: t("live.syncingMatchData"), description: t("live.ensuringLatestData") },
@@ -101,9 +128,33 @@ export default function LiveMatchPage() {
   const [navExpanded, setNavExpanded] = useState(false);
   const isLandscape = useLandscape();
 
-  // Memoized data loading function
-  const loadMatchData = useCallback(async () => {
+  const ensureScorerClaim = useCallback(async () => {
     if (!db) return;
+    const entry = await db.syncManager.tracked.entry(matchId);
+    if (entry?.claim === "lost") return; // read-only, see the effect below
+    if (navigator.onLine) {
+      try {
+        const result = await db.syncManager.claimMatch(matchId);
+        if (!result.claimed) setClaimPrompt({ kind: "taken", holder: result.holder });
+        return;
+      } catch (error) {
+        if (isClaimForbidden(error)) {
+          setClaimPrompt({ kind: "forbidden" });
+          return;
+        }
+        console.warn("Could not check who scores this match, continuing as offline:", error);
+      }
+    }
+    if (entry?.claim !== "held" && entry?.claim !== "pending-force") setClaimPrompt({ kind: "offline" });
+  }, [db, matchId]);
+
+  /**
+   * Loads the match from the local database (after syncing it). Returns whether it worked.
+   * On failure the page is left for the match list, unless `leaveOnFailure` is false: the caller
+   * (a refresh after a claim) then reports it and keeps scoring blocked.
+   */
+  const loadMatchData = useCallback(async ({ leaveOnFailure = true }: { leaveOnFailure?: boolean } = {}): Promise<boolean> => {
+    if (!db) return false;
 
     try {
       setIsLoading(true);
@@ -173,6 +224,7 @@ export default function LiveMatchPage() {
       }
       const format = formatDoc.toMutableJSON();
       match.match_formats = format as MatchFormat;
+      if (match.status !== "completed") await ensureScorerClaim();
 
       const teamDocs = await db.teams
         .findByIds([match.home_team_id, match.away_team_id])
@@ -283,27 +335,184 @@ export default function LiveMatchPage() {
           ? { home: currentSet.home_score, away: currentSet.away_score }
           : { home: 0, away: 0 },
       });
+      return true;
     } catch (error) {
       console.error("Failed to load match data:", error);
-      toast({
-        variant: "destructive",
-        title: t("live.failedLoadMatchData"),
-        description:
-          error instanceof Error ? error.message : t("live.failedLoadMatchData"),
-      });
-      router.push("/matches");
+      if (leaveOnFailure) {
+        toast({
+          variant: "destructive",
+          title: t("live.failedLoadMatchData"),
+          description:
+            error instanceof Error ? error.message : t("live.failedLoadMatchData"),
+        });
+        router.push("/matches");
+      }
+      return false;
     } finally {
       setIsLoading(false);
     }
-  }, [db, matchId, router, t, searchParams]);
+  }, [db, matchId, router, t, searchParams, ensureScorerClaim]);
 
   useEffect(() => {
     loadMatchData();
   }, [loadMatchData]);
 
+  /**
+   * After this device got scoring (forced claim, take-back, or a take-back completed in the background):
+   * pulls the match again so rows the other device pushed meanwhile are here, then loads it. Scoring stays
+   * blocked meanwhile, and after a failure (offline, timeout) until a retry succeeds. `refreshed`: the
+   * pull is already done (the take-back did it).
+   */
+  const refreshAfterClaim = useCallback(
+    async (refreshed?: boolean) => {
+      // A second call while one runs is dropped: the running one ends in the same state (loaded, or
+      // blocked with a retry), and a later call (the retry, or another background completion) starts a new refresh.
+      if (!db || refreshRunning.current) return;
+      refreshRunning.current = true;
+      setRefreshing(true);
+      setRefreshFailed(false);
+      let loaded = false;
+      try {
+        const pulled = refreshed ?? (await db.syncManager.refreshMatch(matchId));
+        loaded = pulled && (await loadMatchData({ leaveOnFailure: false }));
+      } catch (error) {
+        console.warn("Refreshing the match after taking scoring failed:", error);
+      } finally {
+        refreshRunning.current = false;
+        setRefreshing(false);
+      }
+      if (!loaded) {
+        setRefreshFailed(true);
+        toast({ variant: "destructive", title: tSync("claim.refreshFailed") });
+      }
+    },
+    [db, matchId, loadMatchData, tSync]
+  );
+  const refreshAfterClaimRef = useRef(refreshAfterClaim);
+  useEffect(() => {
+    refreshAfterClaimRef.current = refreshAfterClaim;
+  }, [refreshAfterClaim]);
+
+  useEffect(() => {
+    if (!db) return;
+    previousClaim.current = undefined; // another database or match: nothing seen yet
+    const subscription = db.syncManager.tracked.get$().subscribe((matches) => {
+      const entry = matches[matchId];
+      setLostClaim(entry?.claim === "lost" ? { holder: entry.lostTo } : null);
+      // A take-back completed without this page asking (an interrupted one finished on resume): the
+      // screen still shows the match from before, so refresh it like after a forced claim.
+      const became = claimBecameHeld(previousClaim.current, entry?.claim);
+      previousClaim.current = entry?.claim;
+      if (became && !ownClaimFlow.current) void refreshAfterClaimRef.current();
+    });
+    return () => subscription.unsubscribe();
+  }, [db, matchId]);
+
+  /**
+   * Forces the claim (the "taken" dialog), then pulls the match
+   * again so rows the other device pushed meanwhile are here before scoring resumes.
+   */
+  const forceClaim = async () => {
+    if (!db) return;
+    ownClaimFlow.current = true;
+    setRefreshing(true);
+    try {
+      let result: ClaimResult;
+      try {
+        result = await db.syncManager.claimMatch(matchId, true);
+      } catch (error) {
+        setRefreshing(false);
+        if (isClaimForbidden(error)) {
+          setClaimPrompt({ kind: "forbidden" });
+          return;
+        }
+        console.warn("Takeover failed, the server can't be reached:", error);
+        setClaimPrompt({ kind: "offline" });
+        return;
+      }
+      if (!result.claimed) {
+        setRefreshing(false);
+        setClaimPrompt({ kind: "taken", holder: result.holder });
+        toast({ variant: "destructive", title: tSync("claim.takeOverFailed") });
+        return;
+      }
+      setClaimPrompt(null);
+      await refreshAfterClaim();
+    } finally {
+      ownClaimFlow.current = false;
+    }
+  };
+
+  const handleClaimConfirm = async () => {
+    if (!db || !claimPrompt) return;
+    setClaimBusy(true);
+    try {
+      if (claimPrompt.kind === "taken") {
+        await forceClaim();
+      } else {
+        await db.syncManager.claimMatchOffline(matchId);
+        setClaimPrompt(null);
+        // A lost claim stays lost offline: say so instead of closing the prompt as if nothing happened.
+        let claim: ClaimState | null | undefined;
+        try {
+          claim = (await db.syncManager.tracked.entry(matchId))?.claim;
+        } catch (error) {
+          // Unreadable: treated like the offline case, scoring goes on here.
+          console.warn("Reading the claim after confirming offline scoring failed:", error);
+        }
+        if (offlineConfirmFollowUp(claim) === "needs-connection") {
+          toast({ variant: "destructive", title: tSync("claim.takeBackNeedsConnection") });
+        }
+      }
+    } finally {
+      setClaimBusy(false);
+    }
+  };
+
+  /**
+   * The banner, after its confirmation: takes scoring back, discarding this device's changes the
+   * takeover superseded so it shows the match as the server has it. Scoring stays blocked until
+   * the match is reset, refreshed and loaded again.
+   */
+  const handleTakeBack = async () => {
+    if (!db) return;
+    ownClaimFlow.current = true;
+    setClaimBusy(true);
+    setRefreshing(true);
+    try {
+      let outcome: Awaited<ReturnType<typeof db.syncManager.takeBackMatch>>;
+      try {
+        outcome = await db.syncManager.takeBackMatch(matchId);
+      } catch (error) {
+        setRefreshing(false);
+        if (isClaimForbidden(error)) {
+          setClaimPrompt({ kind: "forbidden" });
+          return;
+        }
+        console.warn("Taking scoring back failed, the server can't be reached:", error);
+        setClaimPrompt({ kind: "offline" });
+        return;
+      }
+      const followUp = claimFollowUp(outcome.claim.claimed, outcome.refreshed);
+      if (followUp === "not-claimed") {
+        setRefreshing(false);
+        toast({ variant: "destructive", title: tSync("claim.takeOverFailed") });
+        return;
+      }
+      // The held claim may reach the subscription after this flow ended: it isn't a background completion.
+      previousClaim.current = "held";
+      // "reload": the take-back pulled the match, load it. "refresh-failed": the pull timed out; refreshAfterClaim
+      // reports it and keeps scoring blocked until a retry succeeds.
+      await refreshAfterClaim(followUp === "reload");
+    } finally {
+      ownClaimFlow.current = false;
+      setClaimBusy(false);
+    }
+  };
+
   const onSetSetupComplete = useCallback(
     async (newSet: Set) => {
-      if (!db) return;
+      if (!db || scoringBlocked) return;
       const command = new SetSetupCommand(matchState, newSet, db);
 
       try {
@@ -318,12 +527,12 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t, scoringBlocked]
   );
 
   const onSubstitutionRecorded = useCallback(
     async (substitution: Substitution) => {
-      if (!db) return;
+      if (!db || scoringBlocked) return;
       const command = new SubstitutionCommand(matchState, substitution, db);
 
       try {
@@ -350,12 +559,12 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, teamPlayerById, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, teamPlayerById, t, scoringBlocked]
   );
 
   const onPlayerStatRecorded = useCallback(
     async (stat: PlayerStat) => {
-      if (!db) return;
+      if (!db || scoringBlocked) return;
 
       const command = new PlayerStatCommand(matchState, stat, db);
       try {
@@ -373,12 +582,12 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, t, scoringBlocked]
   );
 
   const onPointRecorded = useCallback(
     async (point: ScorePoint) => {
-      if (!db) return;
+      if (!db || scoringBlocked) return;
       if (!matchState.currentSet || !matchState.match) return;
 
       const myTeam = managedTeam!.id === point.scoring_team_id;
@@ -398,7 +607,7 @@ export default function LiveMatchPage() {
         });
       }
     },
-    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, managedTeam?.id, history, t]
+    [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, managedTeam?.id, history, t, scoringBlocked]
   );
 
   const onMatchCompleted = () => {
@@ -421,6 +630,7 @@ export default function LiveMatchPage() {
   };
 
   const handleUndo = async () => {
+    if (scoringBlocked) return;
     try {
       const state = await history.undo();
       setMatchState(state);
@@ -556,6 +766,8 @@ export default function LiveMatchPage() {
       );
     }
     if (activePanel === "events") {
+      // Writes events and substitutions: not while another device holds the match, a claim prompt is open or the match is being refreshed.
+      if (scoringBlocked) return null;
       return (
         <EventsPanel
           matchId={matchId}
@@ -605,6 +817,31 @@ export default function LiveMatchPage() {
   // Helper to render main content
   const renderMainContent = () => {
     if (!matchState.match) return null;
+    if (lostClaim) {
+      return (
+        <TakenOverBanner holder={lostClaim.holder} busy={claimBusy} onTakeBack={() => void handleTakeBack()} />
+      );
+    }
+    if (claimPrompt) return null;
+    if (refreshing) {
+      return (
+        <div className="h-full flex items-center justify-center" role="status" aria-busy="true">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+        </div>
+      );
+    }
+    if (refreshFailed) {
+      return (
+        <Alert variant="destructive" className="m-2 w-auto" data-testid="refresh-failed">
+          <AlertDescription className="flex flex-col items-start gap-2">
+            <span>{tSync("claim.refreshFailed")}</span>
+            <Button size="sm" variant="outline" onClick={() => void refreshAfterClaim()} data-testid="retry-refresh">
+              {tSync("badge.retry")}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      );
+    }
 
     if (!matchState.currentSet || matchState.currentSet.status === "completed") {
       return (
@@ -658,13 +895,25 @@ export default function LiveMatchPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Row 1: Header - Full Width */}
-      <div className="w-full shrink-0">
-        <MatchScoreDetails
-          match={matchState.match}
-          sets={matchState.sets}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-        />
+      <div className="w-full shrink-0 flex items-start gap-1">
+        <div className="flex-1 min-w-0">
+          <MatchScoreDetails
+            match={matchState.match}
+            sets={matchState.sets}
+            homeTeam={homeTeam}
+            awayTeam={awayTeam}
+          />
+        </div>
+        <SyncBadge compact />
+        {matchState.currentSet && (
+          <span
+            hidden
+            data-testid="live-score"
+            data-set-id={matchState.currentSet.id}
+            data-home={matchState.score.home}
+            data-away={matchState.score.away}
+          />
+        )}
       </div>
 
       {/* Row 2: Content - Responsive Layout */}
@@ -782,6 +1031,13 @@ export default function LiveMatchPage() {
           )}
         </div>
       </div>
+
+      <ScorerClaimDialog
+        prompt={claimPrompt}
+        busy={claimBusy}
+        onCancel={() => router.push("/matches")}
+        onConfirm={() => void handleClaimConfirm()}
+      />
     </div>
   );
 }

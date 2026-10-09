@@ -125,9 +125,27 @@ volley-stats/
 │   ├── pdf/                      # PDF export types (jsPDF)
 │   ├── rxdb/                     # RxDB configuration
 │   │   ├── sync/
-│   │   │   ├── manager.ts       # SyncManager (what to sync, syncMatch)
-│   │   │   └── index.ts         # replicateSupabase (RxDB ↔ Supabase replication)
-│   │   ├── database.ts          # RxDB setup (12 collections)
+│   │   │   ├── manager.ts           # SyncManager: user, tracked matches, scorer claim, resume
+│   │   │   ├── match-sync.ts        # The five replications of one match
+│   │   │   ├── reference-sync.ts    # Pull-only replications of reference tables
+│   │   │   ├── replication.ts       # replicateSupabase (RxDB ↔ Supabase adapter)
+│   │   │   ├── pending-changes.ts   # pending_changes collection: every unsent row
+│   │   │   ├── dependencies.ts      # Parent-first gate and claim gate
+│   │   │   ├── errors.ts            # Push error classification
+│   │   │   ├── conflict-handler.ts  # Scoring device wins conflicts on match data
+│   │   │   ├── tracked-matches.ts   # Tracked matches (local document)
+│   │   │   ├── sync-state.ts        # Per-match sync state (local document)
+│   │   │   ├── scorer-claim.ts      # claim_match_scorer / get_match_scorer RPCs
+│   │   │   ├── status.ts            # Sync badge state
+│   │   │   ├── upgrade.ts           # One-time upgrade of devices from the old sync
+│   │   │   ├── timestamps.ts        # Microsecond timestamp helpers
+│   │   │   ├── helper.ts            # Query and schema helpers for the adapter
+│   │   │   ├── types.ts             # Shared sync types and table lists
+│   │   │   └── platform/            # SyncPlatform (connectivity, foreground, device id); web.ts
+│   │   ├── collections.ts       # Collection setup (13 collections incl. pending_changes)
+│   │   ├── database.ts          # RxDB setup
+│   │   ├── pending-hint.ts      # Unsent-changes hint in localStorage
+│   │   ├── reset-policy.ts      # When a database reset is allowed
 │   │   └── schema.ts            # RxDB schemas
 │   ├── stats/                    # Statistics calculation
 │   ├── supabase/                 # Supabase client setup
