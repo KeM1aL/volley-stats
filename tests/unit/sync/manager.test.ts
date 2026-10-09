@@ -491,17 +491,65 @@ describe("SyncManager", () => {
     expect(await tracked.entry(otherMatchId)).not.toBeNull();
   });
 
-  it("keeps a lost match unopened for 14 days while it has superseded changes (the take-back needs them)", async () => {
-    const d = await device();
-    const tracked = new TrackedMatches(d.db);
-    const longAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString();
-    await tracked.track(matchId, USER_ID, longAgo);
-    await tracked.setClaim(matchId, "lost", null);
-    await d.db.sets.insert(aSet(matchId) as any);
-    await d.pending.supersedeMatch(matchId);
-    d.goOffline();
-    await d.signIn();
-    expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
+  describe("a lost match nobody takes back", () => {
+    const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+    /** A match this device lost: tracked as lost with one superseded change. Offline, so nothing is pruned or checked yet. */
+    async function leaveLostMatch(d: TestDevice, id: string, openedAt: string) {
+      const tracked = new TrackedMatches(d.db);
+      await tracked.track(id, USER_ID, openedAt);
+      await tracked.setClaim(id, "lost", null);
+      const set = aSet(id);
+      await d.db.sets.insert(set as any);
+      await d.pending.supersedeMatch(id);
+      return { tracked, set };
+    }
+
+    it("is kept while it was opened within 14 days (the take-back needs its superseded changes)", async () => {
+      const d = await device();
+      const { tracked, set } = await leaveLostMatch(d, matchId, daysAgo(10));
+      d.goOffline();
+      await d.signIn();
+      expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
+      expect((await d.pending.get("sets", set.id))?.status).toBe("superseded");
+    });
+
+    it("is pruned with its superseded entries once unopened for 14 days", async () => {
+      const d = await device();
+      const { tracked, set } = await leaveLostMatch(d, matchId, daysAgo(15));
+      d.goOffline();
+      await d.signIn();
+      expect(await tracked.entry(matchId)).toBeNull();
+      expect(await d.pending.get("sets", set.id)).toBeNull();
+      expect(await d.pending.count({ matchId })).toBe(0);
+    });
+
+    it("is kept when something of it is still unsent", async () => {
+      const d = await device();
+      const { tracked } = await leaveLostMatch(d, matchId, daysAgo(15));
+      const unsent = aSet(matchId, { set_number: 2 });
+      await d.db.sets.insert(unsent as any); // written after the loss: its entry is pending
+      expect((await d.pending.get("sets", unsent.id))?.status).toBe("pending");
+      d.goOffline();
+      await d.signIn();
+      expect(await tracked.entry(matchId)).toMatchObject({ claim: "lost" });
+      expect(await d.pending.count({ matchId, statuses: ["superseded"] })).toBe(1);
+    });
+
+    it("is not asked about on resume once unopened for 14 days, a recent one still is", async () => {
+      const d = await device();
+      await d.signIn();
+      const oldMatchId = seedServerMatch(server);
+      const recentMatchId = seedServerMatch(server);
+      await d.manager.tracked.track(oldMatchId, USER_ID, daysAgo(15));
+      await d.manager.tracked.setClaim(oldMatchId, "lost", null);
+      await d.manager.tracked.track(recentMatchId, USER_ID, daysAgo(2));
+      await d.manager.tracked.setClaim(recentMatchId, "lost", null);
+      await d.manager.checkClaims();
+      const asked = server.log.filter((entry) => entry.table === "rpc:get_match_scorer").flatMap((entry) => entry.ids);
+      expect(asked).toContain(recentMatchId);
+      expect(asked).not.toContain(oldMatchId);
+    });
   });
 
   it("resolves a match opened before sign-in as not synced when the manager is destroyed", async () => {

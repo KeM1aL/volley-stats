@@ -4,7 +4,7 @@ import type { User } from "@/lib/types";
 import type { LocalDatabase } from "../collections";
 import type { ClaimCheck } from "./dependencies";
 import { MatchSync } from "./match-sync";
-import type { PendingChanges } from "./pending-changes";
+import type { PendingChanges, PendingStatus } from "./pending-changes";
 import type { SyncPlatform } from "./platform/types";
 import { ReferenceSync } from "./reference-sync";
 import { claimMatchScorer, getMatchScorer, isClaimForbidden, type ClaimResult, type ScorerInfo } from "./scorer-claim";
@@ -266,6 +266,8 @@ export class SyncManager {
     const deviceId = await this.deviceId;
     for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
       if (entry.userId !== user.id || (entry.claim !== "held" && entry.claim !== "lost")) continue;
+      // A lost match nobody opened for the TTL is about to be pruned: no more calls for it.
+      if (entry.claim === "lost" && this.unopenedForTtl(entry)) continue;
       let holder: ScorerInfo;
       try {
         holder = await getMatchScorer(this.options.client, matchId, deviceId);
@@ -416,17 +418,25 @@ export class SyncManager {
     return true;
   }
 
+  private unopenedForTtl(entry: TrackedMatch): boolean {
+    return Date.parse(entry.lastOpenedAt) < Date.now() - TRACKED_MATCH_TTL_MS;
+  }
+
   /**
    * Drops matches unopened for TRACKED_MATCH_TTL_MS once nothing of theirs is unsent. Superseded
-   * changes keep a lost match too: taking scoring back must still discard them.
+   * changes of a lost match only matter while the take-back is offered, which is while the match is
+   * tracked and was opened recently: past the TTL a lost match goes too, and its superseded entries
+   * are deleted with it (they were never going to upload).
    */
   private async pruneTracked(userId: string): Promise<void> {
-    const cutoff = Date.now() - TRACKED_MATCH_TTL_MS;
     for (const [matchId, entry] of Object.entries(await this.tracked.get())) {
-      if (entry.userId !== userId || Date.parse(entry.lastOpenedAt) >= cutoff) continue;
-      if ((await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected", "superseded"] })) === 0) {
-        await this.tracked.remove(matchId);
+      if (entry.userId !== userId || !this.unopenedForTtl(entry)) continue;
+      const unsent: PendingStatus[] = entry.claim === "lost" ? ["pending", "rejected"] : ["pending", "rejected", "superseded"];
+      if ((await this.pendingChanges.count({ matchId, statuses: unsent })) > 0) continue;
+      if (entry.claim === "lost") {
+        await this.pendingChanges.removeEntries((await this.pendingChanges.list({ matchId, statuses: ["superseded"] })).map((change) => change.id));
       }
+      await this.tracked.remove(matchId);
     }
   }
 
