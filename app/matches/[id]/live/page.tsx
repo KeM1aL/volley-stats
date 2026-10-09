@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
@@ -8,6 +8,7 @@ import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { ScoreBoard } from "@/components/matches/live/score-board";
 import { StatTracker } from "@/components/matches/live/stat-tracker";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import {
   Tooltip,
@@ -53,7 +54,9 @@ import { SyncBadge } from "@/components/sync/sync-badge";
 import { ScorerClaimDialog, type ClaimPrompt } from "@/components/sync/scorer-claim-dialog";
 import { TakenOverBanner } from "@/components/sync/taken-over-banner";
 import { useBeforeUnloadWhenUnsent, useMatchUnsentCount } from "@/hooks/use-unsent-guard";
-import { isClaimForbidden, type ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
+import { isClaimForbidden, type ClaimResult, type ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
+import { claimBecameHeld, claimFollowUp, offlineConfirmFollowUp } from "@/lib/rxdb/sync/claim-flow";
+import type { ClaimState } from "@/lib/rxdb/sync/tracked-matches";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
 
@@ -72,6 +75,7 @@ const initialMatchState: MatchState = {
 
 export default function LiveMatchPage() {
   const t = useTranslations("matches");
+  const tSync = useTranslations("sync");
   const { id: matchId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const { isOnline, wasOffline } = useOnlineStatus();
@@ -96,7 +100,15 @@ export default function LiveMatchPage() {
   const [lostClaim, setLostClaim] = useState<{ holder: ScorerInfo | null } | null>(null);
   // True from a forced claim until the match was pulled again: the claim is held but the screen is stale.
   const [refreshing, setRefreshing] = useState(false);
-  const scoringBlocked = !!lostClaim || !!claimPrompt || refreshing;
+  // The claim is held but the match couldn't be pulled again: the screen may be stale, so scoring stays
+  // blocked (with a retry) until a refresh succeeds.
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const scoringBlocked = !!lostClaim || !!claimPrompt || refreshing || refreshFailed;
+  // True while this page runs its own claim flow (forced claim, take-back): the background detection
+  // of a completed take-back leaves those alone. `refreshRunning` allows one refresh at a time.
+  const ownClaimFlow = useRef(false);
+  const refreshRunning = useRef(false);
+  const previousClaim = useRef<ClaimState | null | undefined>(undefined);
   const unsentCount = useMatchUnsentCount(matchId);
   useBeforeUnloadWhenUnsent(unsentCount > 0);
 
@@ -136,9 +148,13 @@ export default function LiveMatchPage() {
     if (entry?.claim !== "held" && entry?.claim !== "pending-force") setClaimPrompt({ kind: "offline" });
   }, [db, matchId]);
 
-  // Memoized data loading function
-  const loadMatchData = useCallback(async () => {
-    if (!db) return;
+  /**
+   * Loads the match from the local database (after syncing it). Returns whether it worked.
+   * On failure the page is left for the match list, unless `leaveOnFailure` is false: the caller
+   * (a refresh after a claim) then reports it and keeps scoring blocked.
+   */
+  const loadMatchData = useCallback(async ({ leaveOnFailure = true }: { leaveOnFailure?: boolean } = {}): Promise<boolean> => {
+    if (!db) return false;
 
     try {
       setIsLoading(true);
@@ -319,15 +335,19 @@ export default function LiveMatchPage() {
           ? { home: currentSet.home_score, away: currentSet.away_score }
           : { home: 0, away: 0 },
       });
+      return true;
     } catch (error) {
       console.error("Failed to load match data:", error);
-      toast({
-        variant: "destructive",
-        title: t("live.failedLoadMatchData"),
-        description:
-          error instanceof Error ? error.message : t("live.failedLoadMatchData"),
-      });
-      router.push("/matches");
+      if (leaveOnFailure) {
+        toast({
+          variant: "destructive",
+          title: t("live.failedLoadMatchData"),
+          description:
+            error instanceof Error ? error.message : t("live.failedLoadMatchData"),
+        });
+        router.push("/matches");
+      }
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -337,11 +357,50 @@ export default function LiveMatchPage() {
     loadMatchData();
   }, [loadMatchData]);
 
+  /**
+   * After this device got scoring (forced claim, take-back, or a take-back completed in the background):
+   * pulls the match again so rows the other device pushed meanwhile are here, then loads it. Scoring stays
+   * blocked meanwhile, and after a failure (offline, timeout) until a retry succeeds. `refreshed`: the
+   * pull is already done (the take-back did it).
+   */
+  const refreshAfterClaim = useCallback(
+    async (refreshed?: boolean) => {
+      if (!db || refreshRunning.current) return;
+      refreshRunning.current = true;
+      setRefreshing(true);
+      setRefreshFailed(false);
+      let loaded = false;
+      try {
+        const pulled = refreshed ?? (await db.syncManager.refreshMatch(matchId));
+        loaded = pulled && (await loadMatchData({ leaveOnFailure: false }));
+      } catch (error) {
+        console.warn("Refreshing the match after taking scoring failed:", error);
+      } finally {
+        refreshRunning.current = false;
+        setRefreshing(false);
+      }
+      if (!loaded) {
+        setRefreshFailed(true);
+        toast({ variant: "destructive", title: tSync("claim.refreshFailed") });
+      }
+    },
+    [db, matchId, loadMatchData, tSync]
+  );
+  const refreshAfterClaimRef = useRef(refreshAfterClaim);
+  useEffect(() => {
+    refreshAfterClaimRef.current = refreshAfterClaim;
+  }, [refreshAfterClaim]);
+
   useEffect(() => {
     if (!db) return;
     const subscription = db.syncManager.tracked.get$().subscribe((matches) => {
       const entry = matches[matchId];
       setLostClaim(entry?.claim === "lost" ? { holder: entry.lostTo } : null);
+      // A take-back completed without this page asking (an interrupted one finished on resume): the
+      // screen still shows the match from before, so refresh it like after a forced claim.
+      const became = claimBecameHeld(previousClaim.current, entry?.claim);
+      previousClaim.current = entry?.claim;
+      if (became && !ownClaimFlow.current) void refreshAfterClaimRef.current();
     });
     return () => subscription.unsubscribe();
   }, [db, matchId]);
@@ -352,22 +411,32 @@ export default function LiveMatchPage() {
    */
   const forceClaim = async () => {
     if (!db) return;
+    ownClaimFlow.current = true;
     setRefreshing(true);
     try {
-      const result = await db.syncManager.claimMatch(matchId, true);
-      if (!result.claimed) return;
-      setClaimPrompt(null);
-      await db.syncManager.refreshMatch(matchId);
-      await loadMatchData();
-    } catch (error) {
-      if (isClaimForbidden(error)) {
-        setClaimPrompt({ kind: "forbidden" });
+      let result: ClaimResult;
+      try {
+        result = await db.syncManager.claimMatch(matchId, true);
+      } catch (error) {
+        setRefreshing(false);
+        if (isClaimForbidden(error)) {
+          setClaimPrompt({ kind: "forbidden" });
+          return;
+        }
+        console.warn("Takeover failed, the server can't be reached:", error);
+        setClaimPrompt({ kind: "offline" });
         return;
       }
-      console.warn("Takeover failed, the server can't be reached:", error);
-      setClaimPrompt({ kind: "offline" });
+      if (claimFollowUp(result.claimed, true) === "not-claimed") {
+        setRefreshing(false);
+        setClaimPrompt({ kind: "taken", holder: result.holder });
+        toast({ variant: "destructive", title: tSync("claim.takeOverFailed") });
+        return;
+      }
+      setClaimPrompt(null);
+      await refreshAfterClaim();
     } finally {
-      setRefreshing(false);
+      ownClaimFlow.current = false;
     }
   };
 
@@ -380,6 +449,11 @@ export default function LiveMatchPage() {
       } else {
         await db.syncManager.claimMatchOffline(matchId);
         setClaimPrompt(null);
+        // A lost claim stays lost offline: say so instead of closing the prompt as if nothing happened.
+        const entry = await db.syncManager.tracked.entry(matchId);
+        if (offlineConfirmFollowUp(entry?.claim) === "needs-connection") {
+          toast({ variant: "destructive", title: tSync("claim.takeBackNeedsConnection") });
+        }
       }
     } finally {
       setClaimBusy(false);
@@ -393,20 +467,33 @@ export default function LiveMatchPage() {
    */
   const handleTakeBack = async () => {
     if (!db) return;
+    ownClaimFlow.current = true;
     setClaimBusy(true);
     setRefreshing(true);
     try {
-      const { claim } = await db.syncManager.takeBackMatch(matchId);
-      if (claim.claimed) await loadMatchData();
-    } catch (error) {
-      if (isClaimForbidden(error)) {
-        setClaimPrompt({ kind: "forbidden" });
+      let outcome: Awaited<ReturnType<typeof db.syncManager.takeBackMatch>>;
+      try {
+        outcome = await db.syncManager.takeBackMatch(matchId);
+      } catch (error) {
+        setRefreshing(false);
+        if (isClaimForbidden(error)) {
+          setClaimPrompt({ kind: "forbidden" });
+          return;
+        }
+        console.warn("Taking scoring back failed, the server can't be reached:", error);
+        setClaimPrompt({ kind: "offline" });
         return;
       }
-      console.warn("Taking scoring back failed, the server can't be reached:", error);
-      setClaimPrompt({ kind: "offline" });
+      if (claimFollowUp(outcome.claim.claimed, outcome.refreshed) === "not-claimed") {
+        setRefreshing(false);
+        toast({ variant: "destructive", title: tSync("claim.takeOverFailed") });
+        return;
+      }
+      // The held claim may reach the subscription after this flow ended: it isn't a background completion.
+      previousClaim.current = "held";
+      await refreshAfterClaim(outcome.refreshed);
     } finally {
-      setRefreshing(false);
+      ownClaimFlow.current = false;
       setClaimBusy(false);
     }
   };
@@ -729,6 +816,18 @@ export default function LiveMatchPage() {
         <div className="h-full flex items-center justify-center" role="status" aria-busy="true">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
         </div>
+      );
+    }
+    if (refreshFailed) {
+      return (
+        <Alert variant="destructive" className="m-2 w-auto" data-testid="refresh-failed">
+          <AlertDescription className="flex flex-col items-start gap-2">
+            <span>{tSync("claim.refreshFailed")}</span>
+            <Button size="sm" variant="outline" onClick={() => void refreshAfterClaim()} data-testid="retry-refresh">
+              {tSync("badge.retry")}
+            </Button>
+          </AlertDescription>
+        </Alert>
       );
     }
 

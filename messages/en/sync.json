@@ -56,7 +56,10 @@
     "takeBackConfirm": "Take scoring back",
     "never": "never",
     "forbiddenTitle": "You can't score this match",
-    "forbiddenBody": "Only the owner of one of the two teams can record this match."
+    "forbiddenBody": "Only the owner of one of the two teams can record this match.",
+    "refreshFailed": "Scoring is yours, but the latest data couldn't be loaded — check the connection",
+    "takeBackNeedsConnection": "Taking scoring back needs a connection. Go back online and try again.",
+    "takeOverFailed": "Couldn't take over scoring: another device is scoring this match."
   },
   "guards": {
     "signOutTitle": "Changes not uploaded yet",

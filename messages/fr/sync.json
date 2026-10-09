@@ -56,7 +56,10 @@
     "takeBackConfirm": "Reprendre la saisie",
     "never": "jamais",
     "forbiddenTitle": "Vous ne pouvez pas saisir ce match",
-    "forbiddenBody": "Seul le propriétaire de l'une des deux équipes peut saisir ce match."
+    "forbiddenBody": "Seul le propriétaire de l'une des deux équipes peut saisir ce match.",
+    "refreshFailed": "La saisie est à vous, mais les dernières données n'ont pas pu être chargées — vérifiez la connexion",
+    "takeBackNeedsConnection": "Reprendre la saisie nécessite une connexion. Reconnectez-vous et réessayez.",
+    "takeOverFailed": "Impossible de reprendre la saisie : un autre appareil saisit ce match."
   },
   "guards": {
     "signOutTitle": "Modifications pas encore envoyées",

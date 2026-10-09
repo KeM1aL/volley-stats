@@ -56,7 +56,10 @@
     "takeBackConfirm": "Riprendi il punteggio",
     "never": "mai",
     "forbiddenTitle": "Non puoi segnare questa partita",
-    "forbiddenBody": "Solo il proprietario di una delle due squadre può segnare questa partita."
+    "forbiddenBody": "Solo il proprietario di una delle due squadre può segnare questa partita.",
+    "refreshFailed": "Il punteggio è tuo, ma non è stato possibile caricare gli ultimi dati — controlla la connessione",
+    "takeBackNeedsConnection": "Per riprendere il punteggio serve una connessione. Torna online e riprova.",
+    "takeOverFailed": "Impossibile prendere il controllo: un altro dispositivo sta segnando questa partita."
   },
   "guards": {
     "signOutTitle": "Modifiche non ancora inviate",

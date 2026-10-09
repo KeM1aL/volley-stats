@@ -56,7 +56,10 @@
     "takeBackConfirm": "Recuperar el registro",
     "never": "nunca",
     "forbiddenTitle": "No puedes registrar este partido",
-    "forbiddenBody": "Solo el propietario de uno de los dos equipos puede registrar este partido."
+    "forbiddenBody": "Solo el propietario de uno de los dos equipos puede registrar este partido.",
+    "refreshFailed": "El registro es tuyo, pero no se pudieron cargar los últimos datos — comprueba la conexión",
+    "takeBackNeedsConnection": "Recuperar el registro requiere conexión. Vuelve a conectarte e inténtalo de nuevo.",
+    "takeOverFailed": "No se pudo tomar el control: otro dispositivo está registrando este partido."
   },
   "guards": {
     "signOutTitle": "Cambios aún no enviados",

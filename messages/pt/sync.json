@@ -56,7 +56,10 @@
     "takeBackConfirm": "Retomar o registo",
     "never": "nunca",
     "forbiddenTitle": "Não pode registar esta partida",
-    "forbiddenBody": "Só o proprietário de uma das duas equipas pode registar esta partida."
+    "forbiddenBody": "Só o proprietário de uma das duas equipas pode registar esta partida.",
+    "refreshFailed": "O registo é seu, mas não foi possível carregar os dados mais recentes — verifique a ligação",
+    "takeBackNeedsConnection": "Retomar o registo requer ligação. Volte a ligar-se e tente novamente.",
+    "takeOverFailed": "Não foi possível assumir o registo: outro dispositivo está a registar esta partida."
   },
   "guards": {
     "signOutTitle": "Alterações ainda não enviadas",
