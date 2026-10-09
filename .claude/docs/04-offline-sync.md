@@ -62,7 +62,8 @@ Design: [docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md](.
 ### What gets synced
 
 - **Reference tables** (`championships`, `seasons`, `match_formats`, `clubs`, `teams`, and `club_members`/`team_members` of the user's clubs/teams): pull-only, from sign-in.
-- **Match data**: one pull+push replication per (table, tracked match), identifier `sync2_<table>_match_<matchId>`, filtered to the match; a push modifier drops other matches' rows. A match is tracked once the live page calls `syncMatch(matchId)`. Tracked matches live in the `tracked-matches` local document and are replicated **from app start on every screen**, by the leader tab only. A match leaves the list 14 days after it was last opened, once nothing of it is unsent.
+- **Match data**: one pull+push replication per (table, tracked match), identifier `sync2_<table>_match_<matchId>`, filtered to the match; a push modifier drops other matches' rows. A match is tracked once the live page calls `syncMatch(matchId)`. Tracked matches live in the `tracked-matches` local document and are replicated **from app start on every screen**, by the leader tab only. A match leaves the list 14 days after it was last opened, once nothing of it is pending, rejected or superseded (a lost match keeps its banner while taking scoring back can still discard its superseded changes). A match tracked for another account is not handed to the account that opens it while that account's changes to it are unsent on the device.
+- First start after the sync rework (`upgrade.ts`): local matches the server still has are tracked and every local row of theirs is marked pending (the badge shows the rescue until each row is confirmed); `lastOpenedAt` is the match's own date, so old matches are pruned once their rescue is done. Without a session or offline, nothing is seeded and it runs again at the next start.
 - `syncMatch(matchId)` waits (bounded by its timeout) for the user to be set, because the live page can call it before the provider's `setUser`.
 
 ### Local database
@@ -83,12 +84,13 @@ Design: [docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md](.
 - Rows that reached a final outcome (uploaded, rejected, superseded) are not sent or reported again when their batch is retried.
 - Conflicts on match data: if the device knew a previous server version, the device wins; otherwise the later `updated_at` wins.
 - Errors: network/auth/server errors retry forever without counting; `parent_missing`/unknown errors count, and are rejected after 20 attempts; RLS, invalid data, schema mismatch, a missing external reference or a row deleted on the server are rejected at once and never block later rows. `scorer_mismatch` marks the match's unsent rows `superseded`.
-- Rejected rows stay in `pending_changes` with a reason; the badge's **Retry** re-queues them.
+- Rejected rows stay in `pending_changes` with a reason; the badge's **Retry** re-queues them (an entry whose row is gone from the device entirely is dropped with a warning).
+- An UPDATE that matches no row while the server row is unchanged is a refusal: `rls` with a session, a temporary `auth` error without one (match tables are publicly readable, so a lost session reads the row back unchanged).
 - After a claim is lost, the live page is read-only: scoring, set setup, substitutions/events and undo are blocked, because the match is no longer replicated.
 
 ### Not paused offline
 
-Replications are never paused: RxDB's retry waits for the `online` event. Reconnecting or coming back to the foreground calls `reSync()` and re-checks scorer claims.
+Replications are never paused: RxDB's retry waits for the `online` event. Reconnecting or coming back to the foreground calls `reSync()` and re-checks scorer claims; a lost match whose server holder is this device (a take-back whose reset failed after its forced claim) has its take-back finished then.
 
 ### Data-loss guards
 
