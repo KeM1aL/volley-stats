@@ -29,7 +29,7 @@ export function zoneSummary(stats: PlayerStat[], points: ScorePoint[]): ZoneSumm
   for (const s of stats) {
     const isPoint = isPointStat(s);
     if (!isPoint && s.result !== "error") continue;
-    const zone = (s.position as Zone | null) ?? zoneInRotation(pointByStat.get(s.id), s.player_id);
+    const zone = (ZONES.includes(s.position as Zone) ? (s.position as Zone) : null) ?? zoneInRotation(pointByStat.get(s.id), s.player_id);
     if (!zone) {
       unplaced++;
       continue;

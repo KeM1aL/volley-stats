@@ -7,6 +7,11 @@ export const REPORT_VERSION = 1;
 export const isLocale = (value: string | null | undefined): value is Locale =>
   !!value && (SUPPORTED_LOCALES as readonly string[]).includes(value);
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Postgres rejects anything else with a cast error, so check before querying. */
+export const isUuid = (value: string): boolean => UUID.test(value);
+
 export function resolveLocale(requested: string | null, profileLanguage: string | null): Locale {
   if (isLocale(requested)) return requested;
   if (isLocale(profileLanguage)) return profileLanguage;
@@ -26,7 +31,7 @@ export function reportFileName(home: string, away: string, date: string): string
 export function contentDisposition(fileName: string): string {
   const ascii = fileName
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^A-Za-z0-9._-]+/g, "-")
     .replace(/-{2,}/g, "-")
     .replace(/-\./g, ".")

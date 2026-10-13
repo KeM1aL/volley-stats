@@ -3,7 +3,7 @@ import { renderMatchReport } from "@/components/report-pdf/render";
 import { checkReportAccess } from "@/lib/report/access";
 import { buildMatchReport } from "@/lib/report/build";
 import { getReportCaller } from "@/lib/report/caller";
-import { contentDisposition, isLocale, REPORT_VERSION, reportEtag, reportFileName, resolveLocale } from "@/lib/report/http";
+import { contentDisposition, isLocale, isUuid, REPORT_VERSION, reportEtag, reportFileName, resolveLocale } from "@/lib/report/http";
 import { loadMatchReportData, ReportNotFoundError } from "@/lib/report/load";
 import { rows } from "@/lib/report/query";
 
@@ -15,6 +15,7 @@ const failure = (status: number, error: string) => Response.json({ error }, { st
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: matchId } = await params;
+  if (!isUuid(matchId)) return failure(404, "matchNotFound");
   const teamId = request.nextUrl.searchParams.get("team");
   if (!teamId) return failure(400, "missingTeam");
 

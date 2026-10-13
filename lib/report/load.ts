@@ -4,6 +4,8 @@ import type { Event, Match, MatchFormat, PlayerStat, ScorePoint, Set as MatchSet
 import { live, rows, type Row } from "./query";
 import type { MatchReportData } from "./types";
 
+const MAX_ROWS = 1000;
+
 export class ReportNotFoundError extends Error {
   constructor() {
     super("matchNotFound");
@@ -31,6 +33,8 @@ export async function loadMatchReportData(supabase: SupabaseClient, matchId: str
     rows(supabase.from("player_stats").select("*").eq("match_id", matchId)),
     rows(supabase.from("events").select("*").eq("match_id", matchId)),
   ]);
+  // PostgREST returns at most 1000 rows per request; a full page may be a truncated one.
+  if ([members, sets, points, stats, events].some((list) => list.length >= MAX_ROWS)) throw new Error("tooManyRows");
   const format = formats[0];
   const homeTeam = teams.find((team) => team.id === match.home_team_id);
   const awayTeam = teams.find((team) => team.id === match.away_team_id);

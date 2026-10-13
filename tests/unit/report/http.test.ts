@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fileNameFromDisposition } from "@/lib/report/download";
-import { contentDisposition, reportEtag, reportFileName, resolveLocale } from "@/lib/report/http";
+import { contentDisposition, isUuid, reportEtag, reportFileName, resolveLocale } from "@/lib/report/http";
 
 describe("resolveLocale", () => {
   it("prefers the requested locale, then the profile language, then English", () => {
@@ -40,5 +40,16 @@ describe("file names", () => {
   it("falls back to the plain name, or null", () => {
     expect(fileNameFromDisposition('attachment; filename="report.pdf"')).toBe("report.pdf");
     expect(fileNameFromDisposition(null)).toBeNull();
+  });
+});
+
+describe("isUuid", () => {
+  it("accepts UUIDs of any case and refuses everything else", () => {
+    expect(isUuid("123e4567-e89b-12d3-a456-426614174000")).toBe(true);
+    expect(isUuid("123E4567-E89B-12D3-A456-426614174000")).toBe(true);
+    expect(isUuid("not-a-uuid")).toBe(false);
+    expect(isUuid("")).toBe(false);
+    expect(isUuid("123e4567-e89b-12d3-a456-42661417400")).toBe(false);
+    expect(isUuid("123e4567-e89b-12d3-a456-426614174000x")).toBe(false);
   });
 });

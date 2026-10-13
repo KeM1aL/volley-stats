@@ -64,6 +64,13 @@ describe("loadMatchReportData", () => {
     expect((await loadMatchReportData(server.client(), MATCH)).lastModified).toBe(NEW);
   });
 
+  it("fails loudly when a list reaches the 1000-row request cap", async () => {
+    for (let i = 0; i < 1000; i++) {
+      server.seedAt("events", { id: `bulk-${i}`, match_id: MATCH, set_id: null, event_type: "comment", timestamp: OLD, details: {} }, OLD);
+    }
+    await expect(loadMatchReportData(server.client(), MATCH)).rejects.toThrow("tooManyRows");
+  });
+
   it("throws ReportNotFoundError for an unknown match", async () => {
     await expect(loadMatchReportData(server.client(), "nope")).rejects.toBeInstanceOf(ReportNotFoundError);
   });

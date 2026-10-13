@@ -41,6 +41,17 @@ describe("zoneSummary", () => {
     expect(summary.unplaced).toBe(1);
   });
 
+  it("counts a position outside p1-p6 as unplaced, falling back to the rotation", () => {
+    const blank = stat(1, P.d, "spike", "success", "" as never);
+    const p7 = stat(1, P.g, "spike", "error", "p7" as never);
+    const fromRotation = stat(1, P.b, "spike", "error", "p9" as never);
+    const data = makeData([{ rallies: rallies("WL") }]);
+    data.points[1].player_stat_id = fromRotation.id;
+    const summary = zoneSummary([blank, p7, fromRotation], data.points);
+    expect(summary.unplaced).toBe(2);
+    expect(summary.zones.p2).toEqual({ points: 0, errors: 1 });
+  });
+
   it("maps a lineup to zones", () => {
     expect(lineupByZone(LINEUP)).toEqual({ p1: P.a, p2: P.b, p3: P.c, p4: P.d, p5: P.e, p6: P.f });
     expect(lineupByZone(null)).toEqual({});
