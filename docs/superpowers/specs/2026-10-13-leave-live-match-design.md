@@ -45,8 +45,10 @@ The user confirmed the blank page only occurs without a connection or with a wea
   `SyncStatusProvider`. Holds whether the guard is active and renders the one shared `AlertDialog`.
   - `useLeaveGuard(options: { active: boolean; unsentCount: number })`: the live page turns the guard
     on and passes this match's unsent count (from `useMatchUnsentCount`) for the dialog.
-  - `useConfirmLeave(): () => Promise<boolean>`: resolves `true` at once when the guard is off;
-    otherwise opens the dialog and resolves with the user's choice.
+  - `useConfirmLeave(): { isActive(): boolean; confirmLeave(): Promise<LeaveDecision> }` with
+    `LeaveDecision = "free" | "leave" | "stay"`: `"free"` at once when the guard is off; otherwise
+    opens the dialog and resolves with the user's choice. `isActive()` lets a link decide
+    synchronously whether to cancel its default navigation.
 - `components/guarded-link.tsx`: wraps `next/link`. On a plain left click while the guard is on, it
   calls `preventDefault()`, awaits the confirmation, then `router.push(href)`. Clicks with a modifier
   key or a non-primary button pass through (they open a new tab and don't leave the match).
