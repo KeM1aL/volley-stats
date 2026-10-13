@@ -73,7 +73,9 @@ export async function updateSession(request: NextRequest) {
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
+    // Versioned API routes check the session themselves (cookie or Bearer token) and answer 401.
+    // Other /api routes keep the redirect.
+    !request.nextUrl.pathname.startsWith('/api/v1/') &&
     !request.nextUrl.pathname.endsWith('/stats') &&
     !(request.nextUrl.pathname === '/')
   ) {
