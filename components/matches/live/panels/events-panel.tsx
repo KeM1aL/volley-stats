@@ -47,6 +47,7 @@ import {
   MessageSquare,
   Filter,
   RefreshCw,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -67,6 +68,7 @@ interface EventsPanelProps {
   currentPointNumber?: number;
   currentLineup?: Record<string, string>;
   onSubstitutionRecorded?: (substitution: Substitution) => Promise<void>;
+  onAddLatePlayer?: () => Promise<TeamMember | null>;
 }
 
 const EVENT_ICONS = {
@@ -92,6 +94,7 @@ export function EventsPanel({
   currentPointNumber,
   currentLineup,
   onSubstitutionRecorded,
+  onAddLatePlayer,
 }: EventsPanelProps) {
   const t = useTranslations("matches");
   const tc = useTranslations("common");
@@ -312,6 +315,18 @@ export function EventsPanel({
             <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
             {t("live.timeout")}
           </Button>
+          {onAddLatePlayer && (
+            <Button
+              size="sm"
+              variant="outline"
+              data-testid="add-late-player"
+              onClick={() => void onAddLatePlayer()}
+              className="flex-1 h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-xs"
+            >
+              <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              {t("live.latePlayer.button")}
+            </Button>
+          )}
         </div>
 
         {/* Event Dialog */}
@@ -342,6 +357,7 @@ export function EventsPanel({
               currentLineup={currentLineup}
               db={db}
               onSubstitutionRecorded={onSubstitutionRecorded}
+              onAddLatePlayer={onAddLatePlayer}
               onSuccess={handleEventSuccess}
               onCancel={handleDialogClose}
             />

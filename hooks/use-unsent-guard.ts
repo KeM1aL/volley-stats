@@ -40,11 +40,33 @@ export function useUnsentCountFor(tables: readonly MatchCollectionName[]): numbe
   return none ? 0 : countFor(state, key, null);
 }
 
+// Set right before an in-app navigation the user already confirmed (our own dialog), so the browser's
+// "Changes you made may not be saved" doesn't follow it. Offline, the router falls back to a full page load.
+let unloadAllowed = false;
+let unloadAllowedTimer: ReturnType<typeof setTimeout> | undefined;
+
+function clearUnloadAllowed() {
+  unloadAllowed = false;
+  clearTimeout(unloadAllowedTimer);
+}
+
+/**
+ * Lets the next unload of this page through without the browser's prompt. A navigation that never
+ * happens must not disable the guard for good: the flag resets on `pageshow` and after 5 seconds.
+ */
+export function allowNextUnload(): void {
+  unloadAllowed = true;
+  clearTimeout(unloadAllowedTimer);
+  unloadAllowedTimer = setTimeout(clearUnloadAllowed, 5000);
+  window.addEventListener("pageshow", clearUnloadAllowed, { once: true });
+}
+
 /** Asks the browser to confirm before the tab is closed or reloaded. */
 export function useBeforeUnloadWhenUnsent(active: boolean): void {
   useEffect(() => {
     if (!active) return;
     const handler = (event: BeforeUnloadEvent) => {
+      if (unloadAllowed) return;
       event.preventDefault();
       event.returnValue = "";
     };

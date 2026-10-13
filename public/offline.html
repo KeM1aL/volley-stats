@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>VolleyStats</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #ffffff; --fg: #0a0a0a; --muted: #737373; --primary: #171717; --primary-fg: #fafafa; --border: #e5e5e5; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0a0a0a; --fg: #fafafa; --muted: #a3a3a3; --primary: #fafafa; --primary-fg: #171717; --border: #262626; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
+    main { max-width: 360px; text-align: center; }
+    img { width: 64px; height: 64px; border-radius: 12px; }
+    h1 { font-size: 1.25rem; margin: 16px 0 8px; }
+    p { color: var(--muted); margin: 0 0 24px; line-height: 1.5; }
+    button { display: block; width: 100%; padding: 12px 16px; margin-top: 8px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
+    .primary { background: var(--primary); color: var(--primary-fg); border: 1px solid var(--primary); }
+    .secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <main data-testid="offline-page">
+    <img src="/logo.png" alt="VolleyStats" />
+    <h1 id="title">You're offline</h1>
+    <p id="body">This screen needs a connection.</p>
+    <button id="back" class="primary" type="button">Back to the live match</button>
+    <button id="retry" class="secondary" type="button">Retry</button>
+  </main>
+  <script>
+    (function () {
+      var TEXTS = {
+        en: ["You're offline", "This screen needs a connection.", "Back to the live match", "Retry", "Go back"],
+        fr: ["Vous êtes hors ligne", "Cet écran nécessite une connexion.", "Retour au match en direct", "Réessayer", "Retour"],
+        es: ["Sin conexión", "Esta pantalla necesita conexión.", "Volver al partido en directo", "Reintentar", "Volver"],
+        it: ["Sei offline", "Questa schermata richiede una connessione.", "Torna alla partita in diretta", "Riprova", "Indietro"],
+        pt: ["Está offline", "Este ecrã precisa de ligação.", "Voltar ao jogo ao vivo", "Tentar novamente", "Voltar"]
+      };
+      var cookie = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([a-z]{2})/);
+      var browser = (navigator.language || "en").slice(0, 2).toLowerCase();
+      var locale = cookie && TEXTS[cookie[1]] ? cookie[1] : TEXTS[browser] ? browser : "en";
+      var text = TEXTS[locale];
+      document.documentElement.lang = locale;
+      document.getElementById("title").textContent = text[0];
+      document.getElementById("body").textContent = text[1];
+      document.getElementById("retry").textContent = text[3];
+
+      var liveMatch = null;
+      try { liveMatch = sessionStorage.getItem("volleystats:last-live-match"); } catch (e) {}
+      // Without a saved live match the button goes back in history, and says so.
+      document.getElementById("back").textContent = liveMatch ? text[2] : text[4];
+
+      document.getElementById("back").addEventListener("click", function () {
+        // Never /matches: it needs a connection too.
+        if (liveMatch) location.href = liveMatch;
+        else history.back();
+      });
+      document.getElementById("retry").addEventListener("click", function () { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

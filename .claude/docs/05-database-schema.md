@@ -18,7 +18,7 @@
 | `clubs` | Volleyball clubs/organizations | `user_id` → auth user (creator) |
 | `club_members` | Club membership with role `owner` / `admin` / `member` | `club_id` → clubs, `user_id` → auth user |
 | `teams` | Teams, with `status` `incomplete` / `active` / `archived`; `ext_code`/`ext_source` for imported teams | `club_id` → clubs, `championship_id` → championships |
-| `team_members` | Players and staff (`role`: owner, coach, staff, player; jersey `number`, `position`, `avatar_url`) | `team_id` → teams, `user_id` → auth user (optional) |
+| `team_members` | Players and staff (`role`: owner, coach, staff, player; jersey `number`, `position`, `avatar_url`; `archived_at`: archived members are hidden from rosters and match setup and lose team access in the app, null when active) | `team_id` → teams, `user_id` → auth user (optional) |
 | `championships` | Competition categories (`age_category`, `gender`, `type`) | `season_id` → seasons, `default_match_format` → match_formats |
 | `seasons` | Competition seasons (`start_date`, `end_date`) | — |
 | `match_formats` | Match rules: `format` (2x2, 3x3, 4x4, 6x6), `sets_to_win`, `point_by_set`, `point_final_set`, `rotation`, `decisive_point` | — |

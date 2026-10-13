@@ -74,6 +74,12 @@ describe("loadMatchReportData", () => {
   it("throws ReportNotFoundError for an unknown match", async () => {
     await expect(loadMatchReportData(server.client(), "nope")).rejects.toBeInstanceOf(ReportNotFoundError);
   });
+
+  it("keeps archived members: past matches still show who played", async () => {
+    server.editAsWebsite("team_members", "player-1", { archived_at: NEW });
+    const { data } = await loadMatchReportData(server.client(), MATCH);
+    expect(data.members.map((m) => m.id)).toContain("player-1");
+  });
 });
 
 describe("checkReportAccess", () => {
@@ -97,6 +103,13 @@ describe("checkReportAccess", () => {
     expect(await check("member", HOME, "nope")).toBe("match-not-found");
     expect(await check("member", "team-other")).toBe("team-not-in-match");
   });
+
+  it("refuses archived members, unless they created the team or run its club", async () => {
+    server.seedAt("team_members", { id: "member-archived", team_id: HOME, name: "Archived", number: 6, role: "coach", user_id: "archived", archived_at: NEW }, OLD);
+    server.seedAt("team_members", { id: "creator-archived", team_id: HOME, name: "Creator", number: 5, role: "owner", user_id: "creator", archived_at: NEW }, OLD);
+    expect(await check("archived")).toBe("forbidden");
+    expect(await check("creator")).toBe("allowed");
+  });
 });
 
 describe("canExportForTeam", () => {
@@ -116,6 +129,7 @@ describe("canExportForTeam", () => {
     expect(canExportForTeam({ id: "creator" }, team)).toBe(true);
     expect(canExportForTeam({ id: "member", teamMembers: [membership({})] }, team)).toBe(true);
     expect(canExportForTeam({ id: "member", teamMembers: [membership({ _deleted: true })] }, team)).toBe(false);
+    expect(canExportForTeam({ id: "member", teamMembers: [membership({ archived_at: NEW })] }, team)).toBe(false);
     expect(canExportForTeam({ id: "admin", clubMembers: [{ id: "cm", club_id: "club-1", user_id: "admin", role: "admin" }] }, team)).toBe(true);
   });
 

@@ -69,7 +69,8 @@
   "matchLineup": {
     "heading": "Feuille de Match",
     "description": "Sélectionnez les joueurs disponibles pour ce match.",
-    "notEnoughPlayers": "Au moins {count} joueurs sont requis pour un match {format}."
+    "notEnoughPlayers": "Au moins {count} joueurs sont requis pour un match {format}.",
+    "selectedCount": "{count} sélectionné(s) (min. {min})"
   },
   "matchManaged": {
     "heading": "Équipe Gérée"
@@ -259,7 +260,16 @@
     "point": "Point",
     "undo": "Annuler",
     "cancelLastAction": "Annuler la dernière action",
-    "pointsHistory": "Historique des Points"
+    "pointsHistory": "Historique des Points",
+    "latePlayer": {
+      "button": "Ajouter un retardataire",
+      "link": "Joueur absent de la liste ? Ajouter depuis l'équipe…",
+      "title": "Ajouter un joueur retardataire",
+      "description": "Membres de l'équipe absents de la feuille de ce match. Le joueur choisi rejoint la feuille de match.",
+      "none": "Tous les membres actifs de l'équipe sont déjà sur la feuille de match.",
+      "added": "{name} ajouté à la feuille de match",
+      "addError": "Impossible d'ajouter le joueur. Veuillez réessayer."
+    }
   },
   "stats": {
     "title": "Statistiques du match",
@@ -455,5 +465,12 @@
     "eventCreated": "Événement créé",
     "eventCreatedDesc": "L'événement a été enregistré avec succès",
     "failedLoadLocalMatchData": "Échec du chargement des données du match local"
+  },
+  "liveGuard": {
+    "title": "Quitter le match en direct ?",
+    "body": "Tout ce qui a été saisi est enregistré sur cet appareil. Vous pourrez revenir à ce match depuis Matchs.",
+    "unsent": "{count, plural, one {# modification n'a pas encore été envoyée} other {# modifications n'ont pas encore été envoyées}}. Elles seront envoyées automatiquement dès le retour de la connexion.",
+    "stay": "Rester",
+    "leave": "Quitter"
   }
 }

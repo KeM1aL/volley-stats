@@ -187,7 +187,7 @@ export const clubMemberSchema = toTypedRxJsonSchema({
 
 // Player Schema
 export const playerSchema = toTypedRxJsonSchema({
-  version: 0,
+  version: 1, // 1: archived_at (migrationStrategies in collections.ts)
   primaryKey: "id",
   type: "object",
   properties: {
@@ -209,6 +209,7 @@ export const playerSchema = toTypedRxJsonSchema({
       items: { type: "string" },
       default: [],
     },
+    archived_at: { type: ["string", "null"] },
     ...timestampFields,
   },
   required: [

@@ -69,7 +69,8 @@
   "matchLineup": {
     "heading": "Match Roster",
     "description": "Select the players available for this match.",
-    "notEnoughPlayers": "At least {count} players are required for a {format} match."
+    "notEnoughPlayers": "At least {count} players are required for a {format} match.",
+    "selectedCount": "{count} selected (min {min})"
   },
   "matchManaged": {
     "heading": "Managed Team"
@@ -259,7 +260,16 @@
     "point": "Point",
     "undo": "Undo",
     "cancelLastAction": "Cancel Last Action",
-    "pointsHistory": "Points History"
+    "pointsHistory": "Points History",
+    "latePlayer": {
+      "button": "Add late player",
+      "link": "Player not listed? Add from team…",
+      "title": "Add a late player",
+      "description": "Team members who aren't in this match's roster. The player you pick joins the roster.",
+      "none": "Every active team member is already in the roster.",
+      "added": "{name} added to the roster",
+      "addError": "Couldn't add the player. Please try again."
+    }
   },
   "stats": {
     "title": "Match Statistics",
@@ -455,5 +465,12 @@
     "eventCreated": "Event created",
     "eventCreatedDesc": "Event has been recorded successfully",
     "failedLoadLocalMatchData": "Failed to load local match data"
+  },
+  "liveGuard": {
+    "title": "Leave the live match?",
+    "body": "Everything recorded so far is saved on this device. You can come back to this match from Matches.",
+    "unsent": "{count, plural, one {# change hasn't} other {# changes haven't}} been uploaded yet. They'll upload automatically once you're back online.",
+    "stay": "Stay",
+    "leave": "Leave"
   }
 }

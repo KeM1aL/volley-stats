@@ -57,7 +57,24 @@
     "error": "Errore",
     "createError": "Impossibile creare il giocatore. Riprova.",
     "updateError": "Impossibile aggiornare il giocatore. Riprova.",
-    "deleteError": "Impossibile eliminare il giocatore. Riprova."
+    "deleteError": "Impossibile eliminare il giocatore. Riprova.",
+    "archived": "Giocatore archiviato",
+    "archivedDesc": "{name} è nascosto dalle rose.",
+    "restored": "Giocatore ripristinato",
+    "restoredDesc": "{name} è di nuovo in rosa.",
+    "archiveError": "Impossibile archiviare il giocatore. Riprova.",
+    "restoreError": "Impossibile ripristinare il giocatore. Riprova."
+  },
+  "archive": {
+    "action": "Archivia",
+    "ariaLabel": "Archivia {name}",
+    "confirmTitle": "Archiviare {name}?",
+    "confirmDesc": "Verrà nascosto dalle rose e dalla preparazione delle partite, ma resterà nelle statistiche e nei report passati. Potrai ripristinarlo in seguito.",
+    "loseAccess": "Perderà anche l'accesso a questa squadra.",
+    "restoreAriaLabel": "Ripristina {name}",
+    "showArchived": "Mostra archiviati ({count})",
+    "hideArchived": "Nascondi archiviati",
+    "badge": "Archiviato"
   },
   "confirmDelete": "Sei sicuro?",
   "confirmDeleteDesc": "Questa azione non può essere annullata. Questo eliminerà definitivamente il giocatore e tutte le statistiche associate."

@@ -69,7 +69,8 @@
   "matchLineup": {
     "heading": "Alineación del Partido",
     "description": "Selecciona los jugadores disponibles para este partido.",
-    "notEnoughPlayers": "Se requieren al menos {count} jugadores para un partido {format}."
+    "notEnoughPlayers": "Se requieren al menos {count} jugadores para un partido {format}.",
+    "selectedCount": "{count} seleccionados (mín. {min})"
   },
   "matchManaged": {
     "heading": "Equipo Gestionado"
@@ -259,7 +260,16 @@
     "point": "Punto",
     "undo": "Deshacer",
     "cancelLastAction": "Cancelar última acción",
-    "pointsHistory": "Historial de Puntos"
+    "pointsHistory": "Historial de Puntos",
+    "latePlayer": {
+      "button": "Añadir jugador tardío",
+      "link": "¿No aparece el jugador? Añadir desde el equipo…",
+      "title": "Añadir un jugador que llegó tarde",
+      "description": "Miembros del equipo que no están en la alineación de este partido. El jugador elegido se une a la alineación.",
+      "none": "Todos los miembros activos del equipo ya están en la alineación.",
+      "added": "{name} añadido a la alineación",
+      "addError": "No se pudo añadir al jugador. Inténtalo de nuevo."
+    }
   },
   "stats": {
     "title": "Estadísticas del Partido",
@@ -455,5 +465,12 @@
     "eventCreated": "Evento creado",
     "eventCreatedDesc": "El evento ha sido registrado correctamente",
     "failedLoadLocalMatchData": "Error al cargar datos del partido local"
+  },
+  "liveGuard": {
+    "title": "¿Salir del partido en directo?",
+    "body": "Todo lo registrado hasta ahora está guardado en este dispositivo. Puedes volver a este partido desde Partidos.",
+    "unsent": "{count, plural, one {# cambio aún no se ha subido} other {# cambios aún no se han subido}}. Se subirán automáticamente cuando vuelvas a tener conexión.",
+    "stay": "Quedarse",
+    "leave": "Salir"
   }
 }

@@ -101,6 +101,8 @@ export type TeamMember = {
   role: string;
   avatar_url?: string | null;
   comments?: string | null;
+  /** When the member was archived (hidden from rosters and match setup); null or absent when active. */
+  archived_at?: string | null;
 } & Partial<Audited>;
 
 export type Match = {

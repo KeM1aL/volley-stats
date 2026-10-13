@@ -1,14 +1,20 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
 export interface CreateAndStartMatchOptions {
   teamName: string;
   playerNames: string[];
   awayTeamName?: string;  // defaults to 'Team 1'
   formatName?: string;    // defaults to 'Test (6x6)'
+  /** Players left unticked in the start dialog (e.g. a player who arrives late). */
+  excludePlayers?: string[];
+  /** Players the start dialog must not offer (archived). */
+  absentPlayers?: string[];
 }
 
 export interface CreateAndStartMatchResult {
   matchId: string;
+  /** How many players were ticked: the roster size. */
+  selectedPlayers: number;
 }
 
 /**
@@ -31,6 +37,8 @@ export async function createAndStartMatch(
     teamName,
     awayTeamName = 'Team 1',
     formatName = 'Test (6x6)',
+    excludePlayers = [],
+    absentPlayers = [],
   } = options;
 
   // ── 3.1 Navigate to Matches ───────────────────────────────────────────────
@@ -101,13 +109,22 @@ export async function createAndStartMatch(
   await page.getByRole('radio').first().click({ force: true });
   await page.waitForTimeout(300);
 
-  // Select all players from the lineup toggles
+  // Tick every offered player except the excluded ones
   const playerToggles = page.getByTestId('lineup-player-toggle');
+  await playerToggles.first().waitFor({ state: 'visible', timeout: 10_000 });
+  for (const name of absentPlayers) {
+    await expect(page.locator(`[data-testid="lineup-player-toggle"][data-player-name="${name}"]`)).toHaveCount(0);
+  }
   const toggleCount = await playerToggles.count();
+  let selectedPlayers = 0;
   for (let i = 0; i < toggleCount; i++) {
-    await playerToggles.nth(i).click();
+    const toggle = playerToggles.nth(i);
+    if (excludePlayers.includes((await toggle.getAttribute('data-player-name')) ?? '')) continue;
+    await toggle.click();
+    selectedPlayers++;
     await page.waitForTimeout(100);
   }
+  await expect(page.getByTestId('lineup-selected-count')).toHaveText(new RegExp(`^${selectedPlayers} selected`));
 
   // Confirm
   await page.getByTestId('start-match-confirm').click();
@@ -118,5 +135,5 @@ export async function createAndStartMatch(
   // Extract matchId from URL: /matches/[matchId]/live
   const matchId = page.url().match(/\/matches\/([^/]+)\/live/)?.[1] ?? '';
 
-  return { matchId };
+  return { matchId, selectedPlayers };
 }

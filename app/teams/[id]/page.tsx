@@ -97,6 +97,7 @@ export default function TeamDetailsPage() {
 
         const memberFilters: Filter[] = [
           { field: "team_id", operator: "eq", value: id },
+          { field: "archived_at", operator: "is", value: null },
         ];
         const memberSort: Sort<TeamMember>[] = [
           { field: "number", direction: "asc" },

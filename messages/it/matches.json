@@ -69,7 +69,8 @@
   "matchLineup": {
     "heading": "Formazione della Partita",
     "description": "Seleziona i giocatori disponibili per questa partita.",
-    "notEnoughPlayers": "Sono richiesti almeno {count} giocatori per una partita {format}."
+    "notEnoughPlayers": "Sono richiesti almeno {count} giocatori per una partita {format}.",
+    "selectedCount": "{count} selezionati (min. {min})"
   },
   "matchManaged": {
     "heading": "Squadra Gestita"
@@ -259,7 +260,16 @@
     "point": "Punto",
     "undo": "Annulla",
     "cancelLastAction": "Annulla ultima azione",
-    "pointsHistory": "Storico Punti"
+    "pointsHistory": "Storico Punti",
+    "latePlayer": {
+      "button": "Aggiungi ritardatario",
+      "link": "Giocatore non in elenco? Aggiungi dalla squadra…",
+      "title": "Aggiungi un giocatore in ritardo",
+      "description": "Membri della squadra non presenti nella formazione di questa partita. Il giocatore scelto entra in formazione.",
+      "none": "Tutti i membri attivi della squadra sono già in formazione.",
+      "added": "{name} aggiunto alla formazione",
+      "addError": "Impossibile aggiungere il giocatore. Riprova."
+    }
   },
   "stats": {
     "title": "Statistiche Partita",
@@ -455,5 +465,12 @@
     "eventCreated": "Evento creato",
     "eventCreatedDesc": "L'evento è stato registrato con successo",
     "failedLoadLocalMatchData": "Impossibile caricare i dati della partita locale"
+  },
+  "liveGuard": {
+    "title": "Uscire dalla partita in diretta?",
+    "body": "Tutto ciò che è stato registrato finora è salvato su questo dispositivo. Puoi tornare a questa partita da Partite.",
+    "unsent": "{count, plural, one {# modifica non è ancora stata caricata} other {# modifiche non sono ancora state caricate}}. Verranno caricate automaticamente quando tornerai online.",
+    "stay": "Resta",
+    "leave": "Esci"
   }
 }

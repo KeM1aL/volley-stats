@@ -1,5 +1,6 @@
 import { addRxPlugin, type RxCollection, type RxDatabase } from "rxdb";
 import { RxDBLocalDocumentsPlugin } from "rxdb/plugins/local-documents";
+import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
 import { RxDBQueryBuilderPlugin } from "rxdb/plugins/query-builder";
 import { RxDBUpdatePlugin } from "rxdb/plugins/update";
 import type {
@@ -37,6 +38,7 @@ import { MATCH_COLLECTIONS } from "./sync/types";
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 addRxPlugin(RxDBLocalDocumentsPlugin);
+addRxPlugin(RxDBMigrationSchemaPlugin);
 
 export type DatabaseCollections = {
   championships: RxCollection<Championship>;
@@ -91,7 +93,11 @@ export async function setupCollections(db: LocalDatabase): Promise<PendingChange
     club_members: { schema: clubMemberSchema },
     seasons: { schema: seasonSchema },
     teams: { schema: teamSchema },
-    team_members: { schema: playerSchema },
+    team_members: {
+      schema: playerSchema,
+      // Devices that pulled players before archived_at existed: active until the re-pull says otherwise.
+      migrationStrategies: { 1: (doc: any) => ({ ...doc, archived_at: null }) },
+    },
     matches: { schema: matchSchema, conflictHandler: matchConflictHandler },
     sets: { schema: setSchema, conflictHandler: matchConflictHandler },
     events: { schema: eventSchema, conflictHandler: matchConflictHandler },

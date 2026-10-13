@@ -26,6 +26,20 @@ export function filterKey(values: readonly string[]): string {
   return `${(djb2 >>> 0).toString(36)}${(fnv1a >>> 0).toString(36)}`;
 }
 
+/**
+ * Replication identifier of a reference table. It contains the collection's schema version: after a schema
+ * bump the old checkpoint would skip rows changed before the device knew the new columns, so a new
+ * identifier makes the table pull again in full once.
+ */
+export function referenceReplicationIdentifier(
+  table: string,
+  schemaVersion: number,
+  userId: string,
+  values: readonly string[]
+): string {
+  return `sync2_${table}_v${schemaVersion}_${userId}_${filterKey(values)}`;
+}
+
 /** Pull-only replications of the reference tables (edited online through the API layer). */
 export class ReferenceSync {
   private states: RxReplicationState<any, SupabaseCheckpoint>[] = [];
@@ -71,7 +85,7 @@ export class ReferenceSync {
     }
     this.states = plan.map(({ table, values, filter }) =>
       replicateSupabase({
-        replicationIdentifier: `sync2_${table}_${user.id}_${filterKey(values)}`,
+        replicationIdentifier: referenceReplicationIdentifier(table, this.deps.db[table].schema.version, user.id, values),
         collection: this.deps.db[table] as any,
         client: this.deps.client,
         tableName: table,

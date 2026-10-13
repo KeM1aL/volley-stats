@@ -124,9 +124,11 @@ async function playSetToCompletion(
     await page.getByRole('dialog').locator('button[type="submit"]').click();
     await page.waitForTimeout(500);
 
-    // Close Events panel
-    await page.getByTestId('sidebar-btn-events').first().click();
-    await page.waitForTimeout(300);
+    // Close Events panel with the sidebar caret: it collapses the panel back to the icon column
+    await expect(page.getByTestId('live-panel')).toBeVisible();
+    await page.getByTestId('sidebar-toggle').click();
+    await expect(page.getByTestId('live-panel')).toHaveCount(0);
+    await expect(page.getByTestId('sidebar-toggle')).toHaveAttribute('data-state', 'collapsed');
   }
 
   // Phase C — score points until set or match ends
@@ -181,7 +183,12 @@ test.describe('Matches — full match flow', () => {
     expect(teamName, 'Team fixture not found — run 01-teams.spec.ts first').toBeTruthy();
 
     // 3.1 – 3.5 Create match and navigate to live page
-    await createAndStartMatch(page, { teamName, playerNames });
+    const { archivedPlayerName } = loadFixture() as { archivedPlayerName?: string };
+    await createAndStartMatch(page, {
+      teamName,
+      playerNames,
+      absentPlayers: archivedPlayerName ? [archivedPlayerName] : [],
+    });
 
     // 3.6 First set setup (with serving team selection)
     await setupCourtPositions(page, playerNames.slice(0, 6), {

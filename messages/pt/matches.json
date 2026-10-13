@@ -69,7 +69,8 @@
   "matchLineup": {
     "heading": "Escalação da Partida",
     "description": "Selecione os jogadores disponíveis para esta partida.",
-    "notEnoughPlayers": "São necessários pelo menos {count} jogadores para uma partida {format}."
+    "notEnoughPlayers": "São necessários pelo menos {count} jogadores para uma partida {format}.",
+    "selectedCount": "{count} selecionados (mín. {min})"
   },
   "matchManaged": {
     "heading": "Time Gerenciado"
@@ -259,7 +260,16 @@
     "point": "Ponto",
     "undo": "Desfazer",
     "cancelLastAction": "Cancelar última ação",
-    "pointsHistory": "Histórico de Pontos"
+    "pointsHistory": "Histórico de Pontos",
+    "latePlayer": {
+      "button": "Adicionar jogador atrasado",
+      "link": "Jogador não está na lista? Adicionar da equipa…",
+      "title": "Adicionar um jogador atrasado",
+      "description": "Membros da equipa que não estão na escalação deste jogo. O jogador escolhido entra na escalação.",
+      "none": "Todos os membros ativos da equipa já estão na escalação.",
+      "added": "{name} adicionado à escalação",
+      "addError": "Não foi possível adicionar o jogador. Tente novamente."
+    }
   },
   "stats": {
     "title": "Estatísticas da Partida",
@@ -455,5 +465,12 @@
     "eventCreated": "Evento criado",
     "eventCreatedDesc": "Evento foi registrado com sucesso",
     "failedLoadLocalMatchData": "Falha ao carregar dados da partida local"
+  },
+  "liveGuard": {
+    "title": "Sair do jogo ao vivo?",
+    "body": "Tudo o que foi registado até agora está guardado neste dispositivo. Pode voltar a este jogo a partir de Jogos.",
+    "unsent": "{count, plural, one {# alteração ainda não foi enviada} other {# alterações ainda não foram enviadas}}. Serão enviadas automaticamente quando voltar a estar online.",
+    "stay": "Ficar",
+    "leave": "Sair"
   }
 }

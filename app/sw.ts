@@ -31,6 +31,12 @@ const serwist = new Serwist({
     },
     ...defaultCache,
   ],
+  // A page that can't load (offline, weak signal) shows the app's offline page instead of the
+  // browser's error page. Client-side navigations whose data fetch fails fall back to a full page
+  // load, so they end up here too.
+  fallbacks: {
+    entries: [{ url: '/offline.html', matcher: ({ request }) => request.destination === 'document' }],
+  },
 });
 
 serwist.addEventListeners();

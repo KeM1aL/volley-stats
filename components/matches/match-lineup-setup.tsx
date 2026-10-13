@@ -9,15 +9,17 @@ import { Check } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type MatchSetupProps = {
   match: Match;
   players: TeamMember[]
   availablePlayers: string[]
   setAvailablePlayers: Dispatch<SetStateAction<string[]>>
+  minPlayers: number
 };
 
-export function MatchLineupSetup({ match, players, availablePlayers, setAvailablePlayers }: MatchSetupProps) {
+export function MatchLineupSetup({ match, players, availablePlayers, setAvailablePlayers, minPlayers }: MatchSetupProps) {
   const t = useTranslations("matches");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +44,18 @@ export function MatchLineupSetup({ match, players, availablePlayers, setAvailabl
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-1">{t("matchLineup.heading")}</h2>
-        <p className="text-sm text-muted-foreground mb-4">{t("matchLineup.description")}</p>
+        <div className="flex items-baseline justify-between gap-4 mb-4">
+          <p className="text-sm text-muted-foreground">{t("matchLineup.description")}</p>
+          <p
+            data-testid="lineup-selected-count"
+            className={cn(
+              "text-sm font-medium shrink-0",
+              availablePlayers.length < minPlayers ? "text-destructive" : "text-muted-foreground"
+            )}
+          >
+            {t("matchLineup.selectedCount", { count: availablePlayers.length, min: minPlayers })}
+          </p>
+        </div>
         <div className="grid grid-cols-4 gap-4">
           {[...players].sort(sortPlayers).map((player) => (
             <Toggle

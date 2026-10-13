@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
@@ -32,8 +31,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { GuardedLink } from "@/components/guarded-link";
+import { useConfirmLeave } from "@/components/providers/leave-guard-provider";
 import { SyncBadge } from "@/components/sync/sync-badge";
 import { useSyncStatus } from "@/hooks/use-sync-status";
+import { allowNextUnload } from "@/hooks/use-unsent-guard";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -42,9 +44,18 @@ export function Navigation() {
   const syncStatus = useSyncStatus();
   const unsentCount = (syncStatus?.pendingCount ?? 0) + (syncStatus?.rejectedCount ?? 0);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
-  const handleSignOut = () => {
-    if (unsentCount > 0) setConfirmSignOut(true);
-    else void signOut();
+  const { confirmLeave } = useConfirmLeave();
+  const handleSignOut = async () => {
+    // Unsent changes: the sign-out warning says where they go (they upload at the next sign-in), and it
+    // stands for leaving a live match too, so it is the only dialog. Otherwise ask before leaving a live match.
+    if (unsentCount > 0) {
+      setConfirmSignOut(true);
+      return;
+    }
+    const decision = await confirmLeave();
+    if (decision === "stay") return;
+    if (decision === "leave") allowNextUnload();
+    void signOut();
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isLandscape = useLandscape();
@@ -92,7 +103,7 @@ export function Navigation() {
                     {routes.map((route) => {
                       const Icon = route.icon;
                       return (
-                        <Link
+                        <GuardedLink
                           key={route.href}
                           href={route.href}
                           onClick={() => setMobileMenuOpen(false)}
@@ -105,14 +116,14 @@ export function Navigation() {
                         >
                           <Icon className="h-5 w-5" />
                           {route.label}
-                        </Link>
+                        </GuardedLink>
                       );
                     })}
                   </nav>
                 </SheetContent>
               </Sheet>
             )}
-            <Link href="/" className="flex items-center pl-1">
+            <GuardedLink href="/" className="flex items-center pl-1">
               <Image
                 src='/logo.png'
                 alt={t('common.app.shortTitle')}
@@ -120,7 +131,7 @@ export function Navigation() {
                 height='24'
                 className="rounded object-cover"
               />
-            </Link>
+            </GuardedLink>
           </div>
           <div className="flex items-center gap-1">
             {user && <SyncBadge compact />}
@@ -150,7 +161,7 @@ export function Navigation() {
                     {routes.map((route) => {
                       const Icon = route.icon;
                       return (
-                        <Link
+                        <GuardedLink
                           key={route.href}
                           href={route.href}
                           onClick={() => setMobileMenuOpen(false)}
@@ -163,7 +174,7 @@ export function Navigation() {
                         >
                           <Icon className="h-5 w-5" />
                           {route.label}
-                        </Link>
+                        </GuardedLink>
                       );
                     })}
                   </nav>
@@ -171,7 +182,7 @@ export function Navigation() {
               </Sheet>
             </div>
           )}
-          <Link href="/" className="flex items-center gap-2 font-semibold pl-2">
+          <GuardedLink href="/" className="flex items-center gap-2 font-semibold pl-2">
             <Image
                   src='/logo.png'
                           alt={t('common.app.title')}
@@ -179,13 +190,13 @@ export function Navigation() {
                           height='50'
                           className="rounded-lg object-cover w-10 h-10 md:w-12 md:h-12"
                         />
-          </Link>
+          </GuardedLink>
           {user && (
             <nav className="hidden md:flex items-center gap-6 mx-6">
               {routes.map((route) => {
                 const Icon = route.icon;
                 return (
-                  <Link
+                  <GuardedLink
                     key={route.href}
                     href={route.href}
                     className={cn(
@@ -197,7 +208,7 @@ export function Navigation() {
                   >
                     <Icon className="h-5 w-5" />
                     {route.label}
-                  </Link>
+                  </GuardedLink>
                 );
               })}
             </nav>
@@ -209,7 +220,7 @@ export function Navigation() {
           <LanguageSwitcher />
           <ThemeToggle />
           {user && (
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="px-2 md:px-3 text-xs md:text-sm">
+            <Button variant="ghost" size="sm" onClick={() => void handleSignOut()} className="px-2 md:px-3 text-xs md:text-sm">
               <LogOut className="h-4 w-4 mr-1 md:mr-2" />
               <span>{t('actions.signOut')}</span>
             </Button>
@@ -227,6 +238,7 @@ export function Navigation() {
             <AlertDialogAction
               onClick={() => {
                 setConfirmSignOut(false);
+                allowNextUnload();
                 void signOut();
               }}
             >

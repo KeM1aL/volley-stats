@@ -4,7 +4,7 @@ import { live, rows } from "./query";
 export type ReportAccess = "allowed" | "match-not-found" | "team-not-in-match" | "forbidden";
 
 /**
- * Whether `userId` may export the report of `matchId` analysed for `teamId`: a member of the team,
+ * Whether `userId` may export the report of `matchId` analysed for `teamId`: a member of the team (not archived),
  * its creator, or an owner/admin of its club. Runs with the caller's own client, before any match data is read.
  */
 export async function checkReportAccess(supabase: SupabaseClient, userId: string, matchId: string, teamId: string): Promise<ReportAccess> {
@@ -12,7 +12,9 @@ export async function checkReportAccess(supabase: SupabaseClient, userId: string
   if (!match) return "match-not-found";
   if (teamId !== match.home_team_id && teamId !== match.away_team_id) return "team-not-in-match";
 
-  const memberships = live(await rows(supabase.from("team_members").select("id, _deleted").eq("team_id", teamId).eq("user_id", userId)));
+  const memberships = live(
+    await rows(supabase.from("team_members").select("id, _deleted, archived_at").eq("team_id", teamId).eq("user_id", userId))
+  ).filter((member) => !member.archived_at);
   if (memberships.length > 0) return "allowed";
 
   const team = live(await rows(supabase.from("teams").select("id, user_id, club_id, _deleted").eq("id", teamId)))[0];
