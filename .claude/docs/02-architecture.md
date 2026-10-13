@@ -77,7 +77,8 @@ volley-stats/
 │   │   └── [id]/stats/          # Match statistics
 │   ├── settings/                 # User settings
 │   ├── teams/                    # Team management
-│   └── api/import/ffvb/          # FFVB match import route
+│   ├── api/import/ffvb/          # FFVB match import route
+│   └── api/v1/matches/[id]/report/  # Match PDF report (server)
 │
 ├── components/                   # React components (feature-based)
 │   ├── auth/                     # Authentication UI
@@ -89,6 +90,7 @@ volley-stats/
 │   ├── players/                  # Player management
 │   ├── providers/                # Context providers
 │   │   └── local-database-provider.tsx  # RxDB provider + useLocalDb()
+│   ├── report-pdf/               # @react-pdf/renderer report document
 │   ├── teams/                    # Team components
 │   └── ui/                       # Shadcn/ui components
 │
@@ -122,7 +124,7 @@ volley-stats/
 │   │   └── match-commands.ts    # SetSetup, Substitution, PlayerStat, ScorePoint commands
 │   ├── i18n/                     # next-intl helpers
 │   ├── importers/                # Data import utilities (FFVB)
-│   ├── pdf/                      # PDF export types (jsPDF)
+│   ├── report/                   # Match PDF report: metrics, model, loading, access
 │   ├── rxdb/                     # RxDB configuration
 │   │   ├── sync/
 │   │   │   ├── manager.ts           # SyncManager: user, tracked matches, scorer claim, resume

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useImperativeHandle, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Card,
@@ -56,7 +56,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PdfExportHandle } from "@/lib/pdf/types";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface TeamPerformanceProps {
@@ -66,634 +65,533 @@ interface TeamPerformanceProps {
   points: ScorePoint[];
   stats: PlayerStat[];
   players: TeamMember[];
-  isPdfGenerating?: boolean;
 }
 
-const TeamPerformance = React.forwardRef<
-  PdfExportHandle,
-  TeamPerformanceProps
->(
-  (
-    { match, sets, points, managedTeam, stats, players, isPdfGenerating },
-    ref
-  ) => {
-    const t = useTranslations("matches");
-    const [selectedPlayer, setSelectedPlayer] = useState<string>(players[0].id);
-    const [selectedSet, setSelectedSet] = useState<string>("all");
-    const [selectedTab, setSelectedTab] = useState("positions");
-    const teamPerformanceRef = useRef<HTMLDivElement>(null);
-    const teamId = managedTeam.id;
-    const [pdfRenderTrigger, setPdfRenderTrigger] = useState(0);
+function TeamPerformance({ match, sets, points, managedTeam, stats, players }: TeamPerformanceProps) {
+  const t = useTranslations("matches");
+  const [selectedPlayer, setSelectedPlayer] = useState<string>(players[0].id);
+  const [selectedSet, setSelectedSet] = useState<string>("all");
+  const [selectedTab, setSelectedTab] = useState("positions");
+  const teamId = managedTeam.id;
 
-    const waitForContentToRender = () => {
-      return new Promise((resolve) => {
-        const checkContent = () => {
-          if (teamPerformanceRef.current) {
-            resolve(null);
-          } else {
-            setTimeout(checkContent, 100);
-          }
-        };
-        checkContent();
-      });
-    };
+  // Calculate all statistics
+  const positionStats = calculatePositionStats(
+    stats,
+    points,
+    teamId,
+    selectedPlayer ? selectedPlayer : players[0].id,
+    selectedSet === "all" ? undefined : selectedSet
+  );
+  const { patterns, rotationStats } = analyzeScoringPatterns(
+    points,
+    sets,
+    teamId,
+    selectedPlayer ? selectedPlayer : players[0].id,
+    selectedSet === "all" ? undefined : selectedSet
+  );
+  const defensiveStats = analyzeDefensiveVulnerabilities(
+    points,
+    teamId,
+    selectedPlayer ? selectedPlayer : players[0].id,
+    selectedSet === "all" ? undefined : selectedSet
+  );
+  const tacticalInsights = generateTacticalInsights(
+    positionStats,
+    defensiveStats,
+    rotationStats
+  );
 
-    useImperativeHandle(ref, () => ({
-      generatePdfContent: async (doc, initialYOffset, allSets, tabTitle) => {
-        let currentYOffset = initialYOffset;
-        const margin = 20;
-        const imgWidth = 595 - 2 * margin;
-        let isFirstPage = true;
+  // Analyze streaks
+  const streakAnalysis = analyzeStreaks(
+    points,
+    sets,
+    teamId,
+    selectedPlayer ? selectedPlayer : players[0].id,
+    selectedSet === "all" ? undefined : selectedSet
+  );
 
-        const tabIds = ["positions", "streaks", "patterns", "defense", "insights"];
-        const tabNames = {
-          positions: "Position Analysis",
-          streaks: "Streak Analysis",
-          patterns: "Scoring Patterns",
-          defense: "Defensive Analysis",
-          insights: "Tactical Insights",
-        };
+  const streakDistributionData = Object.entries(
+    streakAnalysis.winning.distribution
+  ).map(([position, count]) => ({
+    position,
+    winning: count,
+    losing: streakAnalysis.losing.distribution[position as PlayerPosition],
+  }));
 
-        // Only export "All Sets" view, not each individual set
-        setSelectedSet("all");
-
-        for (const tabId of tabIds) {
-          setSelectedTab(tabId);
-          setPdfRenderTrigger((prev) => prev + 1);
-
-          await waitForContentToRender();
-          await new Promise((resolve) => setTimeout(resolve, 300));
-
-          // Only add page after first content
-          if (!isFirstPage) {
-            doc.addPage();
-          }
-          isFirstPage = false;
-          currentYOffset = margin;
-
-          doc.setFontSize(16);
-          doc.text(
-            `${tabTitle} - ${tabNames[tabId as keyof typeof tabNames]}`,
-            margin,
-            currentYOffset
-          );
-          currentYOffset += 20;
-
-          if (teamPerformanceRef.current) {
-            const html2canvas = (await import("html2canvas-pro")).default;
-            const canvas = await html2canvas(teamPerformanceRef.current, {
-              scale: 1.5,
-              useCORS: true,
-              logging: false,
-            });
-            const imgData = canvas.toDataURL("image/jpeg", 0.6);
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            if (
-              currentYOffset + imgHeight >
-              doc.internal.pageSize.height - margin
-            ) {
-              doc.addPage();
-              currentYOffset = margin;
-            }
-            doc.addImage(
-              imgData,
-              "JPEG",
-              margin,
-              currentYOffset,
-              imgWidth,
-              imgHeight
-            );
-            currentYOffset += imgHeight + margin;
-          } else {
-            console.warn(
-              `Team Performance content element not found for PDF export.`
-            );
-          }
-        }
-        return currentYOffset;
-      },
-    }));
-
-    // Calculate all statistics
-    const positionStats = calculatePositionStats(
-      stats,
-      points,
-      teamId,
-      selectedPlayer ? selectedPlayer : players[0].id,
-      selectedSet === "all" ? undefined : selectedSet
-    );
-    const { patterns, rotationStats } = analyzeScoringPatterns(
-      points,
-      sets,
-      teamId,
-      selectedPlayer ? selectedPlayer : players[0].id,
-      selectedSet === "all" ? undefined : selectedSet
-    );
-    const defensiveStats = analyzeDefensiveVulnerabilities(
-      points,
-      teamId,
-      selectedPlayer ? selectedPlayer : players[0].id,
-      selectedSet === "all" ? undefined : selectedSet
-    );
-    const tacticalInsights = generateTacticalInsights(
-      positionStats,
-      defensiveStats,
-      rotationStats
-    );
-
-    // Analyze streaks
-    const streakAnalysis = analyzeStreaks(
-      points,
-      sets,
-      teamId,
-      selectedPlayer ? selectedPlayer : players[0].id,
-      selectedSet === "all" ? undefined : selectedSet
-    );
-
-    const streakDistributionData = Object.entries(
-      streakAnalysis.winning.distribution
-    ).map(([position, count]) => ({
+  // Transform data for charts
+  const positionPerformanceData = Object.entries(positionStats).map(
+    ([position, stats]) => ({
       position,
-      winning: count,
-      losing: streakAnalysis.losing.distribution[position as PlayerPosition],
-    }));
+      scored: stats.pointsScored,
+      conceded: stats.pointsConceded,
+      distribution: Object.entries(stats.attackDistribution).map(
+        ([spikePosition, spikes]) => ({
+          spikePosition,
+          ratio: (spikes / stats.attackSuccess) * 100 || 0,
+        })
+      ),
+    })
+  );
 
-    // Transform data for charts
-    const positionPerformanceData = Object.entries(positionStats).map(
-      ([position, stats]) => ({
-        position,
-        scored: stats.pointsScored,
-        conceded: stats.pointsConceded,
-        distribution: Object.entries(stats.attackDistribution).map(
-          ([spikePosition, spikes]) => ({
-            spikePosition,
-            ratio: (spikes / stats.attackSuccess) * 100 || 0,
-          })
-        ),
-      })
-    );
+  const scoringPatternsData = Object.entries(rotationStats).map(
+    ([position, stats]) => ({
+      position,
+      points: stats.points,
+      sequences: stats.sequences,
+    })
+  );
 
-    const scoringPatternsData = Object.entries(rotationStats).map(
-      ([position, stats]) => ({
-        position,
-        points: stats.points,
-        sequences: stats.sequences,
-      })
-    );
+  const defensiveData = Object.entries(defensiveStats).map(
+    ([position, stats]) => ({
+      position,
+      conceded: stats.pointsConceded,
+      maxStreak: stats.maxConsecutiveLosses,
+    })
+  );
 
-    const defensiveData = Object.entries(defensiveStats).map(
-      ([position, stats]) => ({
-        position,
-        conceded: stats.pointsConceded,
-        maxStreak: stats.maxConsecutiveLosses,
-      })
-    );
+  const COLORS = [
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
+  ];
 
-    const COLORS = [
-      "hsl(var(--chart-1))",
-      "hsl(var(--chart-2))",
-      "hsl(var(--chart-3))",
-      "hsl(var(--chart-4))",
-      "hsl(var(--chart-5))",
-    ];
-
-    return (
-      <Card ref={teamPerformanceRef} id="team-section-content">
-        <CardHeader>
-          <CardTitle>{t("stats.teamPerformance")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs
-            value={selectedTab}
-            onValueChange={setSelectedTab}
-            className="space-y-4"
-          >
-            <TabsList>
-              <TabsTrigger value="positions">{t("stats.positionAnalysis")}</TabsTrigger>
-              <TabsTrigger value="streaks">{t("stats.streakAnalysis")}</TabsTrigger>
-              <TabsTrigger value="patterns">{t("stats.scoringPatterns")}</TabsTrigger>
-              <TabsTrigger value="defense">{t("stats.defensiveAnalysis")}</TabsTrigger>
-              <TabsTrigger value="insights">{t("stats.tacticalInsights")}</TabsTrigger>
-            </TabsList>
-            <div className="space-y-4">
-              <div className="inline-flex space-x-2 pdf-hide">
-                <Select
-                  value={selectedPlayer || undefined}
-                  onValueChange={setSelectedPlayer}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder={t("stats.selectPlayer")} />
-                  </SelectTrigger>
-                  <SelectContent defaultValue={players[0].id}>
-                    {players.map((player) => (
-                      <SelectItem key={player.id} value={player.id}>
-                        #{player.number} {player.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="inline-flex">
-                  <Button
-                    variant={selectedSet === "all" ? "default" : "outline"}
-                    onClick={() => setSelectedSet("all")}
-                    className="rounded-r-none"
-                  >
-                    {t("stats.allSetsOverview")}
-                  </Button>
-                  {sets.map((set, index) => (
-                    <Button
-                      variant={selectedSet === set.id ? "default" : "outline"}
-                      key={set.id}
-                      onClick={() => setSelectedSet(set.id)}
-                      className={`
-                        ${index === sets.length - 1 ? "rounded-l-none" : ""}
-                        ${
-                          index >= 0 && index < sets.length - 1
-                            ? "rounded-none border-x-0"
-                            : ""
-                        }
-                      `}
-                    >
-                      {t("stats.setLabel")} {set.set_number}
-                    </Button>
+  return (
+    <Card id="team-section-content">
+      <CardHeader>
+        <CardTitle>{t("stats.teamPerformance")}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs
+          value={selectedTab}
+          onValueChange={setSelectedTab}
+          className="space-y-4"
+        >
+          <TabsList>
+            <TabsTrigger value="positions">{t("stats.positionAnalysis")}</TabsTrigger>
+            <TabsTrigger value="streaks">{t("stats.streakAnalysis")}</TabsTrigger>
+            <TabsTrigger value="patterns">{t("stats.scoringPatterns")}</TabsTrigger>
+            <TabsTrigger value="defense">{t("stats.defensiveAnalysis")}</TabsTrigger>
+            <TabsTrigger value="insights">{t("stats.tacticalInsights")}</TabsTrigger>
+          </TabsList>
+          <div className="space-y-4">
+            <div className="inline-flex space-x-2 pdf-hide">
+              <Select
+                value={selectedPlayer || undefined}
+                onValueChange={setSelectedPlayer}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder={t("stats.selectPlayer")} />
+                </SelectTrigger>
+                <SelectContent defaultValue={players[0].id}>
+                  {players.map((player) => (
+                    <SelectItem key={player.id} value={player.id}>
+                      #{player.number} {player.name}
+                    </SelectItem>
                   ))}
-                </div>
+                </SelectContent>
+              </Select>
+
+              <div className="inline-flex">
+                <Button
+                  variant={selectedSet === "all" ? "default" : "outline"}
+                  onClick={() => setSelectedSet("all")}
+                  className="rounded-r-none"
+                >
+                  {t("stats.allSetsOverview")}
+                </Button>
+                {sets.map((set, index) => (
+                  <Button
+                    variant={selectedSet === set.id ? "default" : "outline"}
+                    key={set.id}
+                    onClick={() => setSelectedSet(set.id)}
+                    className={`
+                      ${index === sets.length - 1 ? "rounded-l-none" : ""}
+                      ${
+                        index >= 0 && index < sets.length - 1
+                          ? "rounded-none border-x-0"
+                          : ""
+                      }
+                    `}
+                  >
+                    {t("stats.setLabel")} {set.set_number}
+                  </Button>
+                ))}
               </div>
-              <TabsContent value="positions">
-                <div className="grid gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{t("stats.positionPerformance")}</CardTitle>
-                      <CardDescription>
-                        {t("stats.pointsScoredbyConcededByPosition")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={positionPerformanceData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="position" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar
-                            dataKey="scored"
+            </div>
+            <TabsContent value="positions">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("stats.positionPerformance")}</CardTitle>
+                    <CardDescription>
+                      {t("stats.pointsScoredbyConcededByPosition")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={positionPerformanceData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="position" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="scored"
+                          fill={COLORS[0]}
+                          name="Points Scored"
+                        />
+                        <Bar
+                          dataKey="conceded"
+                          fill={COLORS[1]}
+                          name="Points Conceded"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("stats.attackDistribution")}</CardTitle>
+                    <CardDescription>
+                      {t("stats.successSpikedByPosition")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[800px] grid grid-cols-3 gap-4">
+                    {positionPerformanceData.map((data, i) => (
+                      <ResponsiveContainer key={i} width="100%" height="100%">
+                        <RadarChart data={data.distribution}>
+                          <PolarGrid />
+                          <PolarAngleAxis dataKey="spikePosition" />
+                          <PolarRadiusAxis domain={[0, 100]} />
+                          <Radar
+                            name={`Player ${data.position.toUpperCase()}`}
+                            dataKey="ratio"
+                            stroke={COLORS[0]}
                             fill={COLORS[0]}
-                            name="Points Scored"
+                            fillOpacity={0.6}
                           />
-                          <Bar
-                            dataKey="conceded"
-                            fill={COLORS[1]}
-                            name="Points Conceded"
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{t("stats.attackDistribution")}</CardTitle>
-                      <CardDescription>
-                        {t("stats.successSpikedByPosition")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className={`${isPdfGenerating ? "h-[400px]" : "h-[800px]"} grid grid-cols-3 gap-4`}>
-                      {positionPerformanceData.map((data, i) => (
-                        <ResponsiveContainer key={i} width="100%" height="100%">
-                          <RadarChart data={data.distribution}>
-                            <PolarGrid />
-                            <PolarAngleAxis dataKey="spikePosition" />
-                            <PolarRadiusAxis domain={[0, 100]} />
-                            <Radar
-                              name={`Player ${data.position.toUpperCase()}`}
-                              dataKey="ratio"
-                              stroke={COLORS[0]}
-                              fill={COLORS[0]}
-                              fillOpacity={0.6}
-                            />
-                            <Legend />
-                          </RadarChart>
-                        </ResponsiveContainer>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="streaks">
-                <div className="grid gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{t("stats.streakDistribution")}</CardTitle>
-                      <CardDescription>
-                        Winning and losing streaks by position
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={streakDistributionData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="position" />
-                          <YAxis />
-                          <Tooltip />
                           <Legend />
-                          <Bar
-                            dataKey="winning"
-                            fill={COLORS[0]}
-                            name="Winning Streaks"
-                          />
-                          <Bar
-                            dataKey="losing"
-                            fill={COLORS[1]}
-                            name="Losing Streaks"
-                          />
-                        </BarChart>
+                        </RadarChart>
                       </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-                  <div className="grid grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>{t("stats.winningStreakAnalysis")}</CardTitle>
-                        <CardDescription>
-                          Average Length:{" "}
-                          {streakAnalysis.winning.averageLength.toFixed(1)}{" "}
-                          points
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {streakAnalysis.winning.streaks
-                            .slice(0, 5)
-                            .map((streak, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-4 border rounded-lg"
-                              >
-                                <div>
-                                  <p className="font-medium">
-                                    Position {streak.position}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Set {streak.setNumber}
-                                  </p>
-                                </div>
-                                <Badge variant="default">
-                                  {streak.length} points
-                                </Badge>
-                              </div>
-                            ))}
-                        </div>
-                      </CardContent>
-                    </Card>
+            <TabsContent value="streaks">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("stats.streakDistribution")}</CardTitle>
+                    <CardDescription>
+                      Winning and losing streaks by position
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={streakDistributionData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="position" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="winning"
+                          fill={COLORS[0]}
+                          name="Winning Streaks"
+                        />
+                        <Bar
+                          dataKey="losing"
+                          fill={COLORS[1]}
+                          name="Losing Streaks"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>{t("stats.losingStreakAnalysis")}</CardTitle>
-                        <CardDescription>
-                          Average Length:{" "}
-                          {streakAnalysis.losing.averageLength.toFixed(1)}{" "}
-                          points
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {streakAnalysis.losing.streaks
-                            .slice(0, 5)
-                            .map((streak, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-4 border rounded-lg"
-                              >
-                                <div>
-                                  <p className="font-medium">
-                                    Position {streak.position}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Set {streak.setNumber}
-                                  </p>
-                                </div>
-                                <Badge variant="destructive">
-                                  {streak.length} points
-                                </Badge>
-                              </div>
-                            ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="patterns">
-                <div className="grid gap-6">
+                <div className="grid grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>{t("stats.scoringSequences")}</CardTitle>
+                      <CardTitle>{t("stats.winningStreakAnalysis")}</CardTitle>
                       <CardDescription>
-                        Points and successful sequences by rotation
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={scoringPatternsData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="position" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar
-                            dataKey="points"
-                            fill={COLORS[0]}
-                            name="Total Points"
-                          />
-                          <Bar
-                            dataKey="sequences"
-                            fill={COLORS[1]}
-                            name="Scoring Sequences"
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{t("stats.notableScoringRuns")}</CardTitle>
-                      <CardDescription>
-                        Sequences of 3+ consecutive points
+                        Average Length:{" "}
+                        {streakAnalysis.winning.averageLength.toFixed(1)}{" "}
+                        points
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {patterns.map((pattern, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-4 border rounded-lg"
-                          >
-                            <div>
-                              <p className="font-medium">
-                                Position {pattern.position}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Set {pattern.setNumber}
-                              </p>
-                            </div>
-                            <Badge variant="secondary">
-                              {pattern.length} consecutive points
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="defense">
-                <div className="grid gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{t("stats.defensiveVulnerabilities")}</CardTitle>
-                      <CardDescription>
-                        Points conceded and longest losing streaks by position
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={defensiveData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="position" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar
-                            dataKey="conceded"
-                            fill={COLORS[0]}
-                            name="Points Conceded"
-                          />
-                          <Bar
-                            dataKey="maxStreak"
-                            fill={COLORS[1]}
-                            name="Max Consecutive Losses"
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{t("stats.attackPatternAnalysis")}</CardTitle>
-                      <CardDescription>
-                        Opponent's successful attack distributions
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
-                        {Object.entries(defensiveStats).map(
-                          ([position, stats]) => (
+                        {streakAnalysis.winning.streaks
+                          .slice(0, 5)
+                          .map((streak, index) => (
                             <div
-                              key={position}
-                              className="p-4 border rounded-lg"
+                              key={index}
+                              className="flex items-center justify-between p-4 border rounded-lg"
                             >
-                              <h4 className="font-medium mb-2">
-                                Position {position}
-                              </h4>
-                              <div className="space-y-2">
-                                <p className="text-sm">
-                                  Points Conceded: {stats.pointsConceded}
+                              <div>
+                                <p className="font-medium">
+                                  Position {streak.position}
                                 </p>
-                                <p className="text-sm">
-                                  Max Consecutive Losses:{" "}
-                                  {stats.maxConsecutiveLosses}
+                                <p className="text-sm text-muted-foreground">
+                                  Set {streak.setNumber}
                                 </p>
                               </div>
+                              <Badge variant="default">
+                                {streak.length} points
+                              </Badge>
                             </div>
-                          )
-                        )}
+                          ))}
                       </div>
                     </CardContent>
                   </Card>
-                </div>
-              </TabsContent>
 
-              <TabsContent value="insights">
-                <div className="grid gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>{t("stats.keyFindings")}</CardTitle>
+                      <CardTitle>{t("stats.losingStreakAnalysis")}</CardTitle>
                       <CardDescription>
-                        Strategic analysis and recommendations
+                        Average Length:{" "}
+                        {streakAnalysis.losing.averageLength.toFixed(1)}{" "}
+                        points
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 border rounded-lg">
-                            <h4 className="font-medium mb-2">
-                              Strongest Rotation
-                            </h4>
-                            <Badge variant="default">
-                              Position {tacticalInsights.strongestRotation}
-                            </Badge>
-                          </div>
-                          <div className="p-4 border rounded-lg">
-                            <h4 className="font-medium mb-2">
-                              Weakest Rotation
-                            </h4>
-                            <Badge variant="destructive">
-                              Position {tacticalInsights.weakestRotation}
-                            </Badge>
-                          </div>
-                          <div className="p-4 border rounded-lg">
-                            <h4 className="font-medium mb-2">
-                              Best Attack Position
-                            </h4>
-                            <Badge variant="default">
-                              Position {tacticalInsights.bestAttackPosition}
-                            </Badge>
-                          </div>
-                          <div className="p-4 border rounded-lg">
-                            <h4 className="font-medium mb-2">
-                              Most Vulnerable Position
-                            </h4>
-                            <Badge variant="destructive">
-                              Position {tacticalInsights.mostVulnerablePosition}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="font-medium">
-                            Tactical Recommendations
-                          </h4>
-                          <ul className="space-y-2">
-                            {tacticalInsights.recommendations.map(
-                              (recommendation, index) => (
-                                <li key={index} className="text-sm">
-                                  • {recommendation}
-                                </li>
-                              )
-                            )}
-                          </ul>
-                        </div>
+                      <div className="space-y-4">
+                        {streakAnalysis.losing.streaks
+                          .slice(0, 5)
+                          .map((streak, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-4 border rounded-lg"
+                            >
+                              <div>
+                                <p className="font-medium">
+                                  Position {streak.position}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Set {streak.setNumber}
+                                </p>
+                              </div>
+                              <Badge variant="destructive">
+                                {streak.length} points
+                              </Badge>
+                            </div>
+                          ))}
                       </div>
                     </CardContent>
                   </Card>
                 </div>
-              </TabsContent>
-            </div>
-          </Tabs>
-        </CardContent>
-      </Card>
-    );
-  }
-);
+              </div>
+            </TabsContent>
+
+            <TabsContent value="patterns">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("stats.scoringSequences")}</CardTitle>
+                    <CardDescription>
+                      Points and successful sequences by rotation
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={scoringPatternsData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="position" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="points"
+                          fill={COLORS[0]}
+                          name="Total Points"
+                        />
+                        <Bar
+                          dataKey="sequences"
+                          fill={COLORS[1]}
+                          name="Scoring Sequences"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("stats.notableScoringRuns")}</CardTitle>
+                    <CardDescription>
+                      Sequences of 3+ consecutive points
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {patterns.map((pattern, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
+                          <div>
+                            <p className="font-medium">
+                              Position {pattern.position}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Set {pattern.setNumber}
+                            </p>
+                          </div>
+                          <Badge variant="secondary">
+                            {pattern.length} consecutive points
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="defense">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("stats.defensiveVulnerabilities")}</CardTitle>
+                    <CardDescription>
+                      Points conceded and longest losing streaks by position
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={defensiveData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="position" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="conceded"
+                          fill={COLORS[0]}
+                          name="Points Conceded"
+                        />
+                        <Bar
+                          dataKey="maxStreak"
+                          fill={COLORS[1]}
+                          name="Max Consecutive Losses"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("stats.attackPatternAnalysis")}</CardTitle>
+                    <CardDescription>
+                      Opponent's successful attack distributions
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      {Object.entries(defensiveStats).map(
+                        ([position, stats]) => (
+                          <div
+                            key={position}
+                            className="p-4 border rounded-lg"
+                          >
+                            <h4 className="font-medium mb-2">
+                              Position {position}
+                            </h4>
+                            <div className="space-y-2">
+                              <p className="text-sm">
+                                Points Conceded: {stats.pointsConceded}
+                              </p>
+                              <p className="text-sm">
+                                Max Consecutive Losses:{" "}
+                                {stats.maxConsecutiveLosses}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="insights">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("stats.keyFindings")}</CardTitle>
+                    <CardDescription>
+                      Strategic analysis and recommendations
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 border rounded-lg">
+                          <h4 className="font-medium mb-2">
+                            Strongest Rotation
+                          </h4>
+                          <Badge variant="default">
+                            Position {tacticalInsights.strongestRotation}
+                          </Badge>
+                        </div>
+                        <div className="p-4 border rounded-lg">
+                          <h4 className="font-medium mb-2">
+                            Weakest Rotation
+                          </h4>
+                          <Badge variant="destructive">
+                            Position {tacticalInsights.weakestRotation}
+                          </Badge>
+                        </div>
+                        <div className="p-4 border rounded-lg">
+                          <h4 className="font-medium mb-2">
+                            Best Attack Position
+                          </h4>
+                          <Badge variant="default">
+                            Position {tacticalInsights.bestAttackPosition}
+                          </Badge>
+                        </div>
+                        <div className="p-4 border rounded-lg">
+                          <h4 className="font-medium mb-2">
+                            Most Vulnerable Position
+                          </h4>
+                          <Badge variant="destructive">
+                            Position {tacticalInsights.mostVulnerablePosition}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h4 className="font-medium">
+                          Tactical Recommendations
+                        </h4>
+                        <ul className="space-y-2">
+                          {tacticalInsights.recommendations.map(
+                            (recommendation, index) => (
+                              <li key={index} className="text-sm">
+                                • {recommendation}
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
 
 TeamPerformance.displayName = "TeamPerformance";
 

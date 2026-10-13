@@ -317,7 +317,6 @@
     "pointsScored": "Punti Segnati",
     "pointsConceded": "Punti Concessi",
     "positionAnalysis": "Analisi Posizione",
-    "pdfGenerationCancelled": "Generazione PDF Annullata",
     "pdfGenerationFailed": "Generazione PDF Non Riuscita",
     "matchStats": "Statistiche Partita",
     "mvpAnalysis": "Analisi MVP Partita",
@@ -326,7 +325,6 @@
     "detailedStats": "Statistiche Dettagliate",
     "positionsStats": "Statistiche Posizioni",
     "overallPerformance": "Prestazioni Generali",
-    "scoreProgression": "Progressione del Punteggio",
     "scoreProgressionDesc": "Evoluzione del punteggio punto per punto",
     "scoreDifference": "Differenza di Punteggio",
     "scoreDifferenceDesc": "Differenziale di punti nel tempo",
@@ -355,9 +353,7 @@
       "players": "Prestazioni Giocatore",
       "team": "Prestazioni Squadra"
     },
-    "errors": {
-      "pdfCancelled": "Annullato"
-    }
+    "errors": {}
   },
   "score": {
     "title": "Punteggio Partita in Corso",
@@ -379,18 +375,15 @@
     }
   },
   "pdf": {
-    "steps": {
-      "overview": "Panoramica Partita",
-      "scores": "Progressione del Punteggio",
-      "sets": "Analisi dei Set",
-      "players": "Prestazioni Giocatore",
-      "team": "Prestazioni Squadra"
-    },
     "success": "PDF Generato!",
     "successDesc": "Il tuo PDF delle statistiche della partita è stato scaricato.",
     "failed": "Generazione PDF Non Riuscita",
     "failedDesc": "Si è verificato un errore durante la generazione del PDF.",
-    "cancelled": "La generazione del PDF è stata annullata."
+    "export": "Esporta PDF",
+    "exporting": "Preparazione del PDF…",
+    "unavailableOffline": "Il PDF richiede una connessione.",
+    "unavailableUnsent": "Alcune modifiche a questa partita non sono ancora state inviate. Il PDF sarà disponibile dopo l’invio.",
+    "unavailableNoRallies": "Nessuno scambio registrato finora."
   },
   "history": {
     "noMatchesFound": "Nessuna partita trovata",

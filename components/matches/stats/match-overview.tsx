@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import React, { useState, useRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type {
   Match,
@@ -13,7 +12,6 @@ import type {
 } from "@/lib/types";
 import { MatchScoreDetails } from "@/components/matches/match-score-details";
 import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
-import { PdfExportHandle } from "@/lib/pdf/types";
 
 interface MatchOverviewProps {
   match: Match;
@@ -23,111 +21,59 @@ interface MatchOverviewProps {
   stats: PlayerStat[];
   sets: Set[];
   players: TeamMember[];
-  isPdfGenerating?: boolean;
 }
 
-const MatchOverview = React.forwardRef<PdfExportHandle, MatchOverviewProps>(
-  (
-    {
-      match,
-      managedTeam,
-      opponentTeam,
-      points,
-      stats,
-      sets,
-      players,
-      isPdfGenerating,
-    },
-    ref
-  ) => {
-    const t = useTranslations("matches");
-    const overviewRef = useRef<HTMLDivElement>(null);
+function MatchOverview({ match, managedTeam, opponentTeam, points, stats, sets, players }: MatchOverviewProps) {
+  const t = useTranslations("matches");
 
-    useImperativeHandle(ref, () => ({
-      generatePdfContent: async (doc, initialYOffset, allSets, tabTitle) => {
-        let currentYOffset = initialYOffset;
-        const margin = 20;
-        const imgWidth = 595 - 2 * margin; // A4 width (595pt) - 2 * margin
+  return (
+    <div id="overview-section-content">
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("stats.matchOverview")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full">
+              <MatchScoreDetails
+                match={match}
+                sets={sets}
+                homeTeam={
+                  match.home_team_id === managedTeam?.id
+                    ? managedTeam!
+                    : opponentTeam!
+                }
+                awayTeam={
+                  match.away_team_id === managedTeam?.id
+                    ? managedTeam!
+                    : opponentTeam!
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-          currentYOffset = margin;
-          doc.setFontSize(16);
-          currentYOffset += 60;
-
-          if (overviewRef.current) {
-            const html2canvas = (await import("html2canvas-pro")).default;
-            const canvas = await html2canvas(overviewRef.current, {
-              scale: 1.5,
-              useCORS: true,
-              logging: false,
-            });
-            const imgData = canvas.toDataURL("image/jpeg", 0.6);
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            if (currentYOffset + imgHeight > doc.internal.pageSize.height - margin) {
-              doc.addPage();
-              currentYOffset = margin;
-            }
-            doc.addImage(imgData, "JPEG", margin, currentYOffset, imgWidth, imgHeight);
-            currentYOffset += imgHeight + margin;
-          } else {
-            console.warn(`Overview content element not found for PDF export.`);
-          }
-        
-        return currentYOffset;
-      },
-    }));
-
-    return (
-      <div ref={overviewRef} id="overview-section-content">
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("stats.matchOverview")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="w-full">
-                <MatchScoreDetails
-                  match={match}
-                  sets={sets}
-                  homeTeam={
-                    match.home_team_id === managedTeam?.id
-                      ? managedTeam!
-                      : opponentTeam!
-                  }
-                  awayTeam={
-                    match.away_team_id === managedTeam?.id
-                      ? managedTeam!
-                      : opponentTeam!
-                  }
-                  isPdfGenerating={isPdfGenerating}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("stats.scoreProgression")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p>{t("stats.totalSets")}: {sets.length}</p>
-                <p>{t("stats.totalPoints")}: {points.length}</p>
-                <p>{t("stats.duration")}: {sets.length * 25} {t("stats.minutes")}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        <MVPAnalysis
-          sets={sets}
-          stats={stats}
-          players={players}
-          isPdfGenerating={isPdfGenerating}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("stats.scoreProgression")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p>{t("stats.totalSets")}: {sets.length}</p>
+              <p>{t("stats.totalPoints")}: {points.length}</p>
+              <p>{t("stats.duration")}: {sets.length * 25} {t("stats.minutes")}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    );
-  }
-);
+      <MVPAnalysis
+        sets={sets}
+        stats={stats}
+        players={players}
+      />
+    </div>
+  );
+}
 
 MatchOverview.displayName = "MatchOverview";
 

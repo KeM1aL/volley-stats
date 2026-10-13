@@ -5,7 +5,7 @@
  * 7.2  Navigate directly to the stats page (URL includes ?team= param)
  * 7.3  Verify page heading and basic structure
  * 7.4  Verify player stats are visible (via Players tab)
- * 7.5  Verify Export PDF button is in the DOM (hidden at 768px by CSS)
+ * 7.5  Export the report PDF; the route refuses callers without a session
  */
 
 import { test, expect } from '@playwright/test';
@@ -66,17 +66,38 @@ test.describe('Match Statistics', () => {
       ).toBeVisible({ timeout: 10_000 });
     }
 
-    // 7.5 Verify the Export PDF button is attached to the DOM.
-    // The button has className="invisible lg:visible" — at 768px viewport it is
-    // visibility:hidden (Tailwind `invisible`), which removes it from the ARIA tree.
-    // Use a CSS-based locator rather than getByRole() to find it regardless of visibility.
-    const exportPdfButton = page.locator('button').filter({ hasText: /export pdf/i });
-    await expect(exportPdfButton).toBeAttached();
+    // 7.5 The test user created the team, so the report export is offered; it downloads a PDF.
+    const exportPdfButton = page.getByRole('button', { name: /export pdf/i });
+    await expect(exportPdfButton).toBeEnabled({ timeout: 15_000 });
+    const [download] = await Promise.all([page.waitForEvent('download'), exportPdfButton.click()]);
+    expect(download.suggestedFilename()).toMatch(/\.pdf$/);
+    const downloaded = await download.path();
+    expect(fs.readFileSync(downloaded!).subarray(0, 4).toString()).toBe('%PDF');
 
-    // Also verify the Share button is visible (no visibility restriction on it)
-    await expect(
-      page.getByRole('button', { name: /share/i })
-    ).toBeVisible();
+    // Also verify the Share button is visible
+    await expect(page.getByRole('button', { name: /share/i })).toBeVisible();
+  });
+
+  test('signed-out visitors get no export, and the report route refuses them', async ({ browser, playwright, baseURL }) => {
+    const { completedMatchStatsUrl } = loadFixture();
+    expect(completedMatchStatsUrl).toBeTruthy();
+    const statsUrl = new URL(completedMatchStatsUrl!, baseURL);
+    const matchId = statsUrl.pathname.split('/')[2];
+    const teamId = statsUrl.searchParams.get('team');
+
+    // The stats page stays public, without the export button.
+    const visitor = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const visitorPage = await visitor.newPage();
+    await visitorPage.goto(statsUrl.toString());
+    await expect(visitorPage.getByRole('heading', { name: 'Match Statistics', level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(visitorPage.getByRole('button', { name: /export pdf/i })).toHaveCount(0);
+    await visitor.close();
+
+    const anonymous = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
+    const path = `/api/v1/matches/${matchId}/report?team=${teamId}`;
+    expect((await anonymous.get(path, { maxRedirects: 0 })).status()).toBe(401);
+    expect((await anonymous.get(path, { maxRedirects: 0, headers: { Authorization: 'Bearer not-a-token' } })).status()).toBe(401);
+    await anonymous.dispose();
   });
 });
 
@@ -102,7 +123,7 @@ test.describe('Match Statistics — logged out', () => {
 });
 
 test.describe('Match Statistics — PDF export', () => {
-  // Export PDF is only visible from the lg breakpoint.
+  // Desktop viewport.
   test.use({ viewport: { width: 1440, height: 900 } });
 
   test('exports the statistics as a PDF', async ({ page }) => {

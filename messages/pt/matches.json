@@ -317,7 +317,6 @@
     "pointsScored": "Pontos Marcados",
     "pointsConceded": "Pontos Concedidos",
     "positionAnalysis": "Análise de Posição",
-    "pdfGenerationCancelled": "Geração de PDF Cancelada",
     "pdfGenerationFailed": "Geração de PDF Falhou",
     "matchStats": "Estatísticas da Partida",
     "mvpAnalysis": "Análise de MVP da Partida",
@@ -326,7 +325,6 @@
     "detailedStats": "Estatísticas Detalhadas",
     "positionsStats": "Estatísticas de Posições",
     "overallPerformance": "Desempenho Geral",
-    "scoreProgression": "Progressão da Pontuação",
     "scoreProgressionDesc": "Evolução da pontuação ponto a ponto",
     "scoreDifference": "Diferença de Pontuação",
     "scoreDifferenceDesc": "Diferencial de pontos ao longo do tempo",
@@ -355,9 +353,7 @@
       "players": "Desempenho do Jogador",
       "team": "Desempenho do Time"
     },
-    "errors": {
-      "pdfCancelled": "Cancelado"
-    }
+    "errors": {}
   },
   "score": {
     "title": "Pontuação ao Vivo da Partida",
@@ -379,18 +375,15 @@
     }
   },
   "pdf": {
-    "steps": {
-      "overview": "Visão Geral da Partida",
-      "scores": "Progressão da Pontuação",
-      "sets": "Análise dos Jogos",
-      "players": "Desempenho do Jogador",
-      "team": "Desempenho do Time"
-    },
     "success": "PDF Gerado!",
     "successDesc": "Seu PDF de estatísticas da partida foi baixado.",
     "failed": "Geração de PDF Falhou",
     "failedDesc": "Houve um erro ao gerar o PDF.",
-    "cancelled": "A geração do PDF foi cancelada."
+    "export": "Exportar PDF",
+    "exporting": "Preparando o PDF…",
+    "unavailableOffline": "O PDF precisa de conexão.",
+    "unavailableUnsent": "Algumas alterações desta partida ainda não foram enviadas. O PDF ficará disponível depois disso.",
+    "unavailableNoRallies": "Nenhum ponto registrado ainda."
   },
   "history": {
     "noMatchesFound": "Nenhuma partida encontrada",

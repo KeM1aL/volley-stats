@@ -317,7 +317,6 @@
     "pointsScored": "Points Marqués",
     "pointsConceded": "Points Concédés",
     "positionAnalysis": "Analyse de Position",
-    "pdfGenerationCancelled": "Génération de PDF Annulée",
     "pdfGenerationFailed": "Échec de la Génération de PDF",
     "matchStats": "Statistiques du Match",
     "mvpAnalysis": "Analyse du MVP du Match",
@@ -326,7 +325,6 @@
     "detailedStats": "Statistiques Détaillées",
     "positionsStats": "Statistiques de Positions",
     "overallPerformance": "Performance Générale",
-    "scoreProgression": "Progression du Score",
     "scoreProgressionDesc": "Évolution du score point par point",
     "scoreDifference": "Différence de Score",
     "scoreDifferenceDesc": "Écart de points au fil du temps",
@@ -355,9 +353,7 @@
       "players": "Performance du Joueur",
       "team": "Performance de l'Équipe"
     },
-    "errors": {
-      "pdfCancelled": "Annulé"
-    }
+    "errors": {}
   },
   "score": {
     "title": "Score du Match en Direct",
@@ -379,18 +375,15 @@
     }
   },
   "pdf": {
-    "steps": {
-      "overview": "Aperçu du Match",
-      "scores": "Progression du Score",
-      "sets": "Analyse des Sets",
-      "players": "Performance du Joueur",
-      "team": "Performance de l'Équipe"
-    },
     "success": "PDF Généré !",
     "successDesc": "Votre PDF de statistiques du match a été téléchargé.",
     "failed": "Échec de la Génération de PDF",
     "failedDesc": "Une erreur s'est produite lors de la génération du PDF.",
-    "cancelled": "La génération du PDF a été annulée."
+    "export": "Exporter en PDF",
+    "exporting": "Préparation du PDF…",
+    "unavailableOffline": "Le PDF nécessite une connexion.",
+    "unavailableUnsent": "Certaines modifications de ce match ne sont pas encore envoyées. Le PDF sera disponible ensuite.",
+    "unavailableNoRallies": "Aucun échange enregistré pour l’instant."
   },
   "history": {
     "noMatchesFound": "Aucun match trouvé",

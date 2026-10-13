@@ -11,7 +11,6 @@ interface MVPCalculatorProps {
   stats: PlayerStat[];
   players: TeamMember[];
   sets: Set[];
-  isPdfGenerating?: boolean;
 }
 
 const initials = (name: string) =>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,11 +25,10 @@ import { TeamPerformance } from "@/components/matches/stats/team-performance";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { supabase } from "@/lib/supabase/client";
 import { MatchOverview } from "@/components/matches/stats/match-overview";
-import { PdfExportHandle } from "@/lib/pdf/types";
-import {
-  PdfLoadingOverlay,
-  PdfGenerationStep,
-} from "@/components/ui/pdf-loading-overlay";
+import { useAuth } from "@/contexts/auth-context";
+import { useSyncStatus } from "@/hooks/use-sync-status";
+import { canExportForTeam } from "@/lib/report/can-export";
+import { fileNameFromDisposition, saveBlob } from "@/lib/report/download";
 
 export default function MatchStatsPage() {
   const t = useTranslations("matches");
@@ -46,22 +45,10 @@ export default function MatchStatsPage() {
   const [players, setPlayers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-  const [pdfSteps, setPdfSteps] = useState<PdfGenerationStep[]>([
-    { id: "overview", label: t("stats.tabs.overview"), status: "pending" },
-    { id: "scores", label: t("stats.tabs.scores"), status: "pending" },
-    { id: "sets", label: t("stats.tabs.sets"), status: "pending" },
-    { id: "players", label: t("stats.tabs.players"), status: "pending" },
-    { id: "team", label: t("stats.tabs.team"), status: "pending" },
-  ]);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const overviewRef = useRef<PdfExportHandle>(null);
-  const setBreakdownRef = useRef<PdfExportHandle>(null);
-  const playerPerformanceRef = useRef<PdfExportHandle>(null);
-  const scoreProgressionRef = useRef<PdfExportHandle>(null);
-  const teamPerformanceRef = useRef<PdfExportHandle>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const locale = useLocale();
+  const { user } = useAuth();
+  const syncStatus = useSyncStatus();
 
   useEffect(() => {
     const loadData = async () => {
@@ -258,127 +245,20 @@ export default function MatchStatsPage() {
     }
   }, [db, matchId, isOnline, t]);
 
-  const updateStepStatus = (
-    stepId: string,
-    status: PdfGenerationStep["status"]
-  ) => {
-    setPdfSteps((prev) =>
-      prev.map((step) => (step.id === stepId ? { ...step, status } : step))
-    );
-  };
-
-  const resetSteps = () => {
-    setPdfSteps((prev) =>
-      prev.map((step) => ({ ...step, status: "pending" }))
-    );
-    setCurrentStepIndex(0);
-  };
-
-  const cancelPdfGeneration = () => {
-    abortControllerRef.current?.abort();
-    setIsPdfGenerating(false);
-    resetSteps();
-    document.body.removeAttribute("data-pdf-export");
-    toast({
-      title: t("stats.pdfGenerationCancelled"),
-      description: t("pdf.cancelled"),
-    });
-  };
-
-  const exportToPDF = async () => {
-    if (!match || isPdfGenerating) return;
-
-    setIsPdfGenerating(true);
-    resetSteps();
-    abortControllerRef.current = new AbortController();
-
-    // Enable PDF export mode for proper badge styling
-    document.body.setAttribute("data-pdf-export", "true");
-
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF("p", "pt", "a4");
-    const margin = 40;
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    let docTitle = t("stats.matchStats");
-    if (managedTeam && opponentTeam) {
-      docTitle += ` - ${managedTeam.name} vs ${opponentTeam.name}`;
-    }
-    // --- Title Page ---
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(docTitle, pageWidth / 2, 60, { align: "center" });
-
-    doc.setFontSize(12);
-    doc.text(new Date(match.date).toLocaleDateString(), pageWidth / 2, 110, {
-      align: "center",
-    });
-
-    const componentsToExport = [
-      { ref: overviewRef, title: t("pdf.steps.overview"), tab: "overview", stepId: "overview" },
-      { ref: scoreProgressionRef, title: t("pdf.steps.scores"), tab: "scores", stepId: "scores" },
-      { ref: setBreakdownRef, title: t("pdf.steps.sets"), tab: "sets", stepId: "sets" },
-      { ref: playerPerformanceRef, title: t("pdf.steps.players"), tab: "players", stepId: "players" },
-      // { ref: teamPerformanceRef, title: "Team Performance", tab: "team", stepId: "team" },
-    ];
-
-    const initialTab = activeTab;
-    let isFirstComponent = true;
-
+  const exportReport = async () => {
+    if (!managedTeam || isExporting) return;
+    setIsExporting(true);
     try {
-      for (let i = 0; i < componentsToExport.length; i++) {
-        // Check for cancellation
-        if (abortControllerRef.current?.signal.aborted) {
-          throw new Error(t("stats.errors.pdfCancelled"));
-        }
-
-        const { ref, title, tab, stepId } = componentsToExport[i];
-
-        // Update progress
-        setCurrentStepIndex(i);
-        updateStepStatus(stepId, "in-progress");
-
-        setActiveTab(tab);
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        // Add page before each component except the first
-        if (!isFirstComponent) {
-          doc.addPage();
-        }
-        isFirstComponent = false;
-
-        if (ref.current) {
-          await ref.current.generatePdfContent(doc, margin, sets, title);
-        } else {
-          console.warn(
-            `Ref for ${title} not found. Skipping PDF generation for this component.`
-          );
-        }
-
-        updateStepStatus(stepId, "completed");
-      }
-
-      doc.save(`match-stats-${matchId}.pdf`);
-      toast({
-        title: t("pdf.success"),
-        description: t("pdf.successDesc"),
-      });
+      const response = await fetch(`/api/v1/matches/${matchId}/report?team=${encodeURIComponent(managedTeam.id)}&locale=${locale}`);
+      if (!response.ok) throw new Error(`Report request failed with ${response.status}`);
+      const fileName = fileNameFromDisposition(response.headers.get("content-disposition")) ?? `match-report-${matchId}.pdf`;
+      saveBlob(await response.blob(), fileName);
+      toast({ title: t("pdf.success"), description: t("pdf.successDesc") });
     } catch (error) {
-      if ((error as Error).message === "Cancelled") {
-        // Already handled by cancelPdfGeneration
-        return;
-      }
-      console.error("Error generating PDF:", error);
-      toast({
-        variant: "destructive",
-        title: t("pdf.failed"),
-        description: t("pdf.failedDesc"),
-      });
+      console.error("Error exporting the match report:", error);
+      toast({ variant: "destructive", title: t("pdf.failed"), description: t("pdf.failedDesc") });
     } finally {
-      document.body.removeAttribute("data-pdf-export");
-      setIsPdfGenerating(false);
-      setActiveTab(initialTab);
-      abortControllerRef.current = null;
+      setIsExporting(false);
     }
   };
 
@@ -406,14 +286,19 @@ export default function MatchStatsPage() {
     return <div>{t("live.matchNotFound")}</div>;
   }
 
+  const canExport = canExportForTeam(user, managedTeam);
+  const matchSync = syncStatus?.matches.find((summary) => summary.matchId === matchId);
+  const hasUnsent = !!matchSync && matchSync.pending + matchSync.rejected > 0;
+  const exportBlockedReason = !isOnline
+    ? t("pdf.unavailableOffline")
+    : hasUnsent
+      ? t("pdf.unavailableUnsent")
+      : points.length === 0
+        ? t("pdf.unavailableNoRallies")
+        : null;
+
   return (
     <div className="space-y-6">
-      <PdfLoadingOverlay
-        isVisible={isPdfGenerating}
-        steps={pdfSteps}
-        currentStepIndex={currentStepIndex}
-        onCancel={cancelPdfGeneration}
-      />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">{t("stats.title")}</h1>
@@ -427,20 +312,15 @@ export default function MatchStatsPage() {
             Export CSV
           </Button> */}
 
-          <Button
-            variant="outline"
-            onClick={exportToPDF}
-            disabled={isPdfGenerating}
-            className="invisible lg:visible"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            {isPdfGenerating ? t("stats.tabs.pending") : "Export PDF"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={shareStats}
-            disabled={isPdfGenerating}
-          >
+          {canExport && (
+            <span title={exportBlockedReason ?? undefined}>
+              <Button variant="outline" onClick={exportReport} disabled={isExporting || exportBlockedReason !== null}>
+                <Download className="h-4 w-4 mr-2" />
+                {isExporting ? t("pdf.exporting") : t("pdf.export")}
+              </Button>
+            </span>
+          )}
+          <Button variant="outline" onClick={shareStats}>
             <Share2 className="h-4 w-4 mr-2" />
             Share
           </Button>
@@ -465,7 +345,6 @@ export default function MatchStatsPage() {
             <TabsContent value="overview" id="overview-section" className="space-y-4" >
               {match && managedTeam && opponentTeam && (
                 <MatchOverview
-                  ref={overviewRef}
                   match={match}
                   managedTeam={managedTeam}
                   opponentTeam={opponentTeam}
@@ -473,7 +352,6 @@ export default function MatchStatsPage() {
                   stats={stats}
                   sets={sets}
                   players={players}
-                  isPdfGenerating={isPdfGenerating}
                 />
               )}
             </TabsContent>
@@ -481,13 +359,11 @@ export default function MatchStatsPage() {
             <TabsContent value="sets" id="sets-section">
               {match && managedTeam && opponentTeam && (
                 <SetBreakdown
-                  ref={setBreakdownRef}
                   match={match}
                   sets={sets}
                   points={points}
                   managedTeam={managedTeam}
                   opponentTeam={opponentTeam}
-                  isPdfGenerating={isPdfGenerating}
                 />
               )}
             </TabsContent>
@@ -495,14 +371,12 @@ export default function MatchStatsPage() {
             <TabsContent value="players" id="players-section">
               {match && managedTeam && opponentTeam && (
                 <PlayerPerformance
-                  ref={playerPerformanceRef}
                   match={match}
                   managedTeam={managedTeam}
                   opponentTeam={opponentTeam}
                   players={players}
                   stats={stats}
                   sets={sets}
-                  isPdfGenerating={isPdfGenerating}
                 />
               )}
             </TabsContent>
@@ -510,25 +384,21 @@ export default function MatchStatsPage() {
             <TabsContent value="scores" id="scores-section">
               {match && (
                 <ScoreProgression
-                  ref={scoreProgressionRef}
                   match={match}
                   points={points}
                   sets={sets}
-                  isPdfGenerating={isPdfGenerating}
                 />
               )}
             </TabsContent>
 
             <TabsContent value="team">
               <TeamPerformance
-                ref={teamPerformanceRef}
                 match={match}
                 managedTeam={managedTeam!}
                 sets={sets}
                 points={points}
                 stats={stats}
                 players={players}
-                isPdfGenerating={isPdfGenerating}
               />
             </TabsContent>
           </Tabs>
