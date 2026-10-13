@@ -80,7 +80,12 @@ the scorer-claim dialog, and the Stats button of a finished match.
 - `data-testid="leave-live-dialog"`. New `liveGuard.*` keys in en, fr, es, it and pt.
 
 Unchanged: `useBeforeUnloadWhenUnsent` (the browser's own prompt when the tab is closed or reloaded
-with unsent changes).
+with unsent changes). One exception: after the user confirmed in our own dialog (**Leave** in the
+leave dialog, or the confirm button of the sign-out warning) the next unload goes through without
+that prompt. Offline, `router.push` fails to fetch the RSC payload and Next falls back to a full page
+load, which would fire `beforeunload` and add a second dialog. `allowNextUnload()`
+(`hooks/use-unsent-guard.ts`) sets a flag the handler checks; it resets on `pageshow` and after
+5 seconds, so a navigation that never happened doesn't disable the prompt for good.
 
 ## 2. Offline fallback page
 
@@ -92,7 +97,8 @@ with unsent changes).
   es, it and pt inline in a small script.
 - Content: "You're offline. This screen needs a connection." and two buttons:
   - **Back to the live match**: navigates to `sessionStorage["volleystats:last-live-match"]`; when
-    absent, `history.back()`. Never `/matches`, which would fail again offline.
+    absent, `history.back()` and the button reads **Go back** (decided at load from the same read).
+    Never `/matches`, which would fail again offline.
   - **Retry**: `location.reload()` (weak signal).
 - Precached by Serwist's default `public/**/*` glob: no route configuration change.
 
@@ -129,7 +135,11 @@ New `tests/e2e/04g-leave-live-match.spec.ts`, built on `createAndStartMatch` and
 6. A completed match's live page: header links navigate with no dialog.
 
 `tests/e2e/04f-sign-out-warning.spec.ts`: signing out from the live page with unsent changes shows a
-single dialog (the leave dialog with the unsent line), and confirming signs out.
+single dialog (the sign-out warning, no leave dialog); cancelling keeps the session. With nothing
+unsent, the live page shows the leave dialog (without the unsent line) instead; **Stay** keeps the
+session.
+
+`04g` also counts `beforeunload` dialogs: none after the offline **Leave**.
 
 Regression: specs that leave a live page through the header (search `02`, `04*`, `06`) confirm the
 dialog through a new `confirmLeave(page)` helper in `tests/helpers/`.

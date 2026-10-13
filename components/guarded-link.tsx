@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ComponentProps, MouseEvent } from "react";
 import { useConfirmLeave } from "@/components/providers/leave-guard-provider";
+import { allowNextUnload } from "@/hooks/use-unsent-guard";
 
 type GuardedLinkProps = Omit<ComponentProps<typeof Link>, "href"> & { href: string };
 
@@ -18,7 +19,10 @@ export function GuardedLink({ href, onClick, ...props }: GuardedLinkProps) {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     void confirmLeave().then((decision) => {
-      if (decision !== "stay") router.push(href);
+      if (decision === "stay") return;
+      // Offline the push becomes a full page load: no second, browser prompt after our dialog.
+      if (decision === "leave") allowNextUnload();
+      router.push(href);
     });
   };
 

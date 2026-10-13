@@ -35,6 +35,7 @@ import { GuardedLink } from "@/components/guarded-link";
 import { useConfirmLeave } from "@/components/providers/leave-guard-provider";
 import { SyncBadge } from "@/components/sync/sync-badge";
 import { useSyncStatus } from "@/hooks/use-sync-status";
+import { allowNextUnload } from "@/hooks/use-unsent-guard";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -51,7 +52,9 @@ export function Navigation() {
       setConfirmSignOut(true);
       return;
     }
-    if ((await confirmLeave()) === "stay") return;
+    const decision = await confirmLeave();
+    if (decision === "stay") return;
+    if (decision === "leave") allowNextUnload();
     void signOut();
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -235,6 +238,7 @@ export function Navigation() {
             <AlertDialogAction
               onClick={() => {
                 setConfirmSignOut(false);
+                allowNextUnload();
                 void signOut();
               }}
             >
