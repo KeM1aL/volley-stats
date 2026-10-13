@@ -58,8 +58,8 @@
     "servers": "Sacadores",
     "matchEvents": "Otros eventos",
     "legend": "Ace: aces · ES: errores de saque · Rem: remates ganadores · ER: errores de remate · Blq: puntos de bloqueo · EB: errores de bloqueo · ERc: errores de recepción · ED: errores de defensa · Pts: puntos · Err: errores · Neto: puntos − errores · +/−: puntos ganados − perdidos en pista",
-    "byRow": "+/− por zona",
-    "byRowHint": "Zona delantera: posiciones 2, 3, 4 · trasera: 1, 5, 6"
+    "byRow": "+/− por línea",
+    "byRowHint": "Línea delantera: posiciones 2, 3, 4 · trasera: 1, 5, 6"
   },
   "table": {
     "player": "Jugador",

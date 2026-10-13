@@ -31,7 +31,7 @@ export function buildRallies(data: MatchReportData, managedTeamId: string): Rall
         serverPlayerId: server === "us" && data.format.rotation ? (rotation.p1 ?? null) : null,
         onCourt: Object.values(rotation).filter((id): id is string => typeof id === "string" && id.length > 0),
         positions: Object.fromEntries(
-          Object.entries(rotation).flatMap(([position, id]) => (typeof id === "string" && id && ZONES.includes(position as Zone) ? [[id, position as Zone]] : []))
+          Object.entries(rotation).flatMap(([zone, id]) => (typeof id === "string" && id && ZONES.includes(zone as Zone) ? [[id, zone as Zone]] : []))
         ),
         score: usIsHome ? { us: point.home_score, them: point.away_score } : { us: point.away_score, them: point.home_score },
         winOrigin: winner === "us" ? winOrigin(actedByUs, action) : null,

@@ -74,6 +74,14 @@ describe("buildMatchReport", () => {
     expect(model.pressure.behind).toEqual({ made: 1, of: 1, pct: 100 });
   });
 
+  it("starts the close finish at 10-10 in the 15-point deciding set but not in a 25-point set", () => {
+    const tenAll = rallies(`${"WL".repeat(10)}W`); // the 21st rally is played at 10-10
+    const data = makeData([{ rallies: tenAll }, { rallies: rallies("L") }, { rallies: rallies("L") }, { rallies: rallies("L") }, { rallies: tenAll }]);
+    const model = buildMatchReport(data, US);
+    expect(model.sets[0].pressure.closeFinish.of).toBe(0);
+    expect(model.sets[4].pressure.closeFinish).toEqual({ made: 1, of: 1, pct: 100 });
+  });
+
   it("adds the team serve turns and the row +/- (6x6 only), sorted by number", () => {
     const model = buildMatchReport(makeData([{ firstServer: "us", rallies: rallies("WWL") }]), US);
     expect(model.serveTurns).toEqual({ turns: 1, points: 2, pointsPerTurn: 2, scoring: { made: 1, of: 1, pct: 100 } });

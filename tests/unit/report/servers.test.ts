@@ -69,4 +69,16 @@ describe("serve turns", () => {
     const neverServing = makeData([{ firstServer: "them", rallies: rallies("L") }]);
     expect(teamServeTurns(buildRallies(neverServing, US))).toEqual({ turns: 0, points: 0, pointsPerTurn: null, scoring: { made: 0, of: 0, pct: null } });
   });
+
+  it("starts a new turn for a player substituted at p1 mid-turn, while the team turn goes on", () => {
+    const withG = { ...LINEUP, p1: P.g };
+    const data = makeData([{ firstServer: "us", rallies: [{ winner: "us" }, { winner: "us", rotation: withG }, { winner: "them", rotation: withG }] }]);
+    const rallyList = buildRallies(data, US);
+    // Sorted by points won, then serves: the substitute served twice.
+    expect(serverLines(rallyList, []).map((line) => [line.playerId, line.served, line.turns, line.won])).toEqual([
+      [P.g, 2, 1, 1],
+      [P.a, 1, 1, 1],
+    ]);
+    expect(teamServeTurns(rallyList)).toMatchObject({ turns: 1, points: 2 });
+  });
 });
