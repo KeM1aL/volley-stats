@@ -54,7 +54,7 @@ import { SyncBadge } from "@/components/sync/sync-badge";
 import { ScorerClaimDialog, type ClaimPrompt } from "@/components/sync/scorer-claim-dialog";
 import { TakenOverBanner } from "@/components/sync/taken-over-banner";
 import { useBeforeUnloadWhenUnsent, useMatchUnsentCount } from "@/hooks/use-unsent-guard";
-import { useLeaveGuard } from "@/components/providers/leave-guard-provider";
+import { LAST_LIVE_MATCH_KEY, useLeaveGuard } from "@/components/providers/leave-guard-provider";
 import { isClaimForbidden, type ClaimResult, type ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
 import { claimBecameHeld, claimFollowUp, offlineConfirmFollowUp } from "@/lib/rxdb/sync/claim-flow";
 import type { ClaimState } from "@/lib/rxdb/sync/tracked-matches";
@@ -115,6 +115,16 @@ export default function LiveMatchPage() {
   // In-app navigation asks first while a match in progress is on screen (finished matches leave freely).
   const guardActive = !isLoading && !!matchState.match && matchState.match.status !== "completed";
   useLeaveGuard({ active: guardActive, unsentCount });
+  // The offline page's "Back to the live match" button reads it (public/offline.html).
+  const matchLoaded = !!matchState.match;
+  useEffect(() => {
+    if (!matchLoaded) return;
+    try {
+      sessionStorage.setItem(LAST_LIVE_MATCH_KEY, window.location.pathname + window.location.search);
+    } catch (error) {
+      console.warn("Could not save the live match URL:", error);
+    }
+  }, [matchLoaded]);
 
   const LOADING_STEPS = useMemo(
     () => [

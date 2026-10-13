@@ -59,6 +59,26 @@ test('asks before leaving a live match', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Stay' }).click();
   await expect(dialog).toBeHidden();
 
+  // Leave anyway, for a screen this session never opened (so the worker has no copy of it): the
+  // app's offline page, not the browser's error page
+  await headerLink(page, 'Championships').click();
+  await dialog.getByRole('button', { name: 'Leave' }).click();
+  await expect(page.getByTestId('offline-page')).toBeVisible({ timeout: 15_000 });
+  expect(page.url()).not.toContain('chrome-error');
+
+  // Back to the live match, served from the cache
+  await page.getByRole('button', { name: 'Back to the live match' }).click();
+  await page.waitForURL((url) => url.href === liveUrl, { timeout: 15_000 });
+  await pointButton.waitFor({ state: 'visible', timeout: 30_000 });
+
+  // Without a saved live match the offline page goes back in history (never to /matches)
+  await page.goto('/championships');
+  await expect(page.getByTestId('offline-page')).toBeVisible({ timeout: 15_000 });
+  await page.evaluate(() => sessionStorage.removeItem('volleystats:last-live-match'));
+  await page.getByRole('button', { name: 'Back to the live match' }).click();
+  await page.waitForURL((url) => url.href === liveUrl, { timeout: 15_000 });
+  await pointButton.waitFor({ state: 'visible', timeout: 30_000 });
+
   await goOnline(page);
   await waitForAllSaved(page);
 });

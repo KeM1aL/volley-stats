@@ -132,6 +132,7 @@ Replications are never paused: RxDB's retry waits for the `online` event. Reconn
 - Precaches the build's JS/CSS and runtime-caches pages, images and fonts (`defaultCache`); Supabase API calls are NetworkOnly, so non-live screens always read live data and no user data sits in Cache Storage.
 - `SerwistProvider` keeps `cacheOnNavigation` on: each client-side navigation asks the worker to fetch and cache that page, which is what lets the live page load again offline (together with the saved profile, see below). It costs one extra page request per navigation.
 - `reloadOnOnline` is off so reconnecting does not reload a live match.
+- A page that can't load (offline or a weak signal) gets `public/offline.html` (Serwist `fallbacks`, document requests only; precached through the default `public/**/*` glob). It is static (inline CSS and texts in five languages, picked from the `NEXT_LOCALE` cookie or the browser language) and its **Back to the live match** button opens the URL the live page saves in `sessionStorage` (`volleystats:last-live-match`), or goes back in history when there is none.
 - `skipWaiting` + `clientsClaim`: a new deploy takes over open tabs immediately. A tab still running the previous build that then goes offline and needs a chunk it never loaded can fail to load it; reload once online.
 - After an RxDB major upgrade (`DB_GENERATION` bump), the new build deletes the old local databases. A tab still running the old build loses its database connection mid-session; reload it.
 
@@ -141,3 +142,4 @@ Replications are never paused: RxDB's retry waits for the `online` event. Reconn
 - The sync badge (header and live page) shows "All saved", "Saving N changes...", "N changes saved on this device", "N changes couldn't be saved" (with **Retry**), or "changes from another account".
 - Matches with unsent changes are flagged in the match list.
 - Opening a match another device scores asks before taking over; the previous device becomes read-only and keeps its unsent changes as "not uploaded".
+- Leaving a match in progress through the app (header links, logo, sign out) asks first, with the match's unsent count (`LeaveGuardProvider`, `useLeaveGuard`, `GuardedLink`). Browser Back is not intercepted. Finished matches leave freely.
