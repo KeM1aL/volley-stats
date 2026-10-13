@@ -1,5 +1,5 @@
 /**
- * Signing out with changes not uploaded yet asks first. On the live page that is the leave dialog, which shows the unsent count; staying keeps the session.
+ * Signing out with changes not uploaded yet asks first, on the live page too (the sign-out warning is then the only dialog). With nothing unsent, the live page asks before leaving the match. Cancelling or staying keeps the session.
  */
 
 import { test, expect } from '@playwright/test';
@@ -26,15 +26,25 @@ test('warns before signing out with unsent changes', async ({ page }) => {
   await pointButton.click();
   await expect(page.getByTestId('sync-badge').first()).toHaveAttribute('data-state', 'waiting', { timeout: 10_000 });
 
-  // On the live page, leaving and the unsent changes are covered by one dialog
+  // Unsent changes: the sign-out warning is the only dialog, on the live page too
   await page.getByRole('button', { name: /sign out/i }).click();
-  const leaveDialog = page.getByTestId('leave-live-dialog');
-  await expect(leaveDialog).toContainText("2 changes haven't been uploaded yet");
-  await expect(page.getByTestId('sign-out-warning')).toHaveCount(0);
-  await leaveDialog.getByRole('button', { name: 'Stay' }).click();
-  await expect(leaveDialog).toBeHidden();
+  const warning = page.getByTestId('sign-out-warning');
+  await expect(warning).toBeVisible();
+  await expect(page.getByTestId('leave-live-dialog')).toHaveCount(0);
+  await warning.getByRole('button', { name: /cancel/i }).click();
+  await expect(warning).toBeHidden();
   await expect(page.getByRole('button', { name: /sign out/i })).toBeVisible();
 
   await goOnline(page);
   await waitForAllSaved(page);
+
+  // Nothing unsent: the live page asks before leaving the match, with no unsent line
+  await page.getByRole('button', { name: /sign out/i }).click();
+  const leaveDialog = page.getByTestId('leave-live-dialog');
+  await expect(leaveDialog).toBeVisible();
+  await expect(leaveDialog).not.toContainText("haven't been uploaded");
+  await expect(page.getByTestId('sign-out-warning')).toHaveCount(0);
+  await leaveDialog.getByRole('button', { name: 'Stay' }).click();
+  await expect(leaveDialog).toBeHidden();
+  await expect(page.getByRole('button', { name: /sign out/i })).toBeVisible();
 });

@@ -45,11 +45,14 @@ export function Navigation() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const { confirmLeave } = useConfirmLeave();
   const handleSignOut = async () => {
-    const decision = await confirmLeave();
-    if (decision === "stay") return;
-    // The leave dialog already showed this match's unsent changes: no second prompt.
-    if (decision === "free" && unsentCount > 0) setConfirmSignOut(true);
-    else void signOut();
+    // Unsent changes: the sign-out warning says where they go (they upload at the next sign-in), and it
+    // stands for leaving a live match too, so it is the only dialog. Otherwise ask before leaving a live match.
+    if (unsentCount > 0) {
+      setConfirmSignOut(true);
+      return;
+    }
+    if ((await confirmLeave()) === "stay") return;
+    void signOut();
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isLandscape = useLandscape();

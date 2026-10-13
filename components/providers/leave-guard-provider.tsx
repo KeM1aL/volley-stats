@@ -44,10 +44,23 @@ export function LeaveGuardProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const pending = useRef<((decision: LeaveDecision) => void) | null>(null);
 
-  const setGuard = useCallback((state: GuardState) => {
-    guardRef.current = state;
-    setGuardState(state);
+  const settle = useCallback((decision: "leave" | "stay") => {
+    const resolve = pending.current;
+    pending.current = null;
+    setOpen(false);
+    resolve?.(decision);
   }, []);
+
+  const setGuard = useCallback(
+    (state: GuardState) => {
+      guardRef.current = state;
+      setGuardState(state);
+      // The guard went off (the live page unmounted or the match completed) while the dialog was open:
+      // close it, so Stay/Leave never act on another screen.
+      if (!state.active && pending.current) settle("stay");
+    },
+    [settle]
+  );
 
   const isActive = useCallback(() => guardRef.current.active, []);
 
@@ -59,13 +72,6 @@ export function LeaveGuardProvider({ children }: { children: ReactNode }) {
       pending.current = resolve;
       setOpen(true);
     });
-  }, []);
-
-  const settle = useCallback((decision: "leave" | "stay") => {
-    const resolve = pending.current;
-    pending.current = null;
-    setOpen(false);
-    resolve?.(decision);
   }, []);
 
   const value = useMemo(() => ({ setGuard, isActive, confirmLeave }), [setGuard, isActive, confirmLeave]);

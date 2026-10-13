@@ -54,10 +54,10 @@ The user confirmed the blank page only occurs without a connection or with a wea
   key or a non-primary button pass through (they open a new tab and don't leave the match).
 - `components/navigation.tsx`: every route link in the three layouts and the logo use `GuardedLink`.
   In the mobile sheet the sheet is closed before the dialog opens.
-- Sign out (`components/navigation.tsx`): `handleSignOut` first awaits the leave confirmation. If the
-  leave dialog was shown and the user confirmed, the existing unsent-changes sign-out warning is
-  skipped (the leave dialog already showed the count); otherwise the existing behaviour is unchanged.
-  At most one dialog appears.
+- Sign out (`components/navigation.tsx`): exactly one dialog, chosen by data. Any unsent changes
+  (pending or rejected, any match) show the existing sign-out warning, which says where they go (they
+  upload at the next sign-in) and stands for leaving a live match too. With nothing unsent,
+  `handleSignOut` awaits the leave confirmation, so the leave dialog appears when the guard is on.
 
 ### When the guard is on
 
