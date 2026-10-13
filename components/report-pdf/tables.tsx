@@ -27,10 +27,11 @@ const playerCells = (line: PlayerTotals): string[] => [
   signed(line.plusMinus),
 ];
 
-export function PlayerTable({ model, players, total, t }: { model: MatchReportModel; players: PlayerLine[]; total: PlayerTotals; t: ReportT }) {
+export function PlayerTable({ title, model, players, total, t }: { title?: string; model: MatchReportModel; players: PlayerLine[]; total: PlayerTotals; t: ReportT }) {
   const columns: Column[] = [{ label: t("table.player"), width: 135, align: "left" }, ...PLAYER_COLUMNS.map((key) => ({ label: t(`table.${key}`), width: 33 }))];
   return (
     <Table
+      title={title}
       columns={columns}
       rows={players.map((line) => [playerLabel(model, line.playerId, t), ...playerCells(line)])}
       footer={[t("table.team"), ...playerCells(total)]}
@@ -38,7 +39,7 @@ export function PlayerTable({ model, players, total, t }: { model: MatchReportMo
   );
 }
 
-export function ServerTable({ model, servers, t }: { model: MatchReportModel; servers: ServerLine[]; t: ReportT }) {
+export function ServerTable({ title, model, servers, t }: { title?: string; model: MatchReportModel; servers: ServerLine[]; t: ReportT }) {
   const columns: Column[] = [
     { label: t("table.player"), width: 171, align: "left" },
     { label: t("table.served"), width: 60 },
@@ -57,10 +58,10 @@ export function ServerTable({ model, servers, t }: { model: MatchReportModel; se
     String(s.aces),
     String(s.serveErrors),
   ]);
-  return <Table columns={columns} rows={rows} />;
+  return <Table title={title} columns={columns} rows={rows} />;
 }
 
-export function RoleTable({ model, roles, t }: { model: MatchReportModel; roles: RoleLine[]; t: ReportT }) {
+export function RoleTable({ title, model, roles, t }: { title?: string; model: MatchReportModel; roles: RoleLine[]; t: ReportT }) {
   const columns: Column[] = [
     { label: t("table.role"), width: 150, align: "left" },
     { label: t("table.points"), width: 60 },
@@ -73,7 +74,7 @@ export function RoleTable({ model, roles, t }: { model: MatchReportModel; roles:
     String(r.errors),
     r.topScorerId ? `${playerLabel(model, r.topScorerId, t)} (${t("summary.points", { count: r.topScorerPoints })})` : DASH,
   ]);
-  return <Table columns={columns} rows={rows} />;
+  return <Table title={title} columns={columns} rows={rows} />;
 }
 
 /** Every score in the table is home–away. */
@@ -98,7 +99,7 @@ export function eventRows(model: MatchReportModel, events: EventImpact[], number
   });
 }
 
-export function EventTable({ model, events, numbers, t }: { model: MatchReportModel; events: EventImpact[]; numbers: Map<string, number>; t: ReportT }) {
+export function EventTable({ title, model, events, numbers, t }: { title?: string; model: MatchReportModel; events: EventImpact[]; numbers: Map<string, number>; t: ReportT }) {
   const columns: Column[] = [
     { label: t("table.rally"), width: 35 },
     { label: t("table.score"), width: 45 },
@@ -109,5 +110,5 @@ export function EventTable({ model, events, numbers, t }: { model: MatchReportMo
     { label: t("table.nextRally"), width: 40 },
     { label: t("table.plusMinus"), width: 35 },
   ];
-  return <Table columns={columns} rows={eventRows(model, events, numbers, t)} rowsPerBlock={8} />;
+  return <Table title={title} columns={columns} rows={eventRows(model, events, numbers, t)} rowsPerBlock={8} />;
 }

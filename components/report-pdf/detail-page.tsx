@@ -14,16 +14,10 @@ export function DetailPage({ model, t, locale }: { model: MatchReportModel; t: R
       <Footer model={model} t={t} locale={locale} />
       <Text style={styles.h1}>{t("detail.title")}</Text>
 
-      <Text style={styles.h2}>{t("detail.players")}</Text>
-      <PlayerTable model={model} players={model.players} total={model.total} t={t} />
+      <PlayerTable title={t("detail.players")} model={model} players={model.players} total={model.total} t={t} />
       <Text style={styles.small}>{t("detail.legend")}</Text>
 
-      {model.roles.length > 0 ? (
-        <View wrap={false}>
-          <Text style={styles.h2}>{t("detail.byRole")}</Text>
-          <RoleTable model={model} roles={model.roles} t={t} />
-        </View>
-      ) : null}
+      {model.roles.length > 0 ? <RoleTable title={t("detail.byRole")} model={model} roles={model.roles} t={t} /> : null}
 
       {zones ? (
         <View wrap={false}>
@@ -39,16 +33,12 @@ export function DetailPage({ model, t, locale }: { model: MatchReportModel; t: R
         </View>
       ) : null}
 
-      {model.servers && model.servers.length > 0 ? (
-        <View>
-          <Text style={styles.h2}>{t("detail.servers")}</Text>
-          <ServerTable model={model} servers={model.servers} t={t} />
-        </View>
-      ) : null}
+      {model.servers && model.servers.length > 0 ? <ServerTable title={t("detail.servers")} model={model} servers={model.servers} t={t} /> : null}
 
       {model.matchEvents.length > 0 ? (
         <View>
-          <Text style={styles.h2}>{t("detail.matchEvents")}</Text>
+          {/* Keeps at least two event lines on the heading's page. */}
+          <Text style={styles.h2} minPresenceAhead={30}>{t("detail.matchEvents")}</Text>
           {model.matchEvents.map((e) => (
             <Text key={e.eventId}>{`${t(`events.${e.type}`)}${e.team ? ` (${teamName(model, e.team)})` : ""}${e.text ? ` — ${e.text}` : ""}`}</Text>
           ))}

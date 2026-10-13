@@ -1,5 +1,5 @@
 import { Text, View } from "@react-pdf/renderer";
-import { COLORS } from "./theme";
+import { COLORS, styles } from "./theme";
 
 export interface Column {
   label: string;
@@ -9,14 +9,30 @@ export interface Column {
 
 const DEFAULT_ROWS_PER_BLOCK = 24;
 
-/** Rows are drawn in blocks that never split across pages; each block repeats the header. */
-export function Table({ columns, rows, footer, rowsPerBlock = DEFAULT_ROWS_PER_BLOCK }: { columns: Column[]; rows: string[][]; footer?: string[]; rowsPerBlock?: number }) {
+/**
+ * Rows are drawn in blocks that never split across pages; each block repeats the header.
+ * The title sits inside the first block, so it never stays alone at the bottom of a page.
+ */
+export function Table({
+  title,
+  columns,
+  rows,
+  footer,
+  rowsPerBlock = DEFAULT_ROWS_PER_BLOCK,
+}: {
+  title?: string;
+  columns: Column[];
+  rows: string[][];
+  footer?: string[];
+  rowsPerBlock?: number;
+}) {
   const blocks: string[][][] = [];
   for (let i = 0; i < Math.max(rows.length, 1); i += rowsPerBlock) blocks.push(rows.slice(i, i + rowsPerBlock));
   return (
     <View>
       {blocks.map((block, b) => (
         <View key={b} wrap={false} style={{ marginBottom: b === blocks.length - 1 ? 0 : 4 }}>
+          {b === 0 && title ? <Text style={styles.h2}>{title}</Text> : null}
           <Row columns={columns} cells={columns.map((column) => column.label)} header />
           {block.map((cells, i) => (
             <Row key={i} columns={columns} cells={cells} zebra={i % 2 === 1} />

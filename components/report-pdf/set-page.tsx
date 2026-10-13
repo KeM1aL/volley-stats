@@ -35,47 +35,52 @@ export function SetPage({ model, set, t, locale }: { model: MatchReportModel; se
         </View>
       ) : null}
 
-      <Text style={styles.h2}>{t("set.timeline")}</Text>
-      {set.rallies.length === 0 ? (
-        <Text>{t("noData")}</Text>
-      ) : (
-        <View wrap={false}>
-          <Timeline set={set} />
-          <Text style={styles.small}>{t("set.legend")}</Text>
+      <View wrap={false}>
+        <Text style={styles.h2}>{t("set.timeline")}</Text>
+        {set.rallies.length === 0 ? (
+          <Text>{t("noData")}</Text>
+        ) : (
+          <View>
+            <Timeline set={set} />
+            <Text style={styles.small}>{t("set.legend")}</Text>
+          </View>
+        )}
+      </View>
+
+      <View wrap={false}>
+        <Text style={styles.h2}>{t("set.flow")}</Text>
+        <View style={styles.row}>
+          <Stat label={t("set.largestLead")} value={`${set.flow.largestLead.us} / ${set.flow.largestLead.them}`} hint={sides} />
+          <Stat label={t("set.longestRun")} value={`${set.flow.longestRun.us} / ${set.flow.longestRun.them}`} hint={sides} />
+          <Stat label={t("set.ties")} value={String(set.flow.ties)} />
+          <Stat label={t("set.leadChanges")} value={String(set.flow.leadChanges)} />
+          <Stat label={t("set.deficitOvercome")} value={String(set.flow.deficitOvercome)} />
         </View>
+        <Text style={{ marginTop: 6 }}>
+          <Text style={{ fontWeight: 700 }}>{`${t("set.ending")}: `}</Text>
+          {set.ending.from
+            ? t("set.endingFrom", { score: homeAway(model, set.ending.from), wonUs: set.ending.won.us, wonThem: set.ending.won.them })
+            : t("set.endingNotReached", { threshold: set.ending.threshold })}
+        </Text>
+      </View>
+
+      {set.events.length === 0 ? (
+        <View wrap={false}>
+          <Text style={styles.h2}>{t("set.events")}</Text>
+          <Text style={styles.muted}>{t("set.noEvents")}</Text>
+        </View>
+      ) : (
+        <EventTable title={t("set.events")} model={model} events={set.events} numbers={numbers} t={t} />
       )}
 
-      <Text style={styles.h2}>{t("set.flow")}</Text>
-      <View style={styles.row}>
-        <Stat label={t("set.largestLead")} value={`${set.flow.largestLead.us} / ${set.flow.largestLead.them}`} hint={sides} />
-        <Stat label={t("set.longestRun")} value={`${set.flow.longestRun.us} / ${set.flow.longestRun.them}`} hint={sides} />
-        <Stat label={t("set.ties")} value={String(set.flow.ties)} />
-        <Stat label={t("set.leadChanges")} value={String(set.flow.leadChanges)} />
-        <Stat label={t("set.deficitOvercome")} value={String(set.flow.deficitOvercome)} />
-      </View>
-      <Text style={{ marginTop: 6 }}>
-        <Text style={{ fontWeight: 700 }}>{`${t("set.ending")}: `}</Text>
-        {set.ending.from
-          ? t("set.endingFrom", { score: homeAway(model, set.ending.from), wonUs: set.ending.won.us, wonThem: set.ending.won.them })
-          : t("set.endingNotReached", { threshold: set.ending.threshold })}
-      </Text>
+      <PlayerTable title={t("detail.players")} model={model} players={set.players} total={set.total} t={t} />
 
-      <Text style={styles.h2}>{t("set.events")}</Text>
-      {set.events.length === 0 ? <Text style={styles.muted}>{t("set.noEvents")}</Text> : <EventTable model={model} events={set.events} numbers={numbers} t={t} />}
-
-      <Text style={styles.h2}>{t("detail.players")}</Text>
-      <PlayerTable model={model} players={set.players} total={set.total} t={t} />
-
-      {set.servers && set.servers.length > 0 ? (
-        <View>
-          <Text style={styles.h2}>{t("detail.servers")}</Text>
-          <ServerTable model={model} servers={set.servers} t={t} />
-        </View>
-      ) : null}
+      {set.servers && set.servers.length > 0 ? <ServerTable title={t("detail.servers")} model={model} servers={set.servers} t={t} /> : null}
 
       {comments.length > 0 ? (
         <View>
-          <Text style={styles.h2}>{t("set.comments")}</Text>
+          {/* Keeps at least two comment lines on the heading's page. */}
+          <Text style={styles.h2} minPresenceAhead={30}>{t("set.comments")}</Text>
           {comments.map((c) => (
             <Text key={c.eventId}>{`${numbers.get(c.eventId)}. ${homeAway(model, c.score)} — ${c.text ?? ""}`}</Text>
           ))}
