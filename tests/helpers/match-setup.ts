@@ -124,7 +124,7 @@ export async function createAndStartMatch(
     selectedPlayers++;
     await page.waitForTimeout(100);
   }
-  await expect(page.getByTestId('lineup-selected-count')).toContainText(`${selectedPlayers} selected`);
+  await expect(page.getByTestId('lineup-selected-count')).toHaveText(new RegExp(`^${selectedPlayers} selected`));
 
   // Confirm
   await page.getByTestId('start-match-confirm').click();

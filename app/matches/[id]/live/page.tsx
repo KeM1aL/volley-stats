@@ -620,6 +620,15 @@ export default function LiveMatchPage() {
     [db, scoringBlocked, matchState.match, managedTeam, matchId, t, closeLatePlayer]
   );
   const onAddLatePlayer = scoringBlocked ? undefined : requestLatePlayer;
+  // Scoring got blocked (claim lost, refresh) with the picker open: taps would silently do nothing, so close
+  // it (state adjusted while rendering) and answer the pending request with nobody.
+  if (scoringBlocked && latePlayerOpen) setLatePlayerOpen(false);
+  useEffect(() => {
+    if (!scoringBlocked) return;
+    const resolve = latePlayerRequest.current;
+    latePlayerRequest.current = null;
+    resolve?.(null);
+  }, [scoringBlocked]);
 
   const onPlayerStatRecorded = useCallback(
     async (stat: PlayerStat) => {

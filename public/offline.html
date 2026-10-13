@@ -32,11 +32,11 @@
   <script>
     (function () {
       var TEXTS = {
-        en: ["You're offline", "This screen needs a connection.", "Back to the live match", "Retry"],
-        fr: ["Vous êtes hors ligne", "Cet écran nécessite une connexion.", "Retour au match en direct", "Réessayer"],
-        es: ["Sin conexión", "Esta pantalla necesita conexión.", "Volver al partido en directo", "Reintentar"],
-        it: ["Sei offline", "Questa schermata richiede una connessione.", "Torna alla partita in diretta", "Riprova"],
-        pt: ["Está offline", "Este ecrã precisa de ligação.", "Voltar ao jogo ao vivo", "Tentar novamente"]
+        en: ["You're offline", "This screen needs a connection.", "Back to the live match", "Retry", "Go back"],
+        fr: ["Vous êtes hors ligne", "Cet écran nécessite une connexion.", "Retour au match en direct", "Réessayer", "Retour"],
+        es: ["Sin conexión", "Esta pantalla necesita conexión.", "Volver al partido en directo", "Reintentar", "Volver"],
+        it: ["Sei offline", "Questa schermata richiede una connessione.", "Torna alla partita in diretta", "Riprova", "Indietro"],
+        pt: ["Está offline", "Este ecrã precisa de ligação.", "Voltar ao jogo ao vivo", "Tentar novamente", "Voltar"]
       };
       var cookie = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([a-z]{2})/);
       var browser = (navigator.language || "en").slice(0, 2).toLowerCase();
@@ -45,12 +45,14 @@
       document.documentElement.lang = locale;
       document.getElementById("title").textContent = text[0];
       document.getElementById("body").textContent = text[1];
-      document.getElementById("back").textContent = text[2];
       document.getElementById("retry").textContent = text[3];
 
+      var liveMatch = null;
+      try { liveMatch = sessionStorage.getItem("volleystats:last-live-match"); } catch (e) {}
+      // Without a saved live match the button goes back in history, and says so.
+      document.getElementById("back").textContent = liveMatch ? text[2] : text[4];
+
       document.getElementById("back").addEventListener("click", function () {
-        var liveMatch = null;
-        try { liveMatch = sessionStorage.getItem("volleystats:last-live-match"); } catch (e) {}
         // Never /matches: it needs a connection too.
         if (liveMatch) location.href = liveMatch;
         else history.back();
