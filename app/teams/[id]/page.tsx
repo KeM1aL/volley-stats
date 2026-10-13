@@ -97,6 +97,7 @@ export default function TeamDetailsPage() {
 
         const memberFilters: Filter[] = [
           { field: "team_id", operator: "eq", value: id },
+          { field: "archived_at", operator: "is", value: null },
         ];
         const memberSort: Sort<TeamMember>[] = [
           { field: "number", direction: "asc" },
@@ -111,8 +112,7 @@ export default function TeamDetailsPage() {
 
         setTeam(teamsData[0] || null);
         setMatches(matchesData);
-        // Archived members stay in past stats but are not part of the team page
-        setTeamMembers(membersData.filter((member) => !member.archived_at));
+        setTeamMembers(membersData);
       } catch (error) {
         console.error("Failed to load team data:", error);
       } finally {

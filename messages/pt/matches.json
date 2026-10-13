@@ -69,7 +69,8 @@
   "matchLineup": {
     "heading": "Escalação da Partida",
     "description": "Selecione os jogadores disponíveis para esta partida.",
-    "notEnoughPlayers": "São necessários pelo menos {count} jogadores para uma partida {format}."
+    "notEnoughPlayers": "São necessários pelo menos {count} jogadores para uma partida {format}.",
+    "selectedCount": "{count} selecionados (mín. {min})"
   },
   "matchManaged": {
     "heading": "Time Gerenciado"

@@ -69,7 +69,8 @@
   "matchLineup": {
     "heading": "Formazione della Partita",
     "description": "Seleziona i giocatori disponibili per questa partita.",
-    "notEnoughPlayers": "Sono richiesti almeno {count} giocatori per una partita {format}."
+    "notEnoughPlayers": "Sono richiesti almeno {count} giocatori per una partita {format}.",
+    "selectedCount": "{count} selezionati (min. {min})"
   },
   "matchManaged": {
     "heading": "Squadra Gestita"

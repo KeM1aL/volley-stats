@@ -69,7 +69,8 @@
   "matchLineup": {
     "heading": "Match Roster",
     "description": "Select the players available for this match.",
-    "notEnoughPlayers": "At least {count} players are required for a {format} match."
+    "notEnoughPlayers": "At least {count} players are required for a {format} match.",
+    "selectedCount": "{count} selected (min {min})"
   },
   "matchManaged": {
     "heading": "Managed Team"

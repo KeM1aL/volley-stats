@@ -71,6 +71,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
     try {
       const playerFilters: Filter[] = [];
       playerFilters.push({ field: "team_id", operator: "eq", value: team.id });
+      playerFilters.push({ field: "archived_at", operator: "is", value: null });
       const players = await teamMemberApi.getTeamMembers(playerFilters);
       setPlayers(players);
       setAvailablePlayers([]);
@@ -185,6 +186,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
                 players={players}
                 availablePlayers={availablePlayers}
                 setAvailablePlayers={setAvailablePlayers}
+                minPlayers={minPlayers}
               />
               {playerError && (
                 <p className="text-sm text-destructive">

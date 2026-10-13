@@ -24,6 +24,7 @@ const REQUIRED_KEYS: Record<string, string[]> = {
     "toast.archiveError",
     "toast.restoreError",
   ],
+  "matches.json": ["matchLineup.selectedCount"],
 };
 
 const flatten = (value: unknown, prefix = ""): string[] =>
