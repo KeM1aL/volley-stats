@@ -59,7 +59,8 @@
     "matchEvents": "Otros eventos",
     "legend": "Ace: aces · ES: errores de saque · Rem: remates ganadores · ER: errores de remate · Blq: puntos de bloqueo · EB: errores de bloqueo · ERc: errores de recepción · ED: errores de defensa · Pts: puntos · Err: errores · Neto: puntos − errores · +/−: puntos ganados − perdidos en pista",
     "byRow": "+/− por línea",
-    "byRowHint": "Línea delantera: posiciones 2, 3, 4 · trasera: 1, 5, 6"
+    "byRowHint": "Delantera +/−: puntos ganados − perdidos en las posiciones 2, 3, 4 · Puntos delantera: puntos jugados allí · Trasera: igual en las posiciones 1, 5, 6",
+    "serversLegend": "Sacados: puntos al saque · Ganados: puntos ganados al saque · Break %: parte de los puntos sacados ganados · Mejor racha: más puntos en un turno de saque · Turnos: turnos de saque · Pts/turno: puntos por turno · Con punto: parte de los turnos con al menos un punto · Ace: aces · ES: errores de saque"
   },
   "table": {
     "player": "Jugador",
@@ -94,9 +95,9 @@
     "pointsPerTurn": "Pts/turno",
     "scoringTurns": "Con punto",
     "front": "Delantera +/−",
-    "frontRallies": "Puntos del.",
+    "frontRallies": "Puntos delantera",
     "back": "Trasera +/−",
-    "backRallies": "Puntos tras."
+    "backRallies": "Puntos trasera"
   },
   "roles": {
     "outside_hitter": "Receptor-atacante",

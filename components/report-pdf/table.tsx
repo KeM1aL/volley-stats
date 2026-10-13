@@ -11,16 +11,20 @@ const DEFAULT_ROWS_PER_BLOCK = 24;
 
 /**
  * Rows are drawn in blocks that never split across pages; each block repeats the header.
- * The title sits inside the first block, so it never stays alone at the bottom of a page.
+ * The title sits inside the first block and the legend inside the last one, so neither is
+ * ever left alone on a page.
  */
 export function Table({
   title,
+  legend,
   columns,
   rows,
   footer,
   rowsPerBlock = DEFAULT_ROWS_PER_BLOCK,
 }: {
   title?: string;
+  /** Explains the column abbreviations, under the last row. */
+  legend?: string;
   columns: Column[];
   rows: string[][];
   footer?: string[];
@@ -38,6 +42,7 @@ export function Table({
             <Row key={i} columns={columns} cells={cells} zebra={i % 2 === 1} />
           ))}
           {footer && b === blocks.length - 1 ? <Row columns={columns} cells={footer} header /> : null}
+          {legend && b === blocks.length - 1 ? <Text style={styles.small}>{legend}</Text> : null}
         </View>
       ))}
     </View>

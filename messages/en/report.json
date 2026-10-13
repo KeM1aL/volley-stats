@@ -59,7 +59,8 @@
     "matchEvents": "Other events",
     "legend": "Ace: aces · SE: serve errors · Kill: kills · AE: attack errors · Blk: block points · BE: block errors · RE: reception errors · DE: defense errors · Pts: points · Err: errors · Net: points − errors · +/−: rallies won − lost on court",
     "byRow": "+/− by row",
-    "byRowHint": "Front row: positions 2, 3, 4 · back row: positions 1, 5, 6"
+    "byRowHint": "Front +/−: rallies won − lost at positions 2, 3, 4 · Front rallies: rallies played there · Back: the same at positions 1, 5, 6",
+    "serversLegend": "Served: rallies served · Won: rallies won on serve · Break %: share of served rallies won · Best run: most points in one serve turn · Turns: serve turns · Pts/turn: points per turn · Scoring: share of turns with at least one point · Ace: aces · SE: serve errors"
   },
   "table": {
     "player": "Player",

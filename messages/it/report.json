@@ -59,7 +59,8 @@
     "matchEvents": "Altri eventi",
     "legend": "Ace: ace · EB: errori in battuta · Att: attacchi vincenti · EA: errori in attacco · Muro: punti a muro · EM: errori a muro · ER: errori in ricezione · ED: errori in difesa · Pt: punti · Err: errori · Netto: punti − errori · +/−: scambi vinti − persi in campo",
     "byRow": "+/− per linea",
-    "byRowHint": "Prima linea: posizioni 2, 3, 4 · seconda linea: 1, 5, 6"
+    "byRowHint": "1ª linea +/−: scambi vinti − persi nelle posizioni 2, 3, 4 · Scambi 1ª linea: scambi giocati lì · 2ª linea: idem nelle posizioni 1, 5, 6",
+    "serversLegend": "Battute: scambi in battuta · Vinti: scambi vinti in battuta · Break %: quota di scambi in battuta vinti · Serie migliore: più punti in un turno di battuta · Turni: turni di battuta · Pt/turno: punti per turno · Con punto: quota di turni con almeno un punto · Ace: ace · EB: errori in battuta"
   },
   "table": {
     "player": "Giocatore",
@@ -94,9 +95,9 @@
     "pointsPerTurn": "Pt/turno",
     "scoringTurns": "Con punto",
     "front": "1ª linea +/−",
-    "frontRallies": "Scambi 1ª",
+    "frontRallies": "Scambi 1ª linea",
     "back": "2ª linea +/−",
-    "backRallies": "Scambi 2ª"
+    "backRallies": "Scambi 2ª linea"
   },
   "roles": {
     "outside_hitter": "Schiacciatore",

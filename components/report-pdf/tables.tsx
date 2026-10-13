@@ -33,6 +33,7 @@ export function PlayerTable({ title, model, players, total, t }: { title?: strin
   return (
     <Table
       title={title}
+      legend={t("detail.legend")}
       columns={columns}
       rows={players.map((line) => [playerLabel(model, line.playerId, t), ...playerCells(line)])}
       footer={[t("table.team"), ...playerCells(total)]}
@@ -72,7 +73,7 @@ export function ServerTable({
     String(s.aces),
     String(s.serveErrors),
   ]);
-  return <Table title={title} columns={columns} rows={rows} />;
+  return <Table title={title} legend={t("detail.serversLegend")} columns={columns} rows={rows} />;
 }
 
 /** +/- split by the row each player stood in (6x6). */
@@ -88,7 +89,7 @@ export function RowTable({ title, model, rows: lines, t }: { title?: string; mod
     line.back.rallies === 0 ? DASH : signed(line.back.plusMinus),
     String(line.back.rallies),
   ]);
-  return <Table title={title} columns={columns} rows={rows} />;
+  return <Table title={title} legend={t("detail.byRowHint")} columns={columns} rows={rows} />;
 }
 
 export function RoleTable({ title, model, roles, t }: { title?: string; model: MatchReportModel; roles: RoleLine[]; t: ReportT }) {

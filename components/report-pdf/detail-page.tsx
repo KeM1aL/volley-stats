@@ -15,7 +15,6 @@ export function DetailPage({ model, t, locale }: { model: MatchReportModel; t: R
       <Text style={styles.h1}>{t("detail.title")}</Text>
 
       <PlayerTable title={t("detail.players")} model={model} players={model.players} total={model.total} t={t} />
-      <Text style={styles.small}>{t("detail.legend")}</Text>
 
       {model.roles.length > 0 ? <RoleTable title={t("detail.byRole")} model={model} roles={model.roles} t={t} /> : null}
 
@@ -33,12 +32,7 @@ export function DetailPage({ model, t, locale }: { model: MatchReportModel; t: R
         </View>
       ) : null}
 
-      {model.rows && model.rows.length > 0 ? (
-        <View>
-          <RowTable title={t("detail.byRow")} model={model} rows={model.rows} t={t} />
-          <Text style={styles.small}>{t("detail.byRowHint")}</Text>
-        </View>
-      ) : null}
+      {model.rows && model.rows.length > 0 ? <RowTable title={t("detail.byRow")} model={model} rows={model.rows} t={t} /> : null}
 
       {model.servers && model.servers.length > 0 ? <ServerTable title={t("detail.servers")} model={model} servers={model.servers} t={t} locale={locale} /> : null}
 

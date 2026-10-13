@@ -59,7 +59,8 @@
     "matchEvents": "Outros eventos",
     "legend": "Ace: aces · ES: erros de saque · Atq: ataques vencedores · EA: erros de ataque · Blq: pontos de bloqueio · EB: erros de bloqueio · ER: erros de recepção · ED: erros de defesa · Pts: pontos · Err: erros · Saldo: pontos − erros · +/−: ralis ganhos − perdidos em quadra",
     "byRow": "+/− por linha",
-    "byRowHint": "Rede: posições 2, 3, 4 · fundo: 1, 5, 6"
+    "byRowHint": "Rede +/−: ralis ganhos − perdidos nas posições 2, 3, 4 · Ralis rede: ralis jogados ali · Fundo: o mesmo nas posições 1, 5, 6",
+    "serversLegend": "Sacados: ralis no saque · Ganhos: ralis ganhos no saque · Break %: parte dos ralis sacados ganhos · Melhor sequência: mais pontos em uma vez de saque · Vezes: vezes de saque · Pts/vez: pontos por vez · Com ponto: parte das vezes com pelo menos um ponto · Ace: aces · ES: erros de saque"
   },
   "table": {
     "player": "Jogador",

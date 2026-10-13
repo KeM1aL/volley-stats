@@ -59,7 +59,8 @@
     "matchEvents": "Autres événements",
     "legend": "Ace : aces · FS : fautes de service · Att : attaques gagnantes · FA : fautes d'attaque · Ctr : points de contre · FC : fautes de contre · FR : fautes de réception · FD : fautes de défense · Pts : points · Ftes : fautes · Net : points − fautes · +/− : échanges gagnés − perdus sur le terrain",
     "byRow": "+/− par ligne",
-    "byRowHint": "Avant : postes 2, 3, 4 · arrière : postes 1, 5, 6"
+    "byRowHint": "Avant +/− : échanges gagnés − perdus aux postes 2, 3, 4 · Échanges avant : échanges joués à ces postes · Arrière : idem aux postes 1, 5, 6",
+    "serversLegend": "Servis : échanges au service · Gagnés : échanges gagnés au service · Break % : part des échanges servis gagnés · Meilleure série : plus de points en un tour de service · Tours : tours de service · Pts/tour : points par tour · Marquants : part des tours avec au moins un point · Ace : aces · FS : fautes de service"
   },
   "table": {
     "player": "Joueur",
@@ -94,9 +95,9 @@
     "pointsPerTurn": "Pts/tour",
     "scoringTurns": "Marquants",
     "front": "Avant +/−",
-    "frontRallies": "Éch. avant",
+    "frontRallies": "Échanges avant",
     "back": "Arrière +/−",
-    "backRallies": "Éch. arrière"
+    "backRallies": "Échanges arrière"
   },
   "roles": {
     "outside_hitter": "Réceptionneur-attaquant",
