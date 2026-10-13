@@ -769,6 +769,7 @@ export type Database = {
         Row: {
           _deleted: boolean
           _modified: string
+          archived_at: string | null
           avatar_url: string | null
           comments: string | null
           created_at: string
@@ -785,6 +786,7 @@ export type Database = {
         Insert: {
           _deleted?: boolean
           _modified?: string
+          archived_at?: string | null
           avatar_url?: string | null
           comments?: string | null
           created_at?: string
@@ -801,6 +803,7 @@ export type Database = {
         Update: {
           _deleted?: boolean
           _modified?: string
+          archived_at?: string | null
           avatar_url?: string | null
           comments?: string | null
           created_at?: string
