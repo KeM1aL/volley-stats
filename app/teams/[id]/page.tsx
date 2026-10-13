@@ -111,7 +111,8 @@ export default function TeamDetailsPage() {
 
         setTeam(teamsData[0] || null);
         setMatches(matchesData);
-        setTeamMembers(membersData);
+        // Archived members stay in past stats but are not part of the team page
+        setTeamMembers(membersData.filter((member) => !member.archived_at));
       } catch (error) {
         console.error("Failed to load team data:", error);
       } finally {

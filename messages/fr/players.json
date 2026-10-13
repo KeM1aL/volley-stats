@@ -57,7 +57,24 @@
     "error": "Erreur",
     "createError": "Échec de la création du joueur. Veuillez réessayer.",
     "updateError": "Échec de la mise à jour du joueur. Veuillez réessayer.",
-    "deleteError": "Échec de la suppression du joueur. Veuillez réessayer."
+    "deleteError": "Échec de la suppression du joueur. Veuillez réessayer.",
+    "archived": "Joueur archivé",
+    "archivedDesc": "{name} est masqué des effectifs.",
+    "restored": "Joueur restauré",
+    "restoredDesc": "{name} est de retour dans l'effectif.",
+    "archiveError": "Échec de l'archivage du joueur. Veuillez réessayer.",
+    "restoreError": "Échec de la restauration du joueur. Veuillez réessayer."
+  },
+  "archive": {
+    "action": "Archiver",
+    "ariaLabel": "Archiver {name}",
+    "confirmTitle": "Archiver {name} ?",
+    "confirmDesc": "Ce membre sera masqué des effectifs et de la préparation des matchs, mais conservé dans les statistiques et rapports passés. Vous pourrez le restaurer plus tard.",
+    "loseAccess": "Ce membre perdra aussi l'accès à cette équipe.",
+    "restoreAriaLabel": "Restaurer {name}",
+    "showArchived": "Afficher les archivés ({count})",
+    "hideArchived": "Masquer les archivés",
+    "badge": "Archivé"
   },
   "confirmDelete": "Êtes-vous sûr ?",
   "confirmDeleteDesc": "Cette action ne peut pas être annulée. Cela supprimera définitivement le joueur et toutes les statistiques associées."

@@ -57,7 +57,24 @@
     "error": "Erro",
     "createError": "Falha ao criar o jogador. Tente novamente.",
     "updateError": "Falha ao atualizar o jogador. Tente novamente.",
-    "deleteError": "Falha ao eliminar o jogador. Tente novamente."
+    "deleteError": "Falha ao eliminar o jogador. Tente novamente.",
+    "archived": "Jogador arquivado",
+    "archivedDesc": "{name} está oculto dos plantéis.",
+    "restored": "Jogador restaurado",
+    "restoredDesc": "{name} está de volta ao plantel.",
+    "archiveError": "Não foi possível arquivar o jogador. Tente novamente.",
+    "restoreError": "Não foi possível restaurar o jogador. Tente novamente."
+  },
+  "archive": {
+    "action": "Arquivar",
+    "ariaLabel": "Arquivar {name}",
+    "confirmTitle": "Arquivar {name}?",
+    "confirmDesc": "Será ocultado dos plantéis e da preparação de jogos, mas mantido nas estatísticas e relatórios anteriores. Poderá restaurá-lo mais tarde.",
+    "loseAccess": "Também perderá o acesso a esta equipa.",
+    "restoreAriaLabel": "Restaurar {name}",
+    "showArchived": "Mostrar arquivados ({count})",
+    "hideArchived": "Ocultar arquivados",
+    "badge": "Arquivado"
   },
   "confirmDelete": "Tem a certeza?",
   "confirmDeleteDesc": "Esta ação não pode ser desfeita. Isto eliminará permanentemente o jogador e todas as estatísticas associadas."

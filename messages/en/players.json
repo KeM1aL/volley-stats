@@ -57,7 +57,24 @@
     "error": "Error",
     "createError": "Failed to create player. Please try again.",
     "updateError": "Failed to update player. Please try again.",
-    "deleteError": "Failed to delete player. Please try again."
+    "deleteError": "Failed to delete player. Please try again.",
+    "archived": "Player archived",
+    "archivedDesc": "{name} is hidden from rosters.",
+    "restored": "Player restored",
+    "restoredDesc": "{name} is back in the roster.",
+    "archiveError": "Failed to archive player. Please try again.",
+    "restoreError": "Failed to restore player. Please try again."
+  },
+  "archive": {
+    "action": "Archive",
+    "ariaLabel": "Archive {name}",
+    "confirmTitle": "Archive {name}?",
+    "confirmDesc": "They'll be hidden from rosters and match setup, but kept in past stats and reports. You can restore them later.",
+    "loseAccess": "They'll also lose access to this team.",
+    "restoreAriaLabel": "Restore {name}",
+    "showArchived": "Show archived ({count})",
+    "hideArchived": "Hide archived",
+    "badge": "Archived"
   },
   "confirmDelete": "Are you sure?",
   "confirmDeleteDesc": "This action cannot be undone. This will permanently delete the player and all associated statistics."
