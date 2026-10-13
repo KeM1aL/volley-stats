@@ -935,12 +935,16 @@ export default function LiveMatchPage() {
               onTogglePanel={() => setShowDesktopPanel(!showDesktopPanel)}
               navExpanded={navExpanded}
               onToggleNav={() => setNavExpanded(!navExpanded)}
+              onCollapse={() => {
+                setShowDesktopPanel(false);
+                setNavExpanded(false);
+              }}
             />
           </nav>
 
           {/* Column 2: Panel (conditional) - Internal scrolling */}
           {showDesktopPanel && (
-            <aside className="h-full overflow-hidden border-l">
+            <aside className="h-full overflow-hidden border-l" data-testid="live-panel">
               <div className="h-full overflow-y-auto live-match-scroll">
                 {renderPanelContent()}
               </div>

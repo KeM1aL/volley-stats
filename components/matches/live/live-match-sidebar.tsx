@@ -21,6 +21,8 @@ interface LiveMatchSidebarProps {
   onTogglePanel: () => void;
   navExpanded?: boolean;
   onToggleNav?: () => void;
+  /** Closes the open panel and the labels: the caret's action while either is open. */
+  onCollapse?: () => void;
   isMobile?: boolean;
   isLandscape?: boolean;
 }
@@ -32,6 +34,7 @@ export function LiveMatchSidebar({
   onTogglePanel,
   navExpanded = false,
   onToggleNav,
+  onCollapse,
   isMobile = false,
   isLandscape = false,
 }: LiveMatchSidebarProps) {
@@ -152,7 +155,9 @@ export function LiveMatchSidebar({
     );
   }
 
-  // Desktop/Tablet: Vertical collapsible nav
+  // Desktop/Tablet: Vertical collapsible nav. The caret collapses everything (panel and labels)
+  // while either is open, and expands the labels otherwise.
+  const expanded = navExpanded || showPanel;
   return (
     <div className="flex flex-col h-full bg-muted/30 border-r transition-all duration-300 ease-in-out overflow-hidden">
       {/* Collapse/Expand Toggle */}
@@ -161,16 +166,18 @@ export function LiveMatchSidebar({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onToggleNav}
+            data-testid="sidebar-toggle"
+            data-state={expanded ? "expanded" : "collapsed"}
+            onClick={expanded && onCollapse ? onCollapse : onToggleNav}
             className="w-full h-8"
           >
-            {navExpanded ? (
+            {expanded ? (
               <ChevronLeft className="h-4 w-4" />
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
             <span className="sr-only">
-              {navExpanded ? t("collapse") : t("expand")} {t("navigation")}
+              {expanded ? t("collapse") : t("expand")} {t("navigation")}
             </span>
           </Button>
         </div>

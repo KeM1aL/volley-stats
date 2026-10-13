@@ -124,9 +124,11 @@ async function playSetToCompletion(
     await page.getByRole('dialog').locator('button[type="submit"]').click();
     await page.waitForTimeout(500);
 
-    // Close Events panel
-    await page.getByTestId('sidebar-btn-events').first().click();
-    await page.waitForTimeout(300);
+    // Close Events panel with the sidebar caret: it collapses the panel back to the icon column
+    await expect(page.getByTestId('live-panel')).toBeVisible();
+    await page.getByTestId('sidebar-toggle').click();
+    await expect(page.getByTestId('live-panel')).toHaveCount(0);
+    await expect(page.getByTestId('sidebar-toggle')).toHaveAttribute('data-state', 'collapsed');
   }
 
   // Phase C — score points until set or match ends
