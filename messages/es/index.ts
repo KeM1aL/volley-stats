@@ -14,6 +14,7 @@ import stats from './stats.json';
 import debug from './debug.json';
 import errors from './errors.json';
 import sync from './sync.json';
+import report from './report.json';
 
 export default {
   common,
@@ -32,4 +33,5 @@ export default {
   debug,
   errors,
   sync,
+  report,
 };
