@@ -1,0 +1,109 @@
+import type { MatchReportModel } from "@/lib/report/build";
+import type { EventImpact } from "@/lib/report/metrics/event-impact";
+import type { PlayerLine, PlayerTotals } from "@/lib/report/metrics/players";
+import type { RoleLine } from "@/lib/report/metrics/roles";
+import type { ServerLine } from "@/lib/report/metrics/servers";
+import { DASH, homeAway, pct, playerLabel, signed, teamName, type ReportT } from "./format";
+import { Table, type Column } from "./table";
+
+const PLAYER_COLUMNS = [
+  "aces",
+  "serveErrors",
+  "kills",
+  "attackErrors",
+  "blocks",
+  "blockErrors",
+  "receptionErrors",
+  "defenseErrors",
+  "points",
+  "errors",
+  "net",
+  "plusMinus",
+] as const;
+
+const playerCells = (line: PlayerTotals): string[] => [
+  ...[line.aces, line.serveErrors, line.kills, line.attackErrors, line.blocks, line.blockErrors, line.receptionErrors, line.defenseErrors, line.points, line.errors].map(String),
+  signed(line.net),
+  signed(line.plusMinus),
+];
+
+export function PlayerTable({ model, players, total, t }: { model: MatchReportModel; players: PlayerLine[]; total: PlayerTotals; t: ReportT }) {
+  const columns: Column[] = [{ label: t("table.player"), width: 135, align: "left" }, ...PLAYER_COLUMNS.map((key) => ({ label: t(`table.${key}`), width: 33 }))];
+  return (
+    <Table
+      columns={columns}
+      rows={players.map((line) => [playerLabel(model, line.playerId, t), ...playerCells(line)])}
+      footer={[t("table.team"), ...playerCells(total)]}
+    />
+  );
+}
+
+export function ServerTable({ model, servers, t }: { model: MatchReportModel; servers: ServerLine[]; t: ReportT }) {
+  const columns: Column[] = [
+    { label: t("table.player"), width: 171, align: "left" },
+    { label: t("table.served"), width: 60 },
+    { label: t("table.wonOnServe"), width: 60 },
+    { label: t("table.breakPct"), width: 60 },
+    { label: t("table.longestRun"), width: 60 },
+    { label: t("table.aces"), width: 60 },
+    { label: t("table.serveErrors"), width: 60 },
+  ];
+  const rows = servers.map((s) => [
+    playerLabel(model, s.playerId, t),
+    String(s.served),
+    String(s.won),
+    pct({ pct: s.breakPct }),
+    String(s.longestRun),
+    String(s.aces),
+    String(s.serveErrors),
+  ]);
+  return <Table columns={columns} rows={rows} />;
+}
+
+export function RoleTable({ model, roles, t }: { model: MatchReportModel; roles: RoleLine[]; t: ReportT }) {
+  const columns: Column[] = [
+    { label: t("table.role"), width: 150, align: "left" },
+    { label: t("table.points"), width: 60 },
+    { label: t("table.errors"), width: 60 },
+    { label: t("table.topScorer"), width: 261, align: "left" },
+  ];
+  const rows = roles.map((r) => [
+    t(`roles.${r.role}`),
+    String(r.points),
+    String(r.errors),
+    r.topScorerId ? `${playerLabel(model, r.topScorerId, t)} (${t("summary.points", { count: r.topScorerPoints })})` : DASH,
+  ]);
+  return <Table columns={columns} rows={rows} />;
+}
+
+export function EventTable({ model, events, numbers, t }: { model: MatchReportModel; events: EventImpact[]; numbers: Map<string, number>; t: ReportT }) {
+  const columns: Column[] = [
+    { label: t("table.rally"), width: 35 },
+    { label: t("table.score"), width: 45 },
+    { label: t("table.event"), width: 95, align: "left" },
+    { label: t("table.detail"), width: 181, align: "left" },
+    { label: t("table.before"), width: 50 },
+    { label: t("table.after"), width: 50 },
+    { label: t("table.nextRally"), width: 40 },
+    { label: t("table.plusMinus"), width: 35 },
+  ];
+  const rows = events.map((e) => {
+    const number = numbers.get(e.eventId);
+    const label = `${number ? `${number} · ` : ""}${t(`events.${e.type}`)}${e.team ? ` (${teamName(model, e.team)})` : ""}`;
+    const players =
+      e.type === "substitution" && e.playerInId
+        ? t("events.substitutionDetail", { playerIn: playerLabel(model, e.playerInId, t), playerOut: playerLabel(model, e.playerOutId, t) })
+        : null;
+    return [
+      String(e.afterRally),
+      homeAway(model, e.score),
+      label,
+      [players, e.text].filter(Boolean).join(" — "),
+      `${e.before.us}–${e.before.them}`,
+      `${e.after.us}–${e.after.them}`,
+      e.nextRallyWon === null ? DASH : e.nextRallyWon ? t("set.won") : t("set.lost"),
+      e.plusMinus === null ? "" : signed(e.plusMinus),
+    ];
+  });
+  return <Table columns={columns} rows={rows} />;
+}
