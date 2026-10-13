@@ -54,6 +54,7 @@ import { SyncBadge } from "@/components/sync/sync-badge";
 import { ScorerClaimDialog, type ClaimPrompt } from "@/components/sync/scorer-claim-dialog";
 import { TakenOverBanner } from "@/components/sync/taken-over-banner";
 import { useBeforeUnloadWhenUnsent, useMatchUnsentCount } from "@/hooks/use-unsent-guard";
+import { useLeaveGuard } from "@/components/providers/leave-guard-provider";
 import { isClaimForbidden, type ClaimResult, type ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
 import { claimBecameHeld, claimFollowUp, offlineConfirmFollowUp } from "@/lib/rxdb/sync/claim-flow";
 import type { ClaimState } from "@/lib/rxdb/sync/tracked-matches";
@@ -111,6 +112,9 @@ export default function LiveMatchPage() {
   const previousClaim = useRef<ClaimState | null | undefined>(undefined);
   const unsentCount = useMatchUnsentCount(matchId);
   useBeforeUnloadWhenUnsent(unsentCount > 0);
+  // In-app navigation asks first while a match in progress is on screen (finished matches leave freely).
+  const guardActive = !isLoading && !!matchState.match && matchState.match.status !== "completed";
+  useLeaveGuard({ active: guardActive, unsentCount });
 
   const LOADING_STEPS = useMemo(
     () => [

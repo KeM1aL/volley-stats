@@ -456,5 +456,12 @@
     "eventCreated": "Événement créé",
     "eventCreatedDesc": "L'événement a été enregistré avec succès",
     "failedLoadLocalMatchData": "Échec du chargement des données du match local"
+  },
+  "liveGuard": {
+    "title": "Quitter le match en direct ?",
+    "body": "Tout ce qui a été saisi est enregistré sur cet appareil. Vous pourrez revenir à ce match depuis Matchs.",
+    "unsent": "{count, plural, one {# modification n'a pas encore été envoyée} other {# modifications n'ont pas encore été envoyées}}. Elles seront envoyées automatiquement dès le retour de la connexion.",
+    "stay": "Rester",
+    "leave": "Quitter"
   }
 }

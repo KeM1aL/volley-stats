@@ -456,5 +456,12 @@
     "eventCreated": "Evento criado",
     "eventCreatedDesc": "Evento foi registrado com sucesso",
     "failedLoadLocalMatchData": "Falha ao carregar dados da partida local"
+  },
+  "liveGuard": {
+    "title": "Sair do jogo ao vivo?",
+    "body": "Tudo o que foi registado até agora está guardado neste dispositivo. Pode voltar a este jogo a partir de Jogos.",
+    "unsent": "{count, plural, one {# alteração ainda não foi enviada} other {# alterações ainda não foram enviadas}}. Serão enviadas automaticamente quando voltar a estar online.",
+    "stay": "Ficar",
+    "leave": "Sair"
   }
 }

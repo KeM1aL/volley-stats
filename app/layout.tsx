@@ -6,6 +6,7 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LocalDatabaseProvider } from '@/components/providers/local-database-provider';
 import { SyncStatusProvider } from '@/components/providers/sync-status-provider';
+import { LeaveGuardProvider } from '@/components/providers/leave-guard-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
 import { LoadingBar } from '@/components/ui/loading-bar';
@@ -91,17 +92,19 @@ export default async function RootLayout({
                 <AuthProvider>
                   <LocalDatabaseProvider>
                     <SyncStatusProvider>
-                      <LoadingBar />
-                      <div className="keyboard-layout-grid bg-background">
-                        <header>
-                          <Navigation />
-                        </header>
-                        <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
-                          {children}
-                        </main>
-                        <div className="keyboard-spacer" aria-hidden="true" />
-                      </div>
-                      <Toaster />
+                      <LeaveGuardProvider>
+                        <LoadingBar />
+                        <div className="keyboard-layout-grid bg-background">
+                          <header>
+                            <Navigation />
+                          </header>
+                          <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
+                            {children}
+                          </main>
+                          <div className="keyboard-spacer" aria-hidden="true" />
+                        </div>
+                        <Toaster />
+                      </LeaveGuardProvider>
                     </SyncStatusProvider>
                   </LocalDatabaseProvider>
                 </AuthProvider>

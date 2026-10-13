@@ -456,5 +456,12 @@
     "eventCreated": "Event created",
     "eventCreatedDesc": "Event has been recorded successfully",
     "failedLoadLocalMatchData": "Failed to load local match data"
+  },
+  "liveGuard": {
+    "title": "Leave the live match?",
+    "body": "Everything recorded so far is saved on this device. You can come back to this match from Matches.",
+    "unsent": "{count, plural, one {# change hasn't} other {# changes haven't}} been uploaded yet. They'll upload automatically once you're back online.",
+    "stay": "Stay",
+    "leave": "Leave"
   }
 }

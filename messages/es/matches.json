@@ -456,5 +456,12 @@
     "eventCreated": "Evento creado",
     "eventCreatedDesc": "El evento ha sido registrado correctamente",
     "failedLoadLocalMatchData": "Error al cargar datos del partido local"
+  },
+  "liveGuard": {
+    "title": "¿Salir del partido en directo?",
+    "body": "Todo lo registrado hasta ahora está guardado en este dispositivo. Puedes volver a este partido desde Partidos.",
+    "unsent": "{count, plural, one {# cambio aún no se ha subido} other {# cambios aún no se han subido}}. Se subirán automáticamente cuando vuelvas a tener conexión.",
+    "stay": "Quedarse",
+    "leave": "Salir"
   }
 }

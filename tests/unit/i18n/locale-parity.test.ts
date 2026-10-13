@@ -24,7 +24,14 @@ const REQUIRED_KEYS: Record<string, string[]> = {
     "toast.archiveError",
     "toast.restoreError",
   ],
-  "matches.json": ["matchLineup.selectedCount"],
+  "matches.json": [
+    "matchLineup.selectedCount",
+    "liveGuard.title",
+    "liveGuard.body",
+    "liveGuard.unsent",
+    "liveGuard.stay",
+    "liveGuard.leave",
+  ],
 };
 
 const flatten = (value: unknown, prefix = ""): string[] =>
