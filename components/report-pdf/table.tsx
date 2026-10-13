@@ -7,12 +7,12 @@ export interface Column {
   align?: "left" | "right" | "center";
 }
 
-const ROWS_PER_BLOCK = 24;
+const DEFAULT_ROWS_PER_BLOCK = 24;
 
 /** Rows are drawn in blocks that never split across pages; each block repeats the header. */
-export function Table({ columns, rows, footer }: { columns: Column[]; rows: string[][]; footer?: string[] }) {
+export function Table({ columns, rows, footer, rowsPerBlock = DEFAULT_ROWS_PER_BLOCK }: { columns: Column[]; rows: string[][]; footer?: string[]; rowsPerBlock?: number }) {
   const blocks: string[][][] = [];
-  for (let i = 0; i < Math.max(rows.length, 1); i += ROWS_PER_BLOCK) blocks.push(rows.slice(i, i + ROWS_PER_BLOCK));
+  for (let i = 0; i < Math.max(rows.length, 1); i += rowsPerBlock) blocks.push(rows.slice(i, i + rowsPerBlock));
   return (
     <View>
       {blocks.map((block, b) => (

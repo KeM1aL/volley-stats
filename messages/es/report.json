@@ -51,7 +51,7 @@
     "byZone": "Puntos por zona",
     "frontRow": "Zona delantera",
     "backRow": "Zona trasera",
-    "unplaced": "{count} acciones sin posición",
+    "unplaced": "{count, plural, one {# acción} other {# acciones}} sin posición",
     "servers": "Sacadores",
     "matchEvents": "Otros eventos",
     "legend": "Ace: aces · ES: errores de saque · Rem: remates ganadores · ER: errores de remate · Blq: puntos de bloqueo · EB: errores de bloqueo · ERc: errores de recepción · ED: errores de defensa · Pts: puntos · Err: errores · Neto: puntos − errores · +/−: puntos ganados − perdidos en pista"
@@ -84,7 +84,7 @@
     "before": "5 antes",
     "after": "5 después",
     "nextRally": "Siguiente",
-    "zonePoints": "{points} pts · {errors} err"
+    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# err} other {# err}}"
   },
   "roles": {
     "outside_hitter": "Receptor-atacante",

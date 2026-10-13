@@ -383,7 +383,9 @@
     "exporting": "Preparando el PDF…",
     "unavailableOffline": "El PDF necesita conexión.",
     "unavailableUnsent": "Algunos cambios de este partido aún no se han enviado. El PDF estará disponible cuando se envíen.",
-    "unavailableNoRallies": "Aún no hay puntos registrados."
+    "unavailableNoRallies": "Aún no hay puntos registrados.",
+    "sessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo para descargar el PDF.",
+    "forbidden": "Ya no tienes acceso a los informes de este equipo."
   },
   "history": {
     "noMatchesFound": "No se encontraron partidos",

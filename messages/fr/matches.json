@@ -383,7 +383,9 @@
     "exporting": "Préparation du PDF…",
     "unavailableOffline": "Le PDF nécessite une connexion.",
     "unavailableUnsent": "Certaines modifications de ce match ne sont pas encore envoyées. Le PDF sera disponible ensuite.",
-    "unavailableNoRallies": "Aucun échange enregistré pour l’instant."
+    "unavailableNoRallies": "Aucun échange enregistré pour l’instant.",
+    "sessionExpired": "Votre session a expiré. Reconnectez-vous pour télécharger le PDF.",
+    "forbidden": "Vous n’avez plus accès aux rapports de cette équipe."
   },
   "history": {
     "noMatchesFound": "Aucun match trouvé",

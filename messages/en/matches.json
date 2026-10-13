@@ -383,7 +383,9 @@
     "exporting": "Preparing PDF…",
     "unavailableOffline": "The PDF needs a connection.",
     "unavailableUnsent": "Some changes to this match are not uploaded yet. The PDF will be available once they are.",
-    "unavailableNoRallies": "No rallies recorded yet."
+    "unavailableNoRallies": "No rallies recorded yet.",
+    "sessionExpired": "Your session has expired. Sign in again to download the PDF.",
+    "forbidden": "You no longer have access to this team's reports."
   },
   "history": {
     "noMatchesFound": "No matches found",

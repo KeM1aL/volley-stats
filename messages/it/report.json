@@ -51,7 +51,7 @@
     "byZone": "Punti per zona",
     "frontRow": "Prima linea",
     "backRow": "Seconda linea",
-    "unplaced": "{count} azioni senza posizione",
+    "unplaced": "{count, plural, one {# azione} other {# azioni}} senza posizione",
     "servers": "Battitori",
     "matchEvents": "Altri eventi",
     "legend": "Ace: ace · EB: errori in battuta · Att: attacchi vincenti · EA: errori in attacco · Muro: punti a muro · EM: errori a muro · ER: errori in ricezione · ED: errori in difesa · Pt: punti · Err: errori · Netto: punti − errori · +/−: scambi vinti − persi in campo"
@@ -84,7 +84,7 @@
     "before": "5 prima",
     "after": "5 dopo",
     "nextRally": "Successivo",
-    "zonePoints": "{points} pt · {errors} err"
+    "zonePoints": "{points, plural, one {# pt} other {# pt}} · {errors, plural, one {# err} other {# err}}"
   },
   "roles": {
     "outside_hitter": "Schiacciatore",

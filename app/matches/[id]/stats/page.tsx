@@ -30,6 +30,12 @@ import { useSyncStatus } from "@/hooks/use-sync-status";
 import { canExportForTeam } from "@/lib/report/can-export";
 import { fileNameFromDisposition, saveBlob } from "@/lib/report/download";
 
+class ReportRequestError extends Error {
+  constructor(readonly status: number) {
+    super(`Report request failed with ${status}`);
+  }
+}
+
 export default function MatchStatsPage() {
   const t = useTranslations("matches");
   const { id: matchId } = useParams();
@@ -95,16 +101,19 @@ export default function MatchStatsPage() {
             .from("sets")
             .select("*")
             .eq("match_id", matchId as string)
+            .eq("_deleted", false)
             .order("set_number", { ascending: true }),
           supabase
             .from("player_stats")
             .select("*")
             .eq("match_id", matchId as string)
+            .eq("_deleted", false)
             .order("created_at", { ascending: true }),
           supabase
             .from("score_points")
             .select("*")
             .eq("match_id", matchId as string)
+            .eq("_deleted", false)
             .order("created_at", { ascending: true }),
           supabase
             .from("team_members")
@@ -250,13 +259,18 @@ export default function MatchStatsPage() {
     setIsExporting(true);
     try {
       const response = await fetch(`/api/v1/matches/${matchId}/report?team=${encodeURIComponent(managedTeam.id)}&locale=${locale}`);
-      if (!response.ok) throw new Error(`Report request failed with ${response.status}`);
+      if (!response.ok) throw new ReportRequestError(response.status);
       const fileName = fileNameFromDisposition(response.headers.get("content-disposition")) ?? `match-report-${matchId}.pdf`;
       saveBlob(await response.blob(), fileName);
       toast({ title: t("pdf.success"), description: t("pdf.successDesc") });
     } catch (error) {
       console.error("Error exporting the match report:", error);
-      toast({ variant: "destructive", title: t("pdf.failed"), description: t("pdf.failedDesc") });
+      const status = error instanceof ReportRequestError ? error.status : null;
+      toast({
+        variant: "destructive",
+        title: t("pdf.failed"),
+        description: status === 401 ? t("pdf.sessionExpired") : status === 403 ? t("pdf.forbidden") : t("pdf.failedDesc"),
+      });
     } finally {
       setIsExporting(false);
     }

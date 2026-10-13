@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderMatchReport } from "@/components/report-pdf/render";
+import { renderMatchReport, reportTranslator } from "@/components/report-pdf/render";
 import { PlayerRole } from "@/lib/enums";
 import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
 import { buildMatchReport } from "@/lib/report/build";
@@ -52,5 +52,23 @@ describe("renderMatchReport", () => {
     const data = makeData([{ rallies: [], status: "upcoming", lineup: { p1: LINEUP.p1 } }], { usIsHome: false, status: "upcoming", format: { format: "4x4", rotation: false } });
     const pdf = await renderMatchReport(buildMatchReport(data, US), "en", { strict: true });
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+  });
+});
+
+describe("report plurals", () => {
+  for (const locale of SUPPORTED_LOCALES) {
+    it(`uses the singular for one in ${locale}`, () => {
+      const t = reportTranslator(locale, { strict: true });
+      expect(t("detail.unplaced", { count: 1 })).not.toBe(t("detail.unplaced", { count: 2 }));
+      expect(t("detail.unplaced", { count: 1 })).toMatch(/^1 /);
+      if (locale !== "it") expect(t("table.zonePoints", { points: 1, errors: 1 })).not.toBe(t("table.zonePoints", { points: 2, errors: 2 }));
+    });
+  }
+
+  it("prints 1 pt and 2 pts in English", () => {
+    const t = reportTranslator("en", { strict: true });
+    expect(t("table.zonePoints", { points: 1, errors: 3 })).toBe("1 pt · 3 err");
+    expect(t("table.zonePoints", { points: 2, errors: 1 })).toBe("2 pts · 1 err");
+    expect(t("detail.unplaced", { count: 1 })).toBe("1 action without a position");
   });
 });

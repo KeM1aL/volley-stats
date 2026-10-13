@@ -383,7 +383,9 @@
     "exporting": "Preparazione del PDF…",
     "unavailableOffline": "Il PDF richiede una connessione.",
     "unavailableUnsent": "Alcune modifiche a questa partita non sono ancora state inviate. Il PDF sarà disponibile dopo l’invio.",
-    "unavailableNoRallies": "Nessuno scambio registrato finora."
+    "unavailableNoRallies": "Nessuno scambio registrato finora.",
+    "sessionExpired": "La sessione è scaduta. Accedi di nuovo per scaricare il PDF.",
+    "forbidden": "Non hai più accesso ai report di questa squadra."
   },
   "history": {
     "noMatchesFound": "Nessuna partita trovata",

@@ -51,7 +51,7 @@
     "byZone": "Points by court zone",
     "frontRow": "Front row",
     "backRow": "Back row",
-    "unplaced": "{count} actions without a position",
+    "unplaced": "{count, plural, one {# action} other {# actions}} without a position",
     "servers": "Servers",
     "matchEvents": "Other events",
     "legend": "Ace: aces · SE: serve errors · Kill: kills · AE: attack errors · Blk: block points · BE: block errors · RE: reception errors · DE: defense errors · Pts: points · Err: errors · Net: points − errors · +/−: rallies won − lost on court"
@@ -84,7 +84,7 @@
     "before": "5 before",
     "after": "5 after",
     "nextRally": "Next",
-    "zonePoints": "{points} pts · {errors} err"
+    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# err} other {# err}}"
   },
   "roles": {
     "outside_hitter": "Outside hitter",

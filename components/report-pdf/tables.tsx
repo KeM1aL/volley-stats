@@ -76,18 +76,9 @@ export function RoleTable({ model, roles, t }: { model: MatchReportModel; roles:
   return <Table columns={columns} rows={rows} />;
 }
 
-export function EventTable({ model, events, numbers, t }: { model: MatchReportModel; events: EventImpact[]; numbers: Map<string, number>; t: ReportT }) {
-  const columns: Column[] = [
-    { label: t("table.rally"), width: 35 },
-    { label: t("table.score"), width: 45 },
-    { label: t("table.event"), width: 95, align: "left" },
-    { label: t("table.detail"), width: 181, align: "left" },
-    { label: t("table.before"), width: 50 },
-    { label: t("table.after"), width: 50 },
-    { label: t("table.nextRally"), width: 40 },
-    { label: t("table.plusMinus"), width: 35 },
-  ];
-  const rows = events.map((e) => {
+/** Every score in the table is home–away. */
+export function eventRows(model: MatchReportModel, events: EventImpact[], numbers: Map<string, number>, t: ReportT): string[][] {
+  return events.map((e) => {
     const number = numbers.get(e.eventId);
     const label = `${number ? `${number} · ` : ""}${t(`events.${e.type}`)}${e.team ? ` (${teamName(model, e.team)})` : ""}`;
     const players =
@@ -99,11 +90,24 @@ export function EventTable({ model, events, numbers, t }: { model: MatchReportMo
       homeAway(model, e.score),
       label,
       [players, e.text].filter(Boolean).join(" — "),
-      `${e.before.us}–${e.before.them}`,
-      `${e.after.us}–${e.after.them}`,
+      homeAway(model, e.before),
+      homeAway(model, e.after),
       e.nextRallyWon === null ? DASH : e.nextRallyWon ? t("set.won") : t("set.lost"),
       e.plusMinus === null ? "" : signed(e.plusMinus),
     ];
   });
-  return <Table columns={columns} rows={rows} />;
+}
+
+export function EventTable({ model, events, numbers, t }: { model: MatchReportModel; events: EventImpact[]; numbers: Map<string, number>; t: ReportT }) {
+  const columns: Column[] = [
+    { label: t("table.rally"), width: 35 },
+    { label: t("table.score"), width: 45 },
+    { label: t("table.event"), width: 95, align: "left" },
+    { label: t("table.detail"), width: 181, align: "left" },
+    { label: t("table.before"), width: 50 },
+    { label: t("table.after"), width: 50 },
+    { label: t("table.nextRally"), width: 40 },
+    { label: t("table.plusMinus"), width: 35 },
+  ];
+  return <Table columns={columns} rows={eventRows(model, events, numbers, t)} rowsPerBlock={8} />;
 }

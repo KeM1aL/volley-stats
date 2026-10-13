@@ -51,7 +51,7 @@
     "byZone": "Points par zone",
     "frontRow": "Avant",
     "backRow": "Arrière",
-    "unplaced": "{count} actions sans position",
+    "unplaced": "{count, plural, one {# action} other {# actions}} sans position",
     "servers": "Serveurs",
     "matchEvents": "Autres événements",
     "legend": "Ace : aces · FS : fautes de service · Att : attaques gagnantes · FA : fautes d'attaque · Ctr : points de contre · FC : fautes de contre · FR : fautes de réception · FD : fautes de défense · Pts : points · Ftes : fautes · Net : points − fautes · +/− : échanges gagnés − perdus sur le terrain"
@@ -84,7 +84,7 @@
     "before": "5 avant",
     "after": "5 après",
     "nextRally": "Suivant",
-    "zonePoints": "{points} pts · {errors} ftes"
+    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# fte} other {# ftes}}"
   },
   "roles": {
     "outside_hitter": "Réceptionneur-attaquant",
