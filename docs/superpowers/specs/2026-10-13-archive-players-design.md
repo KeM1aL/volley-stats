@@ -116,26 +116,27 @@ the stats page, the score page, the history statistics dialog and the PDF report
   drop out of `user.teamIds`, so the managed teams and the `team_members` reference sync of that team
   stop on the user's devices.
 - `checkReportAccess` (`lib/report/access.ts`) ignores memberships whose `archived_at` is set.
-- RLS: `lib/supabase/schema.sql` is out of date; the live policies are in the Supabase project.
-  The first implementation step lists them:
-  ```sql
-  SELECT tablename, policyname, cmd, qual, with_check
-  FROM pg_policies
-  WHERE schemaname = 'public'
-    AND (qual ILIKE '%team_members%' OR with_check ILIKE '%team_members%');
-  ```
-  Every policy that grants access through `team_members.user_id` is recreated in a migration with
-  `AND team_members.archived_at IS NULL` on that membership. If none does, no RLS change is made and
-  the plan records it. Running the query needs the Supabase connection authorised, or the output
-  supplied by the user.
-- The scorer claim RPCs don't check team membership (RLS does): no change.
+- RLS: no change. Live policies (`pg_policies`, checked 2026-10-13; `lib/supabase/schema.sql` is out
+  of date):
+  - Every table on this branch is readable by everyone, signed-out visitors included (`Enable read access for all users`, role `public`,
+    `USING (true)`).
+  - Writes are granted to the team creator (`teams.user_id = auth.uid()`) on `teams`,
+    `team_members`, `matches`, `sets`, `score_points`, `player_stats` and `events`.
+  - No policy on these tables grants anything through `team_members.user_id`, so an archived
+    membership changes nothing at the database level. "Losing access" is app-level: the team leaves
+    the user's teams (`getTeamMembers`, `user.teamIds`) and report export is refused.
+  - The only policies reading `team_members.user_id` are on `voice_vocabulary`, a table of the
+    unmerged `feature/voice-stats` branch (its migration lives there). That branch adds
+    `AND team_members.archived_at IS NULL` to its two policies when it merges after this work; this
+    branch doesn't touch them.
+- The scorer claim RPCs don't check team membership: no change.
 
 ### Edge cases
 
 - An archived user who is offline keeps what is already on the device until the app reloads their
   profile online (the saved profile in `lib/auth/user-cache.ts` is refreshed when the connection returns).
-- Unsent match rows of an archived scorer are then refused by RLS and shown as "couldn't be saved"
-  in the sync badge, like any loss of access.
+- Match writes are tied to the team creator, not to memberships, so archiving a member never makes
+  the server refuse their unsent rows: what they already scored still uploads.
 
 ## 4. Testing
 
@@ -158,11 +159,6 @@ the stats page, the score page, the history statistics dialog and the PDF report
   "N selected (min M)" line follows the ticks.
 - Item D's spec: the late-player picker doesn't offer the archived player.
 
-### RLS
-
-If section 3 changes policies: a SQL check as an archived user (`SET LOCAL ROLE authenticated` with
-`request.jwt.claims`) that the team's rows are no longer visible, and visible again after restore.
-
 ### Manual
 
 On a device that already holds the version-0 local database with a tracked match: the app upgrades
@@ -180,3 +176,6 @@ flagged after the re-pull.
 - Hard delete of players who never played.
 - Archiving staff separately from players (one rule for every member).
 - Changes to `deleteTeamMember` in the repository.
+- Tightening the public read policies (every table is readable by everyone today); worth its own
+  review.
+- The `voice_vocabulary` policies (see section 3, Access).
