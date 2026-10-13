@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { PlayerStat, TeamMember, Set } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { calculateMVPScore } from "@/lib/stats/calculations";
+import { mvp } from "@/lib/report/metrics/mvp";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy } from "lucide-react";
 
@@ -11,13 +11,27 @@ interface MVPCalculatorProps {
   stats: PlayerStat[];
   players: TeamMember[];
   sets: Set[];
-  isPdfGenerating?: boolean; // Added for PDF generation context
+  isPdfGenerating?: boolean;
 }
+
+const initials = (name: string) =>
+  name
+    .split(" ")
+    .map((n) => n[0])
+    .join("");
 
 export function MVPAnalysis({ stats, players, sets }: MVPCalculatorProps) {
   const t = useTranslations("matches");
-  const mvpScores = calculateMVPScore(stats, players, sets);
-  const matchMVP = mvpScores.matchMVP;
+  const playerById = new Map(players.map((player) => [player.id, player]));
+  const matchResult = mvp(stats);
+  const matchMVP = matchResult ? playerById.get(matchResult.playerId) : undefined;
+  const setMVPs = [...sets]
+    .sort((a, b) => a.set_number - b.set_number)
+    .flatMap((set) => {
+      const result = mvp(stats.filter((s) => s.set_id === set.id));
+      const player = result ? playerById.get(result.playerId) : undefined;
+      return result && player ? [{ setNumber: set.set_number, player, score: result.score }] : [];
+    });
 
   return (
     <Card>
@@ -25,58 +39,39 @@ export function MVPAnalysis({ stats, players, sets }: MVPCalculatorProps) {
         <CardTitle>{t("stats.mvpAnalysis")}</CardTitle>
       </CardHeader>
       <CardContent>
-        {matchMVP.player && (
+        {matchResult && matchMVP && (
           <div className="space-y-6">
             <div className="flex items-center justify-center p-6 bg-primary/5 rounded-lg">
               <div className="text-center">
                 <Avatar className="w-20 h-20 mx-auto mb-4">
-                  <AvatarImage src={matchMVP.player.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {matchMVP.player.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
+                  <AvatarImage src={matchMVP.avatar_url || undefined} />
+                  <AvatarFallback>{initials(matchMVP.name)}</AvatarFallback>
                 </Avatar>
                 <h3 className="text-xl font-bold flex items-center justify-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
                   {t("stats.matchMVP")}
                 </h3>
-                <p className="text-lg font-medium mt-2">
-                  {matchMVP.player.name}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Score: {matchMVP.score.toFixed(2)}
-                </p>
+                <p className="text-lg font-medium mt-2">{matchMVP.name}</p>
+                <p className="text-sm text-muted-foreground mt-1">Score: {matchResult.score.toFixed(2)}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <h3 className="font-semibold">{t("stats.setMVPs")}</h3>
-              {mvpScores.setMVPs.map((mvp) => (
-                <div
-                  key={mvp.setNumber}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
+              {setMVPs.map((setMvp) => (
+                <div key={setMvp.setNumber} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-4">
                     <Avatar>
-                      <AvatarImage src={mvp.player.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {mvp.player.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
+                      <AvatarImage src={setMvp.player.avatar_url || undefined} />
+                      <AvatarFallback>{initials(setMvp.player.name)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{mvp.player.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Set {mvp.setNumber}
-                      </p>
+                      <p className="font-medium">{setMvp.player.name}</p>
+                      <p className="text-sm text-muted-foreground">Set {setMvp.setNumber}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">Score: {mvp.score.toFixed(2)}</p>
+                    <p className="font-medium">Score: {setMvp.score.toFixed(2)}</p>
                   </div>
                 </div>
               ))}
