@@ -24,7 +24,10 @@
     "matchMvp": "Match",
     "momentum": "Dynamique (écart au score, échange par échange)",
     "coverage": "{pct} des échanges ont une action saisie ({typed} sur {total}).",
-    "points": "{count, plural, one {# pt} other {# pts}}"
+    "points": "{count, plural, one {# pt} other {# pts}}",
+    "serveTurns": "Points par tour de service",
+    "serveTurnsHint": "{turns, plural, one {# tour} other {# tours}} · {pct} marquants",
+    "pressure": "Points sous pression"
   },
   "origin": {
     "ace": "Aces",
@@ -54,7 +57,9 @@
     "unplaced": "{count, plural, one {# action} other {# actions}} sans position",
     "servers": "Serveurs",
     "matchEvents": "Autres événements",
-    "legend": "Ace : aces · FS : fautes de service · Att : attaques gagnantes · FA : fautes d'attaque · Ctr : points de contre · FC : fautes de contre · FR : fautes de réception · FD : fautes de défense · Pts : points · Ftes : fautes · Net : points − fautes · +/− : échanges gagnés − perdus sur le terrain"
+    "legend": "Ace : aces · FS : fautes de service · Att : attaques gagnantes · FA : fautes d'attaque · Ctr : points de contre · FC : fautes de contre · FR : fautes de réception · FD : fautes de défense · Pts : points · Ftes : fautes · Net : points − fautes · +/− : échanges gagnés − perdus sur le terrain",
+    "byRow": "+/− par ligne",
+    "byRowHint": "Avant : postes 2, 3, 4 · arrière : postes 1, 5, 6"
   },
   "table": {
     "player": "Joueur",
@@ -84,7 +89,14 @@
     "before": "5 avant",
     "after": "5 après",
     "nextRally": "Suivant",
-    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# fte} other {# ftes}}"
+    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# fte} other {# ftes}}",
+    "turns": "Tours",
+    "pointsPerTurn": "Pts/tour",
+    "scoringTurns": "Marquants",
+    "front": "Avant +/−",
+    "frontRallies": "Éch. avant",
+    "back": "Arrière +/−",
+    "backRallies": "Éch. arrière"
   },
   "roles": {
     "outside_hitter": "Réceptionneur-attaquant",
@@ -113,7 +125,8 @@
     "noEvents": "Aucun événement dans ce set.",
     "comments": "Commentaires",
     "won": "gagné",
-    "lost": "perdu"
+    "lost": "perdu",
+    "pressure": "Points sous pression"
   },
   "events": {
     "substitution": "Remplacement",
@@ -123,5 +136,12 @@
     "technical": "Problème technique",
     "comment": "Commentaire",
     "substitutionDetail": "{playerIn} pour {playerOut}"
+  },
+  "pressure": {
+    "tied": "À égalité",
+    "closeFinish": "Fin de set serrée",
+    "deuce": "Égalité en fin de set",
+    "behind": "Mené de 3+",
+    "hint": "Fin de set serrée : les deux équipes à 5 points ou moins de la cible · égalité en fin de set : à 1 point"
   }
 }

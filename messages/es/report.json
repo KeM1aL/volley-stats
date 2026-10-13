@@ -24,7 +24,10 @@
     "matchMvp": "Partido",
     "momentum": "Dinámica (diferencia en el marcador, punto a punto)",
     "coverage": "El {pct} de los puntos tiene una acción registrada ({typed} de {total}).",
-    "points": "{count, plural, one {# pt} other {# pts}}"
+    "points": "{count, plural, one {# pt} other {# pts}}",
+    "serveTurns": "Puntos por turno de saque",
+    "serveTurnsHint": "{turns, plural, one {# turno} other {# turnos}} · {pct} con punto",
+    "pressure": "Puntos bajo presión"
   },
   "origin": {
     "ace": "Aces",
@@ -54,7 +57,9 @@
     "unplaced": "{count, plural, one {# acción} other {# acciones}} sin posición",
     "servers": "Sacadores",
     "matchEvents": "Otros eventos",
-    "legend": "Ace: aces · ES: errores de saque · Rem: remates ganadores · ER: errores de remate · Blq: puntos de bloqueo · EB: errores de bloqueo · ERc: errores de recepción · ED: errores de defensa · Pts: puntos · Err: errores · Neto: puntos − errores · +/−: puntos ganados − perdidos en pista"
+    "legend": "Ace: aces · ES: errores de saque · Rem: remates ganadores · ER: errores de remate · Blq: puntos de bloqueo · EB: errores de bloqueo · ERc: errores de recepción · ED: errores de defensa · Pts: puntos · Err: errores · Neto: puntos − errores · +/−: puntos ganados − perdidos en pista",
+    "byRow": "+/− por zona",
+    "byRowHint": "Zona delantera: posiciones 2, 3, 4 · trasera: 1, 5, 6"
   },
   "table": {
     "player": "Jugador",
@@ -84,7 +89,14 @@
     "before": "5 antes",
     "after": "5 después",
     "nextRally": "Siguiente",
-    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# err} other {# err}}"
+    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# err} other {# err}}",
+    "turns": "Turnos",
+    "pointsPerTurn": "Pts/turno",
+    "scoringTurns": "Con punto",
+    "front": "Delantera +/−",
+    "frontRallies": "Puntos del.",
+    "back": "Trasera +/−",
+    "backRallies": "Puntos tras."
   },
   "roles": {
     "outside_hitter": "Receptor-atacante",
@@ -113,7 +125,8 @@
     "noEvents": "No hay eventos en este set.",
     "comments": "Comentarios",
     "won": "ganado",
-    "lost": "perdido"
+    "lost": "perdido",
+    "pressure": "Puntos bajo presión"
   },
   "events": {
     "substitution": "Sustitución",
@@ -123,5 +136,12 @@
     "technical": "Problema técnico",
     "comment": "Comentario",
     "substitutionDetail": "{playerIn} por {playerOut}"
+  },
+  "pressure": {
+    "tied": "Con empate",
+    "closeFinish": "Final ajustado",
+    "deuce": "Empate final",
+    "behind": "Perdiendo por 3+",
+    "hint": "Final ajustado: ambos equipos a 5 puntos o menos del objetivo · empate final: a 1 punto"
   }
 }

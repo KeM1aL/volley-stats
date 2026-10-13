@@ -1,4 +1,5 @@
 import type { MatchReportData, Rally, Side, StatAction, WinOrigin } from "../types";
+import { ZONES, type Zone } from "./zones";
 
 /**
  * Every rally of the match in order, from the managed team's point of view.
@@ -29,6 +30,9 @@ export function buildRallies(data: MatchReportData, managedTeamId: string): Rall
         server,
         serverPlayerId: server === "us" && data.format.rotation ? (rotation.p1 ?? null) : null,
         onCourt: Object.values(rotation).filter((id): id is string => typeof id === "string" && id.length > 0),
+        positions: Object.fromEntries(
+          Object.entries(rotation).flatMap(([position, id]) => (typeof id === "string" && id && ZONES.includes(position as Zone) ? [[id, position as Zone]] : []))
+        ),
         score: usIsHome ? { us: point.home_score, them: point.away_score } : { us: point.away_score, them: point.home_score },
         winOrigin: winner === "us" ? winOrigin(actedByUs, action) : null,
         lossOrigin: winner === "them" ? (actedByUs ? "ownError" : "opponentWinner") : null,

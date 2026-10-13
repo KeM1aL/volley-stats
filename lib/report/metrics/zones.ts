@@ -3,7 +3,7 @@ import { isPointStat } from "./roles";
 
 export type Zone = "p1" | "p2" | "p3" | "p4" | "p5" | "p6";
 export const ZONES: Zone[] = ["p1", "p2", "p3", "p4", "p5", "p6"];
-const FRONT_ROW: Zone[] = ["p2", "p3", "p4"];
+export const FRONT_ROW: Zone[] = ["p2", "p3", "p4"];
 
 export interface ZoneCount {
   points: number;

@@ -24,7 +24,10 @@
     "matchMvp": "Partita",
     "momentum": "Andamento (differenza punteggio, scambio per scambio)",
     "coverage": "Il {pct} degli scambi ha un'azione registrata ({typed} su {total}).",
-    "points": "{count, plural, one {# pt} other {# pt}}"
+    "points": "{count, plural, one {# pt} other {# pt}}",
+    "serveTurns": "Punti per turno di battuta",
+    "serveTurnsHint": "{turns, plural, one {# turno} other {# turni}} · {pct} con punto",
+    "pressure": "Punti sotto pressione"
   },
   "origin": {
     "ace": "Ace",
@@ -54,7 +57,9 @@
     "unplaced": "{count, plural, one {# azione} other {# azioni}} senza posizione",
     "servers": "Battitori",
     "matchEvents": "Altri eventi",
-    "legend": "Ace: ace · EB: errori in battuta · Att: attacchi vincenti · EA: errori in attacco · Muro: punti a muro · EM: errori a muro · ER: errori in ricezione · ED: errori in difesa · Pt: punti · Err: errori · Netto: punti − errori · +/−: scambi vinti − persi in campo"
+    "legend": "Ace: ace · EB: errori in battuta · Att: attacchi vincenti · EA: errori in attacco · Muro: punti a muro · EM: errori a muro · ER: errori in ricezione · ED: errori in difesa · Pt: punti · Err: errori · Netto: punti − errori · +/−: scambi vinti − persi in campo",
+    "byRow": "+/− per linea",
+    "byRowHint": "Prima linea: posizioni 2, 3, 4 · seconda linea: 1, 5, 6"
   },
   "table": {
     "player": "Giocatore",
@@ -84,7 +89,14 @@
     "before": "5 prima",
     "after": "5 dopo",
     "nextRally": "Successivo",
-    "zonePoints": "{points, plural, one {# pt} other {# pt}} · {errors, plural, one {# err} other {# err}}"
+    "zonePoints": "{points, plural, one {# pt} other {# pt}} · {errors, plural, one {# err} other {# err}}",
+    "turns": "Turni",
+    "pointsPerTurn": "Pt/turno",
+    "scoringTurns": "Con punto",
+    "front": "1ª linea +/−",
+    "frontRallies": "Scambi 1ª",
+    "back": "2ª linea +/−",
+    "backRallies": "Scambi 2ª"
   },
   "roles": {
     "outside_hitter": "Schiacciatore",
@@ -113,7 +125,8 @@
     "noEvents": "Nessun evento in questo set.",
     "comments": "Commenti",
     "won": "vinto",
-    "lost": "perso"
+    "lost": "perso",
+    "pressure": "Punti sotto pressione"
   },
   "events": {
     "substitution": "Sostituzione",
@@ -123,5 +136,12 @@
     "technical": "Problema tecnico",
     "comment": "Commento",
     "substitutionDetail": "{playerIn} per {playerOut}"
+  },
+  "pressure": {
+    "tied": "In parità",
+    "closeFinish": "Finale punto a punto",
+    "deuce": "Ai vantaggi",
+    "behind": "Sotto di 3+",
+    "hint": "Finale punto a punto: entrambe a 5 punti o meno dal traguardo · ai vantaggi: a 1 punto"
   }
 }

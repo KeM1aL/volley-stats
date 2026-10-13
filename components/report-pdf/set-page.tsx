@@ -4,7 +4,7 @@ import { ZONES } from "@/lib/report/metrics/zones";
 import { commentNumbers } from "./charts/geometry";
 import { Timeline } from "./charts/timeline";
 import { Court } from "./court";
-import { homeAway, playerLabel, teamName, type ReportT } from "./format";
+import { homeAway, playerLabel, pressureItems, teamName, type ReportT } from "./format";
 import { Footer, Stat } from "./parts";
 import { EventTable, PlayerTable, ServerTable } from "./tables";
 import { styles } from "./theme";
@@ -62,6 +62,10 @@ export function SetPage({ model, set, t, locale }: { model: MatchReportModel; se
             ? t("set.endingFrom", { score: homeAway(model, set.ending.from), wonUs: set.ending.won.us, wonThem: set.ending.won.them })
             : t("set.endingNotReached", { threshold: set.ending.threshold })}
         </Text>
+        <Text style={{ marginTop: 3 }}>
+          <Text style={{ fontWeight: 700 }}>{`${t("set.pressure")}: `}</Text>
+          {pressureItems(set.pressure, t).join(" · ")}
+        </Text>
       </View>
 
       {set.events.length === 0 ? (
@@ -75,7 +79,7 @@ export function SetPage({ model, set, t, locale }: { model: MatchReportModel; se
 
       <PlayerTable title={t("detail.players")} model={model} players={set.players} total={set.total} t={t} />
 
-      {set.servers && set.servers.length > 0 ? <ServerTable title={t("detail.servers")} model={model} servers={set.servers} t={t} /> : null}
+      {set.servers && set.servers.length > 0 ? <ServerTable title={t("detail.servers")} model={model} servers={set.servers} t={t} locale={locale} /> : null}
 
       {comments.length > 0 ? (
         <View>

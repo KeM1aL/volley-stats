@@ -4,7 +4,7 @@ import { ZONES } from "@/lib/report/metrics/zones";
 import { Court } from "./court";
 import { teamName, type ReportT } from "./format";
 import { Footer } from "./parts";
-import { PlayerTable, RoleTable, ServerTable } from "./tables";
+import { PlayerTable, RoleTable, RowTable, ServerTable } from "./tables";
 import { styles } from "./theme";
 
 export function DetailPage({ model, t, locale }: { model: MatchReportModel; t: ReportT; locale: string }) {
@@ -33,7 +33,14 @@ export function DetailPage({ model, t, locale }: { model: MatchReportModel; t: R
         </View>
       ) : null}
 
-      {model.servers && model.servers.length > 0 ? <ServerTable title={t("detail.servers")} model={model} servers={model.servers} t={t} /> : null}
+      {model.rows && model.rows.length > 0 ? (
+        <View>
+          <RowTable title={t("detail.byRow")} model={model} rows={model.rows} t={t} />
+          <Text style={styles.small}>{t("detail.byRowHint")}</Text>
+        </View>
+      ) : null}
+
+      {model.servers && model.servers.length > 0 ? <ServerTable title={t("detail.servers")} model={model} servers={model.servers} t={t} locale={locale} /> : null}
 
       {model.matchEvents.length > 0 ? (
         <View>

@@ -24,7 +24,10 @@
     "matchMvp": "Partida",
     "momentum": "Dinâmica (diferença no placar, rali a rali)",
     "coverage": "{pct} dos ralis têm uma ação registrada ({typed} de {total}).",
-    "points": "{count, plural, one {# pt} other {# pts}}"
+    "points": "{count, plural, one {# pt} other {# pts}}",
+    "serveTurns": "Pontos por vez de saque",
+    "serveTurnsHint": "{turns, plural, one {# vez} other {# vezes}} · {pct} com ponto",
+    "pressure": "Pontos sob pressão"
   },
   "origin": {
     "ace": "Aces",
@@ -54,7 +57,9 @@
     "unplaced": "{count, plural, one {# ação} other {# ações}} sem posição",
     "servers": "Sacadores",
     "matchEvents": "Outros eventos",
-    "legend": "Ace: aces · ES: erros de saque · Atq: ataques vencedores · EA: erros de ataque · Blq: pontos de bloqueio · EB: erros de bloqueio · ER: erros de recepção · ED: erros de defesa · Pts: pontos · Err: erros · Saldo: pontos − erros · +/−: ralis ganhos − perdidos em quadra"
+    "legend": "Ace: aces · ES: erros de saque · Atq: ataques vencedores · EA: erros de ataque · Blq: pontos de bloqueio · EB: erros de bloqueio · ER: erros de recepção · ED: erros de defesa · Pts: pontos · Err: erros · Saldo: pontos − erros · +/−: ralis ganhos − perdidos em quadra",
+    "byRow": "+/− por linha",
+    "byRowHint": "Rede: posições 2, 3, 4 · fundo: 1, 5, 6"
   },
   "table": {
     "player": "Jogador",
@@ -84,7 +89,14 @@
     "before": "5 antes",
     "after": "5 depois",
     "nextRally": "Seguinte",
-    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# err} other {# err}}"
+    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# err} other {# err}}",
+    "turns": "Vezes",
+    "pointsPerTurn": "Pts/vez",
+    "scoringTurns": "Com ponto",
+    "front": "Rede +/−",
+    "frontRallies": "Ralis rede",
+    "back": "Fundo +/−",
+    "backRallies": "Ralis fundo"
   },
   "roles": {
     "outside_hitter": "Ponteiro",
@@ -113,7 +125,8 @@
     "noEvents": "Nenhum evento neste set.",
     "comments": "Comentários",
     "won": "ganho",
-    "lost": "perdido"
+    "lost": "perdido",
+    "pressure": "Pontos sob pressão"
   },
   "events": {
     "substitution": "Substituição",
@@ -123,5 +136,12 @@
     "technical": "Problema técnico",
     "comment": "Comentário",
     "substitutionDetail": "{playerIn} no lugar de {playerOut}"
+  },
+  "pressure": {
+    "tied": "Empatado",
+    "closeFinish": "Final apertado",
+    "deuce": "Disputa final",
+    "behind": "Atrás por 3+",
+    "hint": "Final apertado: as duas equipes a 5 pontos ou menos do alvo · disputa final: a 1 ponto"
   }
 }

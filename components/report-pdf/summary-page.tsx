@@ -2,7 +2,7 @@ import { Page, Text, View } from "@react-pdf/renderer";
 import type { MatchReportModel } from "@/lib/report/build";
 import { DiffChart } from "./charts/diff-chart";
 import { OriginBars } from "./charts/origin-bars";
-import { awayTeam, DASH, formatDate, homeAway, homeTeam, pct, playerLabel, signed, type ReportT } from "./format";
+import { awayTeam, DASH, decimal, formatDate, homeAway, homeTeam, pct, playerLabel, pressureItems, signed, type ReportT } from "./format";
 import { Footer, Stat } from "./parts";
 import { COLORS, PAGE_WIDTH, styles } from "./theme";
 
@@ -40,6 +40,11 @@ export function SummaryPage({ model, t, locale }: { model: MatchReportModel; t: 
           <View style={[styles.row, { marginTop: 12 }]}>
             <Stat label={t("summary.sideOut")} value={pct(model.team.sideOut)} hint={t("summary.sideOutHint")} />
             <Stat label={t("summary.breakPoint")} value={pct(model.team.breakPoint)} hint={t("summary.breakPointHint")} />
+            <Stat
+              label={t("summary.serveTurns")}
+              value={decimal(model.serveTurns.pointsPerTurn, locale)}
+              hint={t("summary.serveTurnsHint", { turns: model.serveTurns.turns, pct: pct(model.serveTurns.scoring) })}
+            />
             <Stat label={t("summary.duration")} value={model.durationMinutes === null ? DASH : t("minutes", { minutes: model.durationMinutes })} />
           </View>
 
@@ -76,6 +81,13 @@ export function SummaryPage({ model, t, locale }: { model: MatchReportModel; t: 
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>{t("summary.mvp")}</Text>
                 {mvpLines.length === 0 ? <Text>{DASH}</Text> : mvpLines.map((line) => <Text key={line}>{line}</Text>)}
+              </View>
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>{t("summary.pressure")}</Text>
+                {pressureItems(model.pressure, t).map((line) => (
+                  <Text key={line}>{line}</Text>
+                ))}
+                <Text style={styles.small}>{t("pressure.hint")}</Text>
               </View>
             </View>
           </View>

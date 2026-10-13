@@ -24,7 +24,10 @@
     "matchMvp": "Match",
     "momentum": "Momentum (score difference, rally by rally)",
     "coverage": "{pct} of rallies have a typed action ({typed} of {total}).",
-    "points": "{count, plural, one {# pt} other {# pts}}"
+    "points": "{count, plural, one {# pt} other {# pts}}",
+    "serveTurns": "Points per serve turn",
+    "serveTurnsHint": "{turns, plural, one {# turn} other {# turns}} · {pct} scoring",
+    "pressure": "Pressure points"
   },
   "origin": {
     "ace": "Aces",
@@ -54,7 +57,9 @@
     "unplaced": "{count, plural, one {# action} other {# actions}} without a position",
     "servers": "Servers",
     "matchEvents": "Other events",
-    "legend": "Ace: aces · SE: serve errors · Kill: kills · AE: attack errors · Blk: block points · BE: block errors · RE: reception errors · DE: defense errors · Pts: points · Err: errors · Net: points − errors · +/−: rallies won − lost on court"
+    "legend": "Ace: aces · SE: serve errors · Kill: kills · AE: attack errors · Blk: block points · BE: block errors · RE: reception errors · DE: defense errors · Pts: points · Err: errors · Net: points − errors · +/−: rallies won − lost on court",
+    "byRow": "+/− by row",
+    "byRowHint": "Front row: positions 2, 3, 4 · back row: positions 1, 5, 6"
   },
   "table": {
     "player": "Player",
@@ -84,7 +89,14 @@
     "before": "5 before",
     "after": "5 after",
     "nextRally": "Next",
-    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# err} other {# err}}"
+    "zonePoints": "{points, plural, one {# pt} other {# pts}} · {errors, plural, one {# err} other {# err}}",
+    "turns": "Turns",
+    "pointsPerTurn": "Pts/turn",
+    "scoringTurns": "Scoring",
+    "front": "Front +/−",
+    "frontRallies": "Front rallies",
+    "back": "Back +/−",
+    "backRallies": "Back rallies"
   },
   "roles": {
     "outside_hitter": "Outside hitter",
@@ -113,7 +125,8 @@
     "noEvents": "No events in this set.",
     "comments": "Comments",
     "won": "won",
-    "lost": "lost"
+    "lost": "lost",
+    "pressure": "Pressure points"
   },
   "events": {
     "substitution": "Substitution",
@@ -123,5 +136,12 @@
     "technical": "Technical issue",
     "comment": "Comment",
     "substitutionDetail": "{playerIn} for {playerOut}"
+  },
+  "pressure": {
+    "tied": "When tied",
+    "closeFinish": "Close finish",
+    "deuce": "Deuce",
+    "behind": "Behind by 3+",
+    "hint": "Close finish: both teams within 5 points of the set target · Deuce: both within 1"
   }
 }

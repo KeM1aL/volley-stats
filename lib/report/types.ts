@@ -1,4 +1,5 @@
 import type { Event, Match, MatchFormat, PlayerStat, ScorePoint, Set, Team, TeamMember } from "@/lib/types";
+import type { Zone } from "./metrics/zones";
 
 export type Side = "us" | "them";
 export type StatAction = PlayerStat["stat_type"];
@@ -40,6 +41,8 @@ export interface Rally {
   serverPlayerId: string | null;
   /** The managed team's players on court before the rally. */
   onCourt: string[];
+  /** Court position of each of those players before the rally (player id → p1…p6). */
+  positions: Record<string, Zone>;
   /** Score after the rally. */
   score: Tally;
   winOrigin: WinOrigin | null;

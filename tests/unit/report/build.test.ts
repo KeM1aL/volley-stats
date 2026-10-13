@@ -63,4 +63,22 @@ describe("buildMatchReport", () => {
     expect(model.sets[0].durationMinutes).toBe(2); // 90 s rounded
     expect(model.members[P.c]).toEqual({ name: "Chloé", number: 3 });
   });
+
+  it("adds pressure points per set and for the match, using each set's own target", () => {
+    // Set 1 (target 25) is tied at 1-1 once; set 5 is the 15-point deciding set.
+    const data = makeData([{ rallies: rallies("WLW") }, { rallies: rallies("L") }, { rallies: rallies("L") }, { rallies: rallies("L") }, { rallies: rallies("LLLW") }]);
+    const model = buildMatchReport(data, US);
+    expect(model.sets[0].pressure.tied).toEqual({ made: 1, of: 1, pct: 100 });
+    expect(model.sets[4].pressure.behind).toEqual({ made: 1, of: 1, pct: 100 });
+    expect(model.pressure.tied).toEqual({ made: 1, of: 1, pct: 100 });
+    expect(model.pressure.behind).toEqual({ made: 1, of: 1, pct: 100 });
+  });
+
+  it("adds the team serve turns and the row +/- (6x6 only), sorted by number", () => {
+    const model = buildMatchReport(makeData([{ firstServer: "us", rallies: rallies("WWL") }]), US);
+    expect(model.serveTurns).toEqual({ turns: 1, points: 2, pointsPerTurn: 2, scoring: { made: 1, of: 1, pct: 100 } });
+    expect(model.rows?.map((line) => line.playerId)).toEqual([P.a, P.b, P.c, P.d, P.e, P.f]);
+    expect(model.rows?.[0]).toEqual({ playerId: P.a, front: { plusMinus: 0, rallies: 0 }, back: { plusMinus: 1, rallies: 3 } });
+    expect(buildMatchReport(makeData([{ rallies: rallies("W") }], { format: { format: "4x4" } }), US).rows).toBeNull();
+  });
 });

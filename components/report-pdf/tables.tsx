@@ -2,8 +2,9 @@ import type { MatchReportModel } from "@/lib/report/build";
 import type { EventImpact } from "@/lib/report/metrics/event-impact";
 import type { PlayerLine, PlayerTotals } from "@/lib/report/metrics/players";
 import type { RoleLine } from "@/lib/report/metrics/roles";
+import type { RowLine } from "@/lib/report/metrics/rows";
 import type { ServerLine } from "@/lib/report/metrics/servers";
-import { DASH, homeAway, pct, playerLabel, signed, teamName, type ReportT } from "./format";
+import { DASH, decimal, homeAway, pct, playerLabel, signed, teamName, type ReportT } from "./format";
 import { Table, type Column } from "./table";
 
 const PLAYER_COLUMNS = [
@@ -39,15 +40,25 @@ export function PlayerTable({ title, model, players, total, t }: { title?: strin
   );
 }
 
-export function ServerTable({ title, model, servers, t }: { title?: string; model: MatchReportModel; servers: ServerLine[]; t: ReportT }) {
+export function ServerTable({
+  title,
+  model,
+  servers,
+  t,
+  locale,
+}: {
+  title?: string;
+  model: MatchReportModel;
+  servers: ServerLine[];
+  t: ReportT;
+  locale: string;
+}) {
   const columns: Column[] = [
-    { label: t("table.player"), width: 171, align: "left" },
-    { label: t("table.served"), width: 60 },
-    { label: t("table.wonOnServe"), width: 60 },
-    { label: t("table.breakPct"), width: 60 },
-    { label: t("table.longestRun"), width: 60 },
-    { label: t("table.aces"), width: 60 },
-    { label: t("table.serveErrors"), width: 60 },
+    { label: t("table.player"), width: 135, align: "left" },
+    ...(["served", "wonOnServe", "breakPct", "longestRun", "turns", "pointsPerTurn", "scoringTurns", "aces", "serveErrors"] as const).map((key) => ({
+      label: t(`table.${key}`),
+      width: 44,
+    })),
   ];
   const rows = servers.map((s) => [
     playerLabel(model, s.playerId, t),
@@ -55,8 +66,27 @@ export function ServerTable({ title, model, servers, t }: { title?: string; mode
     String(s.won),
     pct({ pct: s.breakPct }),
     String(s.longestRun),
+    String(s.turns),
+    decimal(s.pointsPerTurn, locale),
+    pct({ pct: s.scoringTurnPct }),
     String(s.aces),
     String(s.serveErrors),
+  ]);
+  return <Table title={title} columns={columns} rows={rows} />;
+}
+
+/** +/- split by the row each player stood in (6x6). */
+export function RowTable({ title, model, rows: lines, t }: { title?: string; model: MatchReportModel; rows: RowLine[]; t: ReportT }) {
+  const columns: Column[] = [
+    { label: t("table.player"), width: 191, align: "left" },
+    ...(["front", "frontRallies", "back", "backRallies"] as const).map((key) => ({ label: t(`table.${key}`), width: 85 })),
+  ];
+  const rows = lines.map((line) => [
+    playerLabel(model, line.playerId, t),
+    line.front.rallies === 0 ? DASH : signed(line.front.plusMinus),
+    String(line.front.rallies),
+    line.back.rallies === 0 ? DASH : signed(line.back.plusMinus),
+    String(line.back.rallies),
   ]);
   return <Table title={title} columns={columns} rows={rows} />;
 }

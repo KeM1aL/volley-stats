@@ -2,10 +2,12 @@ import type { Set } from "@/lib/types";
 import { eventImpacts, eventSide, eventText, type EventImpact } from "./metrics/event-impact";
 import { mvp, type MvpResult } from "./metrics/mvp";
 import { playerLines, teamTotals, type PlayerLine, type PlayerTotals } from "./metrics/players";
+import { setPressure, totalPressure, type Pressure } from "./metrics/pressure";
 import { buildRallies } from "./metrics/rallies";
 import { roleLines, type RoleLine } from "./metrics/roles";
+import { rowLines, type RowLine } from "./metrics/rows";
 import { scoreFlow, setEnding, setTarget, type ScoreFlow, type SetEnding } from "./metrics/score-flow";
-import { serverLines, type ServerLine } from "./metrics/servers";
+import { serverLines, teamServeTurns, type ServerLine, type TeamServeTurns } from "./metrics/servers";
 import { summarizeTeam, type TeamSummary } from "./metrics/team";
 import { lineupByZone, zoneSummary, type Zone, type ZoneSummary } from "./metrics/zones";
 import type { MatchReportData, Rally, Side, Tally } from "./types";
@@ -37,6 +39,7 @@ export interface SetReport {
   team: TeamSummary;
   flow: ScoreFlow;
   ending: SetEnding;
+  pressure: Pressure;
   events: EventImpact[];
   players: PlayerLine[];
   total: PlayerTotals;
@@ -63,8 +66,12 @@ export interface MatchReportModel {
   setsWon: Tally;
   durationMinutes: number | null;
   team: TeamSummary;
+  pressure: Pressure;
+  serveTurns: TeamServeTurns;
   players: PlayerLine[];
   total: PlayerTotals;
+  /** +/- by row per player, 6x6 only. */
+  rows: RowLine[] | null;
   roles: RoleLine[];
   zones: ZoneSummary | null;
   servers: ServerLine[] | null;
@@ -85,7 +92,7 @@ export function buildMatchReport(data: MatchReportData, managedTeamId: string): 
   const members: Record<string, MemberInfo> = Object.fromEntries(
     data.members.map((m) => [m.id, { name: m.name, number: Number.isFinite(m.number) ? m.number : null }])
   );
-  const sortPlayers = (lines: PlayerLine[]) =>
+  const sortPlayers = <T extends { playerId: string }>(lines: T[]): T[] =>
     [...lines].sort(
       (a, b) =>
         (members[a.playerId]?.number ?? 999) - (members[b.playerId]?.number ?? 999) ||
@@ -116,6 +123,7 @@ export function buildMatchReport(data: MatchReportData, managedTeamId: string): 
         team: summarizeTeam(setRallies),
         flow: scoreFlow(setRallies),
         ending: setEnding(setRallies, target),
+        pressure: setPressure(setRallies, target),
         events: impacts.filter((e) => e.setId === set.id),
         players,
         total: teamTotals(players, setRallies),
@@ -139,8 +147,11 @@ export function buildMatchReport(data: MatchReportData, managedTeamId: string): 
     setsWon: { us: sets.filter((s) => s.winner === "us").length, them: sets.filter((s) => s.winner === "them").length },
     durationMinutes: duration(rallies),
     team: summarizeTeam(rallies),
+    pressure: totalPressure(sets.map((set) => set.pressure)),
+    serveTurns: teamServeTurns(rallies),
     players,
     total: teamTotals(players, rallies),
+    rows: sixPlayers ? sortPlayers(rowLines(rallies)) : null,
     roles: roleLines(stats, data.sets),
     zones: sixPlayers ? zoneSummary(stats, data.points) : null,
     servers,
