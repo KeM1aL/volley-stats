@@ -152,7 +152,9 @@ export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
   const { data, error } = await supabase
     .from('team_members')
     .select('*, teams(*)')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    // Archived memberships give no access: the team drops out of the user's teams (and of their sync).
+    .is('archived_at', null);
 
   if (error) {
     console.error('getTeamMembers error:', error);

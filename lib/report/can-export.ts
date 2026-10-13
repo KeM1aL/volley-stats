@@ -18,7 +18,11 @@ export function canExportForTeam(
   if (!user || !team) return false;
   if (team.user_id === user.id) return true;
   const isMember = (user.teamMembers ?? []).some(
-    (m) => m.team_id === team.id && m.id !== m.team_id && (m as { _deleted?: boolean })._deleted !== true
+    (m) =>
+      m.team_id === team.id &&
+      m.id !== m.team_id &&
+      (m as { _deleted?: boolean })._deleted !== true &&
+      !m.archived_at
   );
   if (isMember) return true;
   return !!team.club_id && (user.clubMembers ?? []).some((m) => m.club_id === team.club_id && (m.role === "owner" || m.role === "admin"));
