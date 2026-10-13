@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -144,6 +144,7 @@ interface EventFormProps {
   currentLineup?: Record<string, string>;
   db: VolleyballDatabase | null;
   onSubstitutionRecorded?: (substitution: Substitution) => Promise<void>;
+  onAddLatePlayer?: () => Promise<TeamMember | null>;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -161,6 +162,7 @@ export function EventForm({
   currentLineup,
   db,
   onSubstitutionRecorded,
+  onAddLatePlayer,
   onSuccess,
   onCancel,
 }: EventFormProps) {
@@ -179,6 +181,11 @@ export function EventForm({
     reasonRequired: t("events.reasonRequired"),
     commentTextRequired: t("events.commentTextRequired"),
   }), [t]);
+
+  // A late player added from the "player in" field is selected once the list offers them: selecting
+  // a value the select doesn't list yet makes it report an empty value, which would clear it.
+  const [pendingPlayerIn, setPendingPlayerIn] = useState<string | null>(null);
+  const appliedPlayerIn = useRef<string | null>(null);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(schema),
@@ -330,6 +337,13 @@ export function EventForm({
   const playersInLineup = players.filter((p) => lineupPlayerIds.has(p.id));
   const playersNotInLineup = players.filter((p) => !lineupPlayerIds.has(p.id));
 
+  useEffect(() => {
+    if (!pendingPlayerIn || appliedPlayerIn.current === pendingPlayerIn) return;
+    if (!players.some((p) => p.id === pendingPlayerIn)) return;
+    appliedPlayerIn.current = pendingPlayerIn;
+    form.setValue("player_in_id", pendingPlayerIn, { shouldValidate: true });
+  }, [pendingPlayerIn, players, form]);
+
   const availablePlayers = players;
 
   return (
@@ -434,6 +448,21 @@ export function EventForm({
                   <FormDescription>
                     {t("events.form.onlyPlayersNotInLineup")}
                   </FormDescription>
+                  {onAddLatePlayer && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0"
+                      data-testid="late-player-link"
+                      onClick={async () => {
+                        const player = await onAddLatePlayer();
+                        if (player) setPendingPlayerIn(player.id);
+                      }}
+                    >
+                      {t("live.latePlayer.link")}
+                    </Button>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

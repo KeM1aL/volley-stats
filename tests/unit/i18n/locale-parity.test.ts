@@ -31,6 +31,13 @@ const REQUIRED_KEYS: Record<string, string[]> = {
     "liveGuard.unsent",
     "liveGuard.stay",
     "liveGuard.leave",
+    "live.latePlayer.button",
+    "live.latePlayer.link",
+    "live.latePlayer.title",
+    "live.latePlayer.description",
+    "live.latePlayer.none",
+    "live.latePlayer.added",
+    "live.latePlayer.addError",
   ],
 };
 

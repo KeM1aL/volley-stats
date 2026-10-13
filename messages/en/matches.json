@@ -260,7 +260,16 @@
     "point": "Point",
     "undo": "Undo",
     "cancelLastAction": "Cancel Last Action",
-    "pointsHistory": "Points History"
+    "pointsHistory": "Points History",
+    "latePlayer": {
+      "button": "Add late player",
+      "link": "Player not listed? Add from team…",
+      "title": "Add a late player",
+      "description": "Team members who aren't in this match's roster. The player you pick joins the roster.",
+      "none": "Every active team member is already in the roster.",
+      "added": "{name} added to the roster",
+      "addError": "Couldn't add the player. Please try again."
+    }
   },
   "stats": {
     "title": "Match Statistics",

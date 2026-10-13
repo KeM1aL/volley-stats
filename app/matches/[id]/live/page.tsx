@@ -53,6 +53,8 @@ import { set } from "lodash";
 import { SyncBadge } from "@/components/sync/sync-badge";
 import { ScorerClaimDialog, type ClaimPrompt } from "@/components/sync/scorer-claim-dialog";
 import { TakenOverBanner } from "@/components/sync/taken-over-banner";
+import { LatePlayerDialog } from "@/components/matches/live/late-player-dialog";
+import { withLatePlayer } from "@/lib/matches/late-players";
 import { useBeforeUnloadWhenUnsent, useMatchUnsentCount } from "@/hooks/use-unsent-guard";
 import { LAST_LIVE_MATCH_KEY, useLeaveGuard } from "@/components/providers/leave-guard-provider";
 import { isClaimForbidden, type ClaimResult, type ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
@@ -576,6 +578,49 @@ export default function LiveMatchPage() {
     [db, matchState.match, matchState.currentSet, matchState.sets, matchState.setPoints, matchState.points, matchState.setStats, matchState.stats, matchState.setEvents, matchState.events, matchState.score, history, teamPlayerById, t, scoringBlocked]
   );
 
+  // Late players (an existing team member joins the match in progress). `requestLatePlayer` opens the
+  // picker and resolves with the player added, or null when it is closed without adding anyone.
+  const [latePlayerOpen, setLatePlayerOpen] = useState(false);
+  const latePlayerRequest = useRef<((player: TeamMember | null) => void) | null>(null);
+
+  const closeLatePlayer = useCallback((player: TeamMember | null) => {
+    setLatePlayerOpen(false);
+    const resolve = latePlayerRequest.current;
+    latePlayerRequest.current = null;
+    resolve?.(player);
+  }, []);
+
+  const requestLatePlayer = useCallback((): Promise<TeamMember | null> => {
+    latePlayerRequest.current?.(null);
+    setLatePlayerOpen(true);
+    return new Promise((resolve) => {
+      latePlayerRequest.current = resolve;
+    });
+  }, []);
+
+  /** Adds the player to the managed team's roster of this match (RxDB; the match replication uploads it). Not undoable. */
+  const addLatePlayer = useCallback(
+    async (player: TeamMember) => {
+      if (!db || scoringBlocked || !matchState.match || !managedTeam) return;
+      const field =
+        managedTeam.id === matchState.match.home_team_id ? "home_available_players" : "away_available_players";
+      try {
+        const doc = await db.matches.findOne(matchId).exec();
+        if (!doc) throw new Error(t("live.matchNotFound"));
+        await doc.incrementalModify((data) => ({ ...data, [field]: withLatePlayer(data[field], player.id) }));
+        setTeamPlayers((players) => (players.some((p) => p.id === player.id) ? players : [...players, player]));
+        setTeamPlayerById((byId) => new Map(byId).set(player.id, player));
+        toast({ title: t("live.latePlayer.added", { name: player.name }) });
+        closeLatePlayer(player);
+      } catch (error) {
+        console.error("Failed to add a late player:", error);
+        toast({ variant: "destructive", title: t("live.latePlayer.addError") });
+      }
+    },
+    [db, scoringBlocked, matchState.match, managedTeam, matchId, t, closeLatePlayer]
+  );
+  const onAddLatePlayer = scoringBlocked ? undefined : requestLatePlayer;
+
   const onPlayerStatRecorded = useCallback(
     async (stat: PlayerStat) => {
       if (!db || scoringBlocked) return;
@@ -799,6 +844,7 @@ export default function LiveMatchPage() {
           }
           currentLineup={matchState.currentSet?.current_lineup}
           onSubstitutionRecorded={onSubstitutionRecorded}
+          onAddLatePlayer={onAddLatePlayer}
         />
       );
     }
@@ -869,6 +915,7 @@ export default function LiveMatchPage() {
             players={teamPlayers}
             playerById={teamPlayerById}
             onComplete={onSetSetupComplete}
+            onAddLatePlayer={onAddLatePlayer}
           />
         </Card>
       );
@@ -1056,6 +1103,16 @@ export default function LiveMatchPage() {
         onCancel={() => router.push("/matches")}
         onConfirm={() => void handleClaimConfirm()}
       />
+
+      {managedTeam && (
+        <LatePlayerDialog
+          open={latePlayerOpen}
+          onOpenChange={(open) => !open && closeLatePlayer(null)}
+          teamId={managedTeam.id}
+          rosterIds={teamPlayers.map((player) => player.id)}
+          onAdd={addLatePlayer}
+        />
+      )}
     </div>
   );
 }

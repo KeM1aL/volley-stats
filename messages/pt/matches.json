@@ -260,7 +260,16 @@
     "point": "Ponto",
     "undo": "Desfazer",
     "cancelLastAction": "Cancelar última ação",
-    "pointsHistory": "Histórico de Pontos"
+    "pointsHistory": "Histórico de Pontos",
+    "latePlayer": {
+      "button": "Adicionar jogador atrasado",
+      "link": "Jogador não está na lista? Adicionar da equipa…",
+      "title": "Adicionar um jogador atrasado",
+      "description": "Membros da equipa que não estão na escalação deste jogo. O jogador escolhido entra na escalação.",
+      "none": "Todos os membros ativos da equipa já estão na escalação.",
+      "added": "{name} adicionado à escalação",
+      "addError": "Não foi possível adicionar o jogador. Tente novamente."
+    }
   },
   "stats": {
     "title": "Estatísticas da Partida",

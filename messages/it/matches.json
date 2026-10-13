@@ -260,7 +260,16 @@
     "point": "Punto",
     "undo": "Annulla",
     "cancelLastAction": "Annulla ultima azione",
-    "pointsHistory": "Storico Punti"
+    "pointsHistory": "Storico Punti",
+    "latePlayer": {
+      "button": "Aggiungi ritardatario",
+      "link": "Giocatore non in elenco? Aggiungi dalla squadra…",
+      "title": "Aggiungi un giocatore in ritardo",
+      "description": "Membri della squadra non presenti nella formazione di questa partita. Il giocatore scelto entra in formazione.",
+      "none": "Tutti i membri attivi della squadra sono già in formazione.",
+      "added": "{name} aggiunto alla formazione",
+      "addError": "Impossibile aggiungere il giocatore. Riprova."
+    }
   },
   "stats": {
     "title": "Statistiche Partita",

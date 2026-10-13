@@ -260,7 +260,16 @@
     "point": "Punto",
     "undo": "Deshacer",
     "cancelLastAction": "Cancelar última acción",
-    "pointsHistory": "Historial de Puntos"
+    "pointsHistory": "Historial de Puntos",
+    "latePlayer": {
+      "button": "Añadir jugador tardío",
+      "link": "¿No aparece el jugador? Añadir desde el equipo…",
+      "title": "Añadir un jugador que llegó tarde",
+      "description": "Miembros del equipo que no están en la alineación de este partido. El jugador elegido se une a la alineación.",
+      "none": "Todos los miembros activos del equipo ya están en la alineación.",
+      "added": "{name} añadido a la alineación",
+      "addError": "No se pudo añadir al jugador. Inténtalo de nuevo."
+    }
   },
   "stats": {
     "title": "Estadísticas del Partido",

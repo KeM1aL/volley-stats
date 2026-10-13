@@ -30,6 +30,7 @@ type SetSetupProps = {
   awayTeam: Team;
   setNumber: number;
   onComplete: (set: Set) => Promise<void>;
+  onAddLatePlayer?: () => Promise<TeamMember | null>;
 };
 
 export function SetSetup({
@@ -40,6 +41,7 @@ export function SetSetup({
   homeTeam,
   awayTeam,
   onComplete,
+  onAddLatePlayer,
 }: SetSetupProps) {
   const t = useTranslations("matches");
   const tp = useTranslations("players");
@@ -272,6 +274,22 @@ export function SetSetup({
                   selectedPlayer={selectedPlayer}
                   onPlayerSelect={handleSelectPlayer}
                 />
+                {onAddLatePlayer && (
+                  <div className="flex justify-center">
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      data-testid="late-player-link"
+                      onClick={async () => {
+                        const player = await onAddLatePlayer();
+                        if (player) void handleSelectPlayer(player);
+                      }}
+                    >
+                      {t("live.latePlayer.link")}
+                    </Button>
+                  </div>
+                )}
                 <div className="grid grid-cols-4 gap-6">
                   <div className="col-span-2 col-start-2">
                     <Label>{tp("form.role")}</Label>
