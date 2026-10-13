@@ -317,7 +317,6 @@
     "pointsScored": "Puntos Anotados",
     "pointsConceded": "Puntos Concedidos",
     "positionAnalysis": "Análisis de Posición",
-    "pdfGenerationCancelled": "Generación de PDF Cancelada",
     "pdfGenerationFailed": "Error en la Generación de PDF",
     "matchStats": "Estadísticas del Partido",
     "mvpAnalysis": "Análisis del MVP del Partido",
@@ -326,7 +325,6 @@
     "detailedStats": "Estadísticas Detalladas",
     "positionsStats": "Estadísticas de Posiciones",
     "overallPerformance": "Desempeño General",
-    "scoreProgression": "Progresión de Puntuación",
     "scoreProgressionDesc": "Evolución de puntuación punto a punto",
     "scoreDifference": "Diferencia de Puntuación",
     "scoreDifferenceDesc": "Diferencial de puntos a lo largo del tiempo",
@@ -355,9 +353,7 @@
       "players": "Desempeño del Jugador",
       "team": "Desempeño del Equipo"
     },
-    "errors": {
-      "pdfCancelled": "Cancelado"
-    }
+    "errors": {}
   },
   "score": {
     "title": "Puntuación en Vivo del Partido",
@@ -379,18 +375,17 @@
     }
   },
   "pdf": {
-    "steps": {
-      "overview": "Resumen del Partido",
-      "scores": "Progresión de Puntuación",
-      "sets": "Desglose de Sets",
-      "players": "Desempeño del Jugador",
-      "team": "Desempeño del Equipo"
-    },
     "success": "¡PDF Generado!",
     "successDesc": "Su PDF de estadísticas del partido ha sido descargado.",
     "failed": "Error en la Generación de PDF",
     "failedDesc": "Hubo un error al generar el PDF.",
-    "cancelled": "La generación del PDF fue cancelada."
+    "export": "Exportar PDF",
+    "exporting": "Preparando el PDF…",
+    "unavailableOffline": "El PDF necesita conexión.",
+    "unavailableUnsent": "Algunos cambios de este partido aún no se han enviado. El PDF estará disponible cuando se envíen.",
+    "unavailableNoRallies": "Aún no hay puntos registrados.",
+    "sessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo para descargar el PDF.",
+    "forbidden": "Ya no tienes acceso a los informes de este equipo."
   },
   "history": {
     "noMatchesFound": "No se encontraron partidos",

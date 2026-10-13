@@ -16,7 +16,7 @@ All file names are kebab-case.
 
 ### Variables & Functions
 - React components: PascalCase (`LiveMatchTracker`, `TeamForm`)
-- Functions: camelCase (`handleScorePoint`, `calculateMVPScore`)
+- Functions: camelCase (`handleScorePoint`, `mvpScores`)
 - Constants: UPPER_SNAKE_CASE (`MAX_PLAYERS`, `DEFAULT_POINTS`)
 - Database fields: snake_case (`team_id`, `created_at`)
 - Type properties: snake_case (matching database schema)

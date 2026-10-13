@@ -83,14 +83,14 @@ describe('useTeamApi', () => {
   })
 })
 
-// Example: lib/stats/calculations.test.ts
-import { calculateMVPScore } from './calculations'
+// Example: tests/unit/report/mvp.test.ts
+import { mvp } from '@/lib/report/metrics/mvp'
 
-describe('calculateMVPScore', () => {
+describe('mvp', () => {
   it('should calculate MVP based on weighted stats', () => {
     const stats = [/* mock player stats */]
-    const { matchMVP } = calculateMVPScore(stats, players, sets)
-    expect(matchMVP.player.id).toBe('player-123')
+    const result = mvp(stats)
+    expect(result?.playerId).toBe('player-123')
   })
 })
 ```

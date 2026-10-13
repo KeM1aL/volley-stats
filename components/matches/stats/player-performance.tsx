@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useImperativeHandle } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PlayerStat, Team, TeamMember, Set, Match } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,6 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { getPlayerSetStats } from "@/lib/stats/calculations";
-import { PdfExportHandle } from "@/lib/pdf/types";
 
 interface PlayerPositionStats
   extends Record<
@@ -53,7 +52,6 @@ interface PlayerPerformanceProps {
   players: TeamMember[];
   stats: PlayerStat[];
   sets: Set[];
-  isPdfGenerating?: boolean;
 }
 
 export const variants = {
@@ -63,88 +61,11 @@ export const variants = {
   [StatResult.GOOD]: "text-blue-700",
 };
 
-const PlayerPerformance = React.forwardRef<
-  PdfExportHandle,
-  PlayerPerformanceProps
->(({ match, managedTeam, opponentTeam, players, stats, sets, isPdfGenerating }, ref) => {
+function PlayerPerformance({ match, managedTeam, opponentTeam, players, stats, sets }: PlayerPerformanceProps) {
   const t = useTranslations("matches");
   const tStats = useTranslations("stats");
   const [selectedSet, setSelectedSet] = useState<string>("all");
   const [selectedTab, setSelectedTab] = useState("overview");
-  const playerPerformanceRef = useRef<HTMLDivElement>(null);
-
-  useImperativeHandle(ref, () => ({
-    generatePdfContent: async (doc, initialYOffset, allSets, tabTitle) => {
-      let currentYOffset = initialYOffset;
-      const margin = 20;
-      const imgWidth = 595 - 2 * margin;
-      let isFirstPage = true;
-
-      const setsToIterate = [null, ...allSets.map((s) => s.id)];
-      const tabsToIterate = ["overview", "details", "positions"];
-
-      for (const tab of tabsToIterate) {
-        setSelectedTab(tab);
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        for (const setId of setsToIterate) {
-          setSelectedSet(setId === null ? "all" : setId);
-          await new Promise((resolve) => setTimeout(resolve, 300));
-
-          const subTitle =
-            setId === null
-              ? t("stats.allSetsOverview")
-              : `${t("stats.setLabel")} ${
-                  allSets.find((s) => s.id === setId)?.set_number || ""
-                } ${t("stats.breakdown")}`;
-
-          // Only add page after first content
-          if (!isFirstPage) {
-            doc.addPage();
-          }
-          isFirstPage = false;
-          currentYOffset = margin;
-
-          doc.setFontSize(16);
-          doc.text(`${tabTitle} - ${subTitle}`, margin, currentYOffset);
-          currentYOffset += 30;
-
-          if (playerPerformanceRef.current) {
-            const html2canvas = (await import("html2canvas-pro")).default;
-            const canvas = await html2canvas(playerPerformanceRef.current, {
-              scale: 1.5,
-              useCORS: true,
-              logging: false,
-            });
-            const imgData = canvas.toDataURL("image/jpeg", 0.6);
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            if (
-              currentYOffset + imgHeight >
-              doc.internal.pageSize.height - margin
-            ) {
-              doc.addPage();
-              currentYOffset = margin;
-            }
-            doc.addImage(
-              imgData,
-              "JPEG",
-              margin,
-              currentYOffset,
-              imgWidth,
-              imgHeight
-            );
-            currentYOffset += imgHeight + margin;
-          } else {
-            console.warn(
-              `Player Performance content element not found for PDF export.`
-            );
-          }
-        }
-      }
-      return currentYOffset;
-    },
-  }));
 
   const getPlayerSetPositionStats = (
     playerId: string,
@@ -332,7 +253,7 @@ const PlayerPerformance = React.forwardRef<
   };
 
   return (
-    <Card ref={playerPerformanceRef} id="players-section-content">
+    <Card id="players-section-content">
       <CardHeader>
         <CardTitle>{t("stats.playerPerformance")}</CardTitle>
       </CardHeader>
@@ -381,7 +302,7 @@ const PlayerPerformance = React.forwardRef<
                     <CardTitle>{t("stats.overallPerformance")}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className={isPdfGenerating ? "h-[280px]" : "h-[400px]"}>
+                    <div className="h-[400px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={getPlayerPerformanceData()}>
                           <CartesianGrid strokeDasharray="3 3" />
@@ -427,7 +348,7 @@ const PlayerPerformance = React.forwardRef<
                         <CardTitle>{player.name} {t("stats.performanceRadar")}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className={isPdfGenerating ? "h-[200px]" : "h-[300px]"}>
+                        <div className="h-[300px]">
                           <ResponsiveContainer width="100%" height="100%">
                             <RadarChart data={getPlayerRadarData(player.id)}>
                               <PolarGrid />
@@ -745,7 +666,7 @@ const PlayerPerformance = React.forwardRef<
       </CardContent>
     </Card>
   );
-});
+}
 
 PlayerPerformance.displayName = "PlayerPerformance";
 

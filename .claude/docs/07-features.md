@@ -113,7 +113,7 @@ const teams = await teamApi.getTeams(
 **Features**:
 - Individual player performance metrics
 - Team performance analysis
-- MVP calculation (`calculateMVPScore` in [lib/stats/calculations.ts](lib/stats/calculations.ts))
+- MVP calculation (`mvp()` / `mvpScores()` in [lib/report/metrics/mvp.ts](lib/report/metrics/mvp.ts))
 - Set-by-set breakdown
 - Tactical insights, scoring patterns and streaks ([lib/stats/calculations.ts](lib/stats/calculations.ts))
 - Visual charts (recharts):
@@ -121,7 +121,7 @@ const teams = await teamApi.getTeams(
   - Attack efficiency
   - Block effectiveness
   - Reception quality
-- **PDF Export** (jsPDF + html2canvas-pro, which understands Tailwind 4 oklch/oklab colours)
+- **PDF report** (server-side, see below)
 
 **Statistics Calculated**:
 - Serve: Total, success rate, errors
@@ -131,9 +131,13 @@ const teams = await teamApi.getTeams(
 - Defense: Total, successful, errors
 - Points scored per player
 
-**PDF Export**:
-- Triggered from [app/matches/[id]/stats/page.tsx](app/matches/[id]/stats/page.tsx), which dynamically imports `jspdf` and builds the document
-- Each exported tab component (`components/matches/stats/*`) exposes a `PdfExportHandle` ([lib/pdf/types.ts](lib/pdf/types.ts)) via `useImperativeHandle`; its `generatePdfContent(doc, yOffset, sets, title)` renders its section (capturing DOM with `html2canvas`) and returns the next y offset
+**PDF Report**:
+- Generated on the server by `GET /api/v1/matches/[id]/report?team=<teamId>&locale=<locale>` ([app/api/v1/matches/[id]/report/route.ts](app/api/v1/matches/[id]/report/route.ts)) with `@react-pdf/renderer`
+- Only for signed-in members of the analysed team, its creator, and owners/admins of its club ([lib/report/access.ts](lib/report/access.ts)); the route reads with the caller's session (anon key), never the service role; `/api/v1/` is exempt from the proxy's sign-in redirect so it answers 401
+- Metrics are pure functions in [lib/report/metrics/](lib/report/metrics/) assembled by `buildMatchReport` ([lib/report/build.ts](lib/report/build.ts)); the stats screen's MVP uses the same `mvp()`
+- Pages: summary, match detail, one per set (timeline with events and their impact). Text in `messages/<locale>/report.json`
+- The stats page button is shown to the same users ([lib/report/can-export.ts](lib/report/can-export.ts)) and disabled offline, without rallies, or while the match has unsent changes
+- Design: [docs/superpowers/specs/2026-10-09-pdf-report-design.md](docs/superpowers/specs/2026-10-09-pdf-report-design.md)
 
 ---
 

@@ -316,7 +316,6 @@
     "pointsScored": "Points Scored",
     "pointsConceded": "Points Conceded",
     "positionAnalysis": "Position Analysis",
-    "pdfGenerationCancelled": "PDF Generation Cancelled",
     "pdfGenerationFailed": "PDF Generation Failed",
     "matchStats": "Match Statistics",
     "mvpAnalysis": "Match MVP Analysis",
@@ -354,9 +353,7 @@
       "players": "Player Performance",
       "team": "Team Performance"
     },
-    "errors": {
-      "pdfCancelled": "Cancelled"
-    }
+    "errors": {}
   },
   "score": {
     "title": "Match Live Score",
@@ -378,18 +375,17 @@
     }
   },
   "pdf": {
-    "steps": {
-      "overview": "Match Overview",
-      "scores": "Score Progression",
-      "sets": "Set Breakdown",
-      "players": "Player Performance",
-      "team": "Team Performance"
-    },
     "success": "PDF Generated!",
     "successDesc": "Your match statistics PDF has been downloaded.",
     "failed": "PDF Generation Failed",
     "failedDesc": "There was an error generating the PDF.",
-    "cancelled": "The PDF generation was cancelled."
+    "export": "Export PDF",
+    "exporting": "Preparing PDF…",
+    "unavailableOffline": "The PDF needs a connection.",
+    "unavailableUnsent": "Some changes to this match are not uploaded yet. The PDF will be available once they are.",
+    "unavailableNoRallies": "No rallies recorded yet.",
+    "sessionExpired": "Your session has expired. Sign in again to download the PDF.",
+    "forbidden": "You no longer have access to this team's reports."
   },
   "history": {
     "noMatchesFound": "No matches found",
