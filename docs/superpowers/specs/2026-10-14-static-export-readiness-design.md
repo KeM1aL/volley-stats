@@ -94,7 +94,7 @@ export interface Platform {
   /** Origin of the web deployment's API. '' on web (same origin); NEXT_PUBLIC_API_ORIGIN on mobile. */
   apiOrigin: string;
   /** Origin for links that leave the app: auth email redirects, shared stats links. */
-  webOrigin: string;
+  webOrigin(): string;
   /** web: @supabase/ssr createBrowserClient (cookies); mobile: supabase-js with localStorage. */
   createSupabaseClient(): SupabaseClient<Database>;
   /** web: SerwistProvider; mobile: renders children only. */
@@ -236,8 +236,10 @@ next-intl's server side.
 3. The first supported entry of `navigator.languages`.
 4. `en`.
 
-When the user is signed in and `profiles.language` differs, the profile wins and is saved
-locally (replaces `syncLocaleFromProfile()` after sign-in).
+When a user is signed in for the first time on this device, `profiles.language` is adopted and
+saved locally (replaces `syncLocaleFromProfile()` after sign-in), unless the page was opened with
+an explicit `?lang=`. After that the device's choice wins; changing the language writes both. The
+adopted user id is stored next to the locale (`volleystats:locale-user`).
 
 **Messages:** `import(\`@/messages/${locale}\`)`, one chunk per locale (bundled in the export,
 fetched and cached by the service worker on web). Until loaded, the provider renders the
