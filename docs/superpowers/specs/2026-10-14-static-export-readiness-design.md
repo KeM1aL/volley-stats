@@ -10,14 +10,19 @@ Build the app as a static export (`BUILD_TARGET=mobile`, `output: 'export'`) tha
 shell of sub-project 2 will bundle, while the Vercel web deployment keeps working. Everything here
 is a change to the web codebase; no native project is created.
 
+This sub-project also revises the existing test suites (section 8), first, because it rewrites
+every e2e URL and adds a second target to test.
+
 **Done when:**
 1. CI passes on `main`: lint against the baseline, unit tests, the web build, and the mobile export
    with its `out/` check.
-2. The web e2e suite passes against the web build (port 3100), and the export e2e suite passes
-   against `out/` served on port 3200 (minus specs tagged `@web`).
-3. On the deployed web app, old URLs redirect, auth emails go through `/auth/confirm`, and the
+2. The full web e2e suite passes against the web build (port 3100), and the export suite (quick
+   level plus auth and account deletion) passes against `out/` served on port 3200.
+3. The test revision meets its targets (section 8): quick e2e level about 1.5 min, unit tests under
+   15 s and green while another server runs.
+4. On the deployed web app, old URLs redirect, auth emails go through `/auth/confirm`, and the
    chosen language persists.
-4. An account can be deleted from settings on both targets.
+5. An account can be deleted from settings on both targets.
 
 ## What blocks the export today
 
@@ -46,6 +51,7 @@ Also missing for the stores: in-app account deletion. There is no CI.
 | Locale | One client-side path on both targets. Accepted cost: the web's first HTML is untranslated, crawlers see the landing page in English |
 | Account deletion | Delete the person (auth user, profile, memberships); keep team data (players, matches, stats). Blocked while the user is a club's sole owner |
 | CI | GitHub Actions: lint (baseline), unit tests, both builds, `out/` check. E2E stays local, on both targets |
+| Existing tests | Revised first: API seeding, explicit Playwright project dependencies, a quick level, no silent "if visible" steps; sync unit tests without fixed sleeps (section 8) |
 
 ## 1. Build targets and the platform seam
 
@@ -95,10 +101,19 @@ export interface Platform {
   ServiceWorker: ComponentType<{ children: ReactNode }>;
   /** web: <a download>; mobile: the same for now; sub-project 2 uses Filesystem + Share. */
   saveFile(data: Blob, fileName: string): Promise<void>;
+  /** The sync core's signals (connectivity, foreground, persistent storage, device id/label). */
+  createSyncPlatform(): SyncPlatform;
 }
 ```
 
 `webOrigin` is `window.location.origin` on web and `NEXT_PUBLIC_WEB_ORIGIN` on mobile.
+
+The sync layer already has its own seam, `SyncPlatform` (`lib/rxdb/sync/platform/types.ts`), with
+one web implementation (`lib/rxdb/sync/platform/web.ts`) that `lib/rxdb/database.ts` creates
+directly. The interface stays in the sync core; `web.ts` moves to `lib/platform/web/sync.ts`, the
+mobile implementation reuses it for now (browser events), and `database.ts` calls
+`platform.createSyncPlatform()`. Sub-project 2 swaps in Capacitor `Network`, `App` and `Device`
+behind it. Its unit test (`tests/unit/sync/platform-web.test.ts`) follows the file.
 
 The mobile implementations in this sub-project are browser stand-ins, so the export runs and is
 tested in a normal browser. Sub-project 2 replaces them with Capacitor plugins behind the same
@@ -328,7 +343,8 @@ On push and pull requests to `main`; Node 24, pnpm from `packageManager`, pnpm s
 - Web: unchanged (`pnpm build && pnpm start -p 3100`, `BASE_URL=http://localhost:3100`).
 - Export: `NEXT_PUBLIC_API_ORIGIN=http://localhost:3100 pnpm build:mobile`, `pnpm serve:mobile`
   (3200), with the web server on 3100 started with `API_CORS_ORIGINS=http://localhost:3200`; run
-  `BASE_URL=http://localhost:3200 E2E_TARGET=mobile pnpm test:e2e`.
+  `BASE_URL=http://localhost:3200 E2E_TARGET=mobile pnpm test:e2e:quick` plus the `auth` and
+  `account` specs (section 8 defines the levels).
 - Web-only specs carry a `@web` tag and are skipped when `E2E_TARGET=mobile`: service worker
   cache (`05b-sw-cache`), old-URL redirects, the `/fr/` prefix.
 - All specs move to the new URLs (through `lib/routes.ts` where they build URLs).
@@ -343,6 +359,81 @@ On push and pull requests to `main`; Node 24, pnpm from `packageManager`, pnpm s
 `CLAUDE.md` and `.claude/docs/` (02-architecture, 03-code-patterns, 06-auth, 07-features):
 the two build targets, `lib/platform`, `lib/routes.ts`, the `.web.ts` convention, the client
 locale, `/auth/confirm`, and the new commands.
+
+## 8. Test suite revision (done first)
+
+### Measured (2026-10-14, production build, one worker, this machine)
+
+- E2E: 27 passed, 4 skipped in 4.0 min, plus 49 s for `pnpm build`.
+  - `01-teams`: 53 s. It creates the team and 8 players one dialog at a time.
+  - The 7 live-match tests (`04`, `04d` ×2, `04e`, `04f`, `04g`, `04h`): 8–29 s each, about
+    2 min together. Each first builds its match through the UI: filters, new-match dialog, start
+    dialog, players ticked one by one, 6 court positions.
+  - `02-matches` (full match): 23 s. All other tests: 7 s or less.
+- Unit: 434 tests in 44 s, with one failure. `tests/unit/sync/manager.test.ts` alone takes 43 s
+  (48 tests, about 1 s each, real `sleep(300)`/`sleep(500)` waits). Its timing-sensitive test fails
+  while another server loads the machine.
+
+About 4 minutes for 27 browser tests against a real backend is normal. The 10–17-minute task
+cycles came from rebuilding and running the whole suite for every task, with a dev server
+competing for the CPU. The other problems found:
+- Specs depend on each other through file-name order and `tests/fixtures/test-data.json`, which is
+  tracked in git and rewritten by every run.
+- Many steps act only "if visible", so a missing button skips the step instead of failing.
+- 27 fixed `waitForTimeout` calls; a 5-minute default timeout, so a stuck test hangs 5 minutes.
+- The opt-in tools `04b-rxdb-capture`, `04c-rxdb-legacy` and `06z-screenshots` always show as
+  skipped.
+- `07-team-detail-cleanup` › "delete E2E team" is a permanent `test.fail` (a known app bug:
+  deleting a team with matches hits `matches_home_team_id_fkey`).
+
+### E2E changes
+
+1. **Seed by API.** A `seed` setup project runs after `auth` and creates "E2E Team <run id>"
+   with its 8 players through Supabase as the test user (`tests/helpers/server-data.ts`, RLS
+   applies). It writes the fixture to `playwright/.data/fixture.json` (git-ignored).
+   `tests/fixtures/test-data.json` is deleted from the repo.
+   - `01-teams` keeps a short UI test: create a team, rename it, add one player.
+   - `createAndStartMatch` creates the match by API and uses the UI only for the start dialog.
+     The new-match dialog stays covered by one test in `02-matches`.
+   - Specs that test the court setup (`02`, `04`) keep the UI flow through `setupCourtPositions`.
+2. **Dependencies are explicit**, through Playwright projects instead of file order:
+   `setup` → `seed` → `core` (teams, championships, settings, UI details, public access) and
+   `live` (`04*`) → `finished-match` (`02`, writes the completed match id) → `stats` (`06`, the
+   finished-match case of `04g`). Running one project pulls in what it needs.
+3. **Two levels:** `pnpm test:e2e:quick` runs `core` and `live` (target about 1.5 min);
+   `pnpm test:e2e` runs everything. A `tools` project holds `04b`, `04c` and `06z` and runs only
+   when named (`--project=tools`).
+4. **Reliability:**
+   - Every "if visible then act" step becomes an assertion, or is removed when the step isn't needed.
+   - Fixed `waitForTimeout` calls become web-first waits on the state they were waiting for.
+     The 500 ms search debounce waits for the filtered row instead.
+   - The default timeout drops to 90 s; only the full-match and two-device tests set more.
+   - The permanent `test.fail` cleanup test is removed: global teardown already deletes E2E data.
+     The team-deletion bug goes to the follow-ups.
+5. **Workers:** after the changes, try 2 workers. Keep the setting only if the full suite passes
+   three runs in a row on the developer machine; otherwise stay at 1.
+
+### Unit changes
+
+- In the sync tests, fixed `sleep()` waits become `waitFor(condition)`. Where a wait proves
+  something must not happen, it gets a short, named window helper.
+- `manager.test.ts` is split by concern (connectivity and resume, scorer claim and takeover, lost
+  matches, reference replication) so Vitest runs the files in parallel.
+- Target: `pnpm test` under 15 s, and green while a production server runs on the same machine.
+
+### Docs
+
+`CLAUDE.md` gets "Which tests to run when":
+- During a task: the unit tests plus the e2e projects the change touches, or `test:e2e:quick`.
+- Before merging: the full `test:e2e`.
+- No dev server while e2e runs.
+
+The e2e section of `.claude/docs/` describes the projects and the seed.
+
+### Not included
+
+A dedicated Supabase project for tests: e2e keeps writing to the real project and cleaning up by
+name pattern. Possible follow-up.
 
 ## Rollout order
 
@@ -362,3 +453,6 @@ for match stats (possible web-only follow-up); e2e in CI.
 
 - Remove `app/auth/callback/route.web.ts` one release after the hook deploy.
 - Optional web-only share route (`/s/<id>`) with per-match Open Graph metadata.
+- Deleting a team that has matches fails (`matches_home_team_id_fkey`); fix the app, then add an
+  e2e test for it.
+- A dedicated Supabase project (or branch) for e2e data.
