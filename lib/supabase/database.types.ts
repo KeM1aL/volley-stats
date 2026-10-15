@@ -950,6 +950,7 @@ export type Database = {
         Returns: Json
       }
       clean_match: { Args: { match_uuid: string }; Returns: undefined }
+      delete_my_account: { Args: { decisions: Json }; Returns: undefined }
       get_match_scorer: { Args: { p_match_id: string }; Returns: Json }
       request_device_id: { Args: never; Returns: string }
     }
