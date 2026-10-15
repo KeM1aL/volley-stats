@@ -2,11 +2,12 @@
  * Live match — offline/reconnect scenarios
  *
  * Both start the same way: create the match, set up the first set, play 2 points online (a synced
- * baseline; the test format's sets end at 5 points, so 2 online + a stat + 2 offline stay inside set 1).
+ * baseline). The test format's sets end at 5 points, and the serve stat recorded offline is a point too.
  *
  * 1. Reload offline first (a cold start with no network), then record a stat and 2 points offline,
  *    reconnect, wait for "All saved", compare the server with the device, reload.
- * 2. Record offline first, reload while still offline, then reconnect (fixme: the test reloads during the last point's writes).
+ * 2. Record a stat and 1 point offline (4-0, still inside set 1), reload while still offline, then
+ *    reconnect. The reload comes after the last point is on screen, so it never interrupts a point's writes.
  */
 
 import { test, expect, type Page } from '@playwright/test';
@@ -41,8 +42,8 @@ async function reloadOffline(page: Page): Promise<void> {
   await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', '2');
 }
 
-/** Records a serve stat (the managed team serves: selectServingTeam in the set setup) and scores 2 points. */
-async function recordStatAndPoints(page: Page, playerName: string): Promise<void> {
+/** Records a serve stat (the managed team serves: selectServingTeam in the set setup); it scores a point. */
+async function recordServeStat(page: Page, playerName: string): Promise<void> {
   await expect(page.getByRole('button', { name: new RegExp(playerName, 'i') }).first()).toBeVisible();
   await page.getByRole('button', { name: new RegExp(playerName, 'i') }).first().click();
   const serveCard = page.getByTestId('stat-card-serve').first();
@@ -51,6 +52,11 @@ async function recordStatAndPoints(page: Page, playerName: string): Promise<void
   await expect(successBtn).toBeEnabled();
   await successBtn.click();
   await expect(successBtn).toBeDisabled();
+}
+
+/** Records a serve stat and scores 2 points. */
+async function recordStatAndPoints(page: Page, playerName: string): Promise<void> {
+  await recordServeStat(page, playerName);
   await scorePoints(page, 2);
 }
 
@@ -93,16 +99,15 @@ test.describe('Live match — offline/reconnect', () => {
   });
 
   test('records offline, reloads while still offline, then uploads on reconnect', async ({ page }) => {
-    test.fixme(
-      true,
-      "Test timing (task 3b): scorePoints reads the score before the stat's point shows, so the reload interrupts the 5th point's writes (a lost set score update: server set 4-0 with 5 points); with every write landed the 5 points end the set and the page shows the set setup, not the point button. Needs a scenario change, see task-3b-report.md"
-    );
     test.setTimeout(3 * 60_000);
     acceptBeforeUnload(page);
     const { matchId, playerNames } = await startMatchWithBaseline(page);
 
     await goOffline(page);
-    await recordStatAndPoints(page, playerNames[0]);
+    await recordServeStat(page, playerNames[0]);
+    // The stat's point shows only once its writes are done; scorePoints counts from the score shown.
+    await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', '3');
+    await scorePoints(page, 1);
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
     await expect(page.getByTestId('point-btn-managed-point').first()).toBeVisible({ timeout: 20_000 });
