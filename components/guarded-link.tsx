@@ -26,5 +26,7 @@ export function GuardedLink({ href, onClick, ...props }: GuardedLinkProps) {
     });
   };
 
-  return <Link href={href} onClick={handleClick} {...props} />;
+  // No prefetch by default: the screens are static, so a prefetched one would open offline with no data.
+  // Unprefetched, the push has to fetch the page, which fails offline and ends on the service worker's offline page.
+  return <Link href={href} prefetch={false} onClick={handleClick} {...props} />;
 }
