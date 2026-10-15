@@ -176,6 +176,20 @@ describe("pending changes", () => {
     expect(await pending.get("sets", set.id)).toBeNull();
   });
 
+  it("tells when the oldest entry it kept passes the 30 s grace, and nothing once none is kept", async () => {
+    const set = aSet(MATCH);
+    await db.sets.insert(set as any);
+    expect(await pending.clearSettled(db, MATCH, "sets", LATER)).toBeNull();
+    await pending.markPending("sets", { ...set, updated_at: new Date(Date.now() + 1000).toISOString() });
+    await ageEntry("sets", set.id, 20_000);
+    const graceEndsInMs = await pending.clearSettled(db, MATCH, "sets", LATER);
+    expect(graceEndsInMs).toBeGreaterThan(9_000);
+    expect(graceEndsInMs).toBeLessThanOrEqual(10_000);
+    await ageEntry("sets", set.id, 31_000);
+    expect(await pending.clearSettled(db, MATCH, "sets", LATER)).toBeNull();
+    expect(await pending.get("sets", set.id)).toBeNull();
+  });
+
   it("clears the entry of a removal once the removal is written", async () => {
     const set = aSet(MATCH);
     await db.sets.insert(set as any);

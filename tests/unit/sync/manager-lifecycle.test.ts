@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { MatchSync } from "@/lib/rxdb/sync/match-sync";
+import { SETTLE_GRACE_MS } from "@/lib/rxdb/sync/pending-changes";
 import { ReferenceSync } from "@/lib/rxdb/sync/reference-sync";
 import { TrackedMatches } from "@/lib/rxdb/sync/tracked-matches";
 import { AWAY_TEAM_ID, HOME_TEAM_ID, PLAYER_ID, USER_ID, aSet } from "../helpers/fixtures";
@@ -115,6 +116,33 @@ describe("SyncManager lifecycle", () => {
     d.goOnline();
     await d.signIn(); // the home screen: syncMatch is never called
     await d.settle(suite.matchId());
+    await expectServerEqualsDevice(d, suite.matchId());
+  });
+
+  it("finishes uploading when the app was closed offline between a row's pending mark and its write", async () => {
+    const d = await suite.device();
+    await d.signIn();
+    await d.openMatch(suite.matchId());
+    const set = await d.startSet(suite.matchId());
+    await d.recordPoint(suite.matchId(), set.id, 1);
+    d.goOffline();
+    await d.recordPoint(suite.matchId(), set.id, 2);
+    // Closed in the middle of the next point: the hook marked the set's update, the update itself never landed.
+    const written = (await d.db.sets.findOne(set.id).exec())!.updated_at as string;
+    await d.pending.markPending("sets", { id: set.id, match_id: suite.matchId(), updated_at: new Date(Date.parse(written) + 1).toISOString() });
+    // Marked a while ago: the grace for a lost write ends shortly after the upload.
+    await d.pending.collection
+      .findOne(`sets:${set.id}`)
+      .incrementalPatch({ updated_at: new Date(Date.now() - SETTLE_GRACE_MS + 1500).toISOString() });
+    await d.restart();
+    await d.signIn(); // cold start, still offline
+    d.goOnline();
+    await waitFor(() => serverPoints().length === 2 && suite.server().row("sets", set.id)?.home_score === 2, {
+      message: "the recorded rows uploaded",
+    });
+    // Nothing is left to upload: the lost write's entry must not keep the badge on "uploading".
+    await d.settle(suite.matchId());
+    expect(await d.pending.count({ matchId: suite.matchId() })).toBe(0);
     await expectServerEqualsDevice(d, suite.matchId());
   });
 

@@ -6,7 +6,7 @@
  *
  * 1. Reload offline first (a cold start with no network), then record a stat and 2 points offline,
  *    reconnect, wait for "All saved", compare the server with the device, reload.
- * 2. Record offline first, reload while still offline, then reconnect (fixme: sync bug under investigation).
+ * 2. Record offline first, reload while still offline, then reconnect (fixme: the test reloads during the last point's writes).
  */
 
 import { test, expect, type Page } from '@playwright/test';
@@ -95,7 +95,7 @@ test.describe('Live match — offline/reconnect', () => {
   test('records offline, reloads while still offline, then uploads on reconnect', async ({ page }) => {
     test.fixme(
       true,
-      'Suspected sync bug: after recording offline, an offline reload and reconnect, the sync badge stays "uploading" about 1 run in 2 with an RxDB error on a sets row — investigated in the next task'
+      "Test timing (task 3b): scorePoints reads the score before the stat's point shows, so the reload interrupts the 5th point's writes (a lost set score update: server set 4-0 with 5 points); with every write landed the 5 points end the set and the page shows the set setup, not the point button. Needs a scenario change, see task-3b-report.md"
     );
     test.setTimeout(3 * 60_000);
     acceptBeforeUnload(page);

@@ -262,12 +262,16 @@ export class PendingChanges {
    * the replication (the server's version won a conflict); or when the entry is older than
    * SETTLE_GRACE_MS (its write failed after the hook marked it). An entry whose write hasn't landed
    * yet (the hook runs before the write) is kept.
+   *
+   * Returns in how many ms the oldest kept entry passes SETTLE_GRACE_MS (null: none kept). The caller
+   * checks again then: a write lost when the app was closed leaves an entry that nothing else clears
+   * once the rest of the match is uploaded.
    */
-  async clearSettled(db: RxDatabase<any>, matchId: string, table: MatchCollectionName, before: string): Promise<void> {
+  async clearSettled(db: RxDatabase<any>, matchId: string, table: MatchCollectionName, before: string): Promise<number | null> {
     const entries = await this.collection
       .find({ selector: { match_id: matchId, table_name: table, status: "pending", updated_at: { $lt: before } } })
       .exec();
-    if (entries.length === 0) return;
+    if (entries.length === 0) return null;
     const collection = db.collections[table] as RxCollection<any>;
     const primaryPath = collection.schema.primaryPath as string;
     const local = new Map(
@@ -276,7 +280,8 @@ export class PendingChanges {
         doc,
       ])
     );
-    const failedBefore = Date.parse(this.now()) - SETTLE_GRACE_MS;
+    const now = Date.parse(this.now());
+    const failedBefore = now - SETTLE_GRACE_MS;
     const settled = entries.filter((entry) => {
       if (Date.parse(entry.updated_at) < failedBefore) return true;
       const doc = local.get(entry.doc_id);
@@ -287,6 +292,11 @@ export class PendingChanges {
     });
     // An entry marked again meanwhile no longer matches its read revision: bulkRemove leaves it.
     if (settled.length > 0) await this.collection.bulkRemove(settled);
+    const graceEnds = entries
+      .filter((entry) => !settled.includes(entry))
+      .map((entry) => Date.parse(entry.updated_at) + SETTLE_GRACE_MS)
+      .filter(Number.isFinite);
+    return graceEnds.length > 0 ? Math.max(0, Math.min(...graceEnds) - now) : null;
   }
 
   async list(filter: PendingFilter = {}): Promise<PendingChange[]> {
