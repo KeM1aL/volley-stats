@@ -13,6 +13,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
 import { LoadingBar } from '@/components/ui/loading-bar';
 import { AuthProvider } from '@/contexts/auth-context';
+import { AuthGuard } from '@/components/auth/auth-guard';
 import { KeyboardProvider } from '@/contexts/keyboard-context';
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider';
@@ -101,7 +102,7 @@ export default async function RootLayout({
                             <Navigation />
                           </header>
                           <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
-                            {children}
+                            <AuthGuard>{children}</AuthGuard>
                           </main>
                           <div className="keyboard-spacer" aria-hidden="true" />
                         </div>

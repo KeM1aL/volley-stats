@@ -1,50 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Helper function to check if a path should be saved for redirect
-function shouldSaveRedirect(pathname: string): boolean {
-  // Don't redirect to auth pages
-  if (pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/login')) {
-    return false;
-  }
-
-  // Don't redirect to technical/static files
-  const technicalExtensions = [
-    '.webmanifest',
-    '.json',
-    '.xml',
-    '.ico',
-    '.png',
-    '.jpg',
-    '.jpeg',
-    '.gif',
-    '.svg',
-    '.webp',
-    '.css',
-    '.js',
-    '.woff',
-    '.woff2',
-    '.ttf',
-    '.eot',
-  ];
-
-  if (technicalExtensions.some(ext => pathname.endsWith(ext))) {
-    return false;
-  }
-
-  // Don't redirect to API routes
-  if (pathname.startsWith('/api/')) {
-    return false;
-  }
-
-  // Don't redirect to Next.js internal routes
-  if (pathname.startsWith('/_next/')) {
-    return false;
-  }
-
-  return true;
-}
-
+/** Refreshes the Supabase session cookie. Pages are guarded on the client (components/auth/auth-guard.tsx). */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -67,28 +24,6 @@ export async function updateSession(request: NextRequest) {
       },
     }
   )
-  const { data } = await supabase.auth.getClaims()
-  const user = data?.claims
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    // Versioned API routes check the session themselves (cookie or Bearer token) and answer 401.
-    // Other /api routes keep the redirect.
-    !request.nextUrl.pathname.startsWith('/api/v1/') &&
-    !request.nextUrl.pathname.endsWith('/stats') &&
-    !(request.nextUrl.pathname === '/')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth'
-
-    // Only save redirectTo for meaningful user pages
-    if (shouldSaveRedirect(request.nextUrl.pathname)) {
-      url.searchParams.set('redirectTo', request.nextUrl.pathname + request.nextUrl.search)
-    }
-
-    return NextResponse.redirect(url)
-  }
+  await supabase.auth.getClaims()
   return supabaseResponse
 }

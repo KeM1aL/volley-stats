@@ -4,6 +4,7 @@ import { AuthForm } from "@/components/auth/auth-form";
 import { LoadingPage } from "@/components/loading-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
+import { isSafeRedirectTarget, routes } from "@/lib/routes";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useTranslations } from "next-intl";
@@ -16,10 +17,7 @@ function AuthPage() {
   const redirectTo = searchParams.get("redirectTo");
 
   useEffect(() => {
-    if (user) {
-      const redirectTo = searchParams.get("redirectTo");
-      router.replace(redirectTo || "/");
-    }
+    if (user) router.replace(isSafeRedirectTarget(redirectTo) ? redirectTo : routes.home());
   }, [user, router, redirectTo]);
 
   return (
