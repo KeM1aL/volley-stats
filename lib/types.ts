@@ -12,7 +12,7 @@ export type Championship = {
   default_match_format: string; // UUID reference to match_format
   age_category: 'U10' | 'U12' | 'U14' | 'U16' | 'U18' | 'U21' | 'senior';
   gender: 'female' | 'male' | 'mixte';
-  user_id: string;
+  user_id: string | null; // null once the creator deleted their account
   season_id: string | null; // UUID reference to season
   ext_code: string | null;
   ext_source: string | null;
@@ -76,7 +76,7 @@ export type Team = {
 export type Club = {
   id: string;
   name: string;
-  user_id: string;
+  user_id: string | null; // null once the creator deleted their account
   website?: string | null;
   contact_email?: string | null;
   contact_phone?: string | null;

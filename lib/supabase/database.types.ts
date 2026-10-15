@@ -29,7 +29,7 @@ export type Database = {
           season_id: string | null
           type: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           _deleted?: boolean
@@ -45,7 +45,7 @@ export type Database = {
           season_id?: string | null
           type: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           _deleted?: boolean
@@ -61,7 +61,7 @@ export type Database = {
           season_id?: string | null
           type?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -131,7 +131,7 @@ export type Database = {
           id: string
           name: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           website: string | null
         }
         Insert: {
@@ -143,7 +143,7 @@ export type Database = {
           id?: string
           name: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           website?: string | null
         }
         Update: {
@@ -155,7 +155,7 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           website?: string | null
         }
         Relationships: []

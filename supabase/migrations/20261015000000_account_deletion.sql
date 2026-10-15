@@ -3,6 +3,9 @@
 -- as the user chose. Spec: docs/superpowers/specs/2026-10-14-static-export-readiness-design.md §5.
 -- Audit: docs/superpowers/notes/2026-10-15-user-fk-audit.md.
 
+-- The FK changes lock auth.users briefly; fail fast instead of queuing auth writes behind them.
+set local lock_timeout = '5s';
+
 alter table public.clubs alter column user_id drop not null;
 alter table public.clubs drop constraint clubs_user_id_fkey,
   add constraint clubs_user_id_fkey foreign key (user_id) references auth.users (id) on delete set null;
