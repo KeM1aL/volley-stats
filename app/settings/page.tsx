@@ -49,9 +49,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import * as z from "zod";
 import { FavoritesSection } from "@/components/settings/favorites-section";
-import { updateLocale } from "@/lib/i18n/actions";
-import { Locale } from "@/lib/i18n/config";
-import { useRouter } from "next/navigation";
+import { useAppLocale } from "@/hooks/use-app-locale";
+import type { Locale } from "@/lib/i18n/config";
 import { useTranslations } from "next-intl";
 
 const STATS_TABLES = ["events", "score_points", "player_stats"] as const;
@@ -94,7 +93,7 @@ export default function SettingsPage() {
   const { localDb: db } = useLocalDb();
   const { theme, setTheme } = useTheme();
   const { session, reloadUser, user } = useAuth();
-  const router = useRouter();
+  const { setLocale } = useAppLocale();
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
@@ -156,13 +155,8 @@ export default function SettingsPage() {
   const onSubmit = async (values: Settings) => {
     setIsSaving(true);
     try {
-      // Update language via i18n system if changed
-      if (values.language !== settings.language) {
-        const localeResult = await updateLocale(values.language as Locale);
-        if (!localeResult.success) {
-          throw new Error(t('sync.failedUpdateLanguage'));
-        }
-      }
+      // Switch the UI language (and save it to the profile) if changed
+      if (values.language !== settings.language) await setLocale(values.language as Locale);
 
       // Update other settings via existing system
       const result = await updateSettings(values);
@@ -174,11 +168,6 @@ export default function SettingsPage() {
         title: t('toast.saved'),
         description: t('toast.savedDesc'),
       });
-
-      // Refresh to apply new locale if language changed
-      if (values.language !== settings.language) {
-        router.refresh();
-      }
     } catch (error) {
       console.error("Failed to save settings:", error);
       toast({

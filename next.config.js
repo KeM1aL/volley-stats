@@ -1,5 +1,4 @@
 const { withSerwist } = require('@serwist/turbopack');
-const withNextIntl = require('next-intl/plugin')('./i18n.ts');
 
 // `web`: the Vercel deployment (server routes, proxy, service worker).
 // `mobile`: a static export in out/, bundled by the Capacitor app.
@@ -47,4 +46,4 @@ const nextConfig = {
     : { output: 'export', trailingSlash: true }),
 };
 
-module.exports = isWeb ? withSerwist(withNextIntl(nextConfig)) : withNextIntl(nextConfig);
+module.exports = isWeb ? withSerwist(nextConfig) : nextConfig;

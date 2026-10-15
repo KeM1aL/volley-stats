@@ -2,9 +2,7 @@ import './globals.css';
 import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { NextIntlClientProvider } from 'next-intl';
-// eslint-disable-next-line no-restricted-imports -- removed by the client locale (Task 9)
-import { getLocale, getMessages } from 'next-intl/server';
+import { LocaleProvider, ProfileLocaleSync } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LocalDatabaseProvider } from '@/components/providers/local-database-provider';
 import { SyncStatusProvider } from '@/components/providers/sync-status-provider';
@@ -60,16 +58,13 @@ export const metadata: Metadata = {
 // These metadata values are in English (default). For locale-specific metadata, use generateMetadata()
 // in individual page files or consider using a metadata route handler.
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
@@ -83,7 +78,7 @@ export default async function RootLayout({
       </head>
       <body>
         <ServiceWorkerProvider>
-          <NextIntlClientProvider messages={messages} locale={locale}>
+          <LocaleProvider>
             <KeyboardProvider>
               <ThemeProvider
                 attribute="class"
@@ -93,6 +88,7 @@ export default async function RootLayout({
                 disableTransitionOnChange
               >
                 <AuthProvider>
+                  <ProfileLocaleSync />
                   <LocalDatabaseProvider>
                     <SyncStatusProvider>
                       <LeaveGuardProvider>
@@ -113,7 +109,7 @@ export default async function RootLayout({
                 </AuthProvider>
               </ThemeProvider>
             </KeyboardProvider>
-          </NextIntlClientProvider>
+          </LocaleProvider>
         </ServiceWorkerProvider>
       </body>
       {process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}

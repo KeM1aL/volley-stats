@@ -69,10 +69,13 @@ test('asks before leaving a live match', async ({ page }) => {
     };
   });
   beforeUnloadDialogs = 0;
-  // Leave anyway, for a screen this session never opened (so the worker has no copy of it): the
+  // Leave anyway. The screens are static, so the header link opens the prefetched Championships shell
+  // offline; a full load of a screen this session never opened (the worker has no copy of it) shows the
   // app's offline page, not the browser's error page
   await headerLink(page, 'Championships').click();
   await dialog.getByRole('button', { name: 'Leave' }).click();
+  await page.waitForURL(onPath('/championships'), { timeout: 15_000 });
+  await page.goto('/championships');
   await expect(page.getByTestId('offline-page')).toBeVisible({ timeout: 15_000 });
   expect(page.url()).not.toContain('chrome-error');
   expect(await page.evaluate(() => localStorage.getItem('e2e:beforeunload-prevented'))).toBeNull();

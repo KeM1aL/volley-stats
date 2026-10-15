@@ -38,9 +38,10 @@
         it: ["Sei offline", "Questa schermata richiede una connessione.", "Torna alla partita in diretta", "Riprova", "Indietro"],
         pt: ["Está offline", "Este ecrã precisa de ligação.", "Voltar ao jogo ao vivo", "Tentar novamente", "Voltar"]
       };
-      var cookie = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([a-z]{2})/);
+      var saved = null;
+      try { saved = localStorage.getItem("volleystats:locale"); } catch (e) {}
       var browser = (navigator.language || "en").slice(0, 2).toLowerCase();
-      var locale = cookie && TEXTS[cookie[1]] ? cookie[1] : TEXTS[browser] ? browser : "en";
+      var locale = saved && TEXTS[saved] ? saved : TEXTS[browser] ? browser : "en";
       var text = TEXTS[locale];
       document.documentElement.lang = locale;
       document.getElementById("title").textContent = text[0];

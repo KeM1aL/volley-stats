@@ -1,45 +1,20 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { updateSession } from '@/lib/server/session';
-import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n/config';
+import { splitLocalePrefix } from '@/lib/i18n/locale-path';
 
 export async function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  // Check if pathname starts with a locale
-  const pathnameHasLocale = SUPPORTED_LOCALES.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  );
-
-  if (pathnameHasLocale) {
-    // Extract locale from path (e.g., /fr/matches → fr)
-    const locale = pathname.split('/')[1] as Locale;
-
-    // Rewrite to remove locale from URL (internally route to non-prefixed path)
-    const newPathname = pathname.replace(`/${locale}`, '') || '/';
-    const newUrl = new URL(newPathname + req.nextUrl.search, req.url);
-
-    // Update session for Supabase
-    const supabaseResponse = await updateSession(req);
-
-    // Persist locale from URL prefix for future visits
-    const response = NextResponse.rewrite(newUrl);
-    response.cookies.set('NEXT_LOCALE', locale, {
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-    });
-
-    // Copy Supabase session cookies to the response
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      response.cookies.set(cookie);
-    });
-
-    return response;
+  // /fr/matches → /matches?lang=fr: the client picks up the language and saves it on the device.
+  const prefixed = splitLocalePrefix(req.nextUrl.pathname);
+  if (prefixed) {
+    const url = req.nextUrl.clone();
+    url.pathname = prefixed.path;
+    url.searchParams.set('lang', prefixed.locale);
+    return NextResponse.redirect(url, 307);
   }
-
-  // No locale in path - continue with Supabase session update
   return updateSession(req);
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|serwist|offline\\.html|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",],
+  matcher: ["/((?!_next/static|_next/image|serwist|offline\\.html|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };

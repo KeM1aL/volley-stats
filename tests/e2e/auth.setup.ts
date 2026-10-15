@@ -38,14 +38,12 @@ setup('authenticate', async ({ page }) => {
   // Next.js client-side navigation resets the JS evaluation context.
   await expect(page).not.toHaveURL(/\/auth/, { timeout: 30_000 });
 
-  // Force English locale: navigate via /en/ prefix so the middleware sets
-  // the NEXT_LOCALE=en cookie, overriding the user's profile language preference.
-  // This ensures all tests run with English UI text regardless of account settings.
-  await page.goto('/en/');
-  // Use domcontentloaded (not networkidle) — RxDB/Supabase sync runs indefinitely
-  // and would make networkidle wait for minutes.
-  await page.waitForLoadState('domcontentloaded');
+  // English UI for every spec: an explicit ?lang= is saved on this device and is never replaced by the profile language.
+  await page.goto('/?lang=en');
+  await expect(page).toHaveURL((url) => !url.searchParams.has('lang'));
+  // The profile is loaded: the device now counts as having adopted it, so later pages keep English.
+  await page.waitForFunction(() => localStorage.getItem('volleystats:locale-user') !== null);
 
-  // Save authenticated state (includes the NEXT_LOCALE=en cookie)
+  // Save authenticated state
   await page.context().storageState({ path: authFile });
 });
