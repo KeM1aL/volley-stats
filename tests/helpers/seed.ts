@@ -51,3 +51,23 @@ export async function createMatchByApi(teamId: string): Promise<string> {
   }));
   return id;
 }
+
+/**
+ * A team of its own for a spec that changes its roster (the run's team is shared by specs that may run at the
+ * same time). Name it "E2E Team …": the global teardown deletes it. The creator's own membership row comes
+ * with the team, as for a team made in the UI; `playerNames` become active players.
+ */
+export async function createScratchTeam(name: string, playerNames: string[] = ['Player 1']) {
+  const supabase = await serverClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const now = new Date().toISOString();
+  const teamId = crypto.randomUUID();
+  await must('scratch team', supabase.from('teams').insert({
+    id: teamId, name, status: 'active', user_id: user!.id,
+    championship_id: null, club_id: null, created_at: now, updated_at: now, ext_code: null, ext_source: null,
+  }));
+  await must('scratch players', supabase.from('team_members').insert(
+    playerNames.map((player, index) => ({ team_id: teamId, name: player, number: index + 1, position: null, role: 'player' }))
+  ));
+  return teamId;
+}

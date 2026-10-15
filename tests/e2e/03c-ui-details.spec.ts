@@ -50,8 +50,21 @@ test('days in the middle of a selected date range stay readable', async ({ page 
 
   const middleDay = firstMonth.getByRole('button', { name: /\b10(th)?\b/ }).first();
   await expect(middleDay).toHaveAttribute('aria-label', /selected/);
-  // Day buttons animate colour changes (transition-colors): the contrast settles within the poll
-  await expect.poll(() => textContrast(middleDay), { message: 'text contrast of a day inside the range' }).toBeGreaterThanOrEqual(3);
+  // Day buttons animate colour changes (transition-colors): the contrast of the old colour already passes,
+  // so first wait for the transition to end (no running animation and the same colour twice in a row).
+  let previousColor = '';
+  await expect
+    .poll(
+      async () => {
+        const state = await middleDay.evaluate((el) => ({ animations: el.getAnimations().length, color: getComputedStyle(el).color + getComputedStyle(el).backgroundColor }));
+        const settled = state.animations === 0 && state.color === previousColor;
+        previousColor = state.color;
+        return settled;
+      },
+      { message: 'the day colour transition ends' }
+    )
+    .toBe(true);
+  expect(await textContrast(middleDay), 'text contrast of a day inside the range').toBeGreaterThanOrEqual(3);
 });
 
 test('buttons show a pointer cursor', async ({ page }) => {
