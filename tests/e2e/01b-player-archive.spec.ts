@@ -1,21 +1,12 @@
 /**
  * Archiving a player hides them from the roster; "Show archived" lists them; restoring brings them back.
- * Leaves "Player 9" archived for the specs that follow (02 checks the start dialog, 04h the late-player picker).
+ * Works on an extra "Player 10" of the run's team; the seed already holds the archived "Player 9" that the
+ * start dialog (02) and the late-player picker (04h) must not offer.
  */
 import { test, expect, type Page } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
+import { readFixture } from '../helpers/fixture';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
-const ARCHIVED = 'Player 9';
-
-function loadFixture(): { teamName: string; [key: string]: unknown } {
-  return JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
-}
-
-function saveFixture(data: Record<string, unknown>): void {
-  fs.writeFileSync(FIXTURE_PATH, JSON.stringify({ ...loadFixture(), ...data }, null, 2));
-}
+const ARCHIVED = 'Player 10';
 
 async function openPlayersPage(page: Page, teamName: string): Promise<string> {
   await page.goto('/teams');
@@ -34,14 +25,13 @@ async function openPlayersPage(page: Page, teamName: string): Promise<string> {
 }
 
 test('archive and restore a player', async ({ page }) => {
-  const { teamName } = loadFixture();
-  expect(teamName, 'Team fixture not found — run 01-teams.spec.ts first').toBeTruthy();
+  const { teamName } = readFixture();
   const teamId = await openPlayersPage(page, teamName);
 
-  // A ninth player
+  // A tenth player
   await page.getByRole('button', { name: 'New Player' }).click();
   await page.getByLabel('Name').fill(ARCHIVED);
-  await page.getByLabel('Number').fill('9');
+  await page.getByLabel('Number').fill('10');
   await page.getByRole('button', { name: 'Create Player' }).click();
   await expect(page.getByText('Player created').first()).toBeVisible({ timeout: 5_000 });
   const activeRow = page.getByTestId('player-row').filter({ hasText: ARCHIVED });
@@ -61,7 +51,7 @@ test('archive and restore a player', async ({ page }) => {
   await expect(activeRow).toHaveCount(0);
 
   // Show archived: listed with the badge and a Restore button
-  await page.getByRole('button', { name: 'Show archived (1)' }).click();
+  await page.getByRole('button', { name: /^Show archived/ }).click();
   const archivedRow = page.getByTestId('archived-player-row').filter({ hasText: ARCHIVED });
   await expect(archivedRow).toContainText('Archived');
 
@@ -78,6 +68,4 @@ test('archive and restore a player', async ({ page }) => {
   await page.goto(`/teams/${teamId}`);
   await expect(page.getByText(`Team Members (${activeCount})`)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('cell', { name: ARCHIVED, exact: true })).toHaveCount(0);
-
-  saveFixture({ archivedPlayerName: ARCHIVED });
 });

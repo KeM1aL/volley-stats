@@ -160,6 +160,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
       <DialogTrigger asChild>
         <Button
           data-testid="start-match-trigger"
+          data-match-id={match.id}
           variant="ghost"
           size="sm"
           title={t("dialog.startMatch")}

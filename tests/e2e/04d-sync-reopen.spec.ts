@@ -7,27 +7,20 @@
  */
 
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { setupCourtPositions } from '../helpers/court';
 import { goOffline, waitForServiceWorker } from '../helpers/network';
 import { acceptBeforeUnload, expectServerMatchesDevice, readLiveScore, waitForAllSaved } from '../helpers/sync';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
-
-function loadFixture(): { teamName: string; playerNames: string[] } {
-  return JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
-}
+import { readFixture } from '../helpers/fixture';
 
 test.describe('Sync — data recorded offline reaches the server', () => {
   test('uploads after the app is closed offline and reopened on the home page', async ({ page, context }) => {
     test.setTimeout(6 * 60_000);
     acceptBeforeUnload(page);
-    const { teamName, playerNames } = loadFixture();
-    expect(teamName, 'Team fixture not found — run 01-teams.spec.ts first').toBeTruthy();
+    const { teamId, teamName, playerNames } = readFixture();
 
-    const { matchId } = await createAndStartMatch(page, { teamName, playerNames });
+    const { matchId } = await createAndStartMatch(page, { teamId, teamName });
     await setupCourtPositions(page, playerNames.slice(0, 6), { selectServingTeam: teamName });
     const pointButton = page.getByTestId('point-btn-managed-point').first();
     await pointButton.waitFor({ state: 'visible', timeout: 10_000 });
@@ -57,8 +50,8 @@ test.describe('Sync — data recorded offline reaches the server', () => {
 
     const page = await context.newPage();
     acceptBeforeUnload(page);
-    const { teamName, playerNames } = loadFixture();
-    const { matchId } = await createAndStartMatch(page, { teamName, playerNames });
+    const { teamId, teamName, playerNames } = readFixture();
+    const { matchId } = await createAndStartMatch(page, { teamId, teamName });
     await setupCourtPositions(page, playerNames.slice(0, 6), { selectServingTeam: teamName });
     const pointButton = page.getByTestId('point-btn-managed-point').first();
     await pointButton.waitFor({ state: 'visible', timeout: 10_000 });

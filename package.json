@@ -22,6 +22,7 @@
     "email:preview": "email dev --port 3001 --dir emails",
     "email:deploy": "tsx scripts/deploy-email-templates.ts",
     "test:e2e": "playwright test",
+    "test:e2e:quick": "playwright test --project=core --project=live",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "lint:report": "node scripts/lint-report.mjs",

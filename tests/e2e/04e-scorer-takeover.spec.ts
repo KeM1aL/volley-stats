@@ -8,18 +8,18 @@ import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
+import { readFixture } from '../helpers/fixture';
 import { setupCourtPositions } from '../helpers/court';
 import { acceptBeforeUnload, expectServerMatchesDevice, expectServerStaysAt, readLiveScore, waitForAllSaved } from '../helpers/sync';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 const AUTH_STATE_PATH = path.join(__dirname, '../../playwright/.auth/user.json');
 
 test('a second device takes over scoring, the first becomes read-only, then takes scoring back', async ({ page, browser }) => {
   test.setTimeout(6 * 60_000);
   acceptBeforeUnload(page);
-  const { teamName, playerNames } = JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
+  const { teamId, teamName, playerNames } = readFixture();
 
-  const { matchId } = await createAndStartMatch(page, { teamName, playerNames });
+  const { matchId } = await createAndStartMatch(page, { teamId, teamName });
   await setupCourtPositions(page, playerNames.slice(0, 6), { selectServingTeam: teamName });
   const pointA = page.getByTestId('point-btn-managed-point').first();
   await pointA.waitFor({ state: 'visible', timeout: 10_000 });

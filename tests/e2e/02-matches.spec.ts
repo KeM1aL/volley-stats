@@ -9,23 +9,9 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
+import { readFixture, updateFixture } from '../helpers/fixture';
 import { setupCourtPositions } from '../helpers/court';
 import { createAndStartMatch } from '../helpers/match-setup';
-
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
-
-// Load team data saved by 01-teams.spec.ts
-function loadFixture(): { teamName: string; playerNames: string[]; [key: string]: unknown } {
-  const raw = fs.readFileSync(FIXTURE_PATH, 'utf-8');
-  return JSON.parse(raw);
-}
-
-function saveFixture(data: Record<string, unknown>): void {
-  const existing = loadFixture();
-  fs.writeFileSync(FIXTURE_PATH, JSON.stringify({ ...existing, ...data }, null, 2));
-}
 
 // ─── Helper: play one full set ───────────────────────────────────────────────
 /**
@@ -179,15 +165,14 @@ async function playSetToCompletion(
 
 test.describe('Matches — full match flow', () => {
   test('create and play a full match to completion', async ({ page }) => {
-    const { teamName, playerNames } = loadFixture();
-    expect(teamName, 'Team fixture not found — run 01-teams.spec.ts first').toBeTruthy();
+    test.setTimeout(8 * 60_000);
+    const { teamId, teamName, playerNames, archivedPlayerName } = readFixture();
 
     // 3.1 – 3.5 Create match and navigate to live page
-    const { archivedPlayerName } = loadFixture() as { archivedPlayerName?: string };
-    await createAndStartMatch(page, {
+    const { matchId } = await createAndStartMatch(page, {
+      teamId,
       teamName,
-      playerNames,
-      absentPlayers: archivedPlayerName ? [archivedPlayerName] : [],
+      absentPlayers: [archivedPlayerName],
     });
 
     // 3.6 First set setup (with serving team selection)
@@ -217,9 +202,9 @@ test.describe('Matches — full match flow', () => {
     const statsBtn = page.getByRole('button', { name: 'Match Statistics' });
     await expect(statsBtn).toBeVisible({ timeout: 15_000 });
 
-    // Navigate to stats page and save the full URL (includes ?team= query param)
+    // Navigate to the stats page and record the match id
     await statsBtn.click();
     await page.waitForURL(/\/matches\/.+\/stats/, { timeout: 10_000 });
-    saveFixture({ completedMatchStatsUrl: page.url() });
+    updateFixture({ completedMatchId: matchId });
   });
 });

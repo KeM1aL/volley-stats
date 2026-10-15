@@ -1,7 +1,7 @@
 /**
  * Match Statistics E2E tests
  *
- * 7.1  Load completedMatchStatsUrl from fixture
+ * 7.1  Build the stats URL from completedMatchId in the fixture
  * 7.2  Navigate directly to the stats page (URL includes ?team= param)
  * 7.3  Verify page heading and basic structure
  * 7.4  Verify player stats are visible (via Players tab)
@@ -10,17 +10,15 @@
 
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
-import path from 'path';
+import { readFixture } from '../helpers/fixture';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
-
-function loadFixture(): {
-  completedMatchStatsUrl?: string;
-  playerNames?: string[];
-  [key: string]: unknown;
-} {
-  const raw = fs.readFileSync(FIXTURE_PATH, 'utf-8');
-  return JSON.parse(raw);
+/** The finished match written by the finished-match project (02-matches), with its stats URL (?team= included). */
+function loadFixture() {
+  const { completedMatchId, teamId, playerNames } = readFixture();
+  return {
+    completedMatchStatsUrl: completedMatchId ? `/matches/${completedMatchId}/stats?team=${teamId}` : undefined,
+    playerNames,
+  };
 }
 
 test.describe('Match Statistics', () => {

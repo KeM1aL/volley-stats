@@ -5,17 +5,12 @@
  * not wiped by each run).
  */
 import { test, type Page } from '@playwright/test';
-import fs from 'fs';
 import path from 'path';
+import { readFixture } from '../helpers/fixture';
 import { takeOverScoringIfAsked } from '../helpers/sync';
 
 const LABEL = process.env.SCREENSHOT_LABEL;
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 const OUT_DIR = path.join(__dirname, '../../playwright/screens', LABEL ?? 'unused');
-
-function loadFixture(): Record<string, string | undefined> {
-  return JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
-}
 
 async function shoot(page: Page, name: string) {
   await page.waitForLoadState('domcontentloaded');
@@ -30,14 +25,14 @@ test.describe('Screenshots', () => {
     test(`main screens (${theme})`, async ({ page }) => {
       test.setTimeout(3 * 60_000);
       await page.addInitScript((t) => window.localStorage.setItem('theme', t), theme);
-      const fixture = loadFixture();
+      const fixture = readFixture();
 
       const pages: [string, string | undefined][] = [
         ['home', '/'],
         ['teams', '/teams'],
         ['matches', '/matches'],
-        ['match-stats', fixture.completedMatchStatsUrl],
-        ['live-match', fixture.offlineMatchLiveUrl],
+        ['match-stats', fixture.completedMatchId ? `/matches/${fixture.completedMatchId}/stats?team=${fixture.teamId}` : undefined],
+        ['live-match', fixture.offlineMatchId ? `/matches/${fixture.offlineMatchId}/live?team=${fixture.teamId}` : undefined],
         ['championships', '/championships'],
         [
           'championship-detail',

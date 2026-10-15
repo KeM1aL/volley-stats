@@ -13,35 +13,22 @@
  */
 
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { setupCourtPositions } from '../helpers/court';
 import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
 import { acceptBeforeUnload, expectServerMatchesDevice, waitForAllSaved } from '../helpers/sync';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
-
-function loadFixture(): { teamName: string; playerNames: string[]; [key: string]: unknown } {
-  const raw = fs.readFileSync(FIXTURE_PATH, 'utf-8');
-  return JSON.parse(raw);
-}
-
-function saveFixture(data: Record<string, unknown>): void {
-  const existing = loadFixture();
-  fs.writeFileSync(FIXTURE_PATH, JSON.stringify({ ...existing, ...data }, null, 2));
-}
+import { readFixture, updateFixture } from '../helpers/fixture';
 
 test.describe('Live match — offline/reconnect', () => {
   test('record stats offline and verify persistence on reconnect', async ({ page }) => {
     test.setTimeout(8 * 60_000);
     acceptBeforeUnload(page);
 
-    const { teamName, playerNames } = loadFixture();
-    expect(teamName, 'Team fixture not found — run 01-teams.spec.ts first').toBeTruthy();
+    const { teamId, teamName, playerNames } = readFixture();
 
     // 5.1 Create match and navigate to live page
-    const { matchId } = await createAndStartMatch(page, { teamName, playerNames });
+    const { matchId } = await createAndStartMatch(page, { teamId, teamName });
 
     // 5.2 First set setup
     await setupCourtPositions(page, playerNames.slice(0, 6), {
@@ -134,6 +121,6 @@ test.describe('Live match — offline/reconnect', () => {
     await expect(liveOrSetup).toBeVisible({ timeout: 20_000 });
 
     // 5.8 Save offlineMatchId to fixture
-    saveFixture({ offlineMatchId: matchId, offlineMatchLiveUrl: page.url() });
+    updateFixture({ offlineMatchId: matchId });
   });
 });

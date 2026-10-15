@@ -4,15 +4,12 @@
  * 2.1 Create a new team
  * 2.2 Edit the team name
  * 2.3 Add 8 players with role "Player" and volleyball positions
- * 2.4 Save team details to fixtures for use in the matches test
  *
  * All steps are combined in a single test to avoid Playwright's
  * per-test module re-evaluation which would produce different Date.now() values.
  */
 
 import { test, expect, Page } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
 
 // Position label map: PlayerRole enum value → display label in English UI
 const POSITION_LABELS: Record<string, string> = {
@@ -34,8 +31,6 @@ const PLAYERS = [
   { name: 'Player 7', number: 7, position: 'outside_hitter' },
   { name: 'Player 8', number: 8, position: 'setter' },
 ];
-
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 
 /**
  * Open the filter panel (if not already open) and type the team name in the
@@ -61,7 +56,7 @@ async function searchTeam(page: Page, teamName: string) {
 
 test.describe('Teams management', () => {
   // 2.1 → 2.4 in one test to share TEAM_NAME state
-  test('create team, rename it, add 8 players, save fixture', async ({ page }) => {
+  test('create team, rename it, add 8 players', async ({ page }) => {
     const TEAM_BASE_NAME = `E2E Team ${Date.now()}`;
     let TEAM_NAME = TEAM_BASE_NAME;
 
@@ -141,13 +136,5 @@ test.describe('Teams management', () => {
     for (const player of PLAYERS) {
       await expect(page.getByText(player.name).first()).toBeVisible();
     }
-
-    // ── 2.4 Save fixture for the matches test ────────────────────────────────
-    const fixture = {
-      teamName: TEAM_NAME,
-      playerNames: PLAYERS.map((p) => p.name),
-    };
-    fs.mkdirSync(path.dirname(FIXTURE_PATH), { recursive: true });
-    fs.writeFileSync(FIXTURE_PATH, JSON.stringify(fixture, null, 2), 'utf-8');
   });
 });

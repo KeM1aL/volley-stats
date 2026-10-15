@@ -8,6 +8,18 @@ config({ path: '.env.test.local', quiet: true });
 config({ path: '.env.local', quiet: true });
 config({ path: '.env', quiet: true });
 
+const chrome = {
+  ...devices['Desktop Chrome'],
+  storageState: 'playwright/.auth/user.json',
+  // Portrait tablet viewport — forces the portrait StatTracker layout and the desktop sidebar
+  viewport: { width: 768, height: 1024 },
+  headless: !!process.env.CI,
+};
+const TOOLS = ['**/04b-rxdb-capture.spec.ts', '**/04c-rxdb-legacy.spec.ts', '**/06z-screenshots.spec.ts'];
+const LIVE = ['**/04-live-offline.spec.ts', '**/04d-*.spec.ts', '**/04e-*.spec.ts', '**/04f-*.spec.ts', '**/04g-*.spec.ts', '**/04h-*.spec.ts'];
+const FINISHED = ['**/02-matches.spec.ts'];
+const STATS = ['**/06-match-stats.spec.ts', '**/06b-*.spec.ts'];
+
 export default defineConfig({
   testDir: './tests/e2e',
   // Deletes the teams, matches and championships the specs created (set E2E_KEEP_DATA=1 to keep them).
@@ -16,8 +28,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  // Increase global timeout: RxDB init ~20s + match play can take minutes
-  timeout: 5 * 60_000,
+  // Most tests finish in under 30 s; the full match and the two-device test set their own limit.
+  timeout: 90_000,
+  // Web-only specs are tagged @web and skipped for the static export.
+  grepInvert: process.env.E2E_TARGET === 'mobile' ? /@web/ : undefined,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
     baseURL: process.env.BASE_URL ?? 'http://localhost:3000',
@@ -29,19 +43,12 @@ export default defineConfig({
     headless: !!process.env.CI,
   },
   projects: [
-    {
-      name: 'setup',
-      testMatch: '**/auth.setup.ts',
-    },
-    {
-      name: 'tests',
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/user.json',
-        viewport: { width: 768, height: 1024 },
-        headless: !!process.env.CI,
-      },
-      dependencies: ['setup'],
-    },
+    { name: 'setup', testMatch: '**/auth.setup.ts' },
+    { name: 'seed', testMatch: '**/seed.setup.ts', dependencies: ['setup'] },
+    { name: 'core', use: chrome, dependencies: ['seed'], testIgnore: [...TOOLS, ...LIVE, ...FINISHED, ...STATS, '**/*.setup.ts'] },
+    { name: 'live', use: chrome, dependencies: ['seed'], testMatch: LIVE },
+    { name: 'finished-match', use: chrome, dependencies: ['seed'], testMatch: FINISHED },
+    { name: 'stats', use: chrome, dependencies: ['finished-match'], testMatch: STATS },
+    ...(process.env.E2E_TOOLS ? [{ name: 'tools', use: chrome, dependencies: ['finished-match'], testMatch: TOOLS }] : []),
   ],
 });

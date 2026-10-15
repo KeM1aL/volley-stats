@@ -3,22 +3,20 @@
  * roster change reaches the server. Archived players are never offered.
  */
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
+import { readFixture } from '../helpers/fixture';
 import { setupCourtPositions } from '../helpers/court';
 import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
 import { fetchServerMatch } from '../helpers/server-data';
 import { acceptBeforeUnload, waitForAllSaved } from '../helpers/sync';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 
 test('adds a late player to the roster offline', async ({ page }) => {
   test.setTimeout(6 * 60_000);
   acceptBeforeUnload(page);
-  const { teamName, playerNames, archivedPlayerName } = JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
+  const { teamId, teamName, playerNames, archivedPlayerName } = readFixture();
   const late = playerNames[7]; // not needed on court in set 1
-  const { matchId, selectedPlayers } = await createAndStartMatch(page, { teamName, playerNames, excludePlayers: [late] });
+  const { matchId, selectedPlayers } = await createAndStartMatch(page, { teamId, teamName, excludePlayers: [late] });
   await setupCourtPositions(page, playerNames.slice(0, 6), { selectServingTeam: teamName });
   await page.getByTestId('point-btn-managed-point').first().waitFor({ state: 'visible', timeout: 10_000 });
   await waitForServiceWorker(page);
