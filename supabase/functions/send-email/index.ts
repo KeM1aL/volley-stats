@@ -6,6 +6,7 @@ import { MagicLinkEmail } from './_templates/magic-link.tsx'
 import { NotificationEmail } from './_templates/notification.tsx'
 import { RecoveryEmail } from './_templates/recovery.tsx'
 import { SignUpEmail } from './_templates/sign-up.tsx'
+import { buildConfirmUrl } from './_confirm-url.ts'
 import { getLocale, getTranslations } from './_i18n.ts'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
@@ -51,6 +52,8 @@ Deno.serve(async (req) => {
     const t = getTranslations(locale)
     const supabase_url = Deno.env.get('SUPABASE_URL') ?? ''
     const resolved_site_url = site_url || supabase_url
+    // Notification emails carry no link, so they must not fail on a missing site URL
+    const confirm_url = NOTIFICATION_ACTION_TYPES.includes(email_action_type) ? '' : buildConfirmUrl({ siteUrl: resolved_site_url, redirectTo: redirect_to, tokenHash: token_hash, type: email_action_type })
 
     console.log('[send-email] Verified payload:', {
       action: email_action_type,
@@ -77,11 +80,9 @@ Deno.serve(async (req) => {
         React.createElement(SignUpEmail, {
           username: user['user_metadata'].username,
           lang,
-          supabase_url,
           site_url: resolved_site_url,
+          confirm_url,
           token,
-          token_hash,
-          redirect_to: redirect_to + lang + '/auth',
           email_action_type,
         })
       )
@@ -90,11 +91,9 @@ Deno.serve(async (req) => {
       html = await renderAsync(
         React.createElement(RecoveryEmail, {
           lang,
-          supabase_url,
           site_url: resolved_site_url,
+          confirm_url,
           token,
-          token_hash,
-          redirect_to,
           email_action_type,
         })
       )
@@ -110,11 +109,9 @@ Deno.serve(async (req) => {
       html = await renderAsync(
         React.createElement(MagicLinkEmail, {
           lang,
-          supabase_url,
           site_url: resolved_site_url,
+          confirm_url,
           token,
-          token_hash,
-          redirect_to,
           email_action_type,
         })
       )

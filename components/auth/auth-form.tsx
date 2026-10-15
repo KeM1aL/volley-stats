@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@/contexts/auth-context";
 import { isSafeRedirectTarget, routes } from "@/lib/routes";
+import { platform } from "@/lib/platform";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranslations, useLocale } from "next-intl";
 import { syncLocaleFromProfile } from '@/lib/i18n/actions';
@@ -59,7 +60,7 @@ export function AuthForm() {
         const { error } = await supabase.auth.resetPasswordForEmail(
           values.email,
           {
-            redirectTo: `${window.location.origin}/auth/callback?type=recovery&next=/auth/reset-password`,
+            redirectTo: `${platform.webOrigin()}/auth/reset-password`,
           }
         );
 
@@ -99,6 +100,7 @@ export function AuthForm() {
           data: {
             lang: locale,
           },
+          emailRedirectTo: `${platform.webOrigin()}/`,
         }
       }
 
