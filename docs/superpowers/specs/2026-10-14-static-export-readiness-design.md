@@ -49,7 +49,7 @@ Also missing for the stores: in-app account deletion. There is no CI.
 | Splitting the targets | `.web.ts` file suffix + `pageExtensions` per target; `@platform-impl` alias per target (approach 1 of 3; rejected: a pre-build script moving files aside, runtime `if (isMobile)` checks) |
 | Routes | Query-param routes on both targets (`/matches/live?id=…`); web redirects old URLs. Dynamic segments can't be exported for ids created at runtime and offline |
 | Locale | One client-side path on both targets. Accepted cost: the web's first HTML is untranslated, crawlers see the landing page in English |
-| Account deletion | Delete the person (auth user, profile, memberships); keep team data (players, matches, stats). Blocked while the user is a club's sole owner |
+| Account deletion | Delete the person (auth user, profile, memberships). For each team they created, the user hands it over to a member with an account or deletes it (revised after the live audit, §5). No club block |
 | CI | GitHub Actions: lint (baseline), unit tests, both builds, `out/` check. E2E stays local, on both targets |
 | Existing tests | Revised first: API seeding, explicit Playwright project dependencies, a quick level, no silent "if visible" steps; sync unit tests without fixed sleeps (section 8) |
 
@@ -265,29 +265,50 @@ its own locale.
 
 ## 5. Account deletion
 
+Revised 2026-10-15 after the live audit (`docs/superpowers/notes/2026-10-15-user-fk-audit.md`):
+club memberships grant no rights in any policy and the app has no way to hand over a club, so
+there is no sole-club-owner block; and every write to a team's data is gated by
+`teams.user_id = auth.uid()` (the team's creator), so each team the leaving user created needs
+the user's decision.
+
+### What the user decides
+
+For every team they created (`teams.user_id = auth.uid()`, `_deleted = false`), the deletion
+dialog shows one searchable select (`components/ui/generic-select.tsx`, react-select) with:
+- **Delete the team**, and
+- one entry per **eligible member**: a `team_members` row of that team with a `user_id`
+  (linked account), `archived_at` null, `_deleted` false, and `user_id` ≠ the leaving user,
+  labelled with the member's name. Choosing one hands the team over to that person.
+
+If a team has no eligible member, the select offers only **Delete the team** and the dialog
+says no member of this team has an account to take it over. The confirm button stays disabled
+until every team has a choice and the typed email matches.
+
 ### Database (one migration)
 
-`public.delete_my_account()`: `security definer`, `set search_path = ''`, `execute` revoked from
-`public` and `anon`, granted to `authenticated`. In one transaction:
-1. If `auth.uid()` is the only `owner` in `club_members` of any club with `_deleted = false`,
-   raise `sole_club_owner` with the club names in the error detail; nothing is deleted.
-2. Otherwise `delete from auth.users where id = auth.uid()`; foreign keys do the rest.
+`public.delete_my_account(decisions jsonb)`: `security definer`, `set search_path = ''`,
+`execute` revoked from `public` and `anon`, granted to `authenticated`. `decisions` is a JSON
+array of `{ "team_id": uuid, "action": "delete" | "transfer", "new_owner": uuid | null }`. In
+one transaction:
+1. Every team created by `auth.uid()` (not deleted) has exactly one decision, and no decision
+   names another team; otherwise raise `invalid_decisions` (nothing changes).
+2. A `transfer` names an eligible member of that team (definition above); otherwise raise
+   `invalid_new_owner`.
+3. Apply: `transfer` sets `teams.user_id` to the new owner and that member's
+   `team_members.role` to `owner`; `delete` soft-deletes the team (`_deleted = true`) and its
+   `team_members` rows. The team's matches are kept: each also belongs to the opponent's history.
+4. `delete from auth.users where id = auth.uid()`; foreign keys do the rest.
 
-Foreign keys on user columns, set by the same migration:
+Foreign keys on user columns (from the audit), set by the same migration:
 
-| Column | On user delete |
-|---|---|
-| `profiles.id` | cascade |
-| `club_members.user_id` | cascade |
-| `team_members.user_id` | set null (the player row and stats stay) |
-| `matches.scorer_user_id` | set null (already) |
-| `clubs.user_id`, `teams.user_id`, `championships.user_id` (creators) | set null; drop `not null` where present |
-
-Plan task for the migration: read the live constraints and RLS policies first. Any policy that
-grants rights through a creator column (e.g. `clubs.user_id = auth.uid()`) is checked so that
-clubs keep working through `club_members` owners once the creator is nulled; the migration
-adjusts those policies if needed. Sync replication ignores `profiles` (not an RxDB collection);
-the other changes are server-side nulls and deletes that replicate as normal row updates.
+| Column | Today | On user delete |
+|---|---|---|
+| `profiles.id` | cascade | cascade (unchanged) |
+| `club_members.user_id` | cascade | cascade (unchanged) |
+| `matches.scorer_user_id` | set null | set null (unchanged) |
+| `team_members.user_id` | no action | set null (the leaver's own player row stays, unlinked) |
+| `teams.user_id` | no action | set null (reached only by the teams soft-deleted in step 3 and by teams already soft-deleted before; live teams were all handed over) |
+| `clubs.user_id`, `championships.user_id` | no action, not null | set null; drop `not null` |
 
 Why an RPC and not an `/api/v1/account` route: same call on both targets, no CORS, no
 service-role key in a caller-driven path.
@@ -296,13 +317,14 @@ service-role key in a caller-driven path.
 
 A "Delete account" card at the bottom of settings. The web page is also the deletion URL Google
 Play asks for.
-- Unsent live-match changes (`pending_changes` not empty): the button is disabled with a message
-  to wait for upload; those rows belong to the team.
-- Confirmation dialog: what is deleted (account, profile, memberships) and what stays (players,
-  matches, stats of the teams); the user types their email to confirm.
-- `sole_club_owner`: the dialog lists the clubs and asks to make another member owner or delete
-  the club first.
-- Success: sign out, remove the local RxDB database and the stored locale, go to `/`, toast.
+- Unsent live-match changes (`pending_changes` not empty, or the local database not open yet):
+  the button is disabled with a message to wait for upload.
+- Dialog: what is deleted (account, profile, memberships) and what stays (matches and stats);
+  one row per created team with its select; the user types their email to confirm.
+- Errors from the RPC (`invalid_decisions`, `invalid_new_owner`, any other) show a message in
+  the dialog; nothing is deleted.
+- Success: sign out, remove the local RxDB database and the stored locale, go to
+  `/auth?account-deleted=1`, which shows "Your account has been deleted."
 
 New strings in all five locales (`pnpm i18n:check` passes).
 

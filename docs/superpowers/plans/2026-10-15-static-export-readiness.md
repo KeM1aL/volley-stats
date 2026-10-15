@@ -2370,6 +2370,8 @@ git commit -m "docs: audit of user foreign keys and policies before account dele
 
 ### Task 12: Migration: user foreign keys and `delete_my_account()`
 
+> **Revised 2026-10-15:** after the live audit (Task 11) and the user's decision, account deletion asks the leaving user to hand over or delete each team they created (spec §5, revised). The SQL and steps below are superseded by that design; the controller's revised briefs carry the new migration and UI.
+
 **Files:**
 - Create: `supabase/migrations/20261015000000_account_deletion.sql`
 - Modify: `lib/supabase/database.types.ts` (Functions: `delete_my_account`)
@@ -2481,6 +2483,8 @@ git commit -m "feat(db): deleting a user keeps team data; delete_my_account() re
 ```
 
 ### Task 13: Account deletion in settings
+
+> **Revised 2026-10-15:** after the live audit (Task 11) and the user's decision, account deletion asks the leaving user to hand over or delete each team they created (spec §5, revised). The SQL and steps below are superseded by that design; the controller's revised briefs carry the new migration and UI.
 
 **Files:**
 - Create: `components/settings/delete-account-card.tsx`, `lib/auth/delete-account.ts`, `tests/unit/auth/delete-account.test.ts`, `tests/helpers/throwaway-user.ts`, `tests/e2e/13-account-deletion.spec.ts`
