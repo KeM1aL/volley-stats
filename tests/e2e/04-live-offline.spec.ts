@@ -75,7 +75,8 @@ async function reconnectAndExpectUploaded(page: Page, matchId: string): Promise<
 }
 
 test.describe('Live match — offline/reconnect', () => {
-  test('reloads offline, then records offline and uploads on reconnect', async ({ page }) => {
+  // Needs the service worker: the static export in a browser has none (the Capacitor app bundles its files).
+  test('reloads offline, then records offline and uploads on reconnect @web', async ({ page }) => {
     test.setTimeout(3 * 60_000);
     acceptBeforeUnload(page);
     const { matchId, playerNames } = await startMatchWithBaseline(page);
@@ -98,7 +99,8 @@ test.describe('Live match — offline/reconnect', () => {
     updateFixture({ offlineMatchId: matchId });
   });
 
-  test('records offline, reloads while still offline, then uploads on reconnect', async ({ page }) => {
+  // Needs the service worker: the static export in a browser has none (the Capacitor app bundles its files).
+  test('records offline, reloads while still offline, then uploads on reconnect @web', async ({ page }) => {
     test.setTimeout(3 * 60_000);
     acceptBeforeUnload(page);
     const { matchId, playerNames } = await startMatchWithBaseline(page);

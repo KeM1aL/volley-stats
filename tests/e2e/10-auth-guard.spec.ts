@@ -26,7 +26,8 @@ test.describe('signed out', () => {
 });
 
 test('the FFVB import refuses anonymous callers', async ({ playwright, baseURL }) => {
-  const anonymous = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
+  // The static export has no API: E2E_API_URL points at the web deployment that serves it.
+  const anonymous = await playwright.request.newContext({ baseURL: process.env.E2E_API_URL ?? baseURL, storageState: { cookies: [], origins: [] } });
   const response = await anonymous.post('/api/import/ffvb', { data: { seasonId: 'x', championshipId: 'x' }, maxRedirects: 0 });
   expect(response.status()).toBe(401);
   const bearer = await anonymous.post('/api/import/ffvb', {

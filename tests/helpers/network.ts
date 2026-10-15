@@ -46,6 +46,8 @@ export async function blockSupabase(page: Page): Promise<() => Promise<void>> {
  * served from its cache.
  */
 export async function waitForServiceWorker(page: Page): Promise<void> {
+  // The static export has no service worker when served by a plain static server (the Capacitor app bundles its files).
+  if (process.env.E2E_TARGET === 'mobile') return;
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });

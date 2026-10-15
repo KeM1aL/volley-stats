@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { renderMatchReport } from "@/components/report-pdf/render";
 import { checkReportAccess } from "@/lib/report/access";
 import { buildMatchReport } from "@/lib/report/build";
+import { preflight, withCors } from "@/lib/server/cors";
 import { getReportCaller } from "@/lib/server/report-caller";
 import { contentDisposition, isLocale, isUuid, REPORT_VERSION, reportEtag, reportFileName, resolveLocale } from "@/lib/report/http";
 import { loadMatchReportData, ReportNotFoundError } from "@/lib/report/load";
@@ -13,7 +14,7 @@ export const maxDuration = 30;
 const NO_STORE = { "Cache-Control": "private, no-store" };
 const failure = (status: number, error: string) => Response.json({ error }, { status, headers: NO_STORE });
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function handle(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: matchId } = await params;
   if (!isUuid(matchId)) return failure(404, "matchNotFound");
   const teamId = request.nextUrl.searchParams.get("team");
@@ -53,4 +54,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.error("Match report failed:", error);
     return failure(500, "reportFailed");
   }
+}
+
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  return withCors(request, await handle(request, context));
+}
+
+export function OPTIONS(request: NextRequest) {
+  return preflight(request);
 }

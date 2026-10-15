@@ -22,7 +22,6 @@ import { ChampionshipSelectWithQuickCreate } from "../championships/championship
 import { createClient } from "@/lib/supabase/client";
 import { ClubSelectWithQuickCreate } from "../clubs/club-select-with-quick-create";
 import { GenericSelect } from "../ui/generic-select";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 const supabase = createClient();
@@ -39,7 +38,6 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const teamApi = useTeamApi();
-  const router = useRouter();
   const isEditMode = !!team;
 
   const formSchema = useMemo(
@@ -88,7 +86,6 @@ export function TeamForm({ team, onSuccess, onClose }: TeamFormProps) {
           title: t('toast.updated'),
           description: t('toast.updatedDesc'),
         });
-        router.refresh();
         if (onSuccess) {
           onSuccess(team.id);
         }

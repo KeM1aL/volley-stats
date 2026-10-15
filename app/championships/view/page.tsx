@@ -33,6 +33,7 @@ import { ChampionshipTeamsList } from "@/components/championships/championship-t
 import { useTeamApi } from "@/hooks/use-team-api";
 import { notFound } from "next/navigation";
 import { useRouteId } from "@/hooks/use-route-id";
+import { platform } from "@/lib/platform";
 
 const lastSeptember = new Date();
 if (lastSeptember.getMonth() < 8) {
@@ -258,17 +259,19 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="flex-1 sm:flex-none text-xs sm:text-sm"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-1 sm:mr-2 ${isRefreshing ? "animate-spin" : ""}`}
-            />
-            {isRefreshing ? t("actions.refreshing") : t("actions.refresh")}
-          </Button>
+          {platform.target === "web" && (
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex-1 sm:flex-none text-xs sm:text-sm"
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-1 sm:mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              {isRefreshing ? t("actions.refreshing") : t("actions.refresh")}
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}

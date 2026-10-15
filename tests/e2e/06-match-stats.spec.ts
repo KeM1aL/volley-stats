@@ -93,7 +93,8 @@ test.describe('Match Statistics', () => {
     await expect(visitorPage.getByRole('button', { name: /export pdf/i })).toHaveCount(0);
     await visitor.close();
 
-    const anonymous = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
+    // The static export has no API: E2E_API_URL points at the web deployment that serves it.
+    const anonymous = await playwright.request.newContext({ baseURL: process.env.E2E_API_URL ?? baseURL, storageState: { cookies: [], origins: [] } });
     const path = `/api/v1/matches/${matchId}/report?team=${teamId}`;
     expect((await anonymous.get(path, { maxRedirects: 0 })).status()).toBe(401);
     expect((await anonymous.get(path, { maxRedirects: 0, headers: { Authorization: 'Bearer not-a-token' } })).status()).toBe(401);

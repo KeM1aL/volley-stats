@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Filter as FilterIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamTable } from "@/components/teams/team-table";
@@ -31,7 +30,6 @@ export default function TeamsPage() {
   const tc = useTranslations('common');
   const { user, reloadUser } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [newTeam, setNewTeam] = useState<boolean>(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
@@ -114,7 +112,6 @@ export default function TeamsPage() {
     try {
       await teamApi.deleteTeam(deletingTeam.id);
       toast({ title: t('toast.deleted'), description: t('toast.deletedDesc') });
-      router.refresh();
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("Failed to delete team:", error);

@@ -13,7 +13,8 @@ import { onPath } from '../helpers/routes';
 
 const headerLink = (page: Page, name: string) => page.getByRole('link', { name, exact: true }).first();
 
-test('asks before leaving a live match', async ({ page }) => {
+// Needs the service worker: the static export in a browser has none (the Capacitor app bundles its files).
+test('asks before leaving a live match @web', async ({ page }) => {
   test.setTimeout(2 * 60_000);
   acceptBeforeUnload(page);
   // Our dialog is the only prompt after Leave: the browser's own "changes may not be saved" must not follow.
