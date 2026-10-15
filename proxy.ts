@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
+import { updateSession } from '@/lib/server/session';
 import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n/config';
 
 export async function proxy(req: NextRequest) {

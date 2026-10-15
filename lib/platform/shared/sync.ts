@@ -1,5 +1,5 @@
 import { defer, distinctUntilChanged, filter, fromEvent, map, merge, startWith, type Observable } from "rxjs";
-import type { SyncPlatform } from "./types";
+import type { SyncPlatform } from "@/lib/rxdb/sync/platform/types";
 
 const DEVICE_ID_KEY = "volleystats:device-id";
 let memoryDeviceId: string | null = null;

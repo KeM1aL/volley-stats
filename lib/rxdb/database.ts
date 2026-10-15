@@ -7,7 +7,7 @@ import { wrappedValidateAjvStorage } from "rxdb/plugins/validate-ajv";
 import { setupCollections, type DatabaseCollections, type LocalDatabase } from "./collections";
 import type { PendingChanges } from "./sync/pending-changes";
 import { SyncManager } from "./sync/manager";
-import { createWebPlatform } from "./sync/platform/web";
+import { platform } from "@/lib/platform";
 import { supabase } from "@/lib/supabase/client";
 import { readUnsentHint } from "./pending-hint";
 import { decideDatabaseReset } from "./reset-policy";
@@ -123,7 +123,7 @@ const createDatabase = async (): Promise<VolleyballDatabase> => {
   }).then(async (db) => {
     try {
       const pendingChanges = await setupCollections(db);
-      const syncManager = new SyncManager({ db, client: supabase, platform: createWebPlatform(), pending: pendingChanges });
+      const syncManager = new SyncManager({ db, client: supabase, platform: platform.createSyncPlatform(), pending: pendingChanges });
       Object.assign(db, { syncManager, pendingChanges });
     } catch (error) {
       console.error("Error creating RxDB collections:", error);

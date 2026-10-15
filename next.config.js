@@ -18,7 +18,10 @@ const nextConfig = {
     ? ['web.tsx', 'web.ts', 'tsx', 'ts', 'jsx', 'js']
     : // No 'ts': proxy.ts and the *.web.ts route handlers are server-only. Every page/layout is .tsx; a future .ts convention file (e.g. app/robots.ts) would be left out of the export.
       ['tsx', 'jsx'],
-  turbopack: { root: __dirname },
+  turbopack: {
+    root: __dirname,
+    resolveAlias: { '@platform-impl': isWeb ? './lib/platform/web/index.ts' : './lib/platform/mobile/index.ts' },
+  },
   env: { NEXT_PUBLIC_BUILD_TARGET: target },
   ...(isWeb
     ? {

@@ -1,7 +1,8 @@
 'use server';
 
+// eslint-disable-next-line no-restricted-imports -- removed by the client locale (Task 9)
 import { cookies } from 'next/headers';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/server/supabase';
 import { Locale, SUPPORTED_LOCALES, DEFAULT_LOCALE } from './config';
 
 export async function updateLocale(locale: Locale) {

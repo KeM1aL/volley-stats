@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
+// eslint-disable-next-line no-restricted-imports -- removed by the client locale (Task 9)
 import { getLocale, getMessages } from 'next-intl/server';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LocalDatabaseProvider } from '@/components/providers/local-database-provider';

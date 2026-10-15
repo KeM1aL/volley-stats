@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports -- removed by the client locale (Task 9)
 import { getRequestConfig } from 'next-intl/server';
 import { getUserLocale } from '@/lib/i18n/locale';
 

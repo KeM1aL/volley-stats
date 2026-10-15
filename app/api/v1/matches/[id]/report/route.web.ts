@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { renderMatchReport } from "@/components/report-pdf/render";
 import { checkReportAccess } from "@/lib/report/access";
 import { buildMatchReport } from "@/lib/report/build";
-import { getReportCaller } from "@/lib/report/caller";
+import { getReportCaller } from "@/lib/server/report-caller";
 import { contentDisposition, isLocale, isUuid, REPORT_VERSION, reportEtag, reportFileName, resolveLocale } from "@/lib/report/http";
 import { loadMatchReportData, ReportNotFoundError } from "@/lib/report/load";
 import { rows } from "@/lib/report/query";

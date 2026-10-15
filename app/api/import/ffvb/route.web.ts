@@ -1,6 +1,6 @@
 import { createApi } from "@/lib/api";
 import { importFfvbMatches } from "@/lib/importers/ffvb";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server/supabase";
 import { create } from "lodash";
 import { getTranslations } from "next-intl/server";
 

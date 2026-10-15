@@ -28,7 +28,9 @@ import { MatchOverview } from "@/components/matches/stats/match-overview";
 import { useAuth } from "@/contexts/auth-context";
 import { useSyncStatus } from "@/hooks/use-sync-status";
 import { canExportForTeam } from "@/lib/report/can-export";
-import { fileNameFromDisposition, saveBlob } from "@/lib/report/download";
+import { apiFetch } from "@/lib/api-client";
+import { platform } from "@/lib/platform";
+import { fileNameFromDisposition } from "@/lib/report/download";
 
 class ReportRequestError extends Error {
   constructor(readonly status: number) {
@@ -258,10 +260,10 @@ export default function MatchStatsPage() {
     if (!managedTeam || isExporting) return;
     setIsExporting(true);
     try {
-      const response = await fetch(`/api/v1/matches/${matchId}/report?team=${encodeURIComponent(managedTeam.id)}&locale=${locale}`);
+      const response = await apiFetch(`/api/v1/matches/${matchId}/report?team=${encodeURIComponent(managedTeam.id)}&locale=${locale}`);
       if (!response.ok) throw new ReportRequestError(response.status);
       const fileName = fileNameFromDisposition(response.headers.get("content-disposition")) ?? `match-report-${matchId}.pdf`;
-      saveBlob(await response.blob(), fileName);
+      await platform.saveFile(await response.blob(), fileName);
       toast({ title: t("pdf.success"), description: t("pdf.successDesc") });
     } catch (error) {
       console.error("Error exporting the match report:", error);

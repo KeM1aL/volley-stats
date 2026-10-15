@@ -1,25 +1,24 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { Database } from './types'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+import { Database } from '@/lib/supabase/types'
 
 // Configuration error messages
 const CONFIG_ERROR_MESSAGES = {
   missingSupabaseVariablesServer: 'Missing Supabase environment variables for server',
 } as const;
 
-if (!supabaseUrl || !serviceKey) {
-  throw new Error(CONFIG_ERROR_MESSAGES.missingSupabaseVariablesServer)
-}
-
 export async function createClient() {
+  // Read on use: importing this module must not need the service-role key.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceKey) {
+    throw new Error(CONFIG_ERROR_MESSAGES.missingSupabaseVariablesServer)
+  }
   const cookieStore = await cookies()
 
   return createServerClient<Database>(
-    supabaseUrl!,
-    serviceKey!,
+    supabaseUrl,
+    serviceKey,
     {
       cookies: {
         getAll() {
