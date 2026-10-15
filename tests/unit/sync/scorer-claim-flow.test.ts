@@ -3,7 +3,7 @@ import type { FakeSupabaseServer } from "../fakes/fake-supabase";
 import { createFakeServer } from "../helpers/server";
 import { aSet, anEvent, seedServerMatch, seedTeams } from "../helpers/fixtures";
 import { TestDevice, expectServerEqualsDevice } from "../helpers/test-device";
-import { sleep, waitFor } from "../helpers/wait";
+import { holdsFor, sleep, waitFor } from "../helpers/wait";
 
 describe("scoring device claim", () => {
   let server: FakeSupabaseServer;
@@ -221,8 +221,7 @@ describe("scoring device claim", () => {
     expect(holderRequests()).toBe(0);
     a.online = true;
     await waitFor(async () => (await a.manager.tracked.entry(matchId))?.claim === "lost", { message: "A sees the takeover" });
-    await sleep(300);
-    expect(holderRequests()).toBe(1);
+    await holdsFor(() => holderRequests() === 1, 300, "the holder is asked once");
   });
 
   it("does not keep tracking a match whose claim the server refuses", async () => {
@@ -276,9 +275,7 @@ describe("scoring device claim", () => {
       message: "the point superseded behind its parent",
     });
     await waitFor(() => server.log.some((entry) => entry.table === "rpc:get_match_scorer"), { message: "holder fetched" });
-    await sleep(200);
-    expect((await a.manager.tracked.entry(matchId))?.claim).toBe("held");
-    expect(a.manager.isTracking(matchId)).toBe(true);
+    await holdsFor(async () => (await a.manager.tracked.entry(matchId))?.claim === "held" && a.manager.isTracking(matchId), 200, "the claim stays held and tracked");
   });
 
   it("keeps a lost claim lost when asked to score offline (taking back needs the server)", async () => {
