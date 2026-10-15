@@ -26,6 +26,13 @@ describe("routes", () => {
       expect(isSafeRedirectTarget(t)).toBe(false);
     }
   });
+  it("rejects backslash and control-character tricks browsers turn into //host", () => {
+    for (const t of ["/\\evil.com","/\t/evil.com", "/\tevil.com", "/\r/evil.com", "/\n/evil.com"]) {
+      expect(isSafeRedirectTarget(t)).toBe(false);
+    }
+    expect(isSafeRedirectTarget("/teams?x=%5C")).toBe(true);
+    expect(isSafeRedirectTarget("/%5Cevil.com")).toBe(true);
+  });
   it("parses route ids", () => {
     expect(parseRouteId(ID)).toBe(ID);
     expect(parseRouteId(ID.toUpperCase())).toBe(ID);

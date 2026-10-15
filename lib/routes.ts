@@ -37,6 +37,13 @@ const TECHNICAL_FILE = /\.(webmanifest|json|xml|ico|png|jpe?g|gif|svg|webp|css|j
 /** A redirectTo value that stays in the app and leads to a page worth returning to. */
 export function isSafeRedirectTarget(target: string | null | undefined): target is string {
   if (!target || !target.startsWith("/") || target.startsWith("//") || target.includes("://")) return false;
+  // Browsers read "/\evil.com" and "/<tab>/evil.com" as "//evil.com": no backslashes or control characters.
+  if (/[\\\u0000-\u001f\u007f]/.test(target)) return false;
+  try {
+    if (new URL(target, "http://x").origin !== "http://x") return false;
+  } catch {
+    return false;
+  }
   const path = normalizePath(target.split(/[?#]/)[0]);
   if (path === "/auth" || path.startsWith("/auth/") || path.startsWith("/api/") || path.startsWith("/_next/")) return false;
   return !TECHNICAL_FILE.test(path);

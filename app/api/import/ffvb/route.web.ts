@@ -1,5 +1,6 @@
 import { createApi } from "@/lib/api";
 import { importFfvbMatches } from "@/lib/importers/ffvb";
+import { getReportCaller } from "@/lib/server/report-caller";
 import { createClient } from "@/lib/server/supabase";
 import { create } from "lodash";
 import { getTranslations } from "next-intl/server";
@@ -7,6 +8,10 @@ import { getTranslations } from "next-intl/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
+  // The import runs with service-role rights below, so only a signed-in caller may start it.
+  if (!(await getReportCaller(request))) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   const { seasonId, championshipId } = await request.json();
   const t = await getTranslations("common");
 

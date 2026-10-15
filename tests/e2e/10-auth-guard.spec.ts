@@ -24,3 +24,16 @@ test.describe('signed out', () => {
     await expect(page).toHaveURL((url) => url.pathname === '/' && url.host.startsWith('localhost'));
   });
 });
+
+test('the FFVB import refuses anonymous callers', async ({ playwright, baseURL }) => {
+  const anonymous = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
+  const response = await anonymous.post('/api/import/ffvb', { data: { seasonId: 'x', championshipId: 'x' }, maxRedirects: 0 });
+  expect(response.status()).toBe(401);
+  const bearer = await anonymous.post('/api/import/ffvb', {
+    data: { seasonId: 'x', championshipId: 'x' },
+    maxRedirects: 0,
+    headers: { Authorization: 'Bearer not-a-token' },
+  });
+  expect(bearer.status()).toBe(401);
+  await anonymous.dispose();
+});
