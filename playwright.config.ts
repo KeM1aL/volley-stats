@@ -18,7 +18,7 @@ const chrome = {
 const TOOLS = ['**/04b-rxdb-capture.spec.ts', '**/04c-rxdb-legacy.spec.ts', '**/06z-screenshots.spec.ts'];
 const LIVE = ['**/04-live-offline.spec.ts', '**/04d-*.spec.ts', '**/04e-*.spec.ts', '**/04f-*.spec.ts', '**/04g-*.spec.ts', '**/04h-*.spec.ts'];
 const FINISHED = ['**/02-matches.spec.ts'];
-const STATS = ['**/06-match-stats.spec.ts', '**/06b-*.spec.ts'];
+const STATS = ['**/06-match-stats.spec.ts', '**/06b-*.spec.ts', '**/09-routes.spec.ts'];
 
 export default defineConfig({
   testDir: './tests/e2e',

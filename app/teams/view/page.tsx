@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState, useMemo, useCallback } from "react";
+import { notFound, useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ArrowLeft, Pencil, Trophy, Building2, Users, Calendar } from "lucide-react";
@@ -25,11 +25,13 @@ import {
 } from "@/components/ui/table";
 import { EditTeamDialog } from "@/components/teams/edit-team-dialog";
 import { useTranslations } from "next-intl";
+import { useRouteId } from "@/hooks/use-route-id";
+import { LoadingPage } from "@/components/loading-page";
+import { routes } from "@/lib/routes";
 
-export default function TeamDetailsPage() {
+function TeamDetailsPage({ id }: { id: string }) {
   const t = useTranslations('teams');
   const te = useTranslations("enums");
-  const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
   const [team, setTeam] = useState<Team | null>(null);
@@ -234,7 +236,7 @@ export default function TeamDetailsPage() {
                 <p className="text-sm text-muted-foreground">{t('details.championship')}</p>
                 {team.championships ? (
                   <Link
-                    href={`/championships/${team.championships.id}`}
+                    href={routes.championship(team.championships.id)}
                     className="text-primary hover:underline font-medium"
                   >
                     {team.championships.name}
@@ -406,5 +408,19 @@ export default function TeamDetailsPage() {
         onSuccess={handleTeamRefresh}
       />
     </div>
+  );
+}
+
+function TeamDetailsPageRoute() {
+  const id = useRouteId();
+  if (!id) notFound();
+  return <TeamDetailsPage id={id} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <TeamDetailsPageRoute />
+    </Suspense>
   );
 }

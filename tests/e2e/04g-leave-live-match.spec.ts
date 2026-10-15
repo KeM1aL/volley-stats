@@ -9,6 +9,7 @@ import { setupCourtPositions } from '../helpers/court';
 import { scorePoints } from '../helpers/live';
 import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
 import { acceptBeforeUnload, waitForAllSaved } from '../helpers/sync';
+import { onPath } from '../helpers/routes';
 
 const headerLink = (page: Page, name: string) => page.getByRole('link', { name, exact: true }).first();
 
@@ -42,9 +43,9 @@ test('asks before leaving a live match', async ({ page }) => {
   // Leave: the matches page; afterwards other screens navigate without asking
   await headerLink(page, 'Matches').click();
   await dialog.getByRole('button', { name: 'Leave' }).click();
-  await page.waitForURL(/\/matches$/, { timeout: 15_000 });
+  await page.waitForURL(onPath('/matches'), { timeout: 15_000 });
   await headerLink(page, 'Teams').click();
-  await page.waitForURL(/\/teams$/, { timeout: 15_000 });
+  await page.waitForURL(onPath('/teams'), { timeout: 15_000 });
   await expect(dialog).toBeHidden();
 
   // Offline with an unsent point (a score_points row and the set's score update): the dialog says so

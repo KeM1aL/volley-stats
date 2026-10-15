@@ -6,6 +6,17 @@ const withNextIntl = require('next-intl/plugin')('./i18n.ts');
 const target = process.env.BUILD_TARGET === 'mobile' ? 'mobile' : 'web';
 const isWeb = target === 'web';
 
+// Keep in sync with LEGACY_ROUTE_REDIRECTS in lib/routes.ts (tests/unit/routes/legacy-redirects.test.ts checks it).
+const UUID = ':id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})';
+const LEGACY_ROUTE_REDIRECTS = [
+  { source: `/matches/${UUID}/live`, destination: '/matches/live?id=:id' },
+  { source: `/matches/${UUID}/score`, destination: '/matches/score?id=:id' },
+  { source: `/matches/${UUID}/stats`, destination: '/matches/stats?id=:id' },
+  { source: `/teams/${UUID}/players`, destination: '/teams/players?id=:id' },
+  { source: `/teams/${UUID}`, destination: '/teams/view?id=:id' },
+  { source: `/championships/${UUID}`, destination: '/championships/view?id=:id' },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
@@ -28,6 +39,10 @@ const nextConfig = {
         // @react-pdf/renderer runs in the report route from node_modules, with its fonts traced in.
         serverExternalPackages: ['@react-pdf/renderer'],
         outputFileTracingIncludes: { '/api/v1/matches/[id]/report': ['./lib/report/fonts/**'] },
+        async redirects() {
+          // Next keeps the original query string (e.g. ?team=) on top of the destination's.
+          return LEGACY_ROUTE_REDIRECTS.map((r) => ({ ...r, permanent: true }));
+        },
       }
     : { output: 'export', trailingSlash: true }),
 };

@@ -6,6 +6,7 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
+import { onPath } from '../helpers/routes';
 
 /**
  * Types the team name in the filter panel's search box (opening the panel when it is closed) and waits
@@ -54,7 +55,7 @@ test.describe('Teams management', () => {
 
     // Players page: add Player 1, a setter
     await page.getByRole('row').filter({ hasText: renamed }).getByRole('button').nth(1).click();
-    await page.waitForURL(/\/teams\/.+\/players/, { timeout: 5_000 });
+    await page.waitForURL(onPath('/teams/players'), { timeout: 5_000 });
     await page.getByRole('button', { name: 'New Player' }).click();
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3_000 });
     await page.getByLabel('Name').fill('Player 1');

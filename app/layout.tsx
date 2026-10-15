@@ -1,4 +1,5 @@
 import './globals.css';
+import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
@@ -94,7 +95,7 @@ export default async function RootLayout({
                   <LocalDatabaseProvider>
                     <SyncStatusProvider>
                       <LeaveGuardProvider>
-                        <LoadingBar />
+                        <Suspense fallback={null}><LoadingBar /></Suspense>
                         <div className="keyboard-layout-grid bg-background">
                           <header>
                             <Navigation />

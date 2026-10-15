@@ -11,12 +11,14 @@
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import { readFixture } from '../helpers/fixture';
+import { routes } from '@/lib/routes';
+import { routeId } from '../helpers/routes';
 
 /** The finished match written by the finished-match project (02-matches), with its stats URL (?team= included). */
 function loadFixture() {
   const { completedMatchId, teamId, playerNames } = readFixture();
   return {
-    completedMatchStatsUrl: completedMatchId ? `/matches/${completedMatchId}/stats?team=${teamId}` : undefined,
+    completedMatchStatsUrl: completedMatchId ? routes.matchStats(completedMatchId, { team: teamId }) : undefined,
     playerNames,
   };
 }
@@ -80,7 +82,7 @@ test.describe('Match Statistics', () => {
     const { completedMatchStatsUrl } = loadFixture();
     expect(completedMatchStatsUrl).toBeTruthy();
     const statsUrl = new URL(completedMatchStatsUrl!, baseURL);
-    const matchId = statsUrl.pathname.split('/')[2];
+    const matchId = routeId(statsUrl.toString());
     const teamId = statsUrl.searchParams.get('team');
 
     // The stats page stays public, without the export button.

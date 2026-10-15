@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
 import { Championship, Season } from "@/lib/types";
@@ -32,6 +31,8 @@ import {
 import { ChampionshipTeamsSummary } from "@/components/championships/championship-teams-summary";
 import { ChampionshipTeamsList } from "@/components/championships/championship-teams-list";
 import { useTeamApi } from "@/hooks/use-team-api";
+import { notFound } from "next/navigation";
+import { useRouteId } from "@/hooks/use-route-id";
 
 const lastSeptember = new Date();
 if (lastSeptember.getMonth() < 8) {
@@ -40,11 +41,9 @@ if (lastSeptember.getMonth() < 8) {
 lastSeptember.setMonth(8);
 lastSeptember.setDate(1);
 
-export default function ChampionshipDetailPage() {
+function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
   const t = useTranslations("championships");
   const tc = useTranslations("common");
-  const params = useParams();
-  const championshipId = params.id as string;
   const championshipApi = useChampionshipApi();
   const matchApi = useMatchApi();
   const { toast } = useToast();
@@ -355,5 +354,19 @@ export default function ChampionshipDetailPage() {
         onClose={() => setSelectedMatch(null)}
       />
     </div>
+  );
+}
+
+function ChampionshipDetailPageRoute() {
+  const id = useRouteId();
+  if (!id) notFound();
+  return <ChampionshipDetailPage id={id} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <ChampionshipDetailPageRoute />
+    </Suspense>
   );
 }

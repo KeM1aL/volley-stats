@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Team, TeamStatus } from "@/lib/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslations } from "next-intl";
+import { routes } from "@/lib/routes";
 
 // Helper function to get badge variant based on team status
 function getTeamStatusVariant(status: TeamStatus): "default" | "secondary" | "outline" {
@@ -96,7 +97,7 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(`/teams/${team.id}`)}
+                onClick={() => router.push(routes.team(team.id))}
               >
                 <Eye className="h-4 w-4 mr-1" />
                 <span className="text-xs">{t('table.view')}</span>
@@ -106,7 +107,7 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => router.push(`/teams/${team.id}/players`)}
+                    onClick={() => router.push(routes.teamPlayers(team.id))}
                   >
                     <Users className="h-4 w-4 mr-1" />
                     <span className="text-xs">{t('table.players')}</span>
@@ -161,7 +162,7 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => router.push(`/teams/${team.id}`)}
+                        onClick={() => router.push(routes.team(team.id))}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -170,7 +171,7 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/teams/${team.id}/players`)}
+                          onClick={() => router.push(routes.teamPlayers(team.id))}
                         >
                           <Users className="h-4 w-4" />
                         </Button>

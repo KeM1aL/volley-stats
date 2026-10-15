@@ -6,6 +6,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import { readFixture } from '../helpers/fixture';
+import { routes } from '@/lib/routes';
 
 const OUT = path.join(__dirname, '../../playwright/.auth/rxdb-legacy-state.json');
 
@@ -16,7 +17,7 @@ test('capture legacy RxDB IndexedDB state', async ({ page }) => {
   const { offlineMatchId, teamId } = readFixture();
   expect(offlineMatchId, 'run 04-live-offline.spec.ts first').toBeTruthy();
 
-  await page.goto(`/matches/${offlineMatchId}/live?team=${teamId}`);
+  await page.goto(routes.matchLive(offlineMatchId!, { team: teamId }));
   await expect(
     page.getByTestId('point-btn-managed-point').first()
       .or(page.getByTestId('set-setup').first())

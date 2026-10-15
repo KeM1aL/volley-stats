@@ -5,10 +5,10 @@ import { LoadingPage } from "@/components/loading-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useTranslations } from "next-intl";
 
-export default function AuthPage() {
+function AuthPage() {
   const { user } = useAuth();
   const t = useTranslations('auth');
   const router = useRouter();
@@ -35,5 +35,13 @@ export default function AuthPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <AuthPage />
+    </Suspense>
   );
 }

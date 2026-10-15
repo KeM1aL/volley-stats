@@ -7,6 +7,7 @@
 
 import { test, expect, Page } from '@playwright/test';
 import { readFixture } from '../helpers/fixture';
+import { onPath } from '../helpers/routes';
 
 /** Opens the filter panel (if needed), searches for teamName and waits for its row in the desktop table. */
 async function searchTeam(page: Page, teamName: string) {
@@ -34,8 +35,8 @@ test.describe('Team detail', () => {
     // Click the Eye (View) button — index 0 in the Actions column
     await teamRow.getByRole('button').nth(0).click();
 
-    // Should navigate to /teams/<uuid> (NOT /players)
-    await page.waitForURL(/\/teams\/[a-f0-9-]+$/, { timeout: 5_000 });
+    // Should navigate to /teams/view?id=<uuid> (NOT /teams/players)
+    await page.waitForURL(onPath('/teams/view'), { timeout: 5_000 });
 
     // Team name appears in the page heading
     await expect(page.getByRole('heading', { name: teamName })).toBeVisible({ timeout: 5_000 });

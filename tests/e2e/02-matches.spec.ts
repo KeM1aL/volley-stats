@@ -14,6 +14,7 @@ import { readFixture, updateFixture } from '../helpers/fixture';
 import { setupCourtPositions } from '../helpers/court';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { scorePoints } from '../helpers/live';
+import { onPath } from '../helpers/routes';
 
 // ─── Helper: the "New Match" dialog ──────────────────────────────────────────
 
@@ -188,7 +189,7 @@ test.describe('Matches — full match flow', () => {
 
     // Navigate to the stats page and record the match id
     await statsBtn.click();
-    await page.waitForURL(/\/matches\/.+\/stats/, { timeout: 10_000 });
+    await page.waitForURL(onPath('/matches/stats'), { timeout: 10_000 });
     updateFixture({ completedMatchId: matchId });
   });
 });

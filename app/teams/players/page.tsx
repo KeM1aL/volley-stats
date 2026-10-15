@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { notFound, useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlayerTable } from "@/components/players/player-table";
@@ -11,10 +11,11 @@ import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamMember, Team } from "@/lib/types";
 import { useTranslations } from "next-intl";
+import { useRouteId } from "@/hooks/use-route-id";
+import { LoadingPage } from "@/components/loading-page";
 
-export default function PlayersPage() {
+function PlayersPage({ id }: { id: string }) {
   const t = useTranslations('teams');
-  const params = useParams();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [players, setPlayers] = useState<TeamMember[]>([]);
@@ -25,7 +26,7 @@ export default function PlayersPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     const supabase = createClient();
-    const teamId = params.id as string;
+    const teamId = id;
 
     const [teamResponse, playersResponse] = await Promise.all([
       supabase.from("teams").select("*").eq("id", teamId).single(),
@@ -38,7 +39,7 @@ export default function PlayersPage() {
     setTeam(teamResponse.data);
     setPlayers(playersResponse.data);
     setIsLoading(false);
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
     loadData();
@@ -84,5 +85,19 @@ export default function PlayersPage() {
         onPlayerCreated={() => loadData()}
       />
     </div>
+  );
+}
+
+function PlayersPageRoute() {
+  const id = useRouteId();
+  if (!id) notFound();
+  return <PlayersPage id={id} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <PlayersPageRoute />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { notFound, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,10 +28,11 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { supabase } from "@/lib/supabase/client";
 import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { useRouteId } from "@/hooks/use-route-id";
+import { LoadingPage } from "@/components/loading-page";
 
-export default function LiveScorePage() {
+function LiveScorePage({ matchId }: { matchId: string }) {
   const t = useTranslations("matches");
-  const { id: matchId } = useParams();
   const { isOnline, wasOffline } = useOnlineStatus();
   const searchParams = useSearchParams();
   const { localDb: db } = useLocalDb();
@@ -209,5 +210,19 @@ export default function LiveScorePage() {
         />
       </div>
     </div>
+  );
+}
+
+function LiveScorePageRoute() {
+  const matchId = useRouteId();
+  if (!matchId) notFound();
+  return <LiveScorePage matchId={matchId} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <LiveScorePageRoute />
+    </Suspense>
   );
 }

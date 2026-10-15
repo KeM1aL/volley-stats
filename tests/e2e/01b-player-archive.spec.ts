@@ -6,13 +6,14 @@
 import { test, expect } from '@playwright/test';
 import { readFixture } from '../helpers/fixture';
 import { createScratchTeam } from '../helpers/seed';
+import { routes } from '@/lib/routes';
 
 const PLAYER = 'Player 10';
 
 test('archive and restore a player', async ({ page }, testInfo) => {
   const { runId } = readFixture();
   const teamId = await createScratchTeam(`E2E Team archive ${runId} ${testInfo.retry}`);
-  await page.goto(`/teams/${teamId}/players`);
+  await page.goto(routes.teamPlayers(teamId));
 
   // A second player
   await page.getByRole('button', { name: 'New Player' }).click();
@@ -53,7 +54,7 @@ test('archive and restore a player', async ({ page }, testInfo) => {
   await page.getByRole('alertdialog').getByRole('button', { name: 'Archive' }).click();
   await expect(activeRow).toHaveCount(0);
   const activeCount = await page.getByTestId('player-row').count();
-  await page.goto(`/teams/${teamId}`);
+  await page.goto(routes.team(teamId));
   await expect(page.getByText(`Team Members (${activeCount})`)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('cell', { name: PLAYER, exact: true })).toHaveCount(0);
 });

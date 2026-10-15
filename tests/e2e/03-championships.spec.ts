@@ -10,6 +10,7 @@
 
 import { test, expect } from '@playwright/test';
 import { updateFixture } from '../helpers/fixture';
+import { onPath, routeId } from '../helpers/routes';
 
 test.describe('Championships — CRUD', () => {
   test('create championship, view detail, save fixture', async ({ page }) => {
@@ -82,12 +83,10 @@ test.describe('Championships — CRUD', () => {
       .getByRole('link', { name: 'View Details' })
       .click();
 
-    await page.waitForURL(/\/championships\/[a-f0-9-]+/, { timeout: 10_000 });
+    await page.waitForURL(onPath('/championships/view'), { timeout: 10_000 });
 
     // Extract championship ID from URL
-    const url = page.url();
-    const urlMatch = url.match(/\/championships\/([a-f0-9-]+)/);
-    const championshipId = urlMatch ? urlMatch[1] : '';
+    const championshipId = routeId(page.url());
     expect(championshipId, 'Could not extract championshipId from URL').toBeTruthy();
 
     // Verify detail page content

@@ -1,5 +1,6 @@
 import { expect, Page } from '@playwright/test';
 import { createMatchByApi } from './seed';
+import { onPath } from './routes';
 
 export interface CreateAndStartMatchOptions {
   teamId: string;
@@ -49,6 +50,6 @@ export async function createAndStartMatch(page: Page, options: CreateAndStartMat
   }
 
   await dialog.getByTestId('start-match-confirm').click();
-  await page.waitForURL((url) => url.searchParams.get('id') === matchId || url.pathname.includes(`/matches/${matchId}/live`), { timeout: 15_000 });
+  await page.waitForURL((url) => onPath('/matches/live')(url) && url.searchParams.get('id') === matchId, { timeout: 15_000 });
   return { matchId, selectedPlayers };
 }

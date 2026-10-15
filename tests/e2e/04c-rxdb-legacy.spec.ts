@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { readFixture } from '../helpers/fixture';
 import { takeOverScoringIfAsked } from '../helpers/sync';
+import { routes } from '@/lib/routes';
 
 const LEGACY_STATE = path.join(__dirname, '../../playwright/.auth/rxdb-legacy-state.json');
 const CURRENT_STATE = path.join(__dirname, '../../playwright/.auth/user.json');
@@ -40,7 +41,7 @@ test('live match opens on a device with RxDB v16 data', async ({ browser }) => {
 
   // Full URL incl. ?team=: the live page redirects to /matches without it.
   const { offlineMatchId, teamId } = readFixture();
-  await page.goto(`/matches/${offlineMatchId}/live?team=${teamId}`);
+  await page.goto(routes.matchLive(offlineMatchId!, { team: teamId }));
   await takeOverScoringIfAsked(page);
   await expect(
     page.getByTestId('point-btn-managed-point').first()

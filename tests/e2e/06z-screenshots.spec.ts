@@ -8,6 +8,7 @@ import { test, type Page } from '@playwright/test';
 import path from 'path';
 import { readFixture } from '../helpers/fixture';
 import { takeOverScoringIfAsked } from '../helpers/sync';
+import { routes } from '@/lib/routes';
 
 const LABEL = process.env.SCREENSHOT_LABEL;
 const OUT_DIR = path.join(__dirname, '../../playwright/screens', LABEL ?? 'unused');
@@ -31,12 +32,12 @@ test.describe('Screenshots', () => {
         ['home', '/'],
         ['teams', '/teams'],
         ['matches', '/matches'],
-        ['match-stats', fixture.completedMatchId ? `/matches/${fixture.completedMatchId}/stats?team=${fixture.teamId}` : undefined],
-        ['live-match', fixture.offlineMatchId ? `/matches/${fixture.offlineMatchId}/live?team=${fixture.teamId}` : undefined],
+        ['match-stats', fixture.completedMatchId ? routes.matchStats(fixture.completedMatchId, { team: fixture.teamId }) : undefined],
+        ['live-match', fixture.offlineMatchId ? routes.matchLive(fixture.offlineMatchId, { team: fixture.teamId }) : undefined],
         ['championships', '/championships'],
         [
           'championship-detail',
-          fixture.championshipId ? `/championships/${fixture.championshipId}` : undefined,
+          fixture.championshipId ? routes.championship(fixture.championshipId) : undefined,
         ],
         ['settings', '/settings'],
       ];

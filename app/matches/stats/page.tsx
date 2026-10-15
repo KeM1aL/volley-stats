@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { notFound, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,9 @@ import { canExportForTeam } from "@/lib/report/can-export";
 import { apiFetch } from "@/lib/api-client";
 import { platform } from "@/lib/platform";
 import { fileNameFromDisposition } from "@/lib/report/download";
+import { useRouteId } from "@/hooks/use-route-id";
+import { routes } from "@/lib/routes";
+import { LoadingPage } from "@/components/loading-page";
 
 class ReportRequestError extends Error {
   constructor(readonly status: number) {
@@ -38,9 +41,8 @@ class ReportRequestError extends Error {
   }
 }
 
-export default function MatchStatsPage() {
+function MatchStatsPage({ matchId }: { matchId: string }) {
   const t = useTranslations("matches");
-  const { id: matchId } = useParams();
   const { isOnline, wasOffline } = useOnlineStatus();
   const searchParams = useSearchParams();
   const { localDb: db } = useLocalDb();
@@ -283,7 +285,7 @@ export default function MatchStatsPage() {
       await navigator.share({
         title: t("stats.title"),
         text: "Check out the statistics from our latest match!",
-        url: window.location.href,
+        url: platform.webOrigin() + routes.matchStats(matchId, Object.fromEntries(searchParams)),
       });
     } catch (error) {
       console.error("Error sharing:", error);
@@ -421,5 +423,19 @@ export default function MatchStatsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function MatchStatsPageRoute() {
+  const matchId = useRouteId();
+  if (!matchId) notFound();
+  return <MatchStatsPage matchId={matchId} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <MatchStatsPageRoute />
+    </Suspense>
   );
 }

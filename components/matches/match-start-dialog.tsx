@@ -24,6 +24,7 @@ import { useTeamApi } from "@/hooks/use-team-api";
 import { useTeamMembersApi } from "@/hooks/use-team-members-api";
 import { useMatchApi } from "@/hooks/use-match-api";
 import { Filter } from "@/lib/api/types";
+import { routes } from "@/lib/routes";
 
 type MatchStartDialogProps = {
   match: Match;
@@ -110,7 +111,7 @@ export default function MatchStartDialog({ match }: MatchStartDialogProps) {
       const params = new URLSearchParams();
       params.set("team", managedTeam!.id);
 
-      router.push(`/matches/${match.id}/live?${params.toString()}`);
+      router.push(routes.matchLive(match.id, Object.fromEntries(params)));
     } catch (error) {
       console.error("Failed to start match:", error);
       toast({

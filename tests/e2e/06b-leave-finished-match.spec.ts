@@ -4,6 +4,8 @@
  */
 import { test, expect } from '@playwright/test';
 import { readFixture } from '../helpers/fixture';
+import { routes } from '@/lib/routes';
+import { onPath } from '../helpers/routes';
 
 test('leaves a finished match without asking', async ({ page }) => {
   const { completedMatchId, teamId } = readFixture();
@@ -13,10 +15,10 @@ test('leaves a finished match without asking', async ({ page }) => {
   // When that first pull is slow or fails, the page leaves for /matches with a load-failure toast; that is
   // not what is under test, so open the match again (tracked by then) until the summary shows.
   await expect(async () => {
-    await page.goto(`/matches/${completedMatchId}/live?team=${teamId}`);
+    await page.goto(routes.matchLive(completedMatchId!, { team: teamId }));
     await expect(statsButton).toBeVisible({ timeout: 15_000 });
   }).toPass({ timeout: 60_000 });
   await page.getByRole('link', { name: 'Teams', exact: true }).first().click();
-  await page.waitForURL(/\/teams$/, { timeout: 15_000 });
+  await page.waitForURL(onPath('/teams'), { timeout: 15_000 });
   await expect(page.getByTestId('leave-live-dialog')).toBeHidden();
 });

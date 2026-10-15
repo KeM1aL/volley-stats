@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
@@ -60,6 +60,9 @@ import { LAST_LIVE_MATCH_KEY, useLeaveGuard } from "@/components/providers/leave
 import { isClaimForbidden, type ClaimResult, type ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
 import { claimBecameHeld, claimFollowUp, offlineConfirmFollowUp } from "@/lib/rxdb/sync/claim-flow";
 import type { ClaimState } from "@/lib/rxdb/sync/tracked-matches";
+import { useRouteId } from "@/hooks/use-route-id";
+import { routes } from "@/lib/routes";
+import { LoadingPage } from "@/components/loading-page";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
 
@@ -76,10 +79,9 @@ const initialMatchState: MatchState = {
   score: { home: 0, away: 0 },
 };
 
-export default function LiveMatchPage() {
+function LiveMatchPage({ matchId }: { matchId: string }) {
   const t = useTranslations("matches");
   const tSync = useTranslations("sync");
-  const { id: matchId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const { isOnline, wasOffline } = useOnlineStatus();
   const { localDb: db } = useLocalDb();
@@ -684,11 +686,7 @@ export default function LiveMatchPage() {
         title: t("live.matchFinished"),
         description: t("live.matchFinished"),
       });
-      // const searchParams = new URLSearchParams();
-      // searchParams.set("team", managedTeam!.id);
-      // router.push(
-      //   `/matches/${matchState.match!.id}/stats?${searchParams.toString()}`
-      // );
+      // router.push(routes.matchStats(matchState.match!.id, { team: managedTeam!.id }));
     } else {
       toast({
         title: t("live.matchFinished"),
@@ -791,11 +789,7 @@ export default function LiveMatchPage() {
                 <span className="inline-block">
                   <Button
                     onClick={() => {
-                      const params = new URLSearchParams();
-                      params.set("team", managedTeam!.id);
-                      router.push(
-                        `/matches/${matchState.match!.id}/stats?${params.toString()}`
-                      );
+                      router.push(routes.matchStats(matchState.match!.id, { team: managedTeam!.id }));
                     }}
                     disabled={!isOnline}
                   >
@@ -1123,5 +1117,19 @@ export default function LiveMatchPage() {
         />
       )}
     </div>
+  );
+}
+
+function LiveMatchPageRoute() {
+  const matchId = useRouteId();
+  if (!matchId) notFound();
+  return <LiveMatchPage matchId={matchId} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <LiveMatchPageRoute />
+    </Suspense>
   );
 }
