@@ -11,7 +11,7 @@ import { Page } from '@playwright/test';
 export async function goOffline(page: Page): Promise<void> {
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
-  await page.waitForTimeout(400); // let React re-render
+  await page.waitForFunction((online) => navigator.onLine === online, false);
 }
 
 /**
@@ -22,7 +22,7 @@ export async function goOffline(page: Page): Promise<void> {
 export async function goOnline(page: Page): Promise<void> {
   await page.context().setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await page.waitForTimeout(400); // let React re-render
+  await page.waitForFunction((online) => navigator.onLine === online, true);
 }
 
 /**

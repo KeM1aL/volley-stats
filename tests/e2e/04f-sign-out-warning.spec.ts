@@ -11,7 +11,7 @@ import { acceptBeforeUnload, waitForAllSaved } from '../helpers/sync';
 
 
 test('warns before signing out with unsent changes', async ({ page }) => {
-  test.setTimeout(5 * 60_000);
+  test.setTimeout(2 * 60_000);
   acceptBeforeUnload(page);
   const { teamId, teamName, playerNames } = readFixture();
   await createAndStartMatch(page, { teamId, teamName });

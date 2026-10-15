@@ -9,13 +9,14 @@ import fs from 'fs';
 import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { readFixture } from '../helpers/fixture';
+import { scorePoints } from '../helpers/live';
 import { setupCourtPositions } from '../helpers/court';
 import { acceptBeforeUnload, expectServerMatchesDevice, expectServerStaysAt, readLiveScore, waitForAllSaved } from '../helpers/sync';
 
 const AUTH_STATE_PATH = path.join(__dirname, '../../playwright/.auth/user.json');
 
 test('a second device takes over scoring, the first becomes read-only, then takes scoring back', async ({ page, browser }) => {
-  test.setTimeout(6 * 60_000);
+  test.setTimeout(3 * 60_000);
   acceptBeforeUnload(page);
   const { teamId, teamName, playerNames } = readFixture();
 
@@ -23,11 +24,8 @@ test('a second device takes over scoring, the first becomes read-only, then take
   await setupCourtPositions(page, playerNames.slice(0, 6), { selectServingTeam: teamName });
   const pointA = page.getByTestId('point-btn-managed-point').first();
   await pointA.waitFor({ state: 'visible', timeout: 10_000 });
-  await pointA.click();
-  await page.waitForTimeout(200);
-  await pointA.click();
-  // The badge may still say "saved" from before the click: wait for the page to show both points first.
-  await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', '2');
+  // scorePoints returns once the page shows both points; the badge may still say "saved" from before.
+  await scorePoints(page, 2);
   await waitForAllSaved(page);
   await expectServerMatchesDevice(page, matchId);
 

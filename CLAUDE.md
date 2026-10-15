@@ -48,9 +48,12 @@ pnpm dev              # Development server
 pnpm build           # Production build
 pnpm start           # Production server
 pnpm lint            # ESLint (flat config: eslint.config.mjs)
-pnpm test           # Unit tests (Vitest; sync layer)
-# E2E: pnpm build && pnpm start -p 3100, then
-CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e
+pnpm test             # Unit tests (Vitest)
+pnpm test:e2e:quick   # E2E core + live projects (~1.5 min), during a task
+pnpm test:e2e         # Full E2E, before merging
+# E2E needs a production server and no `next dev` running:
+# pnpm build && pnpm start -p 3100, then CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e[:quick]
+# One area: --project=core|live|finished-match|stats (dependencies run automatically)
 ```
 
 ### Key Directories

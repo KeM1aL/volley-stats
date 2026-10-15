@@ -9,6 +9,7 @@
 import { test, expect } from '@playwright/test';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { setupCourtPositions } from '../helpers/court';
+import { scorePoints } from '../helpers/live';
 import { goOffline, waitForServiceWorker } from '../helpers/network';
 import { acceptBeforeUnload, expectServerMatchesDevice, readLiveScore, waitForAllSaved } from '../helpers/sync';
 
@@ -27,11 +28,7 @@ test.describe('Sync — data recorded offline reaches the server', () => {
     await waitForServiceWorker(page);
 
     await goOffline(page);
-    for (let i = 0; i < 3; i++) {
-      await pointButton.click();
-      await page.waitForTimeout(200);
-    }
-    await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', '3');
+    await scorePoints(page, 3);
     const score = await readLiveScore(page);
     await page.close(); // closing does not run beforeunload
 
@@ -55,11 +52,7 @@ test.describe('Sync — data recorded offline reaches the server', () => {
     await setupCourtPositions(page, playerNames.slice(0, 6), { selectServingTeam: teamName });
     const pointButton = page.getByTestId('point-btn-managed-point').first();
     await pointButton.waitFor({ state: 'visible', timeout: 10_000 });
-    for (let i = 0; i < 3; i++) {
-      await pointButton.click();
-      await page.waitForTimeout(200);
-    }
-    await expect(page.getByTestId('live-score')).toHaveAttribute('data-home', '3');
+    await scorePoints(page, 3);
     const score = await readLiveScore(page);
     await waitForAllSaved(page);
     await expectServerMatchesDevice(score, matchId);

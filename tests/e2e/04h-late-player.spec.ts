@@ -12,7 +12,7 @@ import { acceptBeforeUnload, waitForAllSaved } from '../helpers/sync';
 
 
 test('adds a late player to the roster offline', async ({ page }) => {
-  test.setTimeout(6 * 60_000);
+  test.setTimeout(2 * 60_000);
   acceptBeforeUnload(page);
   const { teamId, teamName, playerNames, archivedPlayerName } = readFixture();
   const late = playerNames[7]; // not needed on court in set 1

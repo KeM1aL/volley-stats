@@ -16,7 +16,13 @@ test('dialog stays on screen when the virtual keyboard is visible', async ({ pag
     document.documentElement.style.setProperty('--keyboard-height', '300px');
     document.body.classList.add('keyboard-visible');
   });
-  await page.waitForTimeout(400); // let the transition settle
+  // Let the transition settle: poll for the final position (nudged up, centre above the viewport centre).
+  await expect
+    .poll(async () => {
+      const b = await dialog.boundingBox();
+      return b ? b.y + b.height / 2 < page.viewportSize()!.height / 2 : false;
+    })
+    .toBe(true);
 
   const box = await dialog.boundingBox();
   const viewport = page.viewportSize()!;

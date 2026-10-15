@@ -6,13 +6,14 @@ import { test, expect, type Page } from '@playwright/test';
 import { createAndStartMatch } from '../helpers/match-setup';
 import { readFixture } from '../helpers/fixture';
 import { setupCourtPositions } from '../helpers/court';
+import { scorePoints } from '../helpers/live';
 import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
-import { acceptBeforeUnload, readLiveScore, waitForAllSaved } from '../helpers/sync';
+import { acceptBeforeUnload, waitForAllSaved } from '../helpers/sync';
 
 const headerLink = (page: Page, name: string) => page.getByRole('link', { name, exact: true }).first();
 
 test('asks before leaving a live match', async ({ page }) => {
-  test.setTimeout(6 * 60_000);
+  test.setTimeout(2 * 60_000);
   acceptBeforeUnload(page);
   // Our dialog is the only prompt after Leave: the browser's own "changes may not be saved" must not follow.
   // Counts the dialogs Playwright sees, and the page's beforeunload handlers asking for one (Chrome doesn't
@@ -36,14 +37,7 @@ test('asks before leaving a live match', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Stay' }).click();
   await expect(dialog).toBeHidden();
   expect(page.url()).toBe(liveUrl);
-  const before = await readLiveScore(page);
-  await pointButton.click();
-  await expect
-    .poll(async () => {
-      const now = await readLiveScore(page);
-      return now.home + now.away;
-    })
-    .toBe(before.home + before.away + 1);
+  await scorePoints(page, 1);
 
   // Leave: the matches page; afterwards other screens navigate without asking
   await headerLink(page, 'Matches').click();

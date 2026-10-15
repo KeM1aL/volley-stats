@@ -27,7 +27,8 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: 1,
+  // Two workers by default (full suite 145 s -> 78 s, green 3 times); E2E_WORKERS=1 runs the specs one at a time.
+  workers: process.env.E2E_WORKERS ? Number(process.env.E2E_WORKERS) : 2,
   // Most tests finish in under 30 s; the full match and the two-device test set their own limit.
   timeout: 90_000,
   // Web-only specs are tagged @web and skipped for the static export.

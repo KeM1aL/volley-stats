@@ -33,16 +33,10 @@ test.describe('Championships — CRUD', () => {
     // Type: CreatableSelect — click to open, type to filter/create, then select or create
     await dialog.getByRole('combobox').nth(0).click();
     await page.keyboard.type('Regional');
-    // Wait for either an existing option or the "Create Regional" option
-    await page.waitForTimeout(300);
-    const regionalOption = page.getByRole('option', { name: /regional/i });
-    await regionalOption.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => null);
-    const optionVisible = await regionalOption.isVisible().catch(() => false);
-    if (optionVisible) {
-      await regionalOption.click();
-    } else {
-      await page.keyboard.press('Enter');
-    }
+    // The select always offers either the existing "Regional" or "Create Regional"
+    const regionalOption = page.getByRole('option', { name: /regional/i }).first();
+    await expect(regionalOption).toBeVisible();
+    await regionalOption.click();
 
     // Gender: shadcn Select (combobox index 1 within dialog)
     // Use exact:true — "Male" is a substring of "Female", causing strict-mode violations.
