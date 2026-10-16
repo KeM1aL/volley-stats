@@ -51,7 +51,7 @@ const api = createApi(supabase);   // browser client singleton
 export const getApi = () => api;
 ```
 
-Server code (e.g. `app/api/import/ffvb/route.ts`) calls `createApi()` with the server client from `lib/supabase/server.ts`.
+Server code (e.g. `app/api/import/ffvb/route.web.ts`) calls `createApi()` with the server client from `lib/server/supabase.ts`.
 
 ### Custom Hook Wrappers
 
@@ -123,7 +123,7 @@ All in [lib/commands/match-commands.ts](lib/commands/match-commands.ts); each ta
 ### Usage Pattern
 
 ```typescript
-// app/matches/[id]/live/page.tsx
+// app/matches/live/page.tsx
 const { localDb: db } = useLocalDb()
 const { history, canUndo, canRedo } = useCommandHistory()
 
@@ -146,7 +146,45 @@ setMatchState(state)
 
 ---
 
-## 3. State Management Strategy
+## 3. Routes, API calls and language
+
+### Routes: `routes.*`, `useRouteId()` and `<Suspense>`
+
+Ids travel as a query parameter (`/matches/live?id=<uuid>`) so the static export has one HTML file per page. Never build an in-app URL by hand: use [lib/routes.ts](../../lib/routes.ts).
+
+```typescript
+import { routes } from '@/lib/routes'
+router.push(routes.matchLive(matchId))                     // /matches/live?id=<matchId>
+<GuardedLink href={routes.team(teamId)}>...</GuardedLink>  // /teams/view?id=<teamId>
+```
+
+A page reads its id with `useRouteId()` ([hooks/use-route-id.ts](../../hooks/use-route-id.ts); `null` when missing or not a UUID). It uses `useSearchParams`, so the component must render under a `<Suspense>` boundary (the export fails to prerender otherwise):
+
+```typescript
+// app/teams/view/page.tsx
+export default function TeamPage() {
+  return <Suspense fallback={<LoadingPage />}><TeamView /></Suspense>
+}
+function TeamView() {
+  const teamId = useRouteId()
+  if (!teamId) return notFound()
+  // ...
+}
+```
+
+Do not add `generateStaticParams` or dynamic segments. `isPublicPath` and `isSafeRedirectTarget` (same file) decide which pages a signed-out visitor may open and which `redirectTo` values are accepted. Header links use `GuardedLink`, which does not prefetch: a prefetched static screen would open offline with no data, whereas an unprefetched navigation fails offline and ends on the service worker's offline page.
+
+### `apiFetch`
+
+The server routes under `/api/v1` and `/api/import` are called with `apiFetch(path, init)` ([lib/api-client.ts](../../lib/api-client.ts)): it adds the Supabase access token as a Bearer header and prefixes `platform.apiOrigin` (empty on web, `NEXT_PUBLIC_API_ORIGIN` on mobile). Never `fetch('/api/...')` directly: it only works on web. On the server, [lib/server/report-caller.ts](../../lib/server/report-caller.ts) accepts the Bearer token or the cookie session.
+
+### `useAppLocale()`
+
+`const { locale, setLocale } = useAppLocale()` ([hooks/use-app-locale.ts](../../hooks/use-app-locale.ts)) reads and changes the UI language: `setLocale` switches the language on this device at once and, when signed in, saves it to the profile. There are no server actions and no locale cookie. How the language is chosen: [07-features.md](07-features.md#language).
+
+---
+
+## 4. State Management Strategy
 
 **Multi-layered Approach**:
 

@@ -1,6 +1,7 @@
 # Static-Export Readiness — Design
 
 **Date:** 2026-10-14
+**Status:** Implemented on feature/static-export (plan 2026-10-15-static-export-readiness.md)
 **Branch:** `feature/static-export` (from `main` @ 9af2ad4)
 **Parent:** [Mobile app decision record](2026-10-09-mobile-app-decision.md), sub-project 1 of 3
 

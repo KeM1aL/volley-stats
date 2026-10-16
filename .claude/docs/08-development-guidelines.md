@@ -99,9 +99,9 @@ const matchApi = useMatchApi()
 import { getApi } from '@/lib/api'
 const api = getApi()
 
-// In route handlers (server): build an API on the server client
+// In route handlers (server, *.web.ts files only): build an API on the server client
 import { createApi } from '@/lib/api'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/server/supabase'
 const api = createApi(await createClient())
 ```
 

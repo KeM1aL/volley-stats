@@ -9,5 +9,6 @@
 - **Offline Storage (live match)**: RxDB 17 with Dexie (IndexedDB)
 - **UI Framework**: Tailwind CSS 4 (CSS-first config in app/globals.css) + Shadcn/ui + Radix UI
 - **Internationalization**: next-intl, with translations in `messages/`
-- **PWA Support**: Serwist (`app/sw.ts`, served by `app/serwist/[path]/route.ts`)
+- **PWA Support**: Serwist (`app/sw.ts`, served by `app/serwist/[path]/route.web.ts`; web target only)
+- **Build targets**: `web` (Vercel) and `mobile` (static export in `out/` for the Capacitor app); see [02-architecture.md](02-architecture.md)
 - **E2E Tests**: Playwright (`tests/e2e/`)

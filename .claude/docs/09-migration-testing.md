@@ -66,7 +66,7 @@ The live match sync ([lib/rxdb/sync/](lib/rxdb/sync/)) talks to Supabase directl
 
 ## Testing Strategy
 
-E2E tests run on Playwright ([tests/e2e/](tests/e2e/), config in `playwright.config.ts`, `pnpm test:e2e`). There are no unit or integration tests and Jest is not installed; the unit and integration sections below are recommendations.
+E2E tests run on Playwright ([tests/e2e/](tests/e2e/), config in `playwright.config.ts`, `pnpm test:e2e`). Pure modules have unit tests in `tests/unit/` (Vitest, node environment, `pnpm test`); there are no component tests and Jest is not installed, so the unit and integration sections below remain recommendations for React components.
 
 ### Unit Tests (recommended: Jest + React Testing Library)
 ```typescript
@@ -117,7 +117,9 @@ describe('SyncManager', () => {
 
 ### E2E Tests (Playwright)
 
-Existing specs in [tests/e2e/](tests/e2e/) run in file-name order: public access (`00`), teams, matches, championships (+ `03b` dialog with keyboard, `03c` date range and cursor), live match offline/reconnect (`04-live-offline.spec.ts`), settings (+ `05b` service worker must not cache Supabase), match stats (incl. logged-out access and PDF export), and team cleanup.
+Playwright projects ([playwright.config.ts](playwright.config.ts)): `setup` (sign-in), `seed` (API seeding), `core`, `live`, `finished-match`, `stats` (dependencies run automatically; `pnpm test:e2e:quick` runs `core` + `live`), and `tools` with `E2E_TOOLS=1`. Specs in [tests/e2e/](tests/e2e/): public access (`00`), teams, matches, championships (+ `03b` dialog with keyboard, `03c` date range and cursor), live match offline/reconnect (`04-live-offline.spec.ts`), settings (+ `05b` service worker must not cache Supabase), match stats (incl. logged-out access and PDF export), and team cleanup.
+
+Route, auth and locale specs: `09-routes` (old URLs redirect, `?id=` pages), `10-auth-guard`, `11-auth-confirm` (`/auth/confirm` with `token_hash`), `12-locale`, `13-account-deletion`.
 
 Opt-in or machine-local specs (skipped otherwise):
 - `04b-rxdb-capture` runs only with `CAPTURE_LEGACY_DB=1` and must run on the *previous* RxDB major to capture a legacy IndexedDB into `playwright/.auth/rxdb-legacy-state.json` (git-ignored: it is a full storage-state dump).
@@ -135,4 +137,16 @@ Helpers in `tests/helpers/`:
 
 Use `04-live-offline.spec.ts` as the template for offline scenarios.
 
-`playwright.config.ts` runs one worker, sequentially, against `BASE_URL` (default `http://localhost:3000`) with no `webServer`, so start the app first. Run it against a production build (`pnpm build && pnpm start -p 3100`, then `CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e`): the service worker is disabled in development, and set `BASE_URL` explicitly because `.env.test.local` may point to a deployed site. Test credentials load from `.env.test` (then `.env.test.local`, `.env.local`, `.env`).
+`playwright.config.ts` runs two workers by default (`E2E_WORKERS=1` for one) against `BASE_URL` (default `http://localhost:3000`) with no `webServer`, so start the app first. Run it against a production build (`pnpm build && pnpm start -p 3100`, then `CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e`): the service worker is disabled in development, and set `BASE_URL` explicitly because `.env.test.local` may point to a deployed site. Test credentials load from `.env.test` (then `.env.test.local`, `.env.local`, `.env`).
+
+#### Export suite (mobile target)
+
+The same specs run against the static export. Tests tagged `@web` (service worker, proxy and other web-only behaviour) are skipped when `E2E_TARGET=mobile`. The export has no API of its own, so `E2E_API_URL` points at the web server it calls for `/api/v1`:
+
+```bash
+pnpm build && API_CORS_ORIGINS=http://localhost:3200 pnpm start -p 3100      # web server (background)
+pnpm build:mobile && pnpm check:export && pnpm serve:mobile                   # export on 3200 (background)
+CI=1 BASE_URL=http://localhost:3200 E2E_TARGET=mobile E2E_API_URL=http://localhost:3100 npx playwright test --project=core --project=live --project=stats
+```
+
+`pnpm build:mobile` needs `NEXT_PUBLIC_API_ORIGIN` and `NEXT_PUBLIC_WEB_ORIGIN` (for this run, both `http://localhost:3100`).

@@ -2,7 +2,7 @@
 
 ## 1. Live Match Tracking (Core Feature)
 
-**Location**: [app/matches/[id]/live/page.tsx](app/matches/[id]/live/page.tsx)
+**Location**: [app/matches/live/page.tsx](app/matches/live/page.tsx) (`/matches/live?id=<matchId>`)
 
 **Purpose**: Real-time point-by-point match scoring with comprehensive statistics tracking. This is the most critical feature of the application and must work offline. It is the only screen that reads and writes RxDB; see [04-offline-sync.md](04-offline-sync.md).
 
@@ -34,7 +34,7 @@ User taps "Point" button
 
 **Implementation Pattern**:
 ```typescript
-// app/matches/[id]/live/page.tsx
+// app/matches/live/page.tsx
 const { localDb: db } = useLocalDb()
 const [matchState, setMatchState] = useState<MatchState>(initialMatchState)
 
@@ -108,7 +108,7 @@ const teams = await teamApi.getTeams(
 
 ## 3. Statistics & Analytics
 
-**Location**: [app/matches/[id]/stats/](app/matches/[id]/stats/), [lib/stats/](lib/stats/)
+**Location**: [app/matches/stats/](app/matches/stats/) (`/matches/stats?id=<matchId>`), [lib/stats/](lib/stats/)
 
 **Features**:
 - Individual player performance metrics
@@ -132,7 +132,7 @@ const teams = await teamApi.getTeams(
 - Points scored per player
 
 **PDF Report**:
-- Generated on the server by `GET /api/v1/matches/[id]/report?team=<teamId>&locale=<locale>` ([app/api/v1/matches/[id]/report/route.ts](app/api/v1/matches/[id]/report/route.ts)) with `@react-pdf/renderer`
+- Generated on the server by `GET /api/v1/matches/[id]/report?team=<teamId>&locale=<locale>` ([app/api/v1/matches/[id]/report/route.web.ts](app/api/v1/matches/[id]/report/route.web.ts), web target only; the pages call it with `apiFetch`) with `@react-pdf/renderer`
 - Only for signed-in members of the analysed team, its creator, and owners/admins of its club ([lib/report/access.ts](lib/report/access.ts)); the route reads with the caller's session (anon key), never the service role; `/api/v1/` is exempt from the proxy's sign-in redirect so it answers 401
 - Metrics are pure functions in [lib/report/metrics/](lib/report/metrics/) assembled by `buildMatchReport` ([lib/report/build.ts](lib/report/build.ts)); the stats screen's MVP uses the same `mvp()`
 - Pages: summary, match detail, one per set (timeline with events and their impact). Text in `messages/<locale>/report.json`
@@ -157,3 +157,22 @@ const teams = await teamApi.getTeams(
 - View championship standings (future feature)
 
 **Implementation Note**: Championships use UUID IDs, like every table. The volleyball format (2x2, 3x3, 4x4, 6x6) is defined in the associated match_format record, allowing different match formats to share the same volleyball format specification.
+
+---
+
+## Language
+
+One client-side path on both targets (`LocaleProvider`, [components/providers/locale-provider.tsx](components/providers/locale-provider.tsx); rules in [lib/i18n/resolve-locale.ts](lib/i18n/resolve-locale.ts)). The language is chosen after mount, first match wins:
+
+1. `?lang=` in the URL (the proxy turns `/fr/matches` into `/matches?lang=fr`; the parameter is removed from the address bar afterwards). It counts as an explicit choice.
+2. The language saved on the device (`localStorage`, key `volleystats:locale`).
+3. The browser language (`navigator.languages`).
+4. English.
+
+The profile language is adopted once per user per device: on a signed-in user's first load on a device, if the choice was not explicit, the profile language replaces the current one and the user id is stored (`volleystats:locale-user`). After that the device's choice wins. An explicit `?lang=` also writes the mark as soon as the session user is known, so a reload right after sign-in keeps it. Changing the language (`useAppLocale().setLocale`) writes the device and, when signed in, the profile. Accepted cost: the web's first HTML is untranslated (a spinner), and crawlers see the landing page in English. Static `public/offline.html` reads the same `localStorage` key.
+
+---
+
+## Account deletion
+
+Settings, "Delete account" card (both targets). For each team the user created, they choose to hand it over to a member who has an account or to delete it, confirm by typing their email, and the RPC `delete_my_account(decisions)` removes the account. Blocked while live-match changes are still unsent. Details: [06-auth.md](06-auth.md#account-deletion).

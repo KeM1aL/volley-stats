@@ -8,6 +8,7 @@
 - Live match tracking works offline (RxDB + Supabase sync); other screens use live Supabase data
 - Real-time match tracking (core feature)
 - PWA with a Serwist service worker ([app/sw.ts](app/sw.ts), served at `/serwist/sw.js`)
+- Two build targets: `web` (Vercel: proxy, `/api` routes, service worker) and `mobile` (`BUILD_TARGET=mobile`, static export in `out/` for the Capacitor app)
 - Repository pattern for data access (lib/api/)
 - Command pattern for undo/redo (lib/commands/)
 
@@ -47,6 +48,9 @@
 pnpm dev              # Development server
 pnpm build           # Production build
 pnpm start           # Production server
+pnpm build:mobile    # Static export in out/ (needs NEXT_PUBLIC_API_ORIGIN and NEXT_PUBLIC_WEB_ORIGIN)
+pnpm check:export    # Checks out/: pages present, no server-only file, no secret
+pnpm serve:mobile    # Serves out/ on port 3200
 pnpm lint            # ESLint (flat config: eslint.config.mjs)
 pnpm test             # Unit tests (Vitest)
 pnpm test:e2e:quick   # E2E core + live projects (~1.5 min), during a task
@@ -54,6 +58,7 @@ pnpm test:e2e         # Full E2E, before merging
 # E2E needs a production server and no `next dev` running:
 # pnpm build && pnpm start -p 3100, then CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e[:quick]
 # One area: --project=core|live|finished-match|stats (dependencies run automatically)
+# Export suite (static export on 3200, web API on 3100): see .claude/docs/02-architecture.md
 ```
 
 ### Key Directories
@@ -71,6 +76,7 @@ pnpm test:e2e         # Full E2E, before merging
 2. **Offline live match**: Live match tracking must work offline, so it writes to RxDB (`useLocalDb` + `lib/commands`) and `SyncManager` replicates to Supabase. A match is replicated once opened (`syncMatch(matchId)` tracks it) and from then on at every app start, on every screen, until it is fully uploaded; don't add whole-table syncs of match data. Unsent rows are listed in the `pending_changes` collection, which drives the sync badge. See [.claude/docs/04-offline-sync.md](.claude/docs/04-offline-sync.md).
 3. **Error Handling**: Try-catch with toast notifications
 4. **Type Safety**: Use types from [lib/types.ts](lib/types.ts)
+5. **Two targets**: server-only files are `*.web.ts(x)` (or in `lib/server/`, or `proxy.ts`); target-specific code lives behind `lib/platform`; in-app URLs come from `lib/routes.ts` (ids as `?id=`); the API is called with `apiFetch`. See [.claude/docs/02-architecture.md](.claude/docs/02-architecture.md).
 
 ### When to Read Detailed Documentation
 
