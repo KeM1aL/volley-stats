@@ -32,6 +32,22 @@ export function isPublicPath(pathname: string): boolean {
   return path === "/" || path === "/auth" || path.startsWith("/auth/") || path === "/matches/stats";
 }
 
+/** Screens that load everything from Supabase: offline they would open empty (the live match works offline). */
+const CONNECTED_PATHS = new Set([
+  "/matches",
+  "/teams",
+  "/teams/new",
+  "/teams/view",
+  "/teams/players",
+  "/championships",
+  "/championships/view",
+]);
+
+/** Whether this screen needs a connection to show anything (OfflineGate shows the offline screen instead). */
+export function requiresConnection(pathname: string): boolean {
+  return CONNECTED_PATHS.has(normalizePath(pathname));
+}
+
 const TECHNICAL_FILE = /\.(webmanifest|json|xml|ico|png|jpe?g|gif|svg|webp|css|js|woff2?|ttf|eot|txt)$/i;
 
 /** A redirectTo value that stays in the app and leads to a page worth returning to. */

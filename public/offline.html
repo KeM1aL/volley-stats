@@ -59,6 +59,8 @@
         else history.back();
       });
       document.getElementById("retry").addEventListener("click", function () { location.reload(); });
+      // The page the user asked for loads by itself once the connection is back (like the in-app OfflineGate).
+      window.addEventListener("online", function () { location.reload(); });
     })();
   </script>
 </body>

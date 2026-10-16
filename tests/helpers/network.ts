@@ -21,9 +21,45 @@ export async function goOffline(page: Page): Promise<void> {
  */
 export async function goOnline(page: Page): Promise<void> {
   await page.context().setOffline(false);
-  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  // public/offline.html reloads on 'online': the page may navigate away under this evaluate.
+  await page.evaluate(() => window.dispatchEvent(new Event('online'))).catch((error: unknown) => {
+    if (!String(error).includes('Execution context was destroyed')) throw error;
+  });
   await page.waitForFunction((online) => navigator.onLine === online, true);
 }
+
+const APP_FILES_ONLY = '**/*';
+
+/**
+ * Offline as the Capacitor app is: the app's own files still load (they are on the device), everything
+ * else fails, and navigator.onLine is false. `setOffline` can't stand for it with the static export
+ * served over HTTP: it also cuts the app's files, so an in-app navigation ends on the browser's error page.
+ */
+export async function goOfflineKeepingAppFiles(page: Page): Promise<void> {
+  const appOrigin = new URL(page.url()).origin;
+  await page.route(APP_FILES_ONLY, (route) =>
+    new URL(route.request().url()).origin === appOrigin ? route.fallback() : route.abort('internetdisconnected')
+  );
+  await page.evaluate(() => {
+    Object.defineProperty(Navigator.prototype, 'onLine', { configurable: true, get: () => false });
+    window.dispatchEvent(new Event('offline'));
+  });
+}
+
+/** Undoes goOfflineKeepingAppFiles. */
+export async function goOnlineKeepingAppFiles(page: Page): Promise<void> {
+  await page.unroute(APP_FILES_ONLY);
+  await page.evaluate(() => {
+    Object.defineProperty(Navigator.prototype, 'onLine', { configurable: true, get: () => true });
+    window.dispatchEvent(new Event('online'));
+  });
+}
+
+/** Offline for the target under test: the static export (E2E_TARGET=mobile) keeps its files, like the app. */
+export const goOfflineForTarget = (page: Page) =>
+  process.env.E2E_TARGET === 'mobile' ? goOfflineKeepingAppFiles(page) : goOffline(page);
+export const goOnlineForTarget = (page: Page) =>
+  process.env.E2E_TARGET === 'mobile' ? goOnlineKeepingAppFiles(page) : goOnline(page);
 
 /**
  * Selectively block Supabase REST API requests without cutting all external connections.

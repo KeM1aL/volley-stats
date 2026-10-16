@@ -133,5 +133,12 @@
       "schemaIncompatible": "O esquema do banco de dados foi atualizado e é incompatível com os dados existentes.",
       "resyncInstructions": "Clique abaixo para limpar o banco de dados local. Seus dados serão ressincronizados do servidor no próximo login."
     }
+  },
+  "offline": {
+    "title": "Está offline",
+    "body": "Este ecrã precisa de ligação.",
+    "backToLive": "Voltar ao jogo ao vivo",
+    "retry": "Tentar novamente",
+    "goBack": "Voltar"
   }
 }

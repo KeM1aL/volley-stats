@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isPublicPath, isSafeRedirectTarget, normalizePath, parseRouteId, routes } from "@/lib/routes";
+import { isPublicPath, isSafeRedirectTarget, normalizePath, parseRouteId, requiresConnection, routes } from "@/lib/routes";
 
 const ID = "3f2b8c1e-9d4a-4b6f-8e2a-1c5d7e9f0a1b";
 
@@ -32,6 +32,39 @@ describe("routes", () => {
     }
     expect(isSafeRedirectTarget("/teams?x=%5C")).toBe(true);
     expect(isSafeRedirectTarget("/%5Cevil.com")).toBe(true);
+  });
+  it("knows the screens that need a connection", () => {
+    for (const p of [
+      "/matches",
+      "/matches/",
+      "/teams",
+      "/teams/",
+      "/teams/new",
+      "/teams/view",
+      "/teams/view/",
+      "/teams/players",
+      "/championships",
+      "/championships/view",
+      "/championships/view/",
+    ]) {
+      expect(requiresConnection(p), p).toBe(true);
+    }
+    for (const p of [
+      "/",
+      "/auth",
+      "/auth/confirm",
+      "/auth/reset-password/",
+      "/matches/live",
+      "/matches/live/",
+      "/matches/score",
+      "/matches/stats",
+      "/settings",
+      "/keyboard-test",
+      "/teamsx",
+      "/matches/other",
+    ]) {
+      expect(requiresConnection(p), p).toBe(false);
+    }
   });
   it("parses route ids", () => {
     expect(parseRouteId(ID)).toBe(ID);
