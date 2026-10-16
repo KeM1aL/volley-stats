@@ -18,6 +18,7 @@
 - Visual court positions
 - Live score updates
 - Works offline once the match has been pulled with `syncMatch(matchId)`
+- When the match can't be loaded (no `?team=`, not on the device, download not finished, its teams or format missing, a team that doesn't play it, any other error), the page returns to the match list with a destructive toast that says why (`LiveLoadError` reasons in [lib/matches/live-load-failure.ts](lib/matches/live-load-failure.ts), `matches.live.left.*`). Leaving through Cancel or Leave needs no toast.
 
 **Data Flow**:
 ```
@@ -151,7 +152,7 @@ const teams = await teamApi.getTeams(
   - Age category: U10, U12, U14, U16, U18, U21, Senior
   - Gender: Female, Male, Mixed
   - Match format rules (sets to win, points per set, rotation)
-- Import matches (and missing teams) for a championship from FFVB via `/api/import/ffvb` ([lib/importers/ffvb.ts](lib/importers/ffvb.ts))
+- Import matches (and missing teams) for a championship from FFVB via `/api/import/ffvb` ([lib/importers/ffvb.ts](lib/importers/ffvb.ts)). For now the championship page shows its button on both targets but disabled ("Coming soon", `championships.import.comingSoon`) and never calls the route; the route itself is unchanged (web only, 401 for signed-out callers).
 - Assign teams to championships
 - Track championship seasons
 - View championship standings (future feature)
@@ -159,6 +160,10 @@ const teams = await teamApi.getTeams(
 **Implementation Note**: Championships use UUID IDs, like every table. The volleyball format (2x2, 3x3, 4x4, 6x6) is defined in the associated match_format record, allowing different match formats to share the same volleyball format specification.
 
 ---
+
+## Offline gate
+
+Screens that load everything from Supabase (`requiresConnection` in [lib/routes.ts](lib/routes.ts): the match list `/matches`, `/teams`, `/teams/new`, `/teams/view`, `/teams/players`, `/championships`, `/championships/view`) would open empty offline: on the web when the page comes from the cache, and always in the static export / Capacitor app (no service worker). `OfflineGate` ([components/offline-gate.tsx](components/offline-gate.tsx), around the page in `app/layout.tsx`, inside `AuthGuard`) decides when such a screen opens: offline, it shows an in-app offline screen instead (`data-testid="offline-page"`, the texts of `public/offline.html`, `common.offline.*`) and does not mount the page; **Back to the live match** when the live page saved its URL (`volleystats:last-live-match` in `sessionStorage`), otherwise **Go back**; **Retry** re-reads `navigator.onLine`. When the connection comes back the page mounts and loads its data. A screen already open when the connection drops keeps what it shows. On the web, a screen the router doesn't hold yet can't be fetched offline: the navigation becomes a full page load and the service worker answers with `public/offline.html`, which reloads by itself on the `online` event. E2E: `tests/e2e/14-offline-gate.spec.ts`; for the static export it goes offline like the app (`goOfflineKeepingAppFiles`: the app's files still load), since `setOffline` would cut them too. The live match, stats, score, settings, home and auth screens are never gated.
 
 ## Language
 

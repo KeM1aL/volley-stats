@@ -124,12 +124,12 @@ Replications are never paused: RxDB's retry waits for the `online` event. Reconn
 **Requires Online**:
 ❌ Opening a match for the first time on a device
 ❌ Starting the app offline on a device that has never signed in online (no saved profile)
-❌ Teams, championships, match list, settings and other non-live screens (direct Supabase via the API layer)
+❌ Teams, championships, match list, settings and other non-live screens (direct Supabase via the API layer); opened offline from inside the app, the teams, championships and match list screens show the in-app offline screen (`OfflineGate`, see [07-features.md](07-features.md#offline-gate)) instead of an empty page
 ❌ Match statistics page from the live page (its stats button is disabled offline; the stats page itself falls back to local data)
 ❌ Real-time updates from other users
 ❌ Authentication (login/signup)
 ❌ Avatar uploads
-❌ FFVB match imports
+❌ FFVB match imports (the button is disabled for now on both targets)
 
 **Service worker** ([app/sw.ts](../../app/sw.ts), Serwist):
 - Precaches the build's JS/CSS and runtime-caches pages, images and fonts (`defaultCache`); Supabase API calls are NetworkOnly, so non-live screens always read live data and no user data sits in Cache Storage.

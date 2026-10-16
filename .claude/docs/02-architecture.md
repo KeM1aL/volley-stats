@@ -125,7 +125,7 @@ volley-stats/
 │   │   └── stats/               # Match statistics, ?id=
 │   ├── settings/                 # User settings
 │   ├── teams/                    # Team management (view/, players/ with ?id=)
-│   ├── api/import/ffvb/route.web.ts             # FFVB match import (web target only)
+│   ├── api/import/ffvb/route.web.ts             # FFVB match import (web target only; its UI button is disabled for now)
 │   ├── api/v1/matches/[id]/report/route.web.ts  # Match PDF report (web target only)
 │   ├── auth/confirm/             # Verifies token_hash email links
 │   ├── auth/callback/route.web.ts  # Old PKCE link handler, kept one release
