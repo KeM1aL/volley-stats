@@ -150,5 +150,8 @@
     "genderLabel": "Género:",
     "ageCategoryLabel": "Categoria etária:",
     "viewDetails": "Ver detalhes"
+  },
+  "import": {
+    "comingSoon": "Brevemente"
   }
 }

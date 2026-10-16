@@ -92,6 +92,12 @@ test.describe('Championships — CRUD', () => {
     // Verify detail page content
     await expect(page.getByText(championshipName).first()).toBeVisible({ timeout: 5_000 });
 
+    // The FFVB import is shown on both targets but disabled for now
+    const importButton = page.getByTestId('ffvb-import-button');
+    await expect(importButton).toBeVisible();
+    await expect(importButton).toBeDisabled();
+    await expect(importButton).toHaveAttribute('title', 'Coming soon');
+
     // ── 4.5 Save fixture ─────────────────────────────────────────────────────
     updateFixture({ championshipId });
   });

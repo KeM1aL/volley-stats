@@ -33,7 +33,6 @@ import { ChampionshipTeamsList } from "@/components/championships/championship-t
 import { useTeamApi } from "@/hooks/use-team-api";
 import { notFound } from "next/navigation";
 import { useRouteId } from "@/hooks/use-route-id";
-import { platform } from "@/lib/platform";
 
 const lastSeptember = new Date();
 if (lastSeptember.getMonth() < 8) {
@@ -59,7 +58,6 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(true);
 
@@ -205,35 +203,6 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
     }
   };
 
-  const handleRefresh = async () => {
-    if (!championship) return;
-
-    setIsRefreshing(true);
-    try {
-      const response = await fetch(
-        `/api/import/ffvb`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            championshipId: championship.id,
-            seasonId: championship.season_id
-          })
-        }
-      );
-      if (!response.ok) {
-        const { error } = await response.json();
-        throw new Error(error || t("errors.refreshFailed"));
-      }
-      toast({ title: t("toast.success"), description: t("toast.matchesRefreshedSuccess") });
-    } catch (error: any) {
-      toast({ title: t("errors.loadMatches"), description: error.message, variant: "destructive" });
-    }
-    setIsRefreshing(false);
-  };
-
   if (isLoading && !championship) {
     return <LoadingPage />;
   }
@@ -259,19 +228,19 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
           </p>
         </div>
         <div className="flex gap-2">
-          {platform.target === "web" && (
+          {/* FFVB import: shown on both targets, disabled until it ships (the /api/import/ffvb route stays). */}
+          <span title={t("import.comingSoon")} className="flex flex-1 sm:flex-none">
             <Button
               variant="outline"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex-1 sm:flex-none text-xs sm:text-sm"
+              disabled
+              title={t("import.comingSoon")}
+              className="w-full text-xs sm:text-sm"
+              data-testid="ffvb-import-button"
             >
-              <RefreshCw
-                className={`h-4 w-4 mr-1 sm:mr-2 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              {isRefreshing ? t("actions.refreshing") : t("actions.refresh")}
+              <RefreshCw className="h-4 w-4 mr-1 sm:mr-2" />
+              {t("actions.refresh")}
             </Button>
-          )}
+          </span>
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
