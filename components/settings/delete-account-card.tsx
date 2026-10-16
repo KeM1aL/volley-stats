@@ -29,17 +29,20 @@ import {
   type TeamChoice,
   type TeamToDecide,
 } from "@/lib/auth/delete-account";
+import type { UnsentBreakdown } from "@/hooks/use-unsent-guard";
 
 const DELETE = "delete";
 
 interface DeleteAccountCardProps {
   email: string;
   userId: string;
-  /** Live-match changes not yet uploaded (or 1 while the local database is not open: unknown). */
-  unsentChanges: number;
+  /** Live-match changes not uploaded, pending and refused; null while unknown (the local database is not open). */
+  unsentChanges: UnsentBreakdown | null;
+  /** Drops the changes the server refused (SyncManager.discardRejected). */
+  onDiscardRejected: () => Promise<number>;
 }
 
-export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccountCardProps) {
+export function DeleteAccountCard({ email, userId, unsentChanges, onDiscardRejected }: DeleteAccountCardProps) {
   const t = useTranslations("settings.deleteAccount");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,8 +52,17 @@ export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccoun
   const [typedEmail, setTypedEmail] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
+  const [discardFailed, setDiscardFailed] = useState(false);
 
-  const blocked = unsentChanges > 0;
+  // Unknown, pending or refused changes all block. Pending ones upload by themselves; refused ones
+  // never will, so only those can be discarded, and only once nothing is pending.
+  const pendingCount = unsentChanges?.pending ?? 0;
+  const rejectedCount = unsentChanges?.rejected ?? 0;
+  const blocked = unsentChanges === null || pendingCount > 0 || rejectedCount > 0;
+  const onlyRejected = unsentChanges !== null && pendingCount === 0 && rejectedCount > 0;
+  const blockedMessage = onlyRejected ? t("rejectedBlocked", { count: rejectedCount }) : t("unsentBlocked");
   const decisions = useMemo(() => buildDecisions(teams, choices), [teams, choices]);
   const emailMatches = typedEmail.trim().toLowerCase() === email.trim().toLowerCase();
   const canConfirm = !blocked && !loading && !loadFailed && !deleting && decisions !== null && emailMatches;
@@ -81,6 +93,20 @@ export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccoun
       setLoadFailed(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const discardRejected = async () => {
+    setDiscarding(true);
+    setDiscardFailed(false);
+    try {
+      await onDiscardRejected();
+      setDiscardOpen(false);
+    } catch (error) {
+      console.error("Could not discard the refused changes:", error);
+      setDiscardFailed(true);
+    } finally {
+      setDiscarding(false);
     }
   };
 
@@ -142,8 +168,23 @@ export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccoun
             <p className="text-sm text-muted-foreground">{t("description")}</p>
             {blocked && (
               <p className="text-sm text-destructive" data-testid="delete-account-blocked">
-                {t("unsentBlocked")}
+                {blockedMessage}
               </p>
+            )}
+            {onlyRejected && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  setDiscardFailed(false);
+                  setDiscardOpen(true);
+                }}
+                data-testid="discard-rejected-button"
+              >
+                {t("discardRejected")}
+              </Button>
             )}
           </div>
           <Button
@@ -217,7 +258,7 @@ export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccoun
 
           {blocked && (
             <p className="text-sm text-destructive" data-testid="delete-account-dialog-blocked">
-              {t("unsentBlocked")}
+              {blockedMessage}
             </p>
           )}
 
@@ -232,6 +273,33 @@ export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccoun
             <Button type="button" variant="destructive" disabled={!canConfirm} onClick={() => void confirm()} data-testid="delete-account-confirm">
               {deleting ? <LoadingSpinner size="sm" className="mr-2" /> : null}
               {t("confirm")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={discardOpen} onOpenChange={(next) => !discarding && setDiscardOpen(next)}>
+        <AlertDialogContent data-testid="discard-rejected-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("discardTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("discardBody")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          {discardFailed && (
+            <p className="text-sm text-destructive" data-testid="discard-rejected-error">
+              {t("discardFailed")}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={discarding}>{t("cancel")}</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={discarding}
+              onClick={() => void discardRejected()}
+              data-testid="discard-rejected-confirm"
+            >
+              {discarding ? <LoadingSpinner size="sm" className="mr-2" /> : null}
+              {t("discardConfirm")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

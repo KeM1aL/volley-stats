@@ -175,4 +175,4 @@ The profile language is adopted once per user per device: on a signed-in user's 
 
 ## Account deletion
 
-Settings, "Delete account" card (both targets). For each team the user created, they choose to hand it over to a member who has an account or to delete it, confirm by typing their email, and the RPC `delete_my_account(decisions)` removes the account. Blocked while live-match changes are still unsent. Details: [06-auth.md](06-auth.md#account-deletion).
+Settings, "Delete account" card (both targets). For each team the user created, they choose to hand it over to a member who has an account or to delete it, confirm by typing their email, and the RPC `delete_my_account(decisions)` removes the account. Blocked while live-match changes are still unsent. When only changes the server refused are left (rejected: they will never upload), the card says how many and offers **Discard them**: after a confirmation, `SyncManager.discardRejected()` drops them and the device shows the server's version of those rows (see [04-offline-sync.md](04-offline-sync.md#push-rules)); pending changes are never discarded. Details: [06-auth.md](06-auth.md#account-deletion).

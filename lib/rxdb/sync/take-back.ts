@@ -17,13 +17,13 @@ import {
 import type { LocalDatabase } from "../collections";
 import { pickSchemaFields } from "./helper";
 import { matchReplicationIdentifier } from "./match-sync";
-import type { PendingChange, PendingChanges } from "./pending-changes";
+import type { PendingChange, PendingChanges, PendingStatus } from "./pending-changes";
 import { MATCH_COLLECTIONS, type MatchCollectionName } from "./types";
 
 /** Ids per request when fetching the server's version of the rows (keeps the URL short). */
 const FETCH_CHUNK = 100;
 
-export interface DiscardSupersededOptions {
+export interface DiscardChangesOptions {
   db: LocalDatabase;
   client: SupabaseClient<any>;
   pending: PendingChanges;
@@ -36,37 +36,53 @@ export interface DiscardSupersededOptions {
 /**
  * Taking scoring back (controller ruling for N1): this device's superseded changes to the match
  * (rows it recorded but never uploaded before another device took over) are discarded, so that the
- * device shows the match as the server has it. Each superseded row is replaced by the server's
- * version, or removed locally when the server doesn't have it; then the entries are deleted.
+ * device shows the match as the server has it. See discardChanges.
+ */
+export function discardSupersededChanges(options: DiscardChangesOptions): Promise<number> {
+  return discardChanges(options, "superseded");
+}
+
+/**
+ * The server refused these changes (rejected: RLS, invalid data, ...), so they will never upload:
+ * they are discarded the same way, and the device shows the server's version of those rows.
+ * Pending changes are left alone. See discardChanges.
+ */
+export function discardRejectedChanges(options: DiscardChangesOptions): Promise<number> {
+  return discardChanges(options, "rejected");
+}
+
+/**
+ * Discards this device's changes to the match that have this status: each row is replaced by the
+ * server's version, or removed locally when the server doesn't have it; then the entries are deleted.
+ * Returns how many entries were deleted.
  *
  * Nothing of this may reach the server. The rows are written through the storage instance (no
  * hooks, so no pending entry), and the match's replication meta is set to the same state: RxDB's
  * upstream skips a row whose fork state equals its assumed master state, so the restarted
  * replication neither re-inserts a discarded row nor pushes its removal. The replications of the
- * match must be stopped while this runs (the claim is still "lost").
+ * match must be stopped while this runs (a lost claim, or SyncManager.discardRejected stops them).
  *
  * Throws if the server can't be read; nothing local is changed for a table whose rows couldn't be fetched.
  */
-export async function discardSupersededChanges({
-  db,
-  client,
-  pending,
-  deviceId,
-  matchId,
-  shouldStop,
-}: DiscardSupersededOptions): Promise<void> {
-  const entries = await pending.list({ matchId, statuses: ["superseded"] });
+async function discardChanges(
+  { db, client, pending, deviceId, matchId, shouldStop }: DiscardChangesOptions,
+  status: Exclude<PendingStatus, "pending">
+): Promise<number> {
+  const entries = await pending.list({ matchId, statuses: [status] });
+  let discarded = 0;
   for (const table of MATCH_COLLECTIONS) {
-    if (shouldStop?.()) return;
+    if (shouldStop?.()) return discarded;
     const tableEntries = entries.filter((entry) => entry.table_name === table);
     if (tableEntries.length === 0) continue;
     const collection = db[table] as unknown as RxCollection<any>;
     const ids = tableEntries.map((entry) => entry.doc_id);
     const serverDocs = await fetchServerDocs(client, collection, table, ids, deviceId);
-    if (shouldStop?.()) return;
+    if (shouldStop?.()) return discarded;
     await alignRows(db, collection, matchReplicationIdentifier(table, matchId), ids, serverDocs);
     await pending.removeEntries(tableEntries.map((entry: PendingChange) => entry.id));
+    discarded += tableEntries.length;
   }
+  return discarded;
 }
 
 async function fetchServerDocs(
@@ -126,7 +142,7 @@ async function alignRows(
   if (forkWrites.length > 0) {
     // The wrapped storage instance sets `_rev` and `_meta.lwt`; the collection sees the change (queries update).
     const result = await collection.storageInstance.bulkWrite(forkWrites, "sync-take-back");
-    if (result.error.length > 0) throw new Error(`take back: could not write ${result.error.length} local row(s)`);
+    if (result.error.length > 0) throw new Error(`discard: could not write ${result.error.length} local row(s)`);
   }
   await writeAssumedMasterStates(db, collection, replicationIdentifier, finalStates);
 }
@@ -187,7 +203,7 @@ async function writeAssumedMasterStates(
       return { previous, document };
     });
     const result = await metaInstance.bulkWrite(rows, "sync-take-back-meta");
-    if (result.error.length > 0) throw new Error(`take back: could not write ${result.error.length} replication state(s)`);
+    if (result.error.length > 0) throw new Error(`discard: could not write ${result.error.length} replication state(s)`);
   } finally {
     await metaInstance.close();
   }

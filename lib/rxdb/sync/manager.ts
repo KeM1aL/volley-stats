@@ -9,7 +9,7 @@ import type { SyncPlatform } from "./platform/types";
 import { ReferenceSync } from "./reference-sync";
 import { claimMatchScorer, getMatchScorer, isClaimForbidden, type ClaimResult, type ScorerInfo } from "./scorer-claim";
 import { SyncStates } from "./sync-state";
-import { discardSupersededChanges } from "./take-back";
+import { discardRejectedChanges, discardSupersededChanges } from "./take-back";
 import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatch, type TrackedMatchMap } from "./tracked-matches";
 import type { SyncUser } from "./types";
 import { runSyncUpgrade } from "./upgrade";
@@ -19,6 +19,8 @@ export const SYNC_TIMEOUT_MS = 30_000;
 const DEFAULT_RETRY_MS = 5_000;
 /** How long aligning a lost match with the server may take before pruning it is left for the next start. */
 export const PRUNE_ALIGN_TIMEOUT_MS = 10_000;
+/** How long discarding refused changes waits for this tab to lead (another tab replicates meanwhile). */
+export const DISCARD_LEADERSHIP_TIMEOUT_MS = 5_000;
 
 export interface SyncManagerOptions {
   db: LocalDatabase;
@@ -174,6 +176,55 @@ export class SyncManager {
 
   retryRejected(matchId?: string): Promise<number> {
     return this.pendingChanges.retryRejected(this.options.db, matchId);
+  }
+
+  /**
+   * Discards this device's rejected changes (the server refused them, so they never upload), all
+   * matches or one: each row becomes the server's version, or a local tombstone that is never pushed,
+   * as a take-back does (take-back.ts). Pending changes are untouched. Each match's replications are
+   * stopped while its rows are aligned and restarted afterwards. Runs in the leader tab only, where the
+   * replications run: another tab would push the rows while they are being aligned.
+   * Returns how many changes were discarded. Throws when the server can't be read (the matches already
+   * aligned stay so, the others keep their rejected changes) or this tab doesn't lead within
+   * DISCARD_LEADERSHIP_TIMEOUT_MS.
+   */
+  async discardRejected(matchId?: string): Promise<number> {
+    await this.waitToLead(DISCARD_LEADERSHIP_TIMEOUT_MS);
+    const deviceId = await this.deviceId;
+    return this.enqueue(async () => {
+      const entries = await this.pendingChanges.list({ matchId, statuses: ["rejected"] });
+      let discarded = 0;
+      try {
+        for (const id of new Set(entries.map((entry) => entry.match_id))) {
+          await this.stopMatch(id);
+          discarded += await discardRejectedChanges({
+            db: this.options.db,
+            client: this.options.client,
+            pending: this.pendingChanges,
+            deviceId,
+            matchId: id,
+          });
+        }
+      } finally {
+        await this.reconcile(await this.tracked.get());
+      }
+      return discarded;
+    });
+  }
+
+  /** Resolves once this tab leads (at once when leadership isn't used); throws after `timeoutMs`. */
+  private async waitToLead(timeoutMs: number): Promise<void> {
+    const { db } = this.options;
+    if (this.options.waitForLeadership === false || db.isLeader()) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error("another tab replicates the matches: close it and try again")), timeoutMs);
+    });
+    try {
+      await Promise.race([db.waitForLeadership(), timedOut]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /** Claims the match for this device (spec section 7). Throws ScorerRpcError when the server can't be reached. */

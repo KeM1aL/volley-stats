@@ -121,6 +121,12 @@
     "confirmLabel": "Saisissez votre e-mail pour confirmer",
     "confirm": "Supprimer mon compte",
     "cancel": "Annuler",
-    "failed": "Votre compte n'a pas pu être supprimé. Rien n'a été modifié. Réessayez."
+    "failed": "Votre compte n'a pas pu être supprimé. Rien n'a été modifié. Réessayez.",
+    "rejectedBlocked": "{count, plural, one {# modification a été refusée par le serveur et ne peut pas être envoyée.} other {# modifications ont été refusées par le serveur et ne peuvent pas être envoyées.}}",
+    "discardRejected": "Les abandonner",
+    "discardTitle": "Abandonner les modifications refusées ?",
+    "discardBody": "Ces modifications n'existent que sur cet appareil et seront supprimées. L'appareil affichera ensuite les matchs tels qu'ils sont sur le serveur.",
+    "discardConfirm": "Les abandonner",
+    "discardFailed": "Les modifications n'ont pas pu être abandonnées. Vérifiez votre connexion et réessayez."
   }
 }

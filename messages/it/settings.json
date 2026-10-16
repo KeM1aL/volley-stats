@@ -121,6 +121,12 @@
     "confirmLabel": "Scrivi la tua email per confermare",
     "confirm": "Elimina il mio account",
     "cancel": "Annulla",
-    "failed": "Impossibile eliminare l'account. Non è stato modificato nulla. Riprova."
+    "failed": "Impossibile eliminare l'account. Non è stato modificato nulla. Riprova.",
+    "rejectedBlocked": "{count, plural, one {# modifica è stata rifiutata dal server e non può essere inviata.} other {# modifiche sono state rifiutate dal server e non possono essere inviate.}}",
+    "discardRejected": "Scartale",
+    "discardTitle": "Scartare le modifiche rifiutate?",
+    "discardBody": "Queste modifiche esistono solo su questo dispositivo e verranno eliminate. Il dispositivo mostrerà poi le partite come sono sul server.",
+    "discardConfirm": "Scartale",
+    "discardFailed": "Impossibile scartare le modifiche. Controlla la connessione e riprova."
   }
 }

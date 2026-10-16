@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { combineLatest } from "rxjs";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { countFor, type KeyedCount } from "@/lib/rxdb/keyed-count";
 import type { MatchCollectionName } from "@/lib/rxdb/sync/types";
@@ -38,6 +39,36 @@ export function useUnsentCountFor(tables: readonly MatchCollectionName[]): numbe
     return () => subscription.unsubscribe();
   }, [localDb, key, none]);
   return none ? 0 : countFor(state, key, null);
+}
+
+export interface UnsentBreakdown {
+  /** Still waiting to upload. */
+  pending: number;
+  /** Refused by the server: they will never upload (SyncManager.discardRejected drops them). */
+  rejected: number;
+}
+
+/**
+ * Unsent changes in these tables, all matches, split into pending and rejected; null until both
+ * counts are known. No tables: nothing can be unsent, zeros without querying.
+ */
+export function useUnsentBreakdownFor(tables: readonly MatchCollectionName[]): UnsentBreakdown | null {
+  const { localDb } = useLocalDb();
+  const [state, setState] = useState<{ key: string; value: UnsentBreakdown } | null>(null);
+  const key = tables.join(",");
+  const none = tables.length === 0;
+  useEffect(() => {
+    const pending = localDb?.pendingChanges;
+    if (!pending || none) return;
+    const keyTables = key.split(",") as MatchCollectionName[];
+    const subscription = combineLatest([
+      pending.count$({ tables: keyTables, statuses: ["pending"] }),
+      pending.count$({ tables: keyTables, statuses: ["rejected"] }),
+    ]).subscribe(([pendingCount, rejectedCount]) => setState({ key, value: { pending: pendingCount, rejected: rejectedCount } }));
+    return () => subscription.unsubscribe();
+  }, [localDb, key, none]);
+  if (none) return { pending: 0, rejected: 0 };
+  return state?.key === key ? state.value : null;
 }
 
 // Set right before an in-app navigation the user already confirmed (our own dialog), so the browser's

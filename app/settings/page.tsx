@@ -38,7 +38,7 @@ import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
-import { useUnsentCountFor } from "@/hooks/use-unsent-guard";
+import { useUnsentBreakdownFor, useUnsentCountFor } from "@/hooks/use-unsent-guard";
 import { MATCH_COLLECTIONS, type MatchCollectionName } from "@/lib/rxdb/sync/types";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -89,6 +89,7 @@ export default function SettingsPage() {
   // null (not counted yet) blocks too: clearing stays disabled until nothing unsent is confirmed.
   const unsentStats = useUnsentCountFor(STATS_TABLES);
   const unsentMatchData = useUnsentCountFor(MATCH_COLLECTIONS);
+  const unsentMatchBreakdown = useUnsentBreakdownFor(MATCH_COLLECTIONS);
   const statsClearBlocked = unsentStats !== 0;
   const matchDataClearBlocked = unsentMatchData !== 0;
   const { localDb: db } = useLocalDb();
@@ -745,8 +746,13 @@ export default function SettingsPage() {
       )}
 
       {session?.user?.email && session.user.id && (
-        // Until the local database is open the unsent count is unknown: keep the button disabled.
-        <DeleteAccountCard email={session.user.email} userId={session.user.id} unsentChanges={db ? (unsentMatchData ?? 1) : 1} />
+        // Until the local database is open the unsent count is unknown (null): the button stays disabled.
+        <DeleteAccountCard
+          email={session.user.email}
+          userId={session.user.id}
+          unsentChanges={db ? unsentMatchBreakdown : null}
+          onDiscardRejected={() => (db ? db.syncManager.discardRejected() : Promise.reject(new Error("local database not open")))}
+        />
       )}
     </div>
   );

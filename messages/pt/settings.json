@@ -121,6 +121,12 @@
     "confirmLabel": "Escreva o seu e-mail para confirmar",
     "confirm": "Eliminar a minha conta",
     "cancel": "Cancelar",
-    "failed": "Não foi possível eliminar a conta. Nada foi alterado. Tente novamente."
+    "failed": "Não foi possível eliminar a conta. Nada foi alterado. Tente novamente.",
+    "rejectedBlocked": "{count, plural, one {# alteração foi recusada pelo servidor e não pode ser enviada.} other {# alterações foram recusadas pelo servidor e não podem ser enviadas.}}",
+    "discardRejected": "Descartá-las",
+    "discardTitle": "Descartar as alterações recusadas?",
+    "discardBody": "Estas alterações existem apenas neste dispositivo e serão eliminadas. O dispositivo passará a mostrar os jogos tal como estão no servidor.",
+    "discardConfirm": "Descartá-las",
+    "discardFailed": "Não foi possível descartar as alterações. Verifique a ligação e tente novamente."
   }
 }

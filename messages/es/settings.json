@@ -121,6 +121,12 @@
     "confirmLabel": "Escribe tu correo para confirmar",
     "confirm": "Eliminar mi cuenta",
     "cancel": "Cancelar",
-    "failed": "No se pudo eliminar tu cuenta. No se cambió nada. Inténtalo de nuevo."
+    "failed": "No se pudo eliminar tu cuenta. No se cambió nada. Inténtalo de nuevo.",
+    "rejectedBlocked": "{count, plural, one {El servidor rechazó # cambio y no se puede enviar.} other {El servidor rechazó # cambios y no se pueden enviar.}}",
+    "discardRejected": "Descartarlos",
+    "discardTitle": "¿Descartar los cambios rechazados?",
+    "discardBody": "Estos cambios solo están en este dispositivo y se eliminarán. Después, el dispositivo mostrará los partidos tal como están en el servidor.",
+    "discardConfirm": "Descartarlos",
+    "discardFailed": "No se pudieron descartar los cambios. Comprueba tu conexión e inténtalo de nuevo."
   }
 }
