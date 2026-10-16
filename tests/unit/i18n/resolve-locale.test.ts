@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { browserLocale, initialLocale, profileLocaleToAdopt } from "@/lib/i18n/resolve-locale";
+import { adoptionMarkToWrite, browserLocale, initialLocale, profileLocaleToAdopt } from "@/lib/i18n/resolve-locale";
 import { splitLocalePrefix } from "@/lib/i18n/locale-path";
 
 describe("initialLocale", () => {
@@ -27,6 +27,23 @@ describe("profileLocaleToAdopt", () => {
     expect(profileLocaleToAdopt({ ...base, profileLanguage: "de" })).toBeNull();
     expect(profileLocaleToAdopt({ ...base, profileLanguage: "en" })).toBeNull();
     expect(profileLocaleToAdopt({ ...base, userId: null })).toBeNull();
+  });
+});
+
+describe("adoptionMarkToWrite", () => {
+  it("marks the signed-in user as adopted as soon as an explicit ?lang= meets a session, before the profile loads", () => {
+    expect(adoptionMarkToWrite({ sessionUserId: "u1", adoptedFor: null, explicit: true })).toBe("u1");
+    expect(adoptionMarkToWrite({ sessionUserId: "u1", adoptedFor: "u0", explicit: true })).toBe("u1");
+  });
+  it("writes nothing without an explicit choice, without a session, or when the mark is already there", () => {
+    expect(adoptionMarkToWrite({ sessionUserId: "u1", adoptedFor: null, explicit: false })).toBeNull();
+    expect(adoptionMarkToWrite({ sessionUserId: null, adoptedFor: null, explicit: true })).toBeNull();
+    expect(adoptionMarkToWrite({ sessionUserId: "u1", adoptedFor: "u1", explicit: true })).toBeNull();
+  });
+  it("makes the profile language lose on the next page load", () => {
+    const base = { userId: "u1", explicit: false, profileLanguage: "fr", current: "en" as const };
+    const mark = adoptionMarkToWrite({ sessionUserId: "u1", adoptedFor: null, explicit: true });
+    expect(profileLocaleToAdopt({ ...base, adoptedFor: mark })).toBeNull();
   });
 });
 

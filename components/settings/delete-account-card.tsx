@@ -53,7 +53,7 @@ export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccoun
   const blocked = unsentChanges > 0;
   const decisions = useMemo(() => buildDecisions(teams, choices), [teams, choices]);
   const emailMatches = typedEmail.trim().toLowerCase() === email.trim().toLowerCase();
-  const canConfirm = !loading && !loadFailed && !deleting && decisions !== null && emailMatches;
+  const canConfirm = !blocked && !loading && !loadFailed && !deleting && decisions !== null && emailMatches;
 
   const load = async () => {
     setLoading(true);
@@ -213,6 +213,12 @@ export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccoun
                 onChange={(event) => setTypedEmail(event.target.value)}
               />
             </div>
+          )}
+
+          {blocked && (
+            <p className="text-sm text-destructive" data-testid="delete-account-dialog-blocked">
+              {t("unsentBlocked")}
+            </p>
           )}
 
           {(failed || loadFailed) && (

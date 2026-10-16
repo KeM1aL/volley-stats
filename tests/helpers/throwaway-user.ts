@@ -29,9 +29,6 @@ export async function createThrowawayUser(): Promise<ThrowawayUser> {
   const admin = adminClient();
   const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
   if (error || !data.user) throw new Error(`create throwaway user: ${error?.message ?? 'no user returned'}`);
-  // The profile language wins over ?lang= after sign-in: pin English so the specs can read the UI.
-  const { error: profileError } = await admin.from('profiles').upsert({ id: data.user.id, language: 'en' });
-  if (profileError) throw new Error(`set throwaway profile language: ${profileError.message}`);
   return { id: data.user.id, email, password };
 }
 

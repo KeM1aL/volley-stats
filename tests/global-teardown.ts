@@ -9,8 +9,13 @@ export default async function globalTeardown() {
   }
   // First: the throwaway accounts' teams are also named "E2E Team …", and only the service role can delete them.
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    const removed = await deleteThrowawayUsers();
-    console.log(`e2e cleanup: removed ${removed} throwaway users`);
+    try {
+      const removed = await deleteThrowawayUsers();
+      console.log(`e2e cleanup: removed ${removed} throwaway users`);
+    } catch (error) {
+      // Do not skip the test user's own cleanup below; the next run's teardown retries this one.
+      console.error(`e2e cleanup: throwaway users not removed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
   const report = await cleanupE2eDataAsTestUser();
   const total = Object.values(report).reduce((sum, n) => sum + n, 0);

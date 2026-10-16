@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/contexts/auth-context";
 import type { Locale } from "@/lib/i18n/config";
-import { initialLocale, isLocale, LOCALE_ADOPTED_KEY, LOCALE_STORAGE_KEY, profileLocaleToAdopt } from "@/lib/i18n/resolve-locale";
+import { adoptionMarkToWrite, initialLocale, isLocale, LOCALE_ADOPTED_KEY, LOCALE_STORAGE_KEY, profileLocaleToAdopt } from "@/lib/i18n/resolve-locale";
 
 const LOADERS = {
   en: () => import("@/messages/en"),
@@ -76,8 +76,17 @@ export function useLocaleContext(): LocaleContextValue {
 
 /** Inside AuthProvider: adopts the signed-in user's profile language once on this device. */
 export function ProfileLocaleSync(): null {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { locale, changeLocale, explicit } = useLocaleContext();
+  const sessionUserId = session?.user.id ?? null;
+
+  // An explicit ?lang= must outlive a reload that happens before the profile loads: the session user is known
+  // right after sign-in, the profile is not.
+  useEffect(() => {
+    const mark = adoptionMarkToWrite({ sessionUserId, adoptedFor: localStorage.getItem(LOCALE_ADOPTED_KEY), explicit });
+    if (mark) localStorage.setItem(LOCALE_ADOPTED_KEY, mark);
+  }, [sessionUserId, explicit]);
+
   useEffect(() => {
     if (!user) return;
     const adopt = profileLocaleToAdopt({

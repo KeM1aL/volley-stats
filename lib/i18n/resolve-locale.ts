@@ -37,3 +37,13 @@ export function profileLocaleToAdopt(input: {
   if (!input.userId || input.adoptedFor === input.userId || input.explicit) return null;
   return isLocale(input.profileLanguage) && input.profileLanguage !== input.current ? input.profileLanguage : null;
 }
+
+/**
+ * The id to store in LOCALE_ADOPTED_KEY right now, or null. An explicit ?lang= is only in memory for the page
+ * load, so it is made durable as soon as the session user is known (right after sign-in, before the profile
+ * loads): a reload then finds the mark and the profile language no longer overrides the explicit choice.
+ */
+export function adoptionMarkToWrite(input: { sessionUserId: string | null; adoptedFor: string | null; explicit: boolean }): string | null {
+  if (!input.sessionUserId || !input.explicit || input.adoptedFor === input.sessionUserId) return null;
+  return input.sessionUserId;
+}
