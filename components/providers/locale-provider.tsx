@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/contexts/auth-context";
 import type { Locale } from "@/lib/i18n/config";
+import { loadMessagesWithFallback } from "@/lib/i18n/load-messages";
 import { adoptionMarkToWrite, initialLocale, isLocale, LOCALE_ADOPTED_KEY, LOCALE_STORAGE_KEY, profileLocaleToAdopt } from "@/lib/i18n/resolve-locale";
 
 const LOADERS = {
@@ -19,7 +20,8 @@ type Messages = Awaited<ReturnType<(typeof LOADERS)["en"]>>["default"];
 
 interface LocaleContextValue {
   locale: Locale;
-  changeLocale(locale: Locale, explicit?: boolean): Promise<void>;
+  /** Resolves to whether `locale` is now the language; false when its messages could not be loaded (the screen is kept). */
+  changeLocale(locale: Locale, explicit?: boolean): Promise<boolean>;
   /** Whether the locale came from ?lang= on this page load. */
   explicit: boolean;
 }
@@ -28,13 +30,23 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<{ locale: Locale; messages: Messages; explicit: boolean } | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const hasMessages = useRef(false);
 
   // `explicit` (the locale came from ?lang= on this page load) is only set by the first call and kept after.
+  // A messages chunk that does not load (offline, gone after a deploy) never throws: later switches keep the
+  // current language, and the first load falls back to English.
   const changeLocale = useCallback(async (locale: Locale, explicit?: boolean) => {
-    const messages = (await LOADERS[locale]()).default;
-    localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    document.documentElement.lang = locale;
-    setState((previous) => ({ locale, messages, explicit: explicit ?? previous?.explicit ?? false }));
+    const loaded = await loadMessagesWithFallback(LOADERS, locale, hasMessages.current ? [] : ["en"]);
+    if (!loaded) {
+      if (!hasMessages.current) setLoadFailed(true);
+      return false;
+    }
+    hasMessages.current = true;
+    if (loaded.locale === locale) localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    document.documentElement.lang = loaded.locale;
+    setState((previous) => ({ locale: loaded.locale, messages: loaded.messages, explicit: explicit ?? previous?.explicit ?? false }));
+    return loaded.locale === locale;
   }, []);
 
   useEffect(() => {
@@ -52,6 +64,17 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     }
   }, [changeLocale]);
 
+  if (!state && loadFailed) {
+    // No messages at all, so this text cannot be translated.
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-3 p-6 text-center">
+        <p>The app could not be loaded. Check your connection and try again.</p>
+        <button type="button" className="rounded-md border px-4 py-2" onClick={() => window.location.reload()}>
+          Reload
+        </button>
+      </div>
+    );
+  }
   if (!state) {
     return (
       <div className="flex h-screen items-center justify-center">

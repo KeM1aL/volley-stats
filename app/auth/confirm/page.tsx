@@ -16,8 +16,9 @@ function ConfirmLink() {
   const t = useTranslations("auth.confirmLink");
   const params = useSearchParams();
   const router = useRouter();
-  const tokenHash = params.get("token_hash");
-  const type = params.get("type") as EmailOtpType | null;
+  // Read once: the credential is removed from the address bar below, and useSearchParams follows the address.
+  const [link] = useState(() => ({ tokenHash: params.get("token_hash"), type: params.get("type") as EmailOtpType | null, next: params.get("next") }));
+  const { tokenHash, type, next } = link;
   const invalidLink = !tokenHash || !type || !OTP_TYPES.includes(type);
   const [rejected, setRejected] = useState(false);
   const failed = invalidLink || rejected;
@@ -26,12 +27,21 @@ function ConfirmLink() {
   useEffect(() => {
     if (invalidLink || started.current || !tokenHash || !type) return; // verifyOtp consumes the token: run once
     started.current = true;
-    void supabase.auth.verifyOtp({ token_hash: tokenHash, type }).then(({ error }) => {
-      if (error) return setRejected(true);
-      const next = params.get("next");
-      router.replace(type === "recovery" ? "/auth/reset-password" : isSafeRedirectTarget(next) ? next : "/");
-    });
-  }, [invalidLink, tokenHash, type, params, router]);
+    // Keep the sign-in credential out of the address bar, the browser history and the analytics page view.
+    const url = new URL(window.location.href);
+    for (const name of ["token_hash", "type", "next"]) url.searchParams.delete(name);
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    supabase.auth
+      .verifyOtp({ token_hash: tokenHash, type })
+      .then(({ error }) => {
+        if (error) return setRejected(true);
+        router.replace(type === "recovery" ? "/auth/reset-password" : isSafeRedirectTarget(next) ? next : "/");
+      })
+      .catch((error) => {
+        console.error("Could not verify the email link:", error);
+        setRejected(true);
+      });
+  }, [invalidLink, tokenHash, type, next, router]);
 
   if (!failed) {
     return (

@@ -50,7 +50,8 @@
     "createSuccess": "{item} créé avec succès",
     "createError": "Échec de la création de {item}",
     "languageChanged": "Langue modifiée avec succès",
-    "languageChangeError": "Échec du changement de langue"
+    "languageChangeError": "Échec du changement de langue",
+    "languageNotSaved": "Langue changée sur cet appareil uniquement : elle n'a pas pu être enregistrée dans votre profil."
   },
   "messages": {
     "noData": "Aucune donnée disponible",

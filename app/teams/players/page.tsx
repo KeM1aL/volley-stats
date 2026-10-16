@@ -91,7 +91,7 @@ function PlayersPage({ id }: { id: string }) {
 function PlayersPageRoute() {
   const id = useRouteId();
   if (!id) notFound();
-  return <PlayersPage id={id} />;
+  return <PlayersPage key={id} id={id} />;
 }
 
 export default function Page() {

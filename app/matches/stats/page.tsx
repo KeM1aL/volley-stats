@@ -429,7 +429,7 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
 function MatchStatsPageRoute() {
   const matchId = useRouteId();
   if (!matchId) notFound();
-  return <MatchStatsPage matchId={matchId} />;
+  return <MatchStatsPage key={matchId} matchId={matchId} />;
 }
 
 export default function Page() {

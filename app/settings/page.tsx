@@ -746,7 +746,7 @@ export default function SettingsPage() {
 
       {session?.user?.email && session.user.id && (
         // Until the local database is open the unsent count is unknown: keep the button disabled.
-        <DeleteAccountCard email={session.user.email} userId={session.user.id} unsentChanges={db ? (unsentMatchData ?? 0) : 1} />
+        <DeleteAccountCard email={session.user.email} userId={session.user.id} unsentChanges={db ? (unsentMatchData ?? 1) : 1} />
       )}
     </div>
   );

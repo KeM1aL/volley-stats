@@ -130,7 +130,7 @@ export function DeleteAccountCard({ email, userId, unsentChanges }: DeleteAccoun
     } catch (removeError) {
       console.warn("Could not remove the local database:", removeError);
     }
-    window.location.assign(new URL("/auth?account-deleted=1&remove-database=true", window.location.origin).href);
+    window.location.assign(new URL("/auth?account-deleted=1", window.location.origin).href);
   };
 
   return (

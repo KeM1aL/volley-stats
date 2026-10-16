@@ -1123,7 +1123,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
 function LiveMatchPageRoute() {
   const matchId = useRouteId();
   if (!matchId) notFound();
-  return <LiveMatchPage matchId={matchId} />;
+  return <LiveMatchPage key={matchId} matchId={matchId} />;
 }
 
 export default function Page() {

@@ -117,7 +117,7 @@ describe('SyncManager', () => {
 
 ### E2E Tests (Playwright)
 
-Playwright projects ([playwright.config.ts](playwright.config.ts)): `setup` (sign-in), `seed` (API seeding), `core`, `live`, `finished-match`, `stats` (dependencies run automatically; `pnpm test:e2e:quick` runs `core` + `live`), and `tools` with `E2E_TOOLS=1`. Specs in [tests/e2e/](tests/e2e/): public access (`00`), teams, matches, championships (+ `03b` dialog with keyboard, `03c` date range and cursor), live match offline/reconnect (`04-live-offline.spec.ts`), settings (+ `05b` service worker must not cache Supabase), match stats (incl. logged-out access and PDF export), and team cleanup.
+Playwright projects ([playwright.config.ts](playwright.config.ts)): `setup` (sign-in), `seed` (API seeding), `core`, `live`, `finished-match`, `stats` (dependencies run automatically; `pnpm test:e2e:quick` runs `core` + `live`), and `tools` with `E2E_TOOLS=1`. Specs in [tests/e2e/](tests/e2e/): public access (`00`), teams, matches, championships (+ `03b` dialog with keyboard, `03c` date range and cursor), live match offline/reconnect (`04-live-offline.spec.ts`), settings (+ `05b` service worker must not cache Supabase), match stats (incl. logged-out access and PDF export), and team detail (`07-team-detail`).
 
 Route, auth and locale specs: `09-routes` (old URLs redirect, `?id=` pages), `10-auth-guard`, `11-auth-confirm` (`/auth/confirm` with `token_hash`), `12-locale`, `13-account-deletion`.
 

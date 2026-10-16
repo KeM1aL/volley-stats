@@ -83,6 +83,7 @@ Limitation: the mobile target leaves out every `.ts` file, because `proxy.ts` mu
 Environment variables (names only; values in `.env.local` or the host):
 - `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_WEB_ORIGIN`: the origin of the web deployment's API and of the web app. Required by `pnpm build:mobile` (the build fails without them); the web target does not need them. They are inlined in the bundle, so they must be public values.
 - `API_CORS_ORIGINS`: comma-separated origins allowed to call `/api/v1` from another origin (the static export). Web server only; see `lib/server/cors.ts`.
+- CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) reads four GitHub Actions *repository variables* (Settings, Secrets and variables, Actions, Variables; public values, no secret): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_WEB_ORIGIN`. Without them the web build fails at prerender (the Supabase config throws) and `build:mobile` fails.
 - `E2E_API_URL`: only for the export e2e suite; the web server that the export under test calls for `/api/v1`.
 
 Commands:

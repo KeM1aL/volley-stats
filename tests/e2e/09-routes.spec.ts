@@ -10,12 +10,11 @@ test('old URLs redirect to the query-param routes, keeping their query @web', as
   await expect(page).toHaveURL((url) => onPath('/teams/view')(url) && url.searchParams.get('id') === teamId);
   await page.goto('/teams/new');
   await expect(page).toHaveURL(onPath('/teams/new'));
-  if (completedMatchId) {
-    await page.goto(`/matches/${completedMatchId}/stats?team=${teamId}`);
-    await expect(page).toHaveURL(
-      (url) => onPath('/matches/stats')(url) && url.searchParams.get('id') === completedMatchId && url.searchParams.get('team') === teamId
-    );
-  }
+  expect(completedMatchId, 'the finished-match project must have written completedMatchId').toBeTruthy();
+  await page.goto(`/matches/${completedMatchId}/stats?team=${teamId}`);
+  await expect(page).toHaveURL(
+    (url) => onPath('/matches/stats')(url) && url.searchParams.get('id') === completedMatchId && url.searchParams.get('team') === teamId
+  );
 });
 
 test('a route without a valid id shows the not-found page', async ({ page }) => {

@@ -23,7 +23,7 @@
 - ✅ Row Level Security (RLS) in Supabase enforces authorization
 - ✅ Service role key only on server (never exposed to client)
 - ✅ Anon key for client (limited permissions)
-- ✅ Auth middleware for protected routes
+- ✅ Session refresh in `proxy.ts` (web only) plus a client-side route guard for protected routes (works in the static export too)
 - ✅ HTTPS enforced (via Supabase and Vercel)
 - ⚠️ Consider rate limiting for API calls
 - ⚠️ Add CSRF protection for mutations

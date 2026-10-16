@@ -414,7 +414,7 @@ function TeamDetailsPage({ id }: { id: string }) {
 function TeamDetailsPageRoute() {
   const id = useRouteId();
   if (!id) notFound();
-  return <TeamDetailsPage id={id} />;
+  return <TeamDetailsPage key={id} id={id} />;
 }
 
 export default function Page() {

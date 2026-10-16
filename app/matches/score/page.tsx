@@ -216,7 +216,7 @@ function LiveScorePage({ matchId }: { matchId: string }) {
 function LiveScorePageRoute() {
   const matchId = useRouteId();
   if (!matchId) notFound();
-  return <LiveScorePage matchId={matchId} />;
+  return <LiveScorePage key={matchId} matchId={matchId} />;
 }
 
 export default function Page() {

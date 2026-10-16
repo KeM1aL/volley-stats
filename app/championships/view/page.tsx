@@ -363,7 +363,7 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
 function ChampionshipDetailPageRoute() {
   const id = useRouteId();
   if (!id) notFound();
-  return <ChampionshipDetailPage id={id} />;
+  return <ChampionshipDetailPage key={id} id={id} />;
 }
 
 export default function Page() {
