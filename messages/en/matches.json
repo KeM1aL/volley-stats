@@ -269,6 +269,18 @@
       "none": "Every active team member is already in the roster.",
       "added": "{name} added to the roster",
       "addError": "Couldn't add the player. Please try again."
+    },
+    "left": {
+      "title": "This match couldn't be loaded on this device",
+      "reasons": {
+        "missingTeam": "The link doesn't say which team you score for. Open the match again from the match list.",
+        "notOnDevice": "It hasn't been downloaded to this device yet, and you're offline. Open it again once you're back online.",
+        "notDownloaded": "It couldn't be downloaded in time. Check your connection and open it again.",
+        "matchNotFound": "It no longer exists, or you don't have access to it.",
+        "dataMissing": "Its teams or match format are missing on this device. Check your connection and open it again.",
+        "teamNotInMatch": "The team in the link doesn't play in this match. Open the match again from the match list.",
+        "unknown": "Check your connection and open it again."
+      }
     }
   },
   "stats": {

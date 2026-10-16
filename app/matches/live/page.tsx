@@ -62,6 +62,7 @@ import { claimBecameHeld, claimFollowUp, offlineConfirmFollowUp } from "@/lib/rx
 import type { ClaimState } from "@/lib/rxdb/sync/tracked-matches";
 import { useRouteId } from "@/hooks/use-route-id";
 import { routes } from "@/lib/routes";
+import { LiveLoadError, liveLoadFailureReason, missingMatchReason } from "@/lib/matches/live-load-failure";
 import { LoadingPage } from "@/components/loading-page";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
@@ -168,8 +169,8 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
 
   /**
    * Loads the match from the local database (after syncing it). Returns whether it worked.
-   * On failure the page is left for the match list, unless `leaveOnFailure` is false: the caller
-   * (a refresh after a claim) then reports it and keeps scoring blocked.
+   * On failure the page is left for the match list with a toast that says why, unless `leaveOnFailure`
+   * is false: the caller (a refresh after a claim) then reports it and keeps scoring blocked.
    */
   const loadMatchData = useCallback(async ({ leaveOnFailure = true }: { leaveOnFailure?: boolean } = {}): Promise<boolean> => {
     if (!db) return false;
@@ -178,11 +179,14 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
       setIsLoading(true);
       const teamId = searchParams.get("team");
       if (!teamId) {
-        throw new Error(t("errors.selectTeam"));
+        throw new LiveLoadError("missingTeam");
       }
 
       setLoadingStep(0);
-      if (!navigator.onLine) {
+      // How the download went explains a match missing on this device.
+      const online = navigator.onLine;
+      let synced = false;
+      if (!online) {
         // Offline: the sync can't finish (it would only time out), so start it in
         // the background and open the match from local data. Replication resumes
         // when the connection is back.
@@ -193,7 +197,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
         });
       } else {
         try {
-          const synced = await db?.syncManager.syncMatch(matchId);
+          synced = await db.syncManager.syncMatch(matchId);
           if (synced) {
             toast({
               title: t("live.readyForOffline"),
@@ -230,7 +234,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
       ]);
 
       if (!matchDoc) {
-        throw new Error(t("live.matchNotFound"));
+        throw new LiveLoadError(missingMatchReason({ online, synced }));
       }
 
       const match = matchDoc.toMutableJSON() as Match;
@@ -238,7 +242,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
         .findOne(match.match_format_id)
         .exec();
       if (!formatDoc) {
-        throw new Error(t("live.loadingMatchFormat"));
+        throw new LiveLoadError("dataMissing");
       }
       const format = formatDoc.toMutableJSON();
       match.match_formats = format as MatchFormat;
@@ -249,12 +253,12 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
         .exec();
 
       if (!teamDocs || teamDocs.size !== 2) {
-        throw new Error(t("errors.teamsNotFound"));
+        throw new LiveLoadError("dataMissing");
       }
 
       const teams = Array.from(teamDocs.values()).map((doc) => doc.toJSON());
       if (teamId !== match.home_team_id && teamId !== match.away_team_id) {
-        throw new Error(t("errors.managedTeamNotFound"));
+        throw new LiveLoadError("teamNotInMatch");
       }
       setHomeTeam(teams[0]);
       setAwayTeam(teams[1]);
@@ -357,13 +361,13 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
     } catch (error) {
       console.error("Failed to load match data:", error);
       if (leaveOnFailure) {
+        // Never back to the list without a word: say why.
         toast({
           variant: "destructive",
-          title: t("live.failedLoadMatchData"),
-          description:
-            error instanceof Error ? error.message : t("live.failedLoadMatchData"),
+          title: t("live.left.title"),
+          description: t(`live.left.reasons.${liveLoadFailureReason(error)}`),
         });
-        router.push("/matches");
+        router.push(routes.matches());
       }
       return false;
     } finally {
@@ -1103,7 +1107,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
       <ScorerClaimDialog
         prompt={claimPrompt}
         busy={claimBusy}
-        onCancel={() => router.push("/matches")}
+        onCancel={() => router.push(routes.matches())}
         onConfirm={() => void handleClaimConfirm()}
       />
 

@@ -129,14 +129,14 @@ export const reducer = (state: State, action: Action): State => {
   }
 }
 
-const listeners: Array<(state: State) => void> = []
+const listeners: Array<() => void> = []
 
 let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
   listeners.forEach((listener) => {
-    listener(memoryState)
+    listener()
   })
 }
 
@@ -171,18 +171,22 @@ function toast({ ...props }: Toast) {
   }
 }
 
-function useToast() {
-  const [state, setState] = React.useState<State>(memoryState)
-
-  React.useEffect(() => {
-    listeners.push(setState)
-    return () => {
-      const index = listeners.indexOf(setState)
-      if (index > -1) {
-        listeners.splice(index, 1)
-      }
+function subscribe(listener: () => void): () => void {
+  listeners.push(listener)
+  return () => {
+    const index = listeners.indexOf(listener)
+    if (index > -1) {
+      listeners.splice(index, 1)
     }
-  }, [state])
+  }
+}
+
+const getSnapshot = () => memoryState
+
+function useToast() {
+  // An external store, not useState + an effect: a toast raised before this component subscribed
+  // (a sibling's effect running first, e.g. the live page leaving at once) would otherwise be missed.
+  const state = React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 
   return {
     ...state,

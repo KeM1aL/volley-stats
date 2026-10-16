@@ -269,6 +269,18 @@
       "none": "Todos os membros ativos da equipa já estão na escalação.",
       "added": "{name} adicionado à escalação",
       "addError": "Não foi possível adicionar o jogador. Tente novamente."
+    },
+    "left": {
+      "title": "Não foi possível carregar este jogo neste dispositivo",
+      "reasons": {
+        "missingTeam": "A ligação não indica a equipa para a qual regista. Abra o jogo novamente a partir da lista de jogos.",
+        "notOnDevice": "Ainda não foi transferido para este dispositivo e está offline. Abra-o novamente quando voltar a estar online.",
+        "notDownloaded": "Não foi possível transferi-lo a tempo. Verifique a ligação e abra-o novamente.",
+        "matchNotFound": "Já não existe, ou não tem acesso a ele.",
+        "dataMissing": "As equipas ou o formato do jogo estão em falta neste dispositivo. Verifique a ligação e abra-o novamente.",
+        "teamNotInMatch": "A equipa indicada na ligação não joga este jogo. Abra o jogo novamente a partir da lista de jogos.",
+        "unknown": "Verifique a ligação e abra-o novamente."
+      }
     }
   },
   "stats": {

@@ -269,6 +269,18 @@
       "none": "Tutti i membri attivi della squadra sono già in formazione.",
       "added": "{name} aggiunto alla formazione",
       "addError": "Impossibile aggiungere il giocatore. Riprova."
+    },
+    "left": {
+      "title": "Impossibile caricare questa partita su questo dispositivo",
+      "reasons": {
+        "missingTeam": "Il link non indica per quale squadra registri. Riapri la partita dall'elenco delle partite.",
+        "notOnDevice": "Non è ancora stata scaricata su questo dispositivo e sei offline. Riaprila quando torni online.",
+        "notDownloaded": "Non è stato possibile scaricarla in tempo. Controlla la connessione e riaprila.",
+        "matchNotFound": "Non esiste più, oppure non hai accesso.",
+        "dataMissing": "Le sue squadre o il formato della partita mancano su questo dispositivo. Controlla la connessione e riaprila.",
+        "teamNotInMatch": "La squadra indicata nel link non gioca questa partita. Riapri la partita dall'elenco delle partite.",
+        "unknown": "Controlla la connessione e riaprila."
+      }
     }
   },
   "stats": {

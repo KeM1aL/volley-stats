@@ -269,6 +269,18 @@
       "none": "Todos los miembros activos del equipo ya están en la alineación.",
       "added": "{name} añadido a la alineación",
       "addError": "No se pudo añadir al jugador. Inténtalo de nuevo."
+    },
+    "left": {
+      "title": "No se pudo cargar este partido en este dispositivo",
+      "reasons": {
+        "missingTeam": "El enlace no indica para qué equipo registras. Vuelve a abrir el partido desde la lista de partidos.",
+        "notOnDevice": "Todavía no se ha descargado en este dispositivo y estás sin conexión. Vuelve a abrirlo cuando recuperes la conexión.",
+        "notDownloaded": "No se pudo descargar a tiempo. Comprueba tu conexión y vuelve a abrirlo.",
+        "matchNotFound": "Ya no existe o no tienes acceso a él.",
+        "dataMissing": "Faltan sus equipos o su formato de partido en este dispositivo. Comprueba tu conexión y vuelve a abrirlo.",
+        "teamNotInMatch": "El equipo del enlace no juega este partido. Vuelve a abrir el partido desde la lista de partidos.",
+        "unknown": "Comprueba tu conexión y vuelve a abrirlo."
+      }
     }
   },
   "stats": {

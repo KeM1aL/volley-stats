@@ -269,6 +269,18 @@
       "none": "Tous les membres actifs de l'équipe sont déjà sur la feuille de match.",
       "added": "{name} ajouté à la feuille de match",
       "addError": "Impossible d'ajouter le joueur. Veuillez réessayer."
+    },
+    "left": {
+      "title": "Ce match n'a pas pu être chargé sur cet appareil",
+      "reasons": {
+        "missingTeam": "Le lien n'indique pas l'équipe dont vous tenez les statistiques. Rouvrez le match depuis la liste des matchs.",
+        "notOnDevice": "Il n'a pas encore été téléchargé sur cet appareil, et vous êtes hors ligne. Rouvrez-le une fois la connexion revenue.",
+        "notDownloaded": "Il n'a pas pu être téléchargé à temps. Vérifiez votre connexion et rouvrez-le.",
+        "matchNotFound": "Il n'existe plus, ou vous n'y avez pas accès.",
+        "dataMissing": "Ses équipes ou son format de match manquent sur cet appareil. Vérifiez votre connexion et rouvrez-le.",
+        "teamNotInMatch": "L'équipe indiquée dans le lien ne joue pas ce match. Rouvrez le match depuis la liste des matchs.",
+        "unknown": "Vérifiez votre connexion et rouvrez-le."
+      }
     }
   },
   "stats": {
