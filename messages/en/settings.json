@@ -104,5 +104,23 @@
   },
   "errors": {
     "generic": "Error"
+  },
+  "deleteAccount": {
+    "title": "Delete account",
+    "description": "Permanently delete your account. Matches and statistics stay with their teams.",
+    "button": "Delete account",
+    "unsentBlocked": "Wait until your changes are uploaded before deleting your account.",
+    "dialogTitle": "Delete your account?",
+    "deleted": "Deleted: your sign-in, your profile, your club and team memberships.",
+    "kept": "Kept: matches and statistics, and the teams you hand over.",
+    "teamsIntro": "You created these teams. Choose who takes each one over, or delete it.",
+    "choosePlaceholder": "Choose a new owner or delete the team",
+    "deleteTeam": "Delete the team",
+    "handOver": "Hand over to {name}",
+    "noCandidate": "No member of this team has an account to take it over.",
+    "confirmLabel": "Type your email to confirm",
+    "confirm": "Delete my account",
+    "cancel": "Cancel",
+    "failed": "Your account could not be deleted. Nothing was changed. Try again."
   }
 }

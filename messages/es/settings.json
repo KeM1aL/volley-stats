@@ -104,5 +104,23 @@
   },
   "errors": {
     "generic": "Error"
+  },
+  "deleteAccount": {
+    "title": "Eliminar cuenta",
+    "description": "Elimina tu cuenta de forma permanente. Los partidos y estadísticas se quedan en sus equipos.",
+    "button": "Eliminar cuenta",
+    "unsentBlocked": "Espera a que se envíen tus cambios antes de eliminar tu cuenta.",
+    "dialogTitle": "¿Eliminar tu cuenta?",
+    "deleted": "Se elimina: tu acceso, tu perfil, tus membresías de clubes y equipos.",
+    "kept": "Se conserva: los partidos y estadísticas, y los equipos que cedes.",
+    "teamsIntro": "Creaste estos equipos. Elige quién se encarga de cada uno, o elimínalo.",
+    "choosePlaceholder": "Elige un nuevo propietario o elimina el equipo",
+    "deleteTeam": "Eliminar el equipo",
+    "handOver": "Ceder a {name}",
+    "noCandidate": "Ningún miembro de este equipo tiene cuenta para hacerse cargo.",
+    "confirmLabel": "Escribe tu correo para confirmar",
+    "confirm": "Eliminar mi cuenta",
+    "cancel": "Cancelar",
+    "failed": "No se pudo eliminar tu cuenta. No se cambió nada. Inténtalo de nuevo."
   }
 }

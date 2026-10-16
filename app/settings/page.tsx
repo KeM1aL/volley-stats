@@ -49,6 +49,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import * as z from "zod";
 import { FavoritesSection } from "@/components/settings/favorites-section";
+import { DeleteAccountCard } from "@/components/settings/delete-account-card";
 import { useAppLocale } from "@/hooks/use-app-locale";
 import type { Locale } from "@/lib/i18n/config";
 import { useTranslations } from "next-intl";
@@ -741,6 +742,11 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {session?.user?.email && session.user.id && (
+        // Until the local database is open the unsent count is unknown: keep the button disabled.
+        <DeleteAccountCard email={session.user.email} userId={session.user.id} unsentChanges={db ? (unsentMatchData ?? 0) : 1} />
       )}
     </div>
   );

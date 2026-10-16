@@ -2,6 +2,7 @@
 
 import { AuthForm } from "@/components/auth/auth-form";
 import { LoadingPage } from "@/components/loading-page";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { isSafeRedirectTarget, routes } from "@/lib/routes";
@@ -22,6 +23,11 @@ function AuthPage() {
 
   return (
     <div className="container max-w-md mx-auto mt-8 sm:mt-12 md:mt-20 px-4">
+      {searchParams.get("account-deleted") === "1" && (
+        <Alert className="mb-4" data-testid="account-deleted">
+          <AlertDescription>{t("accountDeleted")}</AlertDescription>
+        </Alert>
+      )}
       <Card>
         <CardHeader className="px-4 sm:px-6">
           <CardTitle className="text-xl sm:text-2xl text-center">

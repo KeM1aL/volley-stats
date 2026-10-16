@@ -104,5 +104,23 @@
   },
   "errors": {
     "generic": "Erro"
+  },
+  "deleteAccount": {
+    "title": "Eliminar conta",
+    "description": "Elimina a sua conta de forma permanente. Jogos e estatísticas ficam nas suas equipas.",
+    "button": "Eliminar conta",
+    "unsentBlocked": "Aguarde até as suas alterações serem enviadas antes de eliminar a conta.",
+    "dialogTitle": "Eliminar a sua conta?",
+    "deleted": "Eliminado: o seu acesso, o seu perfil, as suas associações a clubes e equipas.",
+    "kept": "Mantido: os jogos e estatísticas, e as equipas que entrega.",
+    "teamsIntro": "Criou estas equipas. Escolha quem assume cada uma, ou elimine-a.",
+    "choosePlaceholder": "Escolha um novo proprietário ou elimine a equipa",
+    "deleteTeam": "Eliminar a equipa",
+    "handOver": "Entregar a {name}",
+    "noCandidate": "Nenhum membro desta equipa tem conta para a assumir.",
+    "confirmLabel": "Escreva o seu e-mail para confirmar",
+    "confirm": "Eliminar a minha conta",
+    "cancel": "Cancelar",
+    "failed": "Não foi possível eliminar a conta. Nada foi alterado. Tente novamente."
   }
 }
