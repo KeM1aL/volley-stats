@@ -141,6 +141,34 @@ describe("discarding the changes the server refused", () => {
     expect(d.manager.isTracking(matchId)).toBe(true);
   });
 
+  it("keeps an edit that lands while the refused entries are re-read (a status read answering from before the edit)", async () => {
+    const { server, matchId, d, set } = await refusedSetUpdate();
+    // The status read answers as of before the edit (as RxDB's document cache can for a few ms across
+    // tabs), and the edit (pending mark, then the row write) completes right after it.
+    const withStatus = d.pending.withStatus.bind(d.pending);
+    let edited = false;
+    const spy = vi.spyOn(d.pending, "withStatus").mockImplementation(async (...args) => {
+      const stale = await withStatus(...args);
+      if (!edited) {
+        edited = true;
+        await d.db.sets.findOne(set.id).update({ $set: { home_score: 9 } });
+      }
+      return stale;
+    });
+    try {
+      expect(await d.manager.discardRejected()).toBe(0);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(edited).toBe(true);
+    expect((await d.db.sets.findOne(set.id).exec())?.home_score).toBe(9);
+    expect(await d.pending.get("sets", set.id)).toMatchObject({ status: "pending" });
+    // The edit uploads once the server accepts it.
+    server.allowWrites("sets");
+    await d.settle(matchId);
+    expect(server.row("sets", set.id)!.home_score).toBe(9);
+  });
+
   it("gives up on a server read that hangs: nothing changes and the match replicates again", async () => {
     const { server, matchId, d, set } = await refusedSetUpdate({ discardTimeoutMs: 300 });
     server.hang("sets", (query) => query.op === "select" && query.ids().length > 0);

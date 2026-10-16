@@ -1,4 +1,4 @@
-import { toTypedRxJsonSchema, type RxCollection, type RxDatabase, type RxDocument, type RxDocumentData } from "rxdb";
+import { toTypedRxJsonSchema, type RxCollection, type RxDatabase, type RxDocumentData } from "rxdb";
 import { filter, firstValueFrom, map, of, timeout, type Observable } from "rxjs";
 import type { ClassifiedError } from "./errors";
 import { isoToMicros } from "./timestamps";
@@ -305,20 +305,29 @@ export class PendingChanges {
   }
 
   /**
-   * The entries among these ids that still have this status, as read now. Their revision guards
-   * removeUnchanged: a rejected row edited meanwhile turns its entry pending.
+   * The entries among these ids that have this status, read from storage (not RxDB's document cache,
+   * which can lag behind another tab's write). Their revision guards removeUnchanged: a rejected row
+   * edited meanwhile turns its entry pending.
    */
-  async withStatus(ids: string[], status: PendingStatus): Promise<RxDocument<PendingChange>[]> {
+  async withStatus(ids: string[], status: PendingStatus): Promise<RxDocumentData<PendingChange>[]> {
     if (ids.length === 0) return [];
-    const found = await this.collection.findByIds(ids).exec();
-    return [...found.values()].filter((doc) => doc.status === status);
+    const stored = await this.collection.storageInstance.findDocumentsById(ids, false);
+    return stored.filter((entry) => entry.status === status);
   }
 
-  /** Deletes these entries unless they changed since they were read (bulkRemove checks the revision). Returns the ids removed. */
-  async removeUnchanged(entries: RxDocument<PendingChange>[]): Promise<Set<string>> {
+  /**
+   * Deletes these entries unless they changed since they were read (the write is checked against the
+   * revision read). Returns the ids removed.
+   */
+  async removeUnchanged(entries: RxDocumentData<PendingChange>[]): Promise<Set<string>> {
     if (entries.length === 0) return new Set();
-    const { success } = await this.collection.bulkRemove(entries);
-    return new Set(success.map((doc) => doc.id));
+    // The wrapped storage instance sets `_rev` and `_meta.lwt`; the collection sees the removal (counts update).
+    const result = await this.collection.storageInstance.bulkWrite(
+      entries.map((previous) => ({ previous, document: { ...previous, _deleted: true } })),
+      "sync-discard-entries"
+    );
+    const failed = new Set(result.error.map((error) => error.documentId));
+    return new Set(entries.map((entry) => entry.id).filter((id) => !failed.has(id)));
   }
 
   count(filter: PendingFilter = {}): Promise<number> {

@@ -44,8 +44,9 @@ export interface DiscardPlan {
 
 interface TablePlan {
   table: MatchCollectionName;
-  /** The entries listed when the plan was made. */
+  /** The entries listed when the plan was made, and their rows. */
   entryIds: string[];
+  docIds: string[];
   serverDocs: Map<string, WithDeleted<any>>;
 }
 
@@ -117,7 +118,7 @@ async function planTable(
   const collection = db[table] as unknown as RxCollection<any>;
   const ids = tableEntries.map((entry) => entry.doc_id);
   const serverDocs = await fetchServerDocs(client, collection, table, ids, deviceId, signal);
-  return { table, entryIds: tableEntries.map((entry) => entry.id), serverDocs };
+  return { table, entryIds: tableEntries.map((entry) => entry.id), docIds: ids, serverDocs };
 }
 
 /**
@@ -130,26 +131,36 @@ async function planTable(
  * replication neither re-inserts a discarded row nor pushes its removal. The replications of the
  * match must be stopped while this runs (a lost claim, or SyncManager.discardRejected stops them).
  *
- * The entries are read again here, after the server was: a refused row edited meanwhile has a
- * pending entry, and its edit must survive. A row written between that read and this write is left
- * as it is (the write conflicts), and an entry changed after it was read isn't deleted.
+ * An edit made to a refused row while this runs must survive. The local rows are read first, then
+ * the entries' status straight from storage, and only rows whose entry still has the status are
+ * written, against the rows read first. The pending hook marks an entry before its row is written,
+ * so an edit is either visible as a pending entry here (its row is left alone), or its row write
+ * comes after the local read and the aligned write conflicts (409: left as it is). An entry changed
+ * after it was read isn't deleted. Rows and entries are separate collections, so this narrows the
+ * window rather than making the pair atomic: it relies on the hook's mark-then-write order.
  */
 async function applyTablePlan(
   db: LocalDatabase,
   pending: PendingChanges,
   matchId: string,
   status: DiscardStatus,
-  { table, entryIds, serverDocs }: TablePlan
+  { table, entryIds, docIds, serverDocs }: TablePlan
 ): Promise<number> {
+  const collection = db[table] as unknown as RxCollection<any>;
+  const primaryPath = collection.schema.primaryPath as string;
+  // Rows first, statuses second (see above).
+  const local = new Map(
+    (await collection.storageInstance.findDocumentsById(docIds, true)).map((doc) => [doc[primaryPath] as string, doc])
+  );
   const current = await pending.withStatus(entryIds, status);
   if (current.length === 0) return 0;
-  const collection = db[table] as unknown as RxCollection<any>;
   const aligned = await alignRows(
     db,
     collection,
     matchReplicationIdentifier(table, matchId),
     current.map((entry) => entry.doc_id),
-    serverDocs
+    serverDocs,
+    local
   );
   const removed = await pending.removeUnchanged(current.filter((entry) => aligned.has(entry.doc_id)));
   return removed.size;
@@ -187,18 +198,18 @@ function toDocState(doc: RxDocumentData<any>): WithDeleted<any> {
   return state as WithDeleted<any>;
 }
 
-/** Returns the ids aligned: a row written since it was read here (a conflict) is left as it is. */
+/**
+ * Writes these rows against `local` (the rows as read before). Returns the ids aligned: a row written
+ * since it was read (a conflict) is left as it is.
+ */
 async function alignRows(
   db: LocalDatabase,
   collection: RxCollection<any>,
   replicationIdentifier: string,
   ids: string[],
-  serverDocs: Map<string, WithDeleted<any>>
+  serverDocs: Map<string, WithDeleted<any>>,
+  local: Map<string, RxDocumentData<any>>
 ): Promise<Set<string>> {
-  const primaryPath = collection.schema.primaryPath as string;
-  const local = new Map(
-    (await collection.storageInstance.findDocumentsById(ids, true)).map((doc) => [doc[primaryPath] as string, doc])
-  );
   const forkWrites: BulkWriteRow<any>[] = [];
   // Every id: its final state, or null when the row is nowhere (nothing to align, its entry can go).
   const finalStates = new Map<string, WithDeleted<any> | null>();
