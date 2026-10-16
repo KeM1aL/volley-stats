@@ -127,6 +127,7 @@
     "discardTitle": "¿Descartar los cambios rechazados?",
     "discardBody": "Estos cambios solo están en este dispositivo y se eliminarán. Después, el dispositivo mostrará los partidos tal como están en el servidor.",
     "discardConfirm": "Descartarlos",
-    "discardFailed": "No se pudieron descartar los cambios. Comprueba tu conexión e inténtalo de nuevo."
+    "discardFailed": "No se pudieron descartar los cambios. Comprueba tu conexión e inténtalo de nuevo.",
+    "discardOtherTab": "La aplicación está abierta en otra pestaña. Cierra las demás pestañas de la aplicación e inténtalo de nuevo."
   }
 }

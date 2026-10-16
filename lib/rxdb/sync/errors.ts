@@ -67,3 +67,15 @@ export function classifyPushError(error: PostgrestLikeError, status: number): Cl
 export function countsTowardsAttemptLimit(code: SyncErrorCode): boolean {
   return code === "parent_missing" || code === "unknown";
 }
+
+/**
+ * Discarding refused changes (SyncManager.discardRejected) couldn't run, nothing was changed:
+ * `other-tab` another tab of the app replicates the matches and didn't hand over in time;
+ * `timeout` the server's version of the rows couldn't be read in time.
+ */
+export class DiscardBlockedError extends Error {
+  constructor(readonly reason: "other-tab" | "timeout") {
+    super(reason === "other-tab" ? "another tab replicates the matches" : "the server could not be read in time");
+    this.name = "DiscardBlockedError";
+  }
+}

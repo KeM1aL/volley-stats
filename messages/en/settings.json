@@ -127,6 +127,7 @@
     "discardTitle": "Discard the refused changes?",
     "discardBody": "These changes exist only on this device and will be dropped. This device will then show the matches as they are on the server.",
     "discardConfirm": "Discard them",
-    "discardFailed": "The changes could not be discarded. Check your connection and try again."
+    "discardFailed": "The changes could not be discarded. Check your connection and try again.",
+    "discardOtherTab": "The app is open in another tab. Close the app's other tabs, then try again."
   }
 }

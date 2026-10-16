@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LAST_LIVE_MATCH_KEY } from "@/components/providers/leave-guard-provider";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { normalizePath, requiresConnection } from "@/lib/routes";
+import { supabaseConfig } from "@/lib/platform/supabase-config";
 
 function readLastLiveMatch(): string | null {
   try {
@@ -27,7 +28,7 @@ function readLastLiveMatch(): string | null {
 export function OfflineGate({ children }: { children: ReactNode }) {
   const path = normalizePath(usePathname() ?? "/");
   const { isOnline } = useOnlineStatus();
-  // Retry re-reads navigator.onLine (a missed `online` event must not keep the screen gated).
+  // Retry re-reads navigator.onLine (a missed `online` event must not keep the screen gated), then probes the server.
   const [, recheck] = useReducer((count: number) => count + 1, 0);
   // Rendered in the browser only (LocaleProvider renders after mount). navigator.onLine is the truth,
   // also before useOnlineStatus's first effect, so a page opened offline never mounts; the hook
@@ -40,14 +41,47 @@ export function OfflineGate({ children }: { children: ReactNode }) {
   else if (gate.gated && online) setGate({ path, gated: false });
   const gated = gate.path === path ? gate.gated && !online : opensGated;
 
+  const retry = async () => {
+    recheck();
+    if (navigator.onLine) return;
+    // navigator.onLine can stay false while the device is online (some Android WebViews): ask the server.
+    if (await probeConnection()) setGate((current) => (current.path === path ? { path, gated: false } : current));
+  };
+
   if (!gated) return <>{children}</>;
-  return <OfflineScreen onRetry={recheck} />;
+  return <OfflineScreen onRetry={retry} />;
 }
 
-function OfflineScreen({ onRetry }: { onRetry: () => void }) {
+const PROBE_TIMEOUT_MS = 5_000;
+
+/** Whether Supabase answers (its auth health endpoint), within PROBE_TIMEOUT_MS. */
+async function probeConnection(): Promise<boolean> {
+  try {
+    const { url, anonKey } = supabaseConfig();
+    const response = await fetch(`${url}/auth/v1/health`, {
+      headers: { apikey: anonKey },
+      cache: "no-store",
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+function OfflineScreen({ onRetry }: { onRetry: () => Promise<void> }) {
   const t = useTranslations("common.offline");
   const router = useRouter();
   const lastLiveMatch = readLastLiveMatch();
+  const [checking, setChecking] = useState(false);
+  const retry = async () => {
+    setChecking(true);
+    try {
+      await onRetry();
+    } finally {
+      setChecking(false);
+    }
+  };
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center p-6">
@@ -66,7 +100,7 @@ function OfflineScreen({ onRetry }: { onRetry: () => void }) {
               {t("goBack")}
             </Button>
           )}
-          <Button type="button" variant="outline" onClick={onRetry}>
+          <Button type="button" variant="outline" disabled={checking} onClick={() => void retry()}>
             {t("retry")}
           </Button>
         </div>

@@ -5,7 +5,7 @@
  * Web: a screen the router already holds renders the in-app OfflineGate; one it must fetch falls back to a
  * full load and the service worker's public/offline.html (which reloads once online). Static export
  * (E2E_TARGET=mobile): offline as in the Capacitor app, the app's files still load, so both screens
- * render the in-app OfflineGate.
+ * render the in-app OfflineGate. Retry also asks the server, for a browser that wrongly says offline.
  */
 
 import { test, expect, Page } from '@playwright/test';
@@ -72,5 +72,24 @@ test('a team page opened offline shows the offline screen, then loads once onlin
 
   await goOnline(page);
   await expect(page.getByTestId('offline-page')).toBeHidden({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: teamName })).toBeVisible({ timeout: 15_000 });
+});
+
+test('Retry opens the screen when the browser wrongly says offline but the server answers', async ({ page }) => {
+  const { teamName } = readFixture();
+  await page.goto('/teams');
+  await page.getByRole('button', { name: 'New Team' }).waitFor({ state: 'visible', timeout: 30_000 });
+  await searchTeam(page, teamName);
+  // Some Android WebViews keep navigator.onLine false while online: the network still works here.
+  await page.evaluate(() => {
+    Object.defineProperty(Navigator.prototype, 'onLine', { configurable: true, get: () => false });
+    window.dispatchEvent(new Event('offline'));
+  });
+  await page.getByRole('row').filter({ hasText: teamName }).getByRole('button').nth(0).click();
+  await page.waitForURL(onPath('/teams/view'), { timeout: 15_000 });
+  const offline = page.getByTestId('offline-page');
+  await expect(offline).toBeVisible({ timeout: 15_000 });
+  await offline.getByRole('button', { name: 'Retry' }).click();
+  await expect(offline).toBeHidden({ timeout: 15_000 });
   await expect(page.getByRole('heading', { name: teamName })).toBeVisible({ timeout: 15_000 });
 });

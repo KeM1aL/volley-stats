@@ -127,6 +127,7 @@
     "discardTitle": "Abandonner les modifications refusées ?",
     "discardBody": "Ces modifications n'existent que sur cet appareil et seront supprimées. L'appareil affichera ensuite les matchs tels qu'ils sont sur le serveur.",
     "discardConfirm": "Les abandonner",
-    "discardFailed": "Les modifications n'ont pas pu être abandonnées. Vérifiez votre connexion et réessayez."
+    "discardFailed": "Les modifications n'ont pas pu être abandonnées. Vérifiez votre connexion et réessayez.",
+    "discardOtherTab": "L'application est ouverte dans un autre onglet. Fermez les autres onglets de l'application, puis réessayez."
   }
 }

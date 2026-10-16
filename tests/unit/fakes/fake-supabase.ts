@@ -105,6 +105,7 @@ export class FakeQuery implements PromiseLike<FakeResponse> {
   returnRows = false;
   headers: Record<string, string> = {};
   private idFilters: string[] = [];
+  private signal: AbortSignal | undefined;
 
   constructor(
     private readonly server: FakeSupabaseServer,
@@ -162,6 +163,11 @@ export class FakeQuery implements PromiseLike<FakeResponse> {
     this.headers[name.toLowerCase()] = value;
     return this;
   }
+  /** Like postgrest-js: once the signal aborts, the request answers with an AbortError (status 0). */
+  abortSignal(signal: AbortSignal): this {
+    this.signal = signal;
+    return this;
+  }
   ids(): string[] {
     return this.payload?.id ? [String(this.payload.id)] : this.idFilters;
   }
@@ -169,7 +175,15 @@ export class FakeQuery implements PromiseLike<FakeResponse> {
     onfulfilled?: ((value: FakeResponse) => A | PromiseLike<A>) | null,
     onrejected?: ((reason: unknown) => B | PromiseLike<B>) | null
   ): PromiseLike<A | B> {
-    return this.server.delay(this.table, this).then(() => this.server.execute(this)).then(onfulfilled, onrejected);
+    const run = this.server.delay(this.table, this).then(() => this.server.execute(this));
+    const signal = this.signal;
+    if (!signal) return run.then(onfulfilled, onrejected);
+    const aborted = new Promise<FakeResponse>((resolve) => {
+      const answer = () => resolve(fail(0, "", "AbortError: This operation was aborted"));
+      if (signal.aborted) answer();
+      else signal.addEventListener("abort", answer, { once: true });
+    });
+    return Promise.race([run, aborted]).then(onfulfilled, onrejected);
   }
 }
 

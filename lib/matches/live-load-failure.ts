@@ -1,6 +1,6 @@
 /**
  * Why the live page couldn't load a match. The page then leaves for the match list and says why
- * (`matches.live.leftReasons.<reason>`), so the user never lands on the list without a reason.
+ * (`matches.live.left.reasons.<reason>`), so the user never lands on the list without a reason.
  */
 export type LiveLoadFailureReason =
   /** The URL has no ?team= (the team this device scores for). */

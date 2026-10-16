@@ -30,6 +30,7 @@ import {
   type TeamToDecide,
 } from "@/lib/auth/delete-account";
 import type { UnsentBreakdown } from "@/hooks/use-unsent-guard";
+import { DiscardBlockedError } from "@/lib/rxdb/sync/errors";
 
 const DELETE = "delete";
 
@@ -54,7 +55,8 @@ export function DeleteAccountCard({ email, userId, unsentChanges, onDiscardRejec
   const [failed, setFailed] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [discarding, setDiscarding] = useState(false);
-  const [discardFailed, setDiscardFailed] = useState(false);
+  // Why the last discard failed: another tab leads, or anything else (connection).
+  const [discardFailed, setDiscardFailed] = useState<"other-tab" | "failed" | null>(null);
 
   // Unknown, pending or refused changes all block. Pending ones upload by themselves; refused ones
   // never will, so only those can be discarded, and only once nothing is pending.
@@ -98,13 +100,13 @@ export function DeleteAccountCard({ email, userId, unsentChanges, onDiscardRejec
 
   const discardRejected = async () => {
     setDiscarding(true);
-    setDiscardFailed(false);
+    setDiscardFailed(null);
     try {
       await onDiscardRejected();
       setDiscardOpen(false);
     } catch (error) {
       console.error("Could not discard the refused changes:", error);
-      setDiscardFailed(true);
+      setDiscardFailed(error instanceof DiscardBlockedError && error.reason === "other-tab" ? "other-tab" : "failed");
     } finally {
       setDiscarding(false);
     }
@@ -178,7 +180,7 @@ export function DeleteAccountCard({ email, userId, unsentChanges, onDiscardRejec
                 size="sm"
                 className="mt-2"
                 onClick={() => {
-                  setDiscardFailed(false);
+                  setDiscardFailed(null);
                   setDiscardOpen(true);
                 }}
                 data-testid="discard-rejected-button"
@@ -286,7 +288,7 @@ export function DeleteAccountCard({ email, userId, unsentChanges, onDiscardRejec
           </AlertDialogHeader>
           {discardFailed && (
             <p className="text-sm text-destructive" data-testid="discard-rejected-error">
-              {t("discardFailed")}
+              {discardFailed === "other-tab" ? t("discardOtherTab") : t("discardFailed")}
             </p>
           )}
           <AlertDialogFooter>

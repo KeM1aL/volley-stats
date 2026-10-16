@@ -33,28 +33,96 @@ export interface DiscardChangesOptions {
   shouldStop?: () => boolean;
 }
 
+type DiscardStatus = Exclude<PendingStatus, "pending">;
+
+/** What discarding a match's changes of one status will write: the server's version of each row, read beforehand. */
+export interface DiscardPlan {
+  matchId: string;
+  status: DiscardStatus;
+  tables: TablePlan[];
+}
+
+interface TablePlan {
+  table: MatchCollectionName;
+  /** The entries listed when the plan was made. */
+  entryIds: string[];
+  serverDocs: Map<string, WithDeleted<any>>;
+}
+
 /**
  * Taking scoring back (controller ruling for N1): this device's superseded changes to the match
  * (rows it recorded but never uploaded before another device took over) are discarded, so that the
- * device shows the match as the server has it. See discardChanges.
+ * device shows the match as the server has it. Table by table: read the server, then write
+ * (see applyTablePlan). Throws if the server can't be read; tables done before stay done.
  */
-export function discardSupersededChanges(options: DiscardChangesOptions): Promise<number> {
-  return discardChanges(options, "superseded");
+export async function discardSupersededChanges({
+  db,
+  client,
+  pending,
+  deviceId,
+  matchId,
+  shouldStop,
+}: DiscardChangesOptions): Promise<number> {
+  const entries = await pending.list({ matchId, statuses: ["superseded"] });
+  let discarded = 0;
+  for (const table of MATCH_COLLECTIONS) {
+    if (shouldStop?.()) return discarded;
+    const tablePlan = await planTable(db, client, deviceId, table, entries);
+    if (!tablePlan) continue;
+    if (shouldStop?.()) return discarded;
+    discarded += await applyTablePlan(db, pending, matchId, "superseded", tablePlan);
+  }
+  return discarded;
 }
 
 /**
- * The server refused these changes (rejected: RLS, invalid data, ...), so they will never upload:
- * they are discarded the same way, and the device shows the server's version of those rows.
- * Pending changes are left alone. See discardChanges.
+ * The server refused these changes (rejected: RLS, invalid data, ...), so they will never upload.
+ * First half of discarding them: reads the server's version of each refused row of the match.
+ * Changes nothing locally; throws if the server can't be read or `signal` aborts.
  */
-export function discardRejectedChanges(options: DiscardChangesOptions): Promise<number> {
-  return discardChanges(options, "rejected");
+export async function planRejectedDiscard(
+  { db, client, pending, deviceId, matchId }: Omit<DiscardChangesOptions, "shouldStop">,
+  signal?: AbortSignal
+): Promise<DiscardPlan> {
+  const entries = await pending.list({ matchId, statuses: ["rejected"] });
+  const tables: TablePlan[] = [];
+  for (const table of MATCH_COLLECTIONS) {
+    const tablePlan = await planTable(db, client, deviceId, table, entries, signal);
+    if (tablePlan) tables.push(tablePlan);
+  }
+  return { matchId, status: "rejected", tables };
 }
 
 /**
- * Discards this device's changes to the match that have this status: each row is replaced by the
- * server's version, or removed locally when the server doesn't have it; then the entries are deleted.
- * Returns how many entries were deleted.
+ * Second half, local only: writes the planned server versions and deletes the entries, as a
+ * take-back does. An entry that changed since it was listed (its row was edited, so it is pending
+ * again) or is gone keeps its row as it is. Returns how many entries were deleted.
+ */
+export async function applyDiscardPlan(db: LocalDatabase, pending: PendingChanges, plan: DiscardPlan): Promise<number> {
+  let discarded = 0;
+  for (const tablePlan of plan.tables) discarded += await applyTablePlan(db, pending, plan.matchId, plan.status, tablePlan);
+  return discarded;
+}
+
+async function planTable(
+  db: LocalDatabase,
+  client: SupabaseClient<any>,
+  deviceId: string,
+  table: MatchCollectionName,
+  entries: PendingChange[],
+  signal?: AbortSignal
+): Promise<TablePlan | null> {
+  const tableEntries = entries.filter((entry) => entry.table_name === table);
+  if (tableEntries.length === 0) return null;
+  const collection = db[table] as unknown as RxCollection<any>;
+  const ids = tableEntries.map((entry) => entry.doc_id);
+  const serverDocs = await fetchServerDocs(client, collection, table, ids, deviceId, signal);
+  return { table, entryIds: tableEntries.map((entry) => entry.id), serverDocs };
+}
+
+/**
+ * Each row whose entry still has the status is replaced by the server's version, or removed locally
+ * when the server doesn't have it; then those entries are deleted.
  *
  * Nothing of this may reach the server. The rows are written through the storage instance (no
  * hooks, so no pending entry), and the match's replication meta is set to the same state: RxDB's
@@ -62,27 +130,29 @@ export function discardRejectedChanges(options: DiscardChangesOptions): Promise<
  * replication neither re-inserts a discarded row nor pushes its removal. The replications of the
  * match must be stopped while this runs (a lost claim, or SyncManager.discardRejected stops them).
  *
- * Throws if the server can't be read; nothing local is changed for a table whose rows couldn't be fetched.
+ * The entries are read again here, after the server was: a refused row edited meanwhile has a
+ * pending entry, and its edit must survive. A row written between that read and this write is left
+ * as it is (the write conflicts), and an entry changed after it was read isn't deleted.
  */
-async function discardChanges(
-  { db, client, pending, deviceId, matchId, shouldStop }: DiscardChangesOptions,
-  status: Exclude<PendingStatus, "pending">
+async function applyTablePlan(
+  db: LocalDatabase,
+  pending: PendingChanges,
+  matchId: string,
+  status: DiscardStatus,
+  { table, entryIds, serverDocs }: TablePlan
 ): Promise<number> {
-  const entries = await pending.list({ matchId, statuses: [status] });
-  let discarded = 0;
-  for (const table of MATCH_COLLECTIONS) {
-    if (shouldStop?.()) return discarded;
-    const tableEntries = entries.filter((entry) => entry.table_name === table);
-    if (tableEntries.length === 0) continue;
-    const collection = db[table] as unknown as RxCollection<any>;
-    const ids = tableEntries.map((entry) => entry.doc_id);
-    const serverDocs = await fetchServerDocs(client, collection, table, ids, deviceId);
-    if (shouldStop?.()) return discarded;
-    await alignRows(db, collection, matchReplicationIdentifier(table, matchId), ids, serverDocs);
-    await pending.removeEntries(tableEntries.map((entry: PendingChange) => entry.id));
-    discarded += tableEntries.length;
-  }
-  return discarded;
+  const current = await pending.withStatus(entryIds, status);
+  if (current.length === 0) return 0;
+  const collection = db[table] as unknown as RxCollection<any>;
+  const aligned = await alignRows(
+    db,
+    collection,
+    matchReplicationIdentifier(table, matchId),
+    current.map((entry) => entry.doc_id),
+    serverDocs
+  );
+  const removed = await pending.removeUnchanged(current.filter((entry) => aligned.has(entry.doc_id)));
+  return removed.size;
 }
 
 async function fetchServerDocs(
@@ -90,19 +160,24 @@ async function fetchServerDocs(
   collection: RxCollection<any>,
   table: MatchCollectionName,
   ids: string[],
-  deviceId: string
+  deviceId: string,
+  signal?: AbortSignal
 ): Promise<Map<string, WithDeleted<any>>> {
   const properties = collection.schema.jsonSchema.properties as Record<string, unknown>;
   const docs = new Map<string, WithDeleted<any>>();
   for (let start = 0; start < ids.length; start += FETCH_CHUNK) {
+    signal?.throwIfAborted();
     const chunk = ids.slice(start, start + FETCH_CHUNK);
-    const { data, error } = await client.from(table).select("*").in("id", chunk).setHeader("x-device-id", deviceId);
+    let query = client.from(table).select("*").in("id", chunk).setHeader("x-device-id", deviceId);
+    if (signal) query = query.abortSignal(signal);
+    const { data, error } = await query;
     if (error) throw error;
     for (const row of (data ?? []) as Record<string, unknown>[]) {
       // Same shape as a pulled row (replication.ts rowToDoc).
       docs.set(String(row.id), { ...pickSchemaFields(row, properties), _deleted: !!row._deleted } as WithDeleted<any>);
     }
   }
+  signal?.throwIfAborted();
   return docs;
 }
 
@@ -112,18 +187,21 @@ function toDocState(doc: RxDocumentData<any>): WithDeleted<any> {
   return state as WithDeleted<any>;
 }
 
+/** Returns the ids aligned: a row written since it was read here (a conflict) is left as it is. */
 async function alignRows(
   db: LocalDatabase,
   collection: RxCollection<any>,
   replicationIdentifier: string,
   ids: string[],
   serverDocs: Map<string, WithDeleted<any>>
-): Promise<void> {
+): Promise<Set<string>> {
+  const primaryPath = collection.schema.primaryPath as string;
   const local = new Map(
-    (await collection.storageInstance.findDocumentsById(ids, true)).map((doc) => [doc[collection.schema.primaryPath], doc])
+    (await collection.storageInstance.findDocumentsById(ids, true)).map((doc) => [doc[primaryPath] as string, doc])
   );
   const forkWrites: BulkWriteRow<any>[] = [];
-  const finalStates: WithDeleted<any>[] = [];
+  // Every id: its final state, or null when the row is nowhere (nothing to align, its entry can go).
+  const finalStates = new Map<string, WithDeleted<any> | null>();
   for (const id of ids) {
     const previous = local.get(id);
     const server = serverDocs.get(id);
@@ -132,19 +210,26 @@ async function alignRows(
         previous,
         document: { ...server, _attachments: {}, _meta: { ...(previous?._meta ?? {}), lwt: now() }, _rev: previous?._rev ?? "" },
       });
-      finalStates.push(server);
+      finalStates.set(id, server);
     } else if (previous) {
       // Never on the server: removed here only.
       if (!previous._deleted) forkWrites.push({ previous, document: { ...previous, _deleted: true } });
-      finalStates.push({ ...toDocState(previous), _deleted: true });
+      finalStates.set(id, { ...toDocState(previous), _deleted: true });
+    } else {
+      finalStates.set(id, null);
     }
   }
   if (forkWrites.length > 0) {
     // The wrapped storage instance sets `_rev` and `_meta.lwt`; the collection sees the change (queries update).
     const result = await collection.storageInstance.bulkWrite(forkWrites, "sync-take-back");
-    if (result.error.length > 0) throw new Error(`discard: could not write ${result.error.length} local row(s)`);
+    for (const error of result.error) {
+      if (error.status !== 409) throw new Error(`discard: could not write local row ${error.documentId} (status ${error.status})`);
+      finalStates.delete(error.documentId);
+    }
   }
-  await writeAssumedMasterStates(db, collection, replicationIdentifier, finalStates);
+  const states = [...finalStates.values()].filter((state): state is WithDeleted<any> => state !== null);
+  await writeAssumedMasterStates(db, collection, replicationIdentifier, states);
+  return new Set(finalStates.keys());
 }
 
 /**

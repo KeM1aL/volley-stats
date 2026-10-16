@@ -31,8 +31,10 @@ test('a failed profile save keeps the new language and the page (no error screen
   await page.getByRole('button', { name: 'Change language' }).click();
   await page.getByRole('menuitem', { name: /Français/ }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  // .first(): Radix also announces the toast in an aria-live span
-  await expect(page.getByText('Language changed on this device only').first()).toBeVisible();
+  // The toast itself (a list item of the toast viewport), not Radix's aria-live announcement of it
+  await expect(
+    page.getByRole('region', { name: /Notifications/ }).getByRole('listitem').filter({ hasText: 'Language changed on this device only' })
+  ).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Équipes');
   await expect(page.getByText('Application error')).toHaveCount(0);
   // Back to English, with the profile reachable again.

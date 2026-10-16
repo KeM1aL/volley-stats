@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { DiscardBlockedError } from "@/lib/rxdb/sync/errors";
 import { anEvent } from "../helpers/fixtures";
 import { expectServerEqualsDevice } from "../helpers/test-device";
-import { waitFor } from "../helpers/wait";
+import { sleep, waitFor } from "../helpers/wait";
 import { setupManagerSuite } from "./manager-helpers";
 
 describe("discarding the changes the server refused", () => {
@@ -106,5 +107,69 @@ describe("discarding the changes the server refused", () => {
     expect(await d.manager.discardRejected()).toBe(1);
     expect(await d.db.sets.findOne(set.id).exec()).toBeNull();
     expect(await d.pending.count({ matchId })).toBe(0);
+  });
+
+  /** A match with one uploaded set whose update the server refused. */
+  async function refusedSetUpdate(syncOptions = {}) {
+    const server = suite.server();
+    const matchId = suite.matchId();
+    const d = await suite.device({ syncOptions });
+    await d.signIn();
+    await d.openMatch(matchId);
+    const set = await d.startSet(matchId);
+    await d.settle(matchId);
+    server.denyWrites("sets", () => true);
+    await d.db.sets.findOne(set.id).update({ $set: { home_score: 7 } });
+    await waitFor(async () => (await d.pending.get("sets", set.id))?.status === "rejected", { message: "update rejected" });
+    return { server, matchId, d, set };
+  }
+
+  it("keeps a change made to a refused row while the server is being read", async () => {
+    const { server, matchId, d, set } = await refusedSetUpdate();
+    // The read of the server's version (by id) waits; meanwhile the user edits the refused row again.
+    server.hang("sets", (query) => query.op === "select" && query.ids().length > 0);
+    const discarding = d.manager.discardRejected();
+    await waitFor(() => server.hungCount > 0, { message: "server read under way" });
+    await d.db.sets.findOne(set.id).update({ $set: { home_score: 9 } });
+    expect(await d.pending.get("sets", set.id)).toMatchObject({ status: "pending" });
+    server.releaseHung();
+
+    expect(await discarding).toBe(0);
+    expect((await d.db.sets.findOne(set.id).exec())?.home_score).toBe(9);
+    expect(await d.pending.get("sets", set.id)).toMatchObject({ status: "pending" });
+    expect(server.row("sets", set.id)!.home_score).toBe(0);
+    expect(d.manager.isTracking(matchId)).toBe(true);
+  });
+
+  it("gives up on a server read that hangs: nothing changes and the match replicates again", async () => {
+    const { server, matchId, d, set } = await refusedSetUpdate({ discardTimeoutMs: 300 });
+    server.hang("sets", (query) => query.op === "select" && query.ids().length > 0);
+    const started = Date.now();
+    await expect(d.manager.discardRejected()).rejects.toMatchObject({ name: "DiscardBlockedError", reason: "timeout" });
+    expect(Date.now() - started).toBeLessThan(3000);
+    expect(await d.pending.get("sets", set.id)).toMatchObject({ status: "rejected" });
+    expect((await d.db.sets.findOne(set.id).exec())?.home_score).toBe(7);
+    expect(d.manager.isTracking(matchId)).toBe(true);
+    // The lifecycle queue isn't held up: opening the match again answers.
+    expect(await d.openMatch(matchId)).toBe(true);
+    // The abandoned read answering late discards nothing. (The restarted replication may itself bring
+    // the server's version of the refused row back; its entry stays.)
+    server.releaseHung();
+    await sleep(200);
+    expect(await d.pending.get("sets", set.id)).toMatchObject({ status: "rejected" });
+  });
+
+  it("says another tab leads instead of failing as if offline", async () => {
+    const { d, set } = await refusedSetUpdate({ waitForLeadership: true, discardLeadershipTimeoutMs: 100 });
+    vi.spyOn(d.db, "isLeader").mockReturnValue(false);
+    vi.spyOn(d.db, "waitForLeadership").mockReturnValue(new Promise<boolean>(() => undefined));
+    try {
+      const error = await d.manager.discardRejected().catch((caught: unknown) => caught);
+      expect(error).toBeInstanceOf(DiscardBlockedError);
+      expect(error).toMatchObject({ reason: "other-tab" });
+      expect(await d.pending.get("sets", set.id)).toMatchObject({ status: "rejected" });
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 });

@@ -127,6 +127,7 @@
     "discardTitle": "Descartar as alterações recusadas?",
     "discardBody": "Estas alterações existem apenas neste dispositivo e serão eliminadas. O dispositivo passará a mostrar os jogos tal como estão no servidor.",
     "discardConfirm": "Descartá-las",
-    "discardFailed": "Não foi possível descartar as alterações. Verifique a ligação e tente novamente."
+    "discardFailed": "Não foi possível descartar as alterações. Verifique a ligação e tente novamente.",
+    "discardOtherTab": "A aplicação está aberta noutro separador. Feche os outros separadores da aplicação e tente novamente."
   }
 }

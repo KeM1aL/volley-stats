@@ -1,4 +1,4 @@
-import { toTypedRxJsonSchema, type RxCollection, type RxDatabase, type RxDocumentData } from "rxdb";
+import { toTypedRxJsonSchema, type RxCollection, type RxDatabase, type RxDocument, type RxDocumentData } from "rxdb";
 import { filter, firstValueFrom, map, of, timeout, type Observable } from "rxjs";
 import type { ClassifiedError } from "./errors";
 import { isoToMicros } from "./timestamps";
@@ -304,9 +304,21 @@ export class PendingChanges {
     return docs.map((doc) => doc.toJSON() as PendingChange);
   }
 
-  /** Deletes entries by id (taking scoring back discards the superseded ones). */
-  async removeEntries(ids: string[]): Promise<void> {
-    if (ids.length > 0) await this.collection.bulkRemove(ids);
+  /**
+   * The entries among these ids that still have this status, as read now. Their revision guards
+   * removeUnchanged: a rejected row edited meanwhile turns its entry pending.
+   */
+  async withStatus(ids: string[], status: PendingStatus): Promise<RxDocument<PendingChange>[]> {
+    if (ids.length === 0) return [];
+    const found = await this.collection.findByIds(ids).exec();
+    return [...found.values()].filter((doc) => doc.status === status);
+  }
+
+  /** Deletes these entries unless they changed since they were read (bulkRemove checks the revision). Returns the ids removed. */
+  async removeUnchanged(entries: RxDocument<PendingChange>[]): Promise<Set<string>> {
+    if (entries.length === 0) return new Set();
+    const { success } = await this.collection.bulkRemove(entries);
+    return new Set(success.map((doc) => doc.id));
   }
 
   count(filter: PendingFilter = {}): Promise<number> {
