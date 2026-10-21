@@ -485,5 +485,32 @@
     "unsent": "{count, plural, one {# cambio aún no se ha subido} other {# cambios aún no se han subido}}. Se subirán automáticamente cuando vuelvas a tener conexión.",
     "stay": "Quedarse",
     "leave": "Salir"
+  },
+  "removal": {
+    "deleteTitle": "¿Eliminar este partido?",
+    "deleteDesc": "{home} contra {away} del {date} se eliminará definitivamente.",
+    "deleteAction": "Eliminar",
+    "deleteAriaLabel": "Eliminar el partido {home} contra {away}",
+    "archiveTitle": "¿Archivar este partido?",
+    "archiveDesc": "{home} contra {away} y sus estadísticas desaparecerán de las listas y de las estadísticas. Puedes restaurarlo desde «Mostrar archivados».",
+    "archiveAction": "Archivar",
+    "archiveAriaLabel": "Archivar el partido {home} contra {away}",
+    "restore": "Restaurar",
+    "restoreAriaLabel": "Restaurar el partido {home} contra {away}",
+    "showArchived": "Mostrar archivados ({count})",
+    "badge": "Archivado",
+    "unsent": "Este dispositivo tiene cambios de este partido que aún no se han subido. Espera a que se suban.",
+    "toast": {
+      "deleted": "Partido eliminado",
+      "archived": "Partido archivado",
+      "archivedDesc": "Ya no cuenta en las estadísticas. Muestra los partidos archivados para restaurarlo.",
+      "restored": "Partido restaurado"
+    },
+    "errors": {
+      "started": "Este partido ha empezado entretanto: archívalo en su lugar.",
+      "notFound": "Este partido ya no existe.",
+      "forbidden": "No puedes modificar este partido.",
+      "unknown": "Algo salió mal. Inténtalo de nuevo."
+    }
   }
 }

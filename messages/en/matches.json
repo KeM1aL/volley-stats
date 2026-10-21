@@ -485,5 +485,32 @@
     "unsent": "{count, plural, one {# change hasn't} other {# changes haven't}} been uploaded yet. They'll upload automatically once you're back online.",
     "stay": "Stay",
     "leave": "Leave"
+  },
+  "removal": {
+    "deleteTitle": "Delete this match?",
+    "deleteDesc": "{home} vs {away} on {date} will be deleted for good.",
+    "deleteAction": "Delete",
+    "deleteAriaLabel": "Delete match {home} vs {away}",
+    "archiveTitle": "Archive this match?",
+    "archiveDesc": "{home} vs {away} and its statistics will disappear from lists and statistics. You can restore it from \"Show archived\".",
+    "archiveAction": "Archive",
+    "archiveAriaLabel": "Archive match {home} vs {away}",
+    "restore": "Restore",
+    "restoreAriaLabel": "Restore match {home} vs {away}",
+    "showArchived": "Show archived ({count})",
+    "badge": "Archived",
+    "unsent": "This device has changes to this match that aren't uploaded yet. Wait until they're uploaded.",
+    "toast": {
+      "deleted": "Match deleted",
+      "archived": "Match archived",
+      "archivedDesc": "It no longer counts in statistics. Show archived matches to restore it.",
+      "restored": "Match restored"
+    },
+    "errors": {
+      "started": "This match has started in the meantime: archive it instead.",
+      "notFound": "This match no longer exists.",
+      "forbidden": "You can't change this match.",
+      "unknown": "Something went wrong. Please try again."
+    }
   }
 }

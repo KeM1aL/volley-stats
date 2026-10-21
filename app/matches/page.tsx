@@ -15,6 +15,7 @@ import { ClubSelect } from "@/components/clubs/club-select";
 import { ChampionshipSelect } from "@/components/championships/championship-select";
 import { TeamSelect } from "@/components/teams/team-select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Collapsible,
   CollapsibleContent,
@@ -56,6 +57,7 @@ export default function MatchPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [newMatchDialogOpen, setNewMatchDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showArchived, setShowArchived] = useState(false);
 
   const matchApi = useMatchApi();
   const clubApi = useClubApi();
@@ -149,6 +151,10 @@ export default function MatchPage() {
   // matchApi and clubApi are stable singletons (lib/api/index.ts) -- intentionally excluded from deps
   }, [selectedTeam, selectedClub, dateRange, toast, selectedChampionship, user, refreshKey]);
 
+  // Archived matches stay out of the statistics; they are listed on demand to be restored.
+  const activeMatches = useMemo(() => matches.filter((match) => !match.archived_at), [matches]);
+  const archivedMatches = useMemo(() => matches.filter((match) => !!match.archived_at), [matches]);
+
   const handleTeamChange = (team: Team | null) => {
     setSelectedTeam(team);
     if (team && team.club_id) {
@@ -241,19 +247,32 @@ export default function MatchPage() {
 
       {selectedTeam && (
         <div className="grid grid-cols-3 gap-2 sm:gap-6">
-          <TeamStats teamId={selectedTeam.id} matches={matches} />
+          <TeamStats teamId={selectedTeam.id} matches={activeMatches} />
         </div>
       )}
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
           <CardTitle>{t('title')}</CardTitle>
+          {(archivedMatches.length > 0 || showArchived) && (
+            <div className="flex items-center gap-2">
+              <Switch
+                id="show-archived-matches"
+                checked={showArchived}
+                onCheckedChange={setShowArchived}
+              />
+              <Label htmlFor="show-archived-matches">
+                {t('removal.showArchived', { count: archivedMatches.length })}
+              </Label>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <MatchHistoryTable
-            matches={matches}
+            matches={showArchived ? archivedMatches : activeMatches}
             error={error}
             isLoading={isLoading}
+            onChange={handleMatchRefresh}
           />
         </CardContent>
       </Card>
