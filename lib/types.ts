@@ -127,6 +127,8 @@ export type Match = {
   home_total: number | null;
   away_total: number | null;
   detailed_scores: string[] | null;
+  /** When the match was archived (hidden from lists and statistics); null or absent when not. Not in the RxDB schema. */
+  archived_at?: string | null;
 } & Partial<Audited>;
 
 export type Set = {
