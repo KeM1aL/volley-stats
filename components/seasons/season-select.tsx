@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Season } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useSeasonApi } from "@/hooks/use-season-api";
 import { Filter } from "@/lib/api/types";
 
@@ -47,6 +48,7 @@ export function SeasonSelect({
 
   return (
     <AsyncSelect<Season>
+      {...selectMenuPortalProps()}
       cacheOptions
       loadOptions={(inputValue) => loadOptions(inputValue, seasonApi)}
       defaultOptions

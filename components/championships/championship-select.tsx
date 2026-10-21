@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Championship } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
 import { Filter } from "@/lib/api/types";
 
@@ -43,6 +44,7 @@ export function ChampionshipSelect({
 
   return (
     <AsyncSelect
+      {...selectMenuPortalProps()}
       cacheOptions
       loadOptions={(inputValue) => loadOptions(inputValue, championshipApi)}
       defaultOptions

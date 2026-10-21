@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Select from 'react-select';
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 
 type GenericSelectProps = {
   options: { label: string; value: string }[];
@@ -34,6 +35,7 @@ export function GenericSelect({
         </label>
       )}
       <Select
+        {...selectMenuPortalProps()}
         value={selectedOption}
         onChange={handleChange}
         options={options}

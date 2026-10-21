@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Championship } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
 import { Filter } from "@/lib/api/types";
 import { QuickCreateChampionshipDialog } from "./quick-create-championship-dialog";
@@ -114,6 +115,7 @@ export function ChampionshipSelectWithQuickCreate({
   return (
     <>
       <AsyncSelect<ChampionshipOption>
+        {...selectMenuPortalProps()}
         cacheOptions
         loadOptions={(inputValue) => loadOptions(inputValue, championshipApi)}
         defaultOptions

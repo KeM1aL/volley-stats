@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MatchFormat } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useMatchFormatApi } from "@/hooks/use-match-format-api";
 import { Filter } from "@/lib/api/types";
 import { NewMatchFormatDialog } from "./new-match-format-dialog";
@@ -112,6 +113,7 @@ export function MatchFormatSelect({
   return (
     <>
       <AsyncSelect<MatchFormatOption>
+        {...selectMenuPortalProps()}
         cacheOptions
         loadOptions={(inputValue) => loadOptions(inputValue, matchFormatApi, t("description"))}
         defaultOptions

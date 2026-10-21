@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Team } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useTeamApi } from "@/hooks/use-team-api";
 import { Filter } from "@/lib/api/types";
 
@@ -72,6 +73,7 @@ export function TeamSelect({
 
   return (
     <AsyncSelect
+      {...selectMenuPortalProps()}
       key={`${clubId}-${championshipId}`}
       cacheOptions
       loadOptions={handleLoadOptions}

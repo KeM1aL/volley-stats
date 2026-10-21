@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Team } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useTeamApi } from "@/hooks/use-team-api";
 import { Filter } from "@/lib/api/types";
 import { QuickCreateTeamDialog } from "./quick-create-team-dialog";
@@ -118,6 +119,7 @@ export function TeamSelectWithQuickCreate({
   return (
     <>
       <AsyncSelect<TeamOption>
+        {...selectMenuPortalProps()}
         cacheOptions
         loadOptions={(inputValue) => loadOptions(inputValue, teamApi)}
         defaultOptions
