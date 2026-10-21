@@ -13,6 +13,8 @@ interface CourtDiagramProps {
   playerById: Map<string, TeamMember>;
   lineup: { [key in PlayerPosition]?: string };
   matchFormat: MatchFormat;
+  /** Positions drawn with a destructive border (e.g. a player without a role). */
+  invalidPositions?: readonly PlayerPosition[];
   className?: string;
   onSelect?: (position: PlayerPosition | null) => void;
 }
@@ -22,6 +24,7 @@ export function CourtDiagram({
   playerById,
   lineup,
   matchFormat,
+  invalidPositions,
   className,
   onSelect,
 }: CourtDiagramProps) {
@@ -155,11 +158,15 @@ export function CourtDiagram({
               <Button
                 variant="ghost"
                 data-testid={`court-position-${pos}`}
-                className={`flex items-center justify-center w-full h-full rounded-full bg-background ${
-                  selectedPosition === pos
-                    ? "border-4 border-indigo-500"
-                    : "border-2 border-primary"
-                }`}
+                className={cn(
+                  "flex items-center justify-center w-full h-full rounded-full bg-background",
+                  selectedPosition === pos ? "border-4" : "border-2",
+                  invalidPositions?.includes(pos)
+                    ? "border-destructive"
+                    : selectedPosition === pos
+                      ? "border-indigo-500"
+                      : "border-primary"
+                )}
                 onClick={() => {
                   if (selectedPosition === pos) {
                     setSelectedPosition(null);

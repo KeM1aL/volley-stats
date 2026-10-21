@@ -54,6 +54,7 @@
     "selectPlayer": "Seleziona giocatore",
     "selectServingTeam": "Seleziona la squadra al servizio",
     "allPositionsMustBeSpecified": "Tutte le posizioni devono essere specificate",
+    "rolesMissing": "Scegli un ruolo per il giocatore in {positions}",
     "servingTeamMustBeSpecified": "La squadra al servizio deve essere specificata",
     "libero": "Libero"
   },

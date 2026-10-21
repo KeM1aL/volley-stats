@@ -54,6 +54,7 @@
     "selectPlayer": "Seleccionar jugador",
     "selectServingTeam": "Seleccione el equipo al saque",
     "allPositionsMustBeSpecified": "Todas las posiciones deben ser especificadas",
+    "rolesMissing": "Elige un rol para el jugador en {positions}",
     "servingTeamMustBeSpecified": "El equipo al saque debe ser especificado",
     "libero": "Líbero"
   },

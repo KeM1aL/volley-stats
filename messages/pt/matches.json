@@ -54,6 +54,7 @@
     "selectPlayer": "Selecionar jogador",
     "selectServingTeam": "Selecione o time sacando",
     "allPositionsMustBeSpecified": "Todas as posições devem ser especificadas",
+    "rolesMissing": "Escolhe uma função para o jogador em {positions}",
     "servingTeamMustBeSpecified": "O time sacando deve ser especificado",
     "libero": "Líbero"
   },

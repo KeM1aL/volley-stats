@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,27 @@ import {
 } from "@/components/ui/select";
 import { PlayerPosition, PlayerRole } from "@/lib/enums";
 import { toast } from "@/hooks/use-toast";
-import { Match, TeamMember, Set, Team, MatchFormat } from "@/lib/types";
-import { string } from "zod";
+import { Match, TeamMember, Set, Team } from "@/lib/types";
+import {
+  FIELD_ROLES,
+  SetLineup,
+  emptyLineup,
+  emptyPositions,
+  existingPositions,
+  placePlayer,
+  positionsMissingRole,
+  roleAt,
+  setLibero,
+  setRole,
+  toPlayerRoles,
+} from "@/lib/matches/set-lineup";
 import { CourtDiagram } from "../matches/live/court-diagram";
 import { PlayerSelector } from "../matches/live/player-selector";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { cn } from "@/lib/utils";
+
+/** Value of the libero select "None" item (an item value can not be empty). */
+const NO_LIBERO = "none";
 
 type SetSetupProps = {
   match: Match;
@@ -49,115 +64,53 @@ export function SetSetup({
   const tc = useTranslations("common");
   const [selectedPosition, setSelectedPosition] =
     useState<PlayerPosition | null>(null);
-  const [selectedRole, setSelectedRole] = useState<PlayerRole | null>(null);
-  const [selectedPlayer, setSelectedPlayer] = useState<TeamMember | null>(null);
   const [serverTeamId, setServerTeamId] = useState<string | null>(null);
-  const [lineup, setLineup] = useState<Record<PlayerRole, string[]>>(
-    {} as Record<PlayerRole, string[]>
-  );
-  const [positions, setPosition] = useState<Record<PlayerPosition, string>>(
-    {} as Record<PlayerPosition, string>
-  );
+  const [lineup, setLineup] = useState<SetLineup>(emptyLineup);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (selectedRole && selectedPlayer && selectedPosition) {
-      setLineup((prev) => {
-        const filteredLineup = {} as Record<PlayerRole, string[]>;
-        Object.entries(prev).forEach(([role, players]) => {
-          filteredLineup[role as PlayerRole] = players.filter(
-            (playerId) => playerId !== selectedPlayer.id
-          );
-        });
-        if (filteredLineup[selectedRole]) {
-          filteredLineup[selectedRole].push(selectedPlayer.id);
-        } else {
-          filteredLineup[selectedRole] = [selectedPlayer.id];
-        }
-        return filteredLineup;
-      });
-      setLineup((prev) => ({
-        ...prev,
-        [selectedRole]: [...prev[selectedRole], selectedPlayer.id],
-      }));
-      setPosition((prev) => ({
-        ...prev,
-        [selectedPosition]: selectedPlayer.id,
-      }));
-    }
-  }, [selectedRole, selectedPlayer, selectedPosition]);
+  const existing = existingPositions(match.match_formats?.format);
+  const missingRole = positionsMissingRole(lineup, existing);
+  const selectedPlayerId = selectedPosition
+    ? lineup.positions[selectedPosition]
+    : undefined;
+  const selectedPlayer = selectedPlayerId
+    ? (playerById.get(selectedPlayerId) ?? null)
+    : null;
+  const selectedRole = selectedPosition ? roleAt(lineup, selectedPosition) : null;
+  const selectedRoleMissing =
+    selectedPosition !== null && !!selectedPlayerId && !selectedRole;
 
-  const handleSelectPlayer = async (player: TeamMember) => {
-    setSelectedPlayer(player);
-    if (player.position) {
-      setSelectedRole(player.position as PlayerRole);
-    } else {
-      setSelectedRole(null);
-    }
+  const handleSelectPlayer = (player: TeamMember) => {
+    if (!selectedPosition) return;
+    // Picking the player already here again must not reset a role chosen by hand
+    if (lineup.positions[selectedPosition] === player.id) return;
+    setLineup((prev) =>
+      placePlayer(prev, selectedPosition, player.id, player.position)
+    );
   };
 
-  const handleSelectPosition = async (position: PlayerPosition | null) => {
-    if (!position) {
-      setSelectedPosition(null);
-      setSelectedRole(null);
-      setSelectedPlayer(null);
-      return;
-    }
-    if (positions[position]) {
-      let playerId = positions[position];
-      let player = playerById.get(playerId);
-      if (player) {
-        setSelectedPlayer(player);
-      } else {
-        setSelectedPlayer(null);
-      }
-      const role = Object.keys(lineup).find((role) =>
-        lineup[role as PlayerRole].includes(playerId)
-      );
-      if (role) {
-        setSelectedRole(role as PlayerRole);
-      } else {
-        setSelectedRole(null);
-      }
-    } else {
-      setSelectedPlayer(null);
-      setSelectedRole(null);
-    }
+  const handleSelectPosition = (position: PlayerPosition | null) => {
     setSelectedPosition(position);
   };
 
   const handleComplete = async () => {
-    // setIsLoading(true);
-
-    //list of existing positions based on matchFormat ie 2x2 means only P1 & P2 exists
-    const existingPositions: PlayerPosition[] = [
-      PlayerPosition.P1,
-      PlayerPosition.P2,
-    ];
-    switch (match.match_formats?.format) {
-      case "3x3":
-        existingPositions.push(PlayerPosition.P3);
-        break;
-      case "4x4":
-        existingPositions.push(PlayerPosition.P3, PlayerPosition.P4);
-        break;
-      case "6x6":
-        existingPositions.push(
-          PlayerPosition.P3,
-          PlayerPosition.P4,
-          PlayerPosition.P5,
-          PlayerPosition.P6
-        );
-        break;
-    }
-
-    if (existingPositions.some((position) => !positions[position])) {
+    if (emptyPositions(lineup, existing).length > 0) {
       toast({
         variant: "destructive",
         title: tc("errors.generalError"),
         description: t("sets.allPositionsMustBeSpecified"),
       });
       setIsLoading(false);
+      return;
+    }
+    if (missingRole.length > 0) {
+      toast({
+        variant: "destructive",
+        title: tc("errors.generalError"),
+        description: t("sets.rolesMissing", {
+          positions: missingRole.map((position) => position.toUpperCase()).join(", "),
+        }),
+      });
       return;
     }
     if ((sets.length === 0 || sets.length === 4) && !serverTeamId) {
@@ -177,23 +130,10 @@ export function SetSetup({
         setServerTeamId = homeTeam.id;
       }
     }
-    let playerRoles: Record<string, PlayerRole> = {};
-    Object.values(PlayerRole).forEach((role) => {
-      const players = lineup[role];
-      if (players && players.length > 0) {
-        players.forEach((player) => {
-          playerRoles[player] = role;
-        });
-      }
-    });
-
-    const effectiveLineup = Object.entries(existingPositions).reduce(
-      (acc, [_key, value]) => {
-        acc[value as PlayerPosition] = positions[value as PlayerPosition];
-        return acc;
-      },
-      {} as Record<PlayerPosition, string>
-    );
+    const playerRoles = toPlayerRoles(lineup, existing);
+    const effectiveLineup = Object.fromEntries(
+      existing.map((position) => [position, lineup.positions[position]!])
+    ) as Record<PlayerPosition, string>;
 
     // Save lineups and start the set
     const set: Set = {
@@ -256,7 +196,8 @@ export function SetSetup({
                 <CourtDiagram
                   players={players}
                   playerById={playerById}
-                  lineup={positions}
+                  lineup={lineup.positions}
+                  invalidPositions={missingRole}
                   matchFormat={match.match_formats!}
                   onSelect={handleSelectPosition}
                 />
@@ -266,7 +207,7 @@ export function SetSetup({
               <Card className="p-1 space-y-2 border-indigo-500 col-span-2">
                 <PlayerSelector
                   players={players.filter((player) =>
-                    Object.entries(positions).every(
+                    Object.entries(lineup.positions).every(
                       ([key, value]) =>
                         key === selectedPosition || value !== player.id
                     )
@@ -297,20 +238,23 @@ export function SetSetup({
                       <Select
                         value={selectedRole ?? ""}
                         onValueChange={(value: PlayerRole) => {
-                          setSelectedRole(value);
+                          if (selectedPosition)
+                            setLineup((prev) => setRole(prev, selectedPosition, value));
                         }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          data-testid="role-select"
+                          aria-invalid={selectedRoleMissing || undefined}
+                          className={cn(selectedRoleMissing && "border-destructive")}
+                        >
                           <SelectValue placeholder={tp("form.selectRole")} />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.values(PlayerRole)
-                            .filter((role) => role !== PlayerRole.LIBERO)
-                            .map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {te(`playerRole.${role}`)}
-                              </SelectItem>
-                            ))}
+                          {FIELD_ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {te(`playerRole.${role}`)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -325,28 +269,24 @@ export function SetSetup({
                 <Label>{t("sets.libero")}</Label>
                 <div className="flex flex-row items-center space-x-1">
                   <Select
-                    defaultValue={null as unknown as string}
+                    value={lineup.liberoId ?? ""}
                     onValueChange={(value) =>
-                      setLineup((prev) => ({
-                        ...prev,
-                        [PlayerRole.LIBERO]: [value],
-                      }))
+                      setLineup((prev) =>
+                        setLibero(prev, value === NO_LIBERO ? null : value)
+                      )
                     }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={t("sets.selectPlayer")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={null as unknown as string}>
+                      <SelectItem value={NO_LIBERO}>
                         {t("sets.none")}
                       </SelectItem>
                       {players
-                        .filter((player) =>
-                          Object.entries(lineup).every(
-                            ([key, values]) =>
-                              key === PlayerRole.LIBERO ||
-                              !values.includes(player.id)
-                          )
+                        .filter(
+                          (player) =>
+                            !Object.values(lineup.positions).includes(player.id)
                         )
                         .map((player) => (
                           <SelectItem key={player.id} value={player.id}>
