@@ -28,15 +28,11 @@ const loadOptions = async (
   teamApi: ReturnType<typeof useTeamApi>,
 ): Promise<TeamOption[]> => {
   try {
-    const filters: Filter[] = inputValue
-      ? [
-          {
-            field: "name",
-            operator: "ilike",
-            value: `%${inputValue}%`,
-          },
-        ]
-      : [];
+    // Archived teams can't be picked for a new match
+    const filters: Filter[] = [{ field: "status", operator: "neq", value: "archived" }];
+    if (inputValue) {
+      filters.push({ field: "name", operator: "ilike", value: `%${inputValue}%` });
+    }
 
     const teams = await teamApi.getTeams(filters);
 

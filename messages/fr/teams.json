@@ -102,15 +102,19 @@
     "createdDesc": "Votre nouvelle équipe a été créée avec succès.",
     "updated": "Équipe mise à jour",
     "updatedDesc": "L'équipe a été mise à jour avec succès.",
-    "deleted": "Équipe supprimée",
-    "deletedDesc": "L'équipe a été supprimée avec succès.",
     "error": "Erreur",
     "createError": "Échec de la création de l'équipe. Veuillez réessayer.",
     "updateError": "Échec de la mise à jour de l'équipe. Veuillez réessayer.",
-    "deleteError": "Échec de la suppression de l'équipe. Veuillez réessayer."
+    "archived": "Équipe archivée",
+    "archivedDesc": "{name} a été archivée.",
+    "archiveError": "Impossible d'archiver l'équipe. Réessaie."
   },
-  "confirmDelete": "Êtes-vous sûr ?",
-  "confirmDeleteDesc": "Cette action est irréversible. Cela supprimera définitivement l'équipe et toutes les données associées.",
+  "archive": {
+    "action": "Archiver",
+    "ariaLabel": "Archiver {name}",
+    "confirmTitle": "Archiver {name} ?",
+    "confirmDesc": "L'équipe disparaît des listes et ne peut plus être choisie pour un nouveau match. Ses matchs, joueurs et stats sont conservés. Tu peux la restaurer en remettant son statut sur Actif."
+  },
   "selectPlaceholder": "Sélectionnez une équipe...",
   "seasonSelectPlaceholder": "Sélectionnez une saison..."
 }

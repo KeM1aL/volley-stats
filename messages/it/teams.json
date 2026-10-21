@@ -102,15 +102,19 @@
     "createdDesc": "La tua nuova squadra è stata creata con successo.",
     "updated": "Squadra aggiornata",
     "updatedDesc": "La squadra è stata aggiornata con successo.",
-    "deleted": "Squadra eliminata",
-    "deletedDesc": "La squadra è stata eliminata con successo.",
     "error": "Errore",
     "createError": "Impossibile creare la squadra. Riprova.",
     "updateError": "Impossibile aggiornare la squadra. Riprova.",
-    "deleteError": "Impossibile eliminare la squadra. Riprova."
+    "archived": "Squadra archiviata",
+    "archivedDesc": "{name} è stata archiviata.",
+    "archiveError": "Impossibile archiviare la squadra. Riprova."
   },
-  "confirmDelete": "Sei sicuro?",
-  "confirmDeleteDesc": "Questa azione non può essere annullata. Eliminerà permanentemente la squadra e tutti i dati associati.",
+  "archive": {
+    "action": "Archivia",
+    "ariaLabel": "Archivia {name}",
+    "confirmTitle": "Archiviare {name}?",
+    "confirmDesc": "La squadra scompare dagli elenchi e non può più essere scelta per nuove partite. Le sue partite, i giocatori e le statistiche vengono conservati. Puoi ripristinarla riportando il suo stato su Attivo."
+  },
   "selectPlaceholder": "Seleziona una squadra...",
   "seasonSelectPlaceholder": "Seleziona una stagione..."
 }

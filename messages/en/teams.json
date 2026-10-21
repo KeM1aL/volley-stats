@@ -102,15 +102,19 @@
     "createdDesc": "Your new team has been created successfully.",
     "updated": "Team updated",
     "updatedDesc": "The team has been successfully updated.",
-    "deleted": "Team deleted",
-    "deletedDesc": "The team has been successfully deleted.",
     "error": "Error",
     "createError": "Failed to create team. Please try again.",
     "updateError": "Failed to update team. Please try again.",
-    "deleteError": "Failed to delete team. Please try again."
+    "archived": "Team archived",
+    "archivedDesc": "{name} has been archived.",
+    "archiveError": "Failed to archive the team. Please try again."
   },
-  "confirmDelete": "Are you sure?",
-  "confirmDeleteDesc": "This action cannot be undone. This will permanently delete the team and all associated data.",
+  "archive": {
+    "action": "Archive",
+    "ariaLabel": "Archive {name}",
+    "confirmTitle": "Archive {name}?",
+    "confirmDesc": "The team leaves the team lists and can't be picked for new matches. Its matches, players and stats are kept. You can restore it by setting its status back to Active."
+  },
   "selectPlaceholder": "Select a team...",
   "seasonSelectPlaceholder": "Select a season..."
 }

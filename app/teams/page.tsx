@@ -33,8 +33,8 @@ export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [newTeam, setNewTeam] = useState<boolean>(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [archivingTeam, setArchivingTeam] = useState<Team | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -106,19 +106,19 @@ export default function TeamsPage() {
     setRefreshKey((prev) => prev + 1);
   }, [editingTeam]);
 
-  const handleDelete = async () => {
-    if (!deletingTeam) return;
-    setIsDeleting(true);
+  const handleArchive = async () => {
+    if (!archivingTeam) return;
+    setIsArchiving(true);
     try {
-      await teamApi.deleteTeam(deletingTeam.id);
-      toast({ title: t('toast.deleted'), description: t('toast.deletedDesc') });
+      await teamApi.archiveTeam(archivingTeam.id);
+      toast({ title: t('toast.archived'), description: t('toast.archivedDesc', { name: archivingTeam.name }) });
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      console.error("Failed to delete team:", error);
-      toast({ variant: "destructive", title: t('toast.error'), description: t('toast.deleteError') });
+      console.error("Failed to archive team:", error);
+      toast({ variant: "destructive", title: t('toast.error'), description: t('toast.archiveError') });
     } finally {
-      setIsDeleting(false);
-      setDeletingTeam(null);
+      setIsArchiving(false);
+      setArchivingTeam(null);
     }
   };
 
@@ -154,7 +154,7 @@ export default function TeamsPage() {
       {isLoading ? (
         <Skeleton className="h-[600px] w-full" />
       ) : (
-        <TeamTable teams={teams} onEdit={setEditingTeam} onDelete={setDeletingTeam} canManage={canManage} />
+        <TeamTable teams={teams} onEdit={setEditingTeam} onArchive={setArchivingTeam} canManage={canManage} />
       )}
 
       <EditTeamDialog
@@ -169,21 +169,19 @@ export default function TeamsPage() {
         onSuccess={handleTeamRefresh}
       />
 
-      <AlertDialog open={!!deletingTeam} onOpenChange={() => setDeletingTeam(null)}>
+      <AlertDialog open={!!archivingTeam} onOpenChange={(open) => !open && setArchivingTeam(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('confirmDeleteDesc')}</AlertDialogDescription>
+            <AlertDialogTitle>{t('archive.confirmTitle', { name: archivingTeam?.name ?? '' })}</AlertDialogTitle>
+            <AlertDialogDescription>{t('archive.confirmDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{tc('actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              data-testid="confirm-delete-btn"
+              onClick={handleArchive}
+              disabled={isArchiving}
             >
-              {tc('actions.delete')}
+              {t('archive.action')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
