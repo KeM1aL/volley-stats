@@ -77,6 +77,7 @@ Design: [docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md](.
 
 - `_modified` (all 12 tables): server-clock checkpoint, set on every insert/update. Not in local schemas; `pickSchemaFields` drops it and any other column the local schema doesn't know.
 - `updated_at`: time of the last edit. Requests with `x-device-id` (sync) keep the device's value; other requests (API layer) get `now()`.
+- `matches.archived_at` is deliberately **not** in the RxDB `matchSchema`: pull and push carry schema fields only, so a device never reads, sets or resets the archive (a push can't unarchive a match). Archive, restore and delete go through the API layer. After deleting an upcoming match, `SyncManager.forgetMatch(matchId)` stops tracking it on that device (unless it still has pending, rejected or superseded changes); other devices drop it through the usual pruning of untouched tracked matches.
 - `matches.scorer_*` + `claim_match_scorer` / `get_match_scorer`: one scoring device per match. A trigger refuses sync writes from another device (`P0001 scorer_mismatch`).
 
 ### Push rules

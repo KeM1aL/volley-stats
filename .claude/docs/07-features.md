@@ -18,6 +18,7 @@
 - Visual court positions
 - Live score updates
 - Works offline once the match has been pulled with `syncMatch(matchId)`
+- **Set start** ([components/sets/set-setup.tsx](components/sets/set-setup.tsx), logic in [lib/matches/set-lineup.ts](lib/matches/set-lineup.ts)): a picked player goes on court at once; the default position is copied into the role only when it is a field role (setter, opposite, outside hitter, middle hitter), so a libero played on court has no role. Each player appears once in the lineup with one role (changing a position drops the previous player's role). A player on court without a role gets a red role select and a red court position, and Start set is blocked with a message naming those positions. A player on court can't be chosen as libero.
 - When the match can't be loaded (no `?team=`, not on the device, download not finished, its teams or format missing, a team that doesn't play it, any other error), the page returns to the match list with a destructive toast that says why (`LiveLoadError` reasons in [lib/matches/live-load-failure.ts](lib/matches/live-load-failure.ts), `matches.live.left.*`). Leaving through Cancel or Leave needs no toast.
 
 **Data Flow**:
@@ -74,6 +75,7 @@ const handleUndo = async () => {
   - Role (player, coach, staff, owner)
 - Assign teams to clubs and championships
 - Team status: incomplete, active, archived
+- **Archive a team**: the teams list's Archive action sets `status = 'archived'` (`teamApi.archiveTeam`); teams are never hard-deleted. Archived teams show under the "Archived" status filter, are not offered in the new-match team picker, and are restored by setting the status back to Active in the team dialog. Their matches stay where they are.
 - Teams can also be created by the FFVB match import ([lib/importers/ffvb.ts](lib/importers/ffvb.ts))
 
 **API Usage** (direct Supabase via the API layer):
@@ -108,6 +110,8 @@ const teams = await teamApi.getTeams(
 ---
 
 ## 3. Statistics & Analytics
+
+**Delete or archive a match** (matches list, [components/matches/history/match-removal-action.tsx](components/matches/history/match-removal-action.tsx)): an `upcoming` match is deleted for real (`matchApi.deleteUnstartedMatch`, RPC `delete_unstarted_match`, no restore); a `live` or `completed` match is archived (`matchApi.archiveMatch` sets `matches.archived_at`) and can be restored (`restoreMatch`). The rule is `matchRemoval` in [lib/matches/removal.ts](lib/matches/removal.ts), errors map through `removalError`. Only the creator of either team may do it (`canRemoveMatch`). It is refused while this device has unsent changes for the match. An archived match disappears from the matches list, team and championship views, team statistics and report access (`isMatchArchived`); the "Show archived (N)" toggle on the matches list shows them with a Restore action. The stats and score pages show an archived notice (with Restore for those allowed) instead of the data, and the live page leaves to the matches list with an "archived" toast. The deleting device calls `SyncManager.forgetMatch` (see [04-offline-sync.md](04-offline-sync.md)).
 
 **Location**: [app/matches/stats/](app/matches/stats/) (`/matches/stats?id=<matchId>`), [lib/stats/](lib/stats/)
 

@@ -27,13 +27,21 @@
 
 | Table | Meaning | Key references |
 |-------|---------|----------------|
-| `matches` | Match records (`date`, `status` upcoming/live/completed, set totals, available players per side) | `home_team_id`, `away_team_id` → teams, `match_format_id` → match_formats, `championship_id` → championships, `season_id` → seasons |
+| `matches` | Match records (`date`, `status` upcoming/live/completed, set totals, available players per side; `archived_at`: archived matches are hidden from lists, statistics and reports and can be restored, null when active; server only, not in the RxDB schema) | `home_team_id`, `away_team_id` → teams, `match_format_id` → match_formats, `championship_id` → championships, `season_id` → seasons |
 | `sets` | Individual sets (`set_number`, scores, `first_lineup`, `current_lineup`, `player_roles`, server team, `status`) | `match_id` → matches, `first_server_team_id`, `server_team_id` → teams |
 | `score_points` | Point-by-point scoring (`point_number`, `point_type`, `result`, running score, `current_rotation`) | `match_id`, `set_id`, `scoring_team_id`, `action_team_id` → teams, `player_id` → team_members, `player_stat_id` → player_stats |
 | `player_stats` | Individual stats (`stat_type`: serve, spike, block, reception, defense; `result`: success, good, bad, error) | `match_id`, `set_id`, `team_id`, `player_id` → team_members |
 | `events` | Match events: `event_type` substitution, timeout, injury, sanction, technical, comment; type-specific `details` JSON | `match_id`, `set_id` (optional), `team_id`, `player_id` |
 
 Substitutions are `events` rows with `event_type: 'substitution'` (see `SubstitutionDetails` in [lib/types/events.ts](lib/types/events.ts)); there is no `substitutions` table.
+
+### Functions (RPC)
+
+| Function | Meaning |
+|----------|---------|
+| `delete_unstarted_match(match_id)` | Really deletes a match that never started. `SECURITY INVOKER` (the caller's RLS applies). Refuses a match that is not `upcoming` (`P0001 match_started`; `P0002` not found; `42501` not allowed), deletes the leftover `player_stats`, `score_points` and `sets` (they have no `ON DELETE CASCADE`; `events` cascade), then the match. Migration [20261021000000_match_archive.sql](supabase/migrations/20261021000000_match_archive.sql). |
+
+Scoring-device claim functions (`claim_match_scorer`, `get_match_scorer`) are described in [04-offline-sync.md](04-offline-sync.md).
 
 ## Relationships
 
@@ -59,6 +67,6 @@ team_members (1) ←→ (N) events (player_id)
 
 ## Row Level Security (RLS)
 
-RLS is enabled on the tables. Policies scope access to the user's clubs, teams and the matches involving those teams, with role-based permissions (club owners manage their clubs; team owners/editors manage players). The service role bypasses RLS. See [06-auth.md](06-auth.md) for the authorization model.
+RLS is enabled on the tables. Policies scope access to the user's clubs, teams and the matches involving those teams, with role-based permissions (club owners manage their clubs; team owners/editors manage players). The service role bypasses RLS. Live match policies let only the creator of either team (`teams.user_id`) update or delete a match; the app mirrors this in `canRemoveMatch` ([lib/matches/can-manage-match.ts](lib/matches/can-manage-match.ts)) for archive, restore and delete, while `canManageMatch` (members of either team or club) gates start, edit and statistics. See [06-auth.md](06-auth.md) for the authorization model.
 
 Policy SQL in the repo: [lib/supabase/schema.sql](lib/supabase/schema.sql) (initial tables and policies; it predates later migrations and still defines `substitutions`) and [lib/supabase/match_formats_rls.sql](lib/supabase/match_formats_rls.sql) (any authenticated user can read and write match formats). The live policies are managed in the Supabase project.

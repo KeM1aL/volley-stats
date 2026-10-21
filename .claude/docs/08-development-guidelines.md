@@ -134,8 +134,8 @@ const updated = await teamApi.updateTeam(teamId, {
   name: 'Updated Name'
 })
 
-// Delete (hard delete in Supabase)
-await teamApi.deleteTeam(teamId)
+// Archive (sets status 'archived'; teams are never hard-deleted)
+await teamApi.archiveTeam(teamId)
 ```
 
 ### Filter Operators

@@ -32,7 +32,7 @@ Features:
 
 ### API Factory Pattern
 
-Each domain folder exports a `createXApi(supabaseClient?)` factory that wraps a `SupabaseDataStore` and returns domain-named methods (e.g. `getTeams`, `getTeam`, `createTeam`, `updateTeam`, `deleteTeam`). [lib/api/index.ts](lib/api/index.ts) assembles them:
+Each domain folder exports a `createXApi(supabaseClient?)` factory that wraps a `SupabaseDataStore` and returns domain-named methods (e.g. `getTeams`, `getTeam`, `createTeam`, `updateTeam`, `archiveTeam`). [lib/api/index.ts](lib/api/index.ts) assembles them:
 
 ```typescript
 // lib/api/index.ts
@@ -181,6 +181,10 @@ The server routes under `/api/v1` and `/api/import` are called with `apiFetch(pa
 ### `useAppLocale()`
 
 `const { locale, setLocale } = useAppLocale()` ([hooks/use-app-locale.ts](../../hooks/use-app-locale.ts)) reads and changes the UI language: `setLocale` switches the language on this device at once and, when signed in, saves it to the profile. There are no server actions and no locale cookie. How the language is chosen: [07-features.md](07-features.md#language).
+
+### react-select inside dialogs
+
+A react-select menu rendered inside a dialog is clipped and mispositioned. Spread `{...selectMenuPortalProps()}` from [components/ui/select-menu-portal.tsx](../../components/ui/select-menu-portal.tsx) on the select so the menu renders in `document.body`; `DialogContent` ignores outside pointer/focus events that land in such a menu (`isInSelectMenuPortal`), so choosing an option doesn't close the dialog.
 
 ---
 
