@@ -43,7 +43,7 @@ test.describe('Teams management', () => {
     await page.getByRole('button', { name: 'New Team' }).waitFor({ state: 'visible', timeout: 30_000 });
     await searchTeam(page, baseName);
 
-    // Rename it. Desktop table buttons: 0=Eye, 1=Players, 2=Edit, 3=Delete
+    // Rename it. Desktop table buttons: 0=Eye, 1=Players, 2=Edit, 3=Archive
     await page.getByRole('row').filter({ hasText: baseName }).getByRole('button').nth(2).click();
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3_000 });
     const nameField = page.getByLabel('Name');

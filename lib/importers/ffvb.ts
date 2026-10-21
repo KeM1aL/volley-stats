@@ -144,7 +144,11 @@ export async function importFfvbMatches(seasonId: number, championshipId: number
       if (match.status === 'completed') {
         continue;
       }
-      matchesToUpdate.push({ ...matchData, id: match.id });
+      // Only a match that is still upcoming takes its status from the import: a started match keeps its own,
+      // so a re-run can't turn a played match back into 'upcoming' (and so deletable).
+      const update: Partial<Match> = { ...matchData, id: match.id };
+      if (match.status !== 'upcoming') delete update.status;
+      matchesToUpdate.push(update);
       continue;
     }
 

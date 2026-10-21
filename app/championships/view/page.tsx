@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
 import { Championship, Season } from "@/lib/types";
@@ -60,6 +60,7 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [showFilters, setShowFilters] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
@@ -156,7 +157,11 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
     matchApi,
     selectedClub,
     t,
+    refreshKey,
   ]);
+
+  // After a match was deleted, archived or restored: reload the list (and the team statistics with it).
+  const handleMatchChange = useCallback(() => setRefreshKey((prev) => prev + 1), []);
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -318,6 +323,7 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
             matches={matches}
             error={error}
             isLoading={isLoading}
+            onChange={handleMatchChange}
           />
         </CardContent>
       </Card>

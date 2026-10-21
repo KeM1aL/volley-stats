@@ -107,13 +107,13 @@
     "updateError": "Falha ao atualizar equipa. Tente novamente.",
     "archived": "Equipa arquivada",
     "archivedDesc": "{name} foi arquivada.",
-    "archiveError": "Não foi possível arquivar a equipa. Tenta novamente."
+    "archiveError": "Não foi possível arquivar a equipa. Tente novamente."
   },
   "archive": {
     "action": "Arquivar",
     "ariaLabel": "Arquivar {name}",
     "confirmTitle": "Arquivar {name}?",
-    "confirmDesc": "A equipa desaparece das listas e já não pode ser escolhida para novos jogos. Os seus jogos, jogadores e estatísticas ficam guardados. Podes restaurá-la voltando a pôr o estado em Ativo."
+    "confirmDesc": "A equipa desaparece das listas e já não pode ser escolhida para novos jogos. Os seus jogos, jogadores e estatísticas ficam guardados. Pode restaurá-la voltando a pôr o estado em Ativo."
   },
   "selectPlaceholder": "Selecione uma equipa...",
   "seasonSelectPlaceholder": "Selecione uma época..."

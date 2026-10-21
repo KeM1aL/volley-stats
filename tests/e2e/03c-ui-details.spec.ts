@@ -90,7 +90,7 @@ test('team dialog status menu fits on screen', async ({ page }) => {
   await searchBox.fill(teamName);
   const card = page.locator('div.border.rounded-lg').filter({ has: page.getByRole('heading', { name: teamName }) });
   await expect(card).toBeVisible({ timeout: 30_000 });
-  // Card buttons: 0=View, 1=Players, 2=Edit, 3=Delete
+  // Card buttons: 0=View, 1=Players, 2=Edit, 3=Archive
   await card.getByRole('button').nth(2).click();
 
   const dialog = page.getByRole('dialog');

@@ -40,8 +40,10 @@ export function MatchRemovalAction({ match, onDone }: MatchRemovalActionProps) {
   const unsent = useMatchUnsentCount(match.id, ["pending", "rejected"]);
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  // Set when a delete is refused because the match started elsewhere: the row offers Archive from then on.
+  const [startedElsewhere, setStartedElsewhere] = useState(false);
 
-  const removal = matchRemoval(match);
+  const removal = startedElsewhere ? "archive" : matchRemoval(match);
   const names = {
     home: match.home_team?.name ?? t("table.unknown"),
     away: match.away_team?.name ?? t("table.unknown"),
@@ -62,10 +64,12 @@ export function MatchRemovalAction({ match, onDone }: MatchRemovalActionProps) {
       }
     } catch (error) {
       console.error("Failed to remove match:", error);
+      const reason = removalError(error);
+      if (reason === "started") setStartedElsewhere(true);
       toast({
         variant: "destructive",
         title: t("toast.error"),
-        description: t(`removal.errors.${removalError(error)}`),
+        description: t(`removal.errors.${reason}`),
       });
     } finally {
       setIsSaving(false);

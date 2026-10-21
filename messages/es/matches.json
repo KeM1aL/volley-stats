@@ -54,7 +54,7 @@
     "selectPlayer": "Seleccionar jugador",
     "selectServingTeam": "Seleccione el equipo al saque",
     "allPositionsMustBeSpecified": "Todas las posiciones deben ser especificadas",
-    "rolesMissing": "Elige un rol para el jugador en {positions}",
+    "rolesMissing": "Elija un rol para el jugador en {positions}",
     "servingTeamMustBeSpecified": "El equipo al saque debe ser especificado",
     "libero": "Líbero"
   },
@@ -269,7 +269,7 @@
       "description": "Miembros del equipo que no están en la alineación de este partido. El jugador elegido se une a la alineación.",
       "none": "Todos los miembros activos del equipo ya están en la alineación.",
       "added": "{name} añadido a la alineación",
-      "addError": "No se pudo añadir al jugador. Inténtalo de nuevo."
+      "addError": "No se pudo añadir al jugador. Inténtelo de nuevo."
     },
     "left": {
       "title": "No se pudo cargar este partido en este dispositivo",
@@ -280,7 +280,7 @@
         "matchNotFound": "Ya no existe o no tienes acceso a él.",
         "dataMissing": "Faltan sus equipos o su formato de partido en este dispositivo. Comprueba tu conexión y vuelve a abrirlo.",
         "teamNotInMatch": "El equipo del enlace no juega este partido. Vuelve a abrir el partido desde la lista de partidos.",
-        "archived": "Este partido está archivado. Restáuralo desde la lista de partidos para anotarlo.",
+        "archived": "Este partido está archivado. Restáurelo desde la lista de partidos para anotarlo.",
         "unknown": "Comprueba tu conexión y vuelve a abrirlo."
       }
     }
@@ -493,7 +493,7 @@
     "deleteAction": "Eliminar",
     "deleteAriaLabel": "Eliminar el partido {home} contra {away}",
     "archiveTitle": "¿Archivar este partido?",
-    "archiveDesc": "{home} contra {away} y sus estadísticas desaparecerán de las listas y de las estadísticas. Puedes restaurarlo desde «Mostrar archivados».",
+    "archiveDesc": "{home} contra {away} y sus estadísticas desaparecerán de las listas y de las estadísticas. Puede restaurarlo desde «Mostrar archivados».",
     "archiveAction": "Archivar",
     "archiveAriaLabel": "Archivar el partido {home} contra {away}",
     "restore": "Restaurar",
@@ -501,18 +501,18 @@
     "showArchived": "Mostrar archivados ({count})",
     "badge": "Archivado",
     "archivedNotice": "Este partido está archivado.",
-    "unsent": "Este dispositivo tiene cambios de este partido que aún no se han subido. Espera a que se suban.",
+    "unsent": "Este dispositivo tiene cambios de este partido que aún no se han subido. Espere a que se suban.",
     "toast": {
       "deleted": "Partido eliminado",
       "archived": "Partido archivado",
-      "archivedDesc": "Ya no cuenta en las estadísticas. Muestra los partidos archivados para restaurarlo.",
+      "archivedDesc": "Ya no cuenta en las estadísticas. Muestre los partidos archivados para restaurarlo.",
       "restored": "Partido restaurado"
     },
     "errors": {
-      "started": "Este partido ha empezado entretanto: archívalo en su lugar.",
+      "started": "Este partido ha empezado entretanto: archívelo en su lugar.",
       "notFound": "Este partido ya no existe.",
-      "forbidden": "No puedes modificar este partido.",
-      "unknown": "Algo salió mal. Inténtalo de nuevo."
+      "forbidden": "No puede modificar este partido.",
+      "unknown": "Algo salió mal. Inténtelo de nuevo."
     }
   }
 }

@@ -155,6 +155,9 @@ export default function MatchPage() {
   const activeMatches = useMemo(() => matches.filter((match) => !match.archived_at), [matches]);
   const archivedMatches = useMemo(() => matches.filter((match) => !!match.archived_at), [matches]);
 
+  // Nothing left to show: turn the toggle off, so the next archived match doesn't appear unasked.
+  if (showArchived && archivedMatches.length === 0) setShowArchived(false);
+
   const handleTeamChange = (team: Team | null) => {
     setSelectedTeam(team);
     if (team && team.club_id) {
@@ -269,7 +272,7 @@ export default function MatchPage() {
         </CardHeader>
         <CardContent>
           <MatchHistoryTable
-            matches={showArchived ? archivedMatches : activeMatches}
+            matches={showArchived ? [...activeMatches, ...archivedMatches] : activeMatches}
             error={error}
             isLoading={isLoading}
             onChange={handleMatchRefresh}

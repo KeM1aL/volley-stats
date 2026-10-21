@@ -73,7 +73,7 @@ export function MatchHistoryTable({
 
   // Must be declared before any early returns to satisfy Rules of Hooks.
   const sortedMatches = useMemo(() => {
-    return [...matches].sort((a, b) => {
+    const sorted = [...matches].sort((a, b) => {
       switch (sortField) {
         case "date":
           return sortDirection === "asc"
@@ -88,6 +88,8 @@ export function MatchHistoryTable({
           return 0;
       }
     });
+    // Archived matches come after the active ones, each group in the chosen order.
+    return [...sorted.filter((match) => !match.archived_at), ...sorted.filter((match) => !!match.archived_at)];
   }, [matches, sortField, sortDirection]);
 
   const toggleSort = (field: SortField) => {

@@ -222,8 +222,10 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
         }
       }
 
-      // The local copy carries no archive flag: ask the server, once the match is downloaded. A failed check is ignored.
-      if (online && synced && (await matchApi.isMatchArchived(matchId).catch(() => false))) {
+      // The local copy carries no archive flag: ask the server whenever online. A failed check is ignored.
+      if (online && (await matchApi.isMatchArchived(matchId).catch(() => false))) {
+        // Best effort: an archived match stops replicating on this device (a match with unsent changes is kept).
+        await db.syncManager.forgetMatch(matchId).catch(() => {});
         throw new LiveLoadError("archived");
       }
 

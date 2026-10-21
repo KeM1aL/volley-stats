@@ -33,13 +33,15 @@ function MenuPortal(props: React.ComponentProps<typeof components.MenuPortal>) {
 /**
  * Props for a react-select used inside a dialog: the menu is rendered on document.body (fixed, flipping to the
  * side with room), so the dialog's overflow can't clip it. Spread it on the select: {...selectMenuPortalProps()}.
+ * A select with components of its own passes them here, so they are merged with the MenuPortal instead of being
+ * replaced by (or replacing) it: {...selectMenuPortalProps({ Option: MyOption })}, and no `components` prop after it.
  */
-export function selectMenuPortalProps() {
+export function selectMenuPortalProps(extraComponents?: SelectComponentsConfig<any, false, any>) {
   return {
     menuPortalTarget: typeof document === "undefined" ? undefined : document.body,
     menuPosition: "fixed" as const,
     menuPlacement: "auto" as const,
     // These selects are all single-value
-    components: { MenuPortal } as SelectComponentsConfig<any, false, any>,
+    components: { ...extraComponents, MenuPortal } as SelectComponentsConfig<any, false, any>,
   };
 }

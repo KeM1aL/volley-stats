@@ -107,13 +107,13 @@
     "updateError": "Error al actualizar el equipo. Inténtelo de nuevo.",
     "archived": "Equipo archivado",
     "archivedDesc": "{name} se ha archivado.",
-    "archiveError": "No se pudo archivar el equipo. Inténtalo de nuevo."
+    "archiveError": "No se pudo archivar el equipo. Inténtelo de nuevo."
   },
   "archive": {
     "action": "Archivar",
     "ariaLabel": "Archivar {name}",
     "confirmTitle": "¿Archivar {name}?",
-    "confirmDesc": "El equipo desaparece de las listas y ya no se puede elegir para nuevos partidos. Sus partidos, jugadores y estadísticas se conservan. Puedes restaurarlo volviendo a poner su estado en Activo."
+    "confirmDesc": "El equipo desaparece de las listas y ya no se puede elegir para nuevos partidos. Sus partidos, jugadores y estadísticas se conservan. Puede restaurarlo volviendo a poner su estado en Activo."
   },
   "selectPlaceholder": "Seleccione un equipo...",
   "seasonSelectPlaceholder": "Seleccione una temporada..."

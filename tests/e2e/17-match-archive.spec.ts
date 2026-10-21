@@ -89,8 +89,9 @@ test('archive and restore a played match', async ({ page }, testInfo) => {
   // Restore: back in the list and in the statistics
   await archivedRow.getByRole('button', { name: /^Restore match / }).click();
   await expect(page.getByText('Match restored').first()).toBeVisible({ timeout: 10_000 });
+  // Nothing archived any more: the toggle is gone
   await expect(visibleRows(page, 'archived-match-row')).toHaveCount(0);
-  await page.getByRole('switch', { name: 'Show archived (0)' }).click();
+  await expect(page.getByRole('switch', { name: /Show archived/ })).toHaveCount(0);
   await expect(visibleRows(page, 'match-row')).toHaveCount(1);
   await expectWinStats(page, 1, 1);
 });
