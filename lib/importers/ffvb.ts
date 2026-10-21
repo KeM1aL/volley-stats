@@ -95,6 +95,7 @@ export async function importFfvbMatches(seasonId: number, championshipId: number
 
     const { set, score, total } = row;
 
+    // Not filtered on archived_at: an archived match still exists, so it is not imported a second time.
     const existingMatches = await api.matches.getMatchs([
       { field: "ext_code", operator: "eq", value: matchCode },
       { field: "ext_source", operator: "eq", value: "ffvb" },

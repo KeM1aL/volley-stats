@@ -5,6 +5,7 @@ describe("why the live page leaves for the match list", () => {
   it("keeps the reason of a known failure", () => {
     expect(liveLoadFailureReason(new LiveLoadError("missingTeam"))).toBe("missingTeam");
     expect(liveLoadFailureReason(new LiveLoadError("teamNotInMatch"))).toBe("teamNotInMatch");
+    expect(liveLoadFailureReason(new LiveLoadError("archived"))).toBe("archived");
   });
 
   it("calls anything unexpected unknown", () => {

@@ -30,6 +30,7 @@ import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useRouteId } from "@/hooks/use-route-id";
 import { LoadingPage } from "@/components/loading-page";
+import { ArchivedMatchNotice } from "@/components/matches/archived-match-notice";
 
 function LiveScorePage({ matchId }: { matchId: string }) {
   const t = useTranslations("matches");
@@ -47,6 +48,7 @@ function LiveScorePage({ matchId }: { matchId: string }) {
   const [set, setSet] = useState<Set | undefined>();
   const [players, setPlayers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const loadData = async () => {
@@ -55,12 +57,14 @@ function LiveScorePage({ matchId }: { matchId: string }) {
 
         const { data: matchData, error: matchError } = await supabase
           .from("matches")
-          .select("*")
+          .select("*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)")
           .eq("id", matchId as string)
           .single();
 
         if (matchError) throw matchError;
         setMatch(matchData);
+        // An archived match shows a notice instead of its data.
+        if (matchData.archived_at) return;
 
         const { data: setsData, error: setsError } = await supabase
           .from("sets")
@@ -140,7 +144,7 @@ function LiveScorePage({ matchId }: { matchId: string }) {
     };
 
     loadData();
-  }, [db, matchId, isOnline, t]);
+  }, [db, matchId, isOnline, t, reloadKey]);
 
   useEffect(() => {
     const channel = supabase
@@ -188,6 +192,9 @@ function LiveScorePage({ matchId }: { matchId: string }) {
 
   if (!match) {
     return <div>{t("live.matchNotFound")}</div>;
+  }
+  if (match.archived_at) {
+    return <ArchivedMatchNotice match={match} onRestored={() => setReloadKey((key) => key + 1)} />;
   }
 
   return (

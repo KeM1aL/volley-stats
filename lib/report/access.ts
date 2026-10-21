@@ -8,8 +8,8 @@ export type ReportAccess = "allowed" | "match-not-found" | "team-not-in-match" |
  * its creator, or an owner/admin of its club. Runs with the caller's own client, before any match data is read.
  */
 export async function checkReportAccess(supabase: SupabaseClient, userId: string, matchId: string, teamId: string): Promise<ReportAccess> {
-  const match = live(await rows(supabase.from("matches").select("id, home_team_id, away_team_id, _deleted").eq("id", matchId)))[0];
-  if (!match) return "match-not-found";
+  const match = live(await rows(supabase.from("matches").select("id, home_team_id, away_team_id, archived_at, _deleted").eq("id", matchId)))[0];
+  if (!match || match.archived_at) return "match-not-found";
   if (teamId !== match.home_team_id && teamId !== match.away_team_id) return "team-not-in-match";
 
   const memberships = live(

@@ -104,6 +104,12 @@ describe("checkReportAccess", () => {
     expect(await check("member", "team-other")).toBe("team-not-in-match");
   });
 
+  it("treats an archived match as not found, even for the team's creator", async () => {
+    server.editAsWebsite("matches", MATCH, { archived_at: NEW });
+    expect(await check("creator")).toBe("match-not-found");
+    expect(await check("member")).toBe("match-not-found");
+  });
+
   it("refuses archived members, unless they created the team or run its club", async () => {
     server.seedAt("team_members", { id: "member-archived", team_id: HOME, name: "Archived", number: 6, role: "coach", user_id: "archived", archived_at: NEW }, OLD);
     server.seedAt("team_members", { id: "creator-archived", team_id: HOME, name: "Creator", number: 5, role: "owner", user_id: "creator", archived_at: NEW }, OLD);

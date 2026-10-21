@@ -34,6 +34,7 @@ import { fileNameFromDisposition } from "@/lib/report/download";
 import { useRouteId } from "@/hooks/use-route-id";
 import { routes } from "@/lib/routes";
 import { LoadingPage } from "@/components/loading-page";
+import { ArchivedMatchNotice } from "@/components/matches/archived-match-notice";
 
 class ReportRequestError extends Error {
   constructor(readonly status: number) {
@@ -59,6 +60,7 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
   const locale = useLocale();
   const { user } = useAuth();
   const syncStatus = useSyncStatus();
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const loadData = async () => {
@@ -67,12 +69,14 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
 
         const { data: matchData, error: matchError } = await supabase
           .from("matches")
-          .select("*")
+          .select("*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)")
           .eq("id", matchId as string)
           .single();
 
         if (matchError) throw matchError;
         setMatch(matchData);
+        // An archived match shows a notice instead of its data.
+        if (matchData.archived_at) return;
 
         const managedTeamParam = searchParams.get("team");
         if (!managedTeamParam) {
@@ -256,7 +260,7 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
     } else {
       loadLocalData();
     }
-  }, [db, matchId, isOnline, t]);
+  }, [db, matchId, isOnline, t, reloadKey]);
 
   const exportReport = async () => {
     if (!managedTeam || isExporting) return;
@@ -302,6 +306,9 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
   }
   if (!match) {
     return <div>{t("live.matchNotFound")}</div>;
+  }
+  if (match.archived_at) {
+    return <ArchivedMatchNotice match={match} onRestored={() => setReloadKey((key) => key + 1)} />;
   }
 
   const canExport = canExportForTeam(user, managedTeam);

@@ -280,6 +280,7 @@
         "matchNotFound": "It no longer exists, or you don't have access to it.",
         "dataMissing": "Its teams or match format are missing on this device. Check your connection and open it again.",
         "teamNotInMatch": "The team in the link doesn't play in this match. Open the match again from the match list.",
+        "archived": "This match is archived. Restore it from the match list to score it.",
         "unknown": "Check your connection and open it again."
       }
     }
@@ -499,6 +500,7 @@
     "restoreAriaLabel": "Restore match {home} vs {away}",
     "showArchived": "Show archived ({count})",
     "badge": "Archived",
+    "archivedNotice": "This match is archived.",
     "unsent": "This device has changes to this match that aren't uploaded yet. Wait until they're uploaded.",
     "toast": {
       "deleted": "Match deleted",

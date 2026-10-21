@@ -280,6 +280,7 @@
         "matchNotFound": "Já não existe, ou não tem acesso a ele.",
         "dataMissing": "As equipas ou o formato do jogo estão em falta neste dispositivo. Verifique a ligação e abra-o novamente.",
         "teamNotInMatch": "A equipa indicada na ligação não joga este jogo. Abra o jogo novamente a partir da lista de jogos.",
+        "archived": "Este jogo está arquivado. Restaure-o a partir da lista de jogos para o marcar.",
         "unknown": "Verifique a ligação e abra-o novamente."
       }
     }
@@ -499,6 +500,7 @@
     "restoreAriaLabel": "Restaurar o jogo {home} contra {away}",
     "showArchived": "Mostrar arquivados ({count})",
     "badge": "Arquivado",
+    "archivedNotice": "Este jogo está arquivado.",
     "unsent": "Este dispositivo tem alterações a este jogo que ainda não foram enviadas. Aguarde até serem enviadas.",
     "toast": {
       "deleted": "Jogo eliminado",

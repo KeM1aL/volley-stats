@@ -44,6 +44,7 @@ import {
   SubstitutionCommand,
 } from "@/lib/commands/match-commands";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useMatchApi } from "@/hooks/use-match-api";
 import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
 import { cn } from "@/lib/utils";
 import { BarChart3, WifiOff } from "lucide-react";
@@ -86,6 +87,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
   const searchParams = useSearchParams();
   const { isOnline, wasOffline } = useOnlineStatus();
   const { localDb: db } = useLocalDb();
+  const matchApi = useMatchApi();
   const router = useRouter();
   const [matchState, setMatchState] = useState<MatchState>(initialMatchState);
   const [teamPlayers, setTeamPlayers] = useState<TeamMember[]>([]);
@@ -218,6 +220,11 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
             description: t("live.syncWarningDesc"),
           });
         }
+      }
+
+      // The local copy carries no archive flag: ask the server, once the match is downloaded. A failed check is ignored.
+      if (online && synced && (await matchApi.isMatchArchived(matchId).catch(() => false))) {
+        throw new LiveLoadError("archived");
       }
 
       setLoadingStep(1);
@@ -373,7 +380,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
     } finally {
       setIsLoading(false);
     }
-  }, [db, matchId, router, t, searchParams, ensureScorerClaim]);
+  }, [db, matchId, router, t, searchParams, ensureScorerClaim, matchApi]);
 
   useEffect(() => {
     loadMatchData();

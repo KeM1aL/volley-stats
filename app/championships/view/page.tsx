@@ -90,6 +90,7 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
           operator: "eq",
           value: championshipId,
         });
+        filters.push({ field: "archived_at", operator: "is", value: null });
 
         if (selectedTeam) {
           filters.push({

@@ -15,6 +15,8 @@ export type LiveLoadFailureReason =
   | "dataMissing"
   /** The ?team= of the URL doesn't play in this match. */
   | "teamNotInMatch"
+  /** Archived: it is restored from the match list before it can be scored. */
+  | "archived"
   /** Anything unexpected (local database error, ...). */
   | "unknown";
 

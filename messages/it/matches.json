@@ -280,6 +280,7 @@
         "matchNotFound": "Non esiste più, oppure non hai accesso.",
         "dataMissing": "Le sue squadre o il formato della partita mancano su questo dispositivo. Controlla la connessione e riaprila.",
         "teamNotInMatch": "La squadra indicata nel link non gioca questa partita. Riapri la partita dall'elenco delle partite.",
+        "archived": "Questa partita è archiviata. Ripristinala dall'elenco delle partite per segnarla.",
         "unknown": "Controlla la connessione e riaprila."
       }
     }
@@ -499,6 +500,7 @@
     "restoreAriaLabel": "Ripristina la partita {home} contro {away}",
     "showArchived": "Mostra archiviati ({count})",
     "badge": "Archiviata",
+    "archivedNotice": "Questa partita è archiviata.",
     "unsent": "Questo dispositivo ha modifiche a questa partita non ancora caricate. Aspetta che vengano caricate.",
     "toast": {
       "deleted": "Partita eliminata",

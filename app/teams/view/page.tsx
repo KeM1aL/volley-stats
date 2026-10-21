@@ -90,6 +90,7 @@ function TeamDetailsPage({ id }: { id: string }) {
             operator: "or",
             value: `home_team_id.eq.${id},away_team_id.eq.${id}`,
           },
+          { field: "archived_at", operator: "is", value: null },
         ];
         const matchSort: Sort<Match>[] = [{ field: "date", direction: "desc" }];
         const matchJoins = [
