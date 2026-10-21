@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { addDocEqualityToQuery, pickSchemaFields } from "@/lib/rxdb/sync/helper";
+import { matchSchema } from "@/lib/rxdb/schema";
 
 describe("pickSchemaFields", () => {
   it("drops columns the local schema does not define", () => {
@@ -19,6 +20,15 @@ describe("pickSchemaFields", () => {
 
   it("keeps _deleted even when the schema omits it", () => {
     expect(pickSchemaFields({ id: "a", _deleted: true }, { id: {} })).toEqual({ id: "a", _deleted: true });
+  });
+});
+
+describe("pickSchemaFields on a match row", () => {
+  it("drops archived_at: a device never pulls it, so its push never resets the archive", () => {
+    const row = { id: "m", status: "completed", archived_at: "2026-10-21T10:00:00.000Z", _deleted: false };
+    const doc = pickSchemaFields(row, matchSchema.properties as Record<string, unknown>);
+    expect(doc).toEqual({ id: "m", status: "completed", _deleted: false });
+    expect("archived_at" in doc).toBe(false);
   });
 });
 

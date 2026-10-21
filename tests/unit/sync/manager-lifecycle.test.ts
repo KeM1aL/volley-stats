@@ -428,4 +428,29 @@ describe("SyncManager lifecycle", () => {
     await d.signIn();
     await waitFor(() => d.platform.wasPersistenceRequested(), { message: "persistent storage requested" });
   });
+
+  describe("forgetMatch", () => {
+    it("stops tracking a match with nothing unsent", async () => {
+      const d = await suite.device();
+      await d.signIn();
+      expect(await d.openMatch(suite.matchId())).toBe(true);
+      await d.manager.awaitMatchInSync(suite.matchId());
+      await d.manager.forgetMatch(suite.matchId());
+      expect(await d.manager.tracked.entry(suite.matchId())).toBeNull();
+      await waitFor(() => !d.manager.isTracking(suite.matchId()), { message: "the replications stopped" });
+    });
+
+    it("keeps a match with a pending change tracked", async () => {
+      const d = await suite.device();
+      await d.signIn();
+      await d.openMatch(suite.matchId());
+      d.goOffline();
+      const set = await d.startSet(suite.matchId());
+      await d.recordPoint(suite.matchId(), set.id, 1);
+      expect(await d.pending.count({ matchId: suite.matchId(), statuses: ["pending"] })).toBeGreaterThan(0);
+      await d.manager.forgetMatch(suite.matchId());
+      expect(await d.manager.tracked.entry(suite.matchId())).not.toBeNull();
+      expect(d.manager.isTracking(suite.matchId())).toBe(true);
+    });
+  });
 });

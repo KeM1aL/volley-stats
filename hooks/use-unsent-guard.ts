@@ -4,21 +4,24 @@ import { useEffect, useState } from "react";
 import { combineLatest } from "rxjs";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { countFor, type KeyedCount } from "@/lib/rxdb/keyed-count";
+import type { PendingStatus } from "@/lib/rxdb/sync/pending-changes";
 import type { MatchCollectionName } from "@/lib/rxdb/sync/types";
 
-/** Changes of this match not uploaded yet (pending only). */
-export function useMatchUnsentCount(matchId: string): number {
+/** Changes of this match in these statuses (default: pending only, i.e. not uploaded yet). */
+export function useMatchUnsentCount(matchId: string, statuses: readonly PendingStatus[] = ["pending"]): number {
   const { localDb } = useLocalDb();
   const [state, setState] = useState<KeyedCount | null>(null);
+  const statusKey = statuses.join(",");
+  const key = `${matchId}:${statusKey}`;
   useEffect(() => {
     const pending = localDb?.pendingChanges;
     if (!pending) return;
     const subscription = pending
-      .count$({ matchId, statuses: ["pending"] })
-      .subscribe((count) => setState({ key: matchId, count }));
+      .count$({ matchId, statuses: statusKey.split(",") as PendingStatus[] })
+      .subscribe((count) => setState({ key, count }));
     return () => subscription.unsubscribe();
-  }, [localDb, matchId]);
-  return countFor(state, matchId, 0);
+  }, [localDb, matchId, statusKey, key]);
+  return countFor(state, key, 0);
 }
 
 /**

@@ -319,6 +319,19 @@ export class SyncManager {
     await this.tracked.setClaim(matchId, "held");
   }
 
+  /**
+   * Stops tracking a match deleted on the server, unless it still has pending, rejected or superseded
+   * changes on this device (they stay until they are uploaded, discarded or taken back). Runs on the
+   * lifecycle queue, like the other tracked-match writes; the replications stop through the tracked subscription.
+   */
+  forgetMatch(matchId: string): Promise<void> {
+    return this.enqueue(async () => {
+      if (!(await this.tracked.entry(matchId))) return;
+      if ((await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected", "superseded"] })) > 0) return;
+      await this.tracked.remove(matchId);
+    });
+  }
+
   /** Stops the match's replications; it stays in `matches` (isTracking) until they are cancelled. */
   private async stopMatch(matchId: string): Promise<void> {
     const running = this.matches.get(matchId);

@@ -28,6 +28,7 @@ import MatchEditDialog from "../match-edit-dialog";
 import MatchStatsDialog from "../match-stats-dialog";
 import MatchScoreDialog from "../match-score-dialog";
 import { useAuth } from "@/contexts/auth-context";
+import { canManageMatch } from "@/lib/matches/can-manage-match";
 import { useTranslations } from "next-intl";
 import { SyncFlag } from "@/components/sync/sync-flag";
 import { useSyncStatus } from "@/hooks/use-sync-status";
@@ -75,30 +76,6 @@ export function MatchHistoryTable({
       }
     });
   }, [matches, sortField, sortDirection]);
-
-  const isMemberOfTeamOrClub = (match: Match) => {
-    if (!user) return false;
-
-    if(match.home_team?.user_id === user.id || match.away_team?.user_id === user.id) {
-      return true;
-    }
-
-    const isHomeTeamMember = user.teamMembers?.some(
-      (member) => member.team_id === match.home_team_id
-    );
-    const isAwayTeamMember = user.teamMembers?.some(
-      (member) => member.team_id === match.away_team_id
-    );
-
-    const isHomeClubMember = user.clubMembers?.some(
-      (member) => member.club_id === match.home_team?.club_id
-    );
-    const isAwayClubMember = user.clubMembers?.some(
-      (member) => member.club_id === match.away_team?.club_id
-    );
-
-    return isHomeTeamMember || isAwayTeamMember || isHomeClubMember || isAwayClubMember;
-  };
 
   const toggleSort = (field: SortField) => {
     if (field === sortField) {
@@ -196,7 +173,7 @@ export function MatchHistoryTable({
                 <span className="font-bold text-lg ml-2">{match.away_score}</span>
               </div>
             </div>
-            {user && isMemberOfTeamOrClub(match) && (
+            {canManageMatch(user, match) && (
               <div className="flex gap-2 pt-2 border-t">
                 {(() => {
                   switch (match.status) {
@@ -262,7 +239,7 @@ export function MatchHistoryTable({
                     <SyncFlag summary={syncByMatch.get(match.id)} />
                   </span>
                 </TableCell>
-                {user && isMemberOfTeamOrClub(match) && (
+                {canManageMatch(user, match) && (
                   <TableCell>
                     <div className="flex gap-2">
                       {(() => {
