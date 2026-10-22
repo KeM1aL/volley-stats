@@ -152,6 +152,8 @@
     "viewDetails": "Visualizza dettagli"
   },
   "import": {
-    "comingSoon": "Prossimamente"
+    "success": "Importazione completata",
+    "successDesc": "Le partite FFVB sono state importate.",
+    "failure": "Importazione non riuscita"
   }
 }

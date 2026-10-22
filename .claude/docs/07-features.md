@@ -156,7 +156,7 @@ const teams = await teamApi.getTeams(
   - Age category: U10, U12, U14, U16, U18, U21, Senior
   - Gender: Female, Male, Mixed
   - Match format rules (sets to win, points per set, rotation)
-- Import matches (and missing teams) for a championship from FFVB via `/api/import/ffvb` ([lib/importers/ffvb.ts](lib/importers/ffvb.ts)). For now the championship page shows its button on both targets but disabled ("Coming soon", `championships.import.comingSoon`) and never calls the route; the route itself is unchanged (web only, 401 for signed-out callers).
+- Import matches (and missing teams) for a championship from FFVB via `/api/import/ffvb` ([lib/importers/ffvb.ts](lib/importers/ffvb.ts)). Admin only (`profiles.role = 'admin'`): the championship page shows `FfvbImportButton` only on the web build for an admin, and the route checks the role with `requireAdmin` ([lib/server/admin.ts](lib/server/admin.ts)): 401 signed out, 403 for a non-admin.
 - Assign teams to championships
 - Track championship seasons
 - View championship standings (future feature)
