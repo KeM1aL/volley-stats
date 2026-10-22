@@ -7,6 +7,7 @@
 **Key Characteristics**:
 - Live match tracking works offline (RxDB + Supabase sync); other screens use live Supabase data
 - Real-time match tracking (core feature)
+- Installed app (Android/iOS) = the `mobile` export in a Capacitor shell: [.claude/docs/11-mobile-app.md](.claude/docs/11-mobile-app.md)
 - PWA with a Serwist service worker ([app/sw.ts](app/sw.ts), served at `/serwist/sw.js`)
 - Two build targets: `web` (Vercel: proxy, `/api` routes, service worker) and `mobile` (`BUILD_TARGET=mobile`, static export in `out/` for the Capacitor app)
 - Repository pattern for data access (lib/api/)
@@ -51,6 +52,7 @@ pnpm start           # Production server
 pnpm build:mobile    # Static export in out/ (needs NEXT_PUBLIC_API_ORIGIN and NEXT_PUBLIC_WEB_ORIGIN)
 pnpm check:export    # Checks out/: pages present, no server-only file, no secret
 pnpm serve:mobile    # Serves out/ on port 3200
+pnpm cap:sync        # build:mobile + app version + cap sync (Android build values: 11-mobile-app.md)
 pnpm lint            # ESLint (flat config: eslint.config.mjs)
 pnpm test             # Unit tests (Vitest)
 pnpm test:e2e:quick   # E2E core + live projects (~1.5 min), during a task
@@ -78,6 +80,8 @@ pnpm test:e2e         # Full E2E, before merging
 4. **Type Safety**: Use types from [lib/types.ts](lib/types.ts)
 5. **Two targets**: server-only files are `*.web.ts(x)` (or in `lib/server/`, or `proxy.ts`); target-specific code lives behind `lib/platform`; in-app URLs come from `lib/routes.ts` (ids as `?id=`); the API is called with `apiFetch`. See [.claude/docs/02-architecture.md](.claude/docs/02-architecture.md).
 
+6. **Migrations**: installed apps update late, so every migration only adds (tables, nullable or defaulted columns, functions) and starts with a header comment answering "does an app built three months ago still work?"; renames, drops, changed function parameters and tighter policies take two releases (`app_config.min_version`). `/api/v1` never changes incompatibly. See [.claude/docs/11-mobile-app.md](.claude/docs/11-mobile-app.md).
+
 ### When to Read Detailed Documentation
 
 Read specific docs based on your current task (use the Read tool):
@@ -92,6 +96,7 @@ Read specific docs based on your current task (use the Read tool):
 - Adding new features? → [.claude/docs/08-development-guidelines.md](.claude/docs/08-development-guidelines.md)
 - Live match tracking? → [.claude/docs/07-features.md](.claude/docs/07-features.md)
 - Authentication? → [.claude/docs/06-auth.md](.claude/docs/06-auth.md)
+- Mobile app, Android build, compatibility policy? → [.claude/docs/11-mobile-app.md](.claude/docs/11-mobile-app.md)
 
 **Full documentation index with task-based guidance**: [.claude/docs/README.md](.claude/docs/README.md)
 

@@ -14,7 +14,7 @@
 
 | Table | Meaning | Key references |
 |-------|---------|----------------|
-| `profiles` | Per-user profile (name, language, favorites); `id` is the auth user id | `favorite_club_id` → clubs, `favorite_team_id` → teams |
+| `profiles` | Per-user profile (name, language, favorites, `role` `user` / `admin`, default `user`); `id` is the auth user id. The trigger `protect_profile_role` rejects a `role` set or changed by an `anon` / `authenticated` request (42501 `role_not_allowed`); the dashboard and the service role may. Admins gate the FFVB import | `favorite_club_id` → clubs, `favorite_team_id` → teams |
 | `clubs` | Volleyball clubs/organizations | `user_id` → auth user (creator) |
 | `club_members` | Club membership with role `owner` / `admin` / `member` | `club_id` → clubs, `user_id` → auth user |
 | `teams` | Teams, with `status` `incomplete` / `active` / `archived`; `ext_code`/`ext_source` for imported teams | `club_id` → clubs, `championship_id` → championships |
@@ -34,6 +34,14 @@
 | `events` | Match events: `event_type` substitution, timeout, injury, sanction, technical, comment; type-specific `details` JSON | `match_id`, `set_id` (optional), `team_id`, `player_id` |
 
 Substitutions are `events` rows with `event_type: 'substitution'` (see `SubstitutionDetails` in [lib/types/events.ts](lib/types/events.ts)); there is no `substitutions` table.
+
+### App configuration
+
+| Table | Meaning |
+|-------|---------|
+| `app_config` | One row per store platform (`ios`, `android`): `min_version`, `latest_version`, `store_url` (null until published). Readable by `anon` and `authenticated`, writable only from the dashboard, not replicated to RxDB, not counted in the 13 tables. Drives the update banner / block of the installed app ([11-mobile-app.md](11-mobile-app.md)). Migrations [20261023000000_app_role_and_config.sql](supabase/migrations/20261023000000_app_role_and_config.sql) and [20261023000100_protect_profile_role_empty_claims.sql](supabase/migrations/20261023000100_protect_profile_role_empty_claims.sql) |
+
+Migrations follow the compatibility policy in [11-mobile-app.md](11-mobile-app.md) (additive only, header question about old app versions).
 
 ### Functions (RPC)
 

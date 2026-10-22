@@ -416,7 +416,7 @@ it("computes the Android version code", () => expect(versionCode("1.4.10")).toBe
 - Delete: `app/auth/callback/route.web.ts`
 
 **Interfaces:**
-- Produces: `<Analytics />` (client) renders `<GoogleAnalytics gaId=… />` only when `platform.target === "web"`, `process.env.NODE_ENV !== "development"` and `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set (the current condition).
+- Produces: `<Analytics />` (client), taken from `platform.Analytics` (the web implementation renders `<GoogleAnalytics gaId=… />`; the mobile one is a no-op component), only when `process.env.NODE_ENV !== "development"` and `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set (the current condition).
 
 - [ ] **Step 1: Precondition**: ask the user whether the `send-email` function has been deployed with `token_hash` links (open item); if not, do the analytics part only and leave the callback deletion as an unchecked step for Task 13.
 - [ ] **Step 2: Implement** `Analytics` and use it in the layout; delete the callback route; remove its mentions from the two docs (the `send-email` comment and test about `/auth/callback` redirects stay: they still filter old `redirect_to` values).

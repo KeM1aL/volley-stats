@@ -120,8 +120,8 @@ benefits too).
 
 ESLint: `@capacitor/*` imports stay confined to `lib/platform/` (rule from sub-project 1).
 
-Google Analytics: `app/layout.tsx` renders it only when `platform.target === 'web'`, so the
-mobile build never loads it.
+Google Analytics: web only, through the `platform.Analytics` seam (`app/layout.tsx` renders
+`<Analytics />`; the mobile implementation is a no-op component), so the mobile build never loads it.
 
 ## 3. Admin role and the FFVB import
 
