@@ -17,6 +17,7 @@ import { KeyboardProvider } from '@/contexts/keyboard-context';
 import { Analytics } from '@/components/analytics';
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider';
 import { isMobileBuild } from '@/lib/platform/build-target';
+import { NATIVE_BOOT_SCRIPT } from '@/lib/platform/native-boot';
 import { StatusBarSync } from '@/components/providers/status-bar-sync';
 import { NativeBridge } from '@/components/native/native-bridge';
 import { UpdateGate } from '@/components/native/update-gate';
@@ -72,6 +73,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Mobile build only: marks <html> as the installed app before the first paint, so the web header never flashes (globals.css). */}
+        {isMobileBuild && <script dangerouslySetInnerHTML={{ __html: NATIVE_BOOT_SCRIPT }} />}
         {/* <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" /> */}

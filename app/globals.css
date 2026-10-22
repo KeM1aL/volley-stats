@@ -204,6 +204,11 @@
     --fixed-bottom-safe-area: 0px;
   }
 
+  /* The installed app has no web header. native-boot.ts sets the attribute before the first paint; React removes the header after mount (useNativeApp). */
+  html[data-native-app] [data-web-header] {
+    display: none;
+  }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
