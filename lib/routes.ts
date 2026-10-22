@@ -152,3 +152,33 @@ export const LEGACY_ROUTE_REDIRECTS = [
   { source: `/teams/${ID}`, destination: "/teams/view?id=:id" },
   { source: `/championships/${ID}`, destination: "/championships/view?id=:id" },
 ];
+
+const LEGACY_ROUTE_MATCHERS = LEGACY_ROUTE_REDIRECTS.map(({ source, destination }) => ({
+  pattern: new RegExp(`^${source.replace(/:id\(([^)]*)\)/, "($1)")}/?$`, "i"),
+  destination,
+}));
+
+/**
+ * The in-app route for a link opened with the app (https://<web origin>/…): old path forms become the new route (query
+ * kept), any other path is kept as is. A link to another origin, or one that does not parse, opens the home page.
+ */
+export function appRouteFromUrl(url: string, webOrigin: string): string {
+  let link: URL;
+  let origin: string;
+  try {
+    link = new URL(url);
+    origin = new URL(webOrigin).origin;
+  } catch {
+    return "/";
+  }
+  if (link.origin !== origin) return "/";
+  const query = link.search.replace(/^\?/, "");
+  for (const { pattern, destination } of LEGACY_ROUTE_MATCHERS) {
+    const match = pattern.exec(link.pathname);
+    if (match) {
+      const route = destination.replace(":id", match[1].toLowerCase());
+      return query ? `${route}&${query}` : route;
+    }
+  }
+  return link.pathname + link.search;
+}

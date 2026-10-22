@@ -18,6 +18,7 @@ import { GoogleAnalytics } from '@next/third-parties/google'
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider';
 import { isMobileBuild } from '@/lib/platform/build-target';
 import { StatusBarSync } from '@/components/providers/status-bar-sync';
+import { NativeBridge } from '@/components/native/native-bridge';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -95,6 +96,7 @@ export default function RootLayout({
                   <LocalDatabaseProvider>
                     <SyncStatusProvider>
                       <LeaveGuardProvider>
+                        <NativeBridge />
                         <Suspense fallback={null}><LoadingBar /></Suspense>
                         {/* Mobile build only: the page draws under the system bars, so these strips keep scrolled content out from under them. Below the dialog overlays (z-50). */}
                         {isMobileBuild && <div className="fixed inset-x-0 top-0 z-40 h-(--safe-area-inset-top) bg-background" aria-hidden="true" />}

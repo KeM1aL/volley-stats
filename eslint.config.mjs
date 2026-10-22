@@ -27,7 +27,7 @@ export default defineConfig([
   },
   {
     // Core folders stay free of React and Next.
-    files: ['lib/{api,auth,commands,importers,keyboard,matches,rxdb,stats,templates,types,utils}/**/*.{ts,tsx}'],
+    files: ['lib/{api,auth,commands,importers,keyboard,matches,native,rxdb,stats,templates,types,utils}/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
         paths: ['react', 'react-dom', 'next', 'next-intl', 'next/headers', 'next/server', 'next-intl/server', '@supabase/ssr', '@platform-impl']
