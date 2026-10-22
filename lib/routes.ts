@@ -65,7 +65,37 @@ export function isSafeRedirectTarget(target: string | null | undefined): target 
   return !TECHNICAL_FILE.test(path);
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** An in-app path (query included) that the root page may open: `/auth…` is allowed, `/api/` and `/_next/` are not. */
+function isBootTarget(target: string | null | undefined): target is string {
+  if (!target || !target.startsWith("/") || target.startsWith("//") || target.includes("://")) return false;
+  // Browsers read "/\evil.com" and "/<tab>/evil.com" as "//evil.com": no backslashes or control characters.
+  if (/[\\\u0000-\u001f\u007f]/.test(target)) return false;
+  try {
+    if (new URL(target, "http://x").origin !== "http://x") return false;
+  } catch {
+    return false;
+  }
+  const path = normalizePath(target.split(/[?#]/)[0]);
+  return !(path.startsWith("/api/") || path.startsWith("/_next/"));
+}
+
+/**
+ * The app serves its root HTML for every path without an extension, so a full page load of a sub-path shows the landing
+ * page. Hard navigations therefore go to `/?to=<path>`; this reads that target (null when absent or unsafe).
+ */
+export function bootRedirectTarget(search: string): string | null {
+  const target = new URLSearchParams(search).get("to");
+  return isBootTarget(target) ? target : null;
+}
+
+/** After a reload of a sub-path the root page is rendered under that URL: the path to open again, null on the root page. */
+export function reloadRedirectTarget(pathname: string, search: string): string | null {
+  if (normalizePath(pathname) === "/") return null;
+  const target = pathname + search;
+  return isBootTarget(target) ? target : null;
+}
+
+const UUID =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function parseRouteId(value: string | null | undefined): string | null {
   return value && UUID.test(value) ? value.toLowerCase() : null;

@@ -6,6 +6,8 @@ import { FeaturesSection } from "@/components/landing/features-section";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
+import { Suspense } from "react";
+import { BootRedirect } from "@/components/native/boot-redirect";
 
 export default function Home() {
   const { user, isLoading } = useAuth();
@@ -13,6 +15,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-8">
+      <Suspense fallback={null}>
+        <BootRedirect />
+      </Suspense>
       <section className="text-center py-8 sm:py-12 md:py-20 px-4">
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-3 sm:mb-4">
           {t('title')}

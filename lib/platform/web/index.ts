@@ -18,4 +18,5 @@ export const platform: Platform = {
   ServiceWorker: WebServiceWorker,
   saveFile: async (data, fileName) => saveBlob(data, fileName),
   createSyncPlatform: createWebPlatform,
+  hardNavigate: (path) => window.location.assign(path),
 };

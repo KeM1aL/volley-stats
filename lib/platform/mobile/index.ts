@@ -30,4 +30,6 @@ export const platform: Platform = {
   ServiceWorker: Passthrough,
   saveFile: async (data, fileName) => saveBlob(data, fileName),
   createSyncPlatform: createWebPlatform,
+  // Capacitor answers every extension-less path with the root index.html: the root page forwards to the target.
+  hardNavigate: (path) => window.location.assign(`/?to=${encodeURIComponent(path)}`),
 };

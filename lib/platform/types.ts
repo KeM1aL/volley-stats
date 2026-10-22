@@ -16,4 +16,6 @@ export interface Platform {
   ServiceWorker: ComponentType<{ children: ReactNode }>;
   saveFile(data: Blob, fileName: string): Promise<void>;
   createSyncPlatform(): SyncPlatform;
+  /** Full page load of an in-app path (the app serves its root page for sub-paths, so mobile goes through `/?to=`). */
+  hardNavigate(path: string): void;
 }
