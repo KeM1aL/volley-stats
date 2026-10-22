@@ -181,8 +181,8 @@ a bottom tab bar instead of the header menu. The website is unchanged on every s
 so is the export opened in a browser (the e2e export suite keeps the current navigation).
 - Four tabs, the current navigation entries: Championships, Matches, Teams, Settings, each with
   its icon and label; the active tab follows the section (`/teams/view?id=…` → Teams).
-- In the app the header keeps the logo (home), the sync indicator and sign-out; the hamburger
-  menu and the header links are not rendered.
+- ~~In the app the header keeps the logo (home), the sync indicator and sign-out~~ — superseded by
+  "No top bar, Profile tab, breadcrumb" below.
 - Hidden on the live match page (the court needs the space; leaving goes through the existing
   leave flow and the Android back button) and while the on-screen keyboard is open.
 - Sits above the home indicator / gesture bar (`env(safe-area-inset-bottom)`); page content is
@@ -190,6 +190,32 @@ so is the export opened in a browser (the e2e export suite keeps the current nav
 - Tab links go through the existing leave guard like the header links.
 - Decided by `platform.nativePlatform !== null` (my call: "the app" means the installed app, not
   the mobile build in a browser).
+
+### No top bar, Profile tab, breadcrumb (installed app only)
+
+Added 2026-10-22 at the user's request; supersedes the header bullet above. The website and the
+browser export keep their current header.
+- **No header** in the app, on every page (including the compact landscape header of the live
+  page). The logo and the full-screen toggle go away (full screen has no effect on mobile); the
+  language is already in settings.
+- **"Settings" tab becomes "Profile"** in the app (person icon, label "Profil" in French; same
+  `/settings` page). In the app the page starts with the user's name and email and the full sync
+  status, and gains **Sign out**, with the existing unsent-changes confirmation (moved out of the
+  header into a shared component). The website keeps "Settings" and its header sign-out (my call).
+- **Breadcrumb** at the top of sub-pages, app only: Teams › {team}; Teams › {team} › Players;
+  Teams › New team; Championships › {championship}; Matches › {home – away} (stats);
+  Matches › {home – away} › Score; Profile › Privacy. Every item but the last is a link (through
+  the leave guard); long names are truncated on narrow screens. No breadcrumb on tab roots
+  (Matches, Teams, Championships, Profile), the landing page or auth pages.
+- **Live match page**: no breadcrumb (court space). A small back button at the top left (goes
+  through the existing leave confirmation, then back, or to Matches when there is no history)
+  with the compact sync status next to it.
+- **Sync status**: on the live page as above; a dot on the Matches tab while changes are waiting
+  to upload; the full status on the Profile page.
+- **Native share for the stats link** (found during the Android checklist): the stats page's
+  "Share" button calls `navigator.share`, which the Android WebView does not provide, so it does
+  nothing in the app. A `platform.shareLink({ url, title })` member uses the native share sheet in
+  the app and the current behaviour (Web Share, else copy) elsewhere.
 
 ### Status bar and safe areas
 

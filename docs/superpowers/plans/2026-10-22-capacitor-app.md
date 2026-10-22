@@ -490,3 +490,40 @@ Added after the plan was approved (spec §4 "Bottom tab bar"). Run it after Task
 - [ ] **Step 4: Full verification**: `pnpm test`; lint gate; `npx tsc --noEmit`; `pnpm i18n:check`; `pnpm build` + full web e2e `CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e`; the export suite (Task 3 Step 6 command); the Android manual checklist on the emulator, every item ticked with notes. Stop every server by PID.
 - [ ] **Step 5: Remind the user** of their open actions: `API_CORS_ORIGINS` on the deployed web app gains `capacitor://localhost,https://localhost`; the GitHub variables; `send-email` deploy (and Task 10's callback deletion if it was deferred); their admin role SQL.
 - [ ] **Step 6: Commit** — `docs: mobile app guide, compatibility policy and release checklists`.
+
+### Task 15: No top bar in the app, Profile tab with sign-out, breadcrumb, live back button, sync status
+
+Added after Task 13 at the user's request (spec §4 "No top bar, Profile tab, breadcrumb"). Web and the browser export unchanged.
+
+**Files:**
+- Create: `lib/native/breadcrumb.ts`, `components/native/app-breadcrumb.tsx`, `components/native/live-app-toolbar.tsx`, `components/auth/sign-out-button.tsx`
+- Modify: `components/navigation.tsx` (render nothing in the app; use `SignOutButton` on web), `components/navigation/nav-items.ts` + `components/navigation/bottom-tab-bar.tsx` (Profile label and icon in the app, unsent dot on Matches), `app/settings/page.tsx` (app-only profile header + sign-out), `app/matches/live/layout.tsx` and `app/matches/live/page.tsx` (no header offset in the app; `LiveAppToolbar`), the six sub-pages (`app/teams/view`, `app/teams/players`, `app/teams/new`, `app/championships/view`, `app/matches/stats`, `app/matches/score`) and `app/privacy/page.tsx` (render `<AppBreadcrumb items=… />` at the top), `messages/*/navigation.json`
+- Test: `tests/unit/native/breadcrumb.test.ts`
+
+**Interfaces:**
+- Consumes: `useNativeApp()` (`hooks/use-native-app.ts`), `useSyncStatus()` (`hooks/use-sync-status.ts`), `SyncBadge` (`components/sync/sync-badge.tsx`), `useConfirmLeave()`, `GuardedLink`, `NAV_SECTIONS` / `activeSection` (`lib/native/tab-bar.ts`), `routes` (`lib/routes.ts`).
+- Produces:
+  - `type Crumb = { label: string; href?: string }`; `breadcrumbFor(pathname: string, names: { team?: string; championship?: string; match?: string }, t: (key: string) => string): Crumb[]` in `lib/native/breadcrumb.ts` (pure; `t` resolves section labels; ids come from the page via the hrefs it already builds — pass `teamHref`/`matchHref` in `names` if needed). Returns `[]` for tab roots, `/`, `/auth…`, `/matches/live`.
+  - `<AppBreadcrumb items={Crumb[]} />`: renders only when `useNativeApp()`; last item plain text (`aria-current="page"`), others `GuardedLink`; `data-testid="app-breadcrumb"`; truncates long labels (`truncate max-w-[40vw]`).
+  - `<SignOutButton />`: the header's sign-out with its unsent-changes `AlertDialog` (same strings, same guard via `useConfirmLeave`), reused by the web header and the app's Profile page.
+  - `<LiveAppToolbar />`: app only; back button (`aria-label` "Back", `data-testid="live-back"`) → `confirmLeave()`; on "leave"/"free" `router.back()` if `history.length > 1`, else `router.replace(routes.matches())`; `SyncBadge compact` next to it.
+  - Tab bar in the app: the `/settings` tab uses label key `navigation.menu.profile` ("Profile"/"Profil"/"Perfil"/"Profilo"/"Perfil") and a person icon (`CircleUser`); the Matches tab shows a small dot (`data-testid="tab-unsent-dot"`) when `useSyncStatus()` reports unsent changes > 0.
+
+- [ ] **Step 1: Write the failing tests** — `breadcrumbFor`: `/teams/view` with team "Les Aigles" → `[{Teams, /teams}, {Les Aigles}]`; `/teams/players` → `[{Teams,/teams},{Les Aigles, routes.team(id)},{Players}]`; `/teams/new` → `[{Teams,/teams},{New team}]`; `/championships/view` → `[{Championships,/championships},{name}]`; `/matches/stats` → `[{Matches,/matches},{Home – Away}]`; `/matches/score` → `[{Matches,/matches},{Home – Away, routes.matchStats(id)? or none},{Score}]` (decide the middle link from what the page has; document it); `/privacy` → `[{Profile,/settings},{Privacy}]`; `/teams`, `/matches`, `/settings`, `/`, `/auth`, `/matches/live` → `[]`; a missing name falls back to a generic label ("Team", "Match", "Championship"), never an empty crumb.
+- [ ] **Step 2: Run** — FAIL.
+- [ ] **Step 3: Implement** per Interfaces. In the app: `Navigation` returns `null` (after mount, via `useNativeApp`; the server render and the browser keep today's header); the live layout's top offset becomes the safe-area inset plus the toolbar height; the landscape compact header is not rendered in the app. New strings in en, fr, es, it, pt.
+- [ ] **Step 4: Run** `pnpm test`, lint gate, `npx tsc --noEmit`, `pnpm i18n:check`; web `pnpm test:e2e:quick` and the export suite (core, live, stats) — PASS (web and browser export unchanged).
+- [ ] **Step 5: Emulator check** (phone; tablet width via `adb shell wm size` if no tablet AVD): no header on any page; Profile tab label and icon; sign-out from Profile (with and without unsent changes, airplane mode for the latter); breadcrumb on each sub-page with working links; live page back button (leave dialog, then Matches) and sync badge; Matches tab dot while offline after scoring points, gone after sync; nothing hidden under the status bar.
+- [ ] **Step 6: Commit** — `feat(mobile): no top bar in the app, Profile tab, breadcrumb, live back button`.
+
+### Task 16: Native share for the stats link
+
+**Files:**
+- Modify: `lib/platform/types.ts`, `lib/platform/web/native.ts` (or `web/index.ts`), `lib/platform/mobile/native.ts`, `app/matches/stats/page.tsx:~289`
+- Test: `tests/unit/platform/mobile-share-link.test.ts`
+
+**Interfaces:**
+- Produces: `Platform.shareLink({ url, title }: { url: string; title: string }): Promise<"shared" | "copied" | "cancelled">` — mobile native: `Share.share({ url, title })` → `"shared"`, cancellation → `"cancelled"`; web and browser export: today's behaviour moved here (Web Share when `navigator.share` exists, else copy to the clipboard → `"copied"`). The stats page calls it and keeps its existing toasts per result.
+
+- [ ] **Step 1: Write the failing tests** (mock `@capacitor/share`, `@capacitor/core`): native → `Share.share` called with url and title, `"shared"`; native cancel ("Share canceled") → `"cancelled"`, no throw; non-native without `navigator.share` → clipboard written, `"copied"`.
+- [ ] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** `pnpm test`, gates, the stats e2e project on web (`--project=stats`). **Step 5: Emulator**: the stats page Share opens the Android chooser with the link. **Step 6: Commit** — `feat(mobile): native share sheet for the stats link`.
