@@ -22,6 +22,8 @@ export interface NativeFeatures {
   onBackButton(listener: (canGoBack: boolean) => void): () => void;
   /** Closes the app (Android). No-op on web. */
   exitApp(): void;
+  /** Keeps the system status bar readable (light or dark text) as the theme changes. No-op on web. Returns the stop function. */
+  watchStatusBar(): () => void;
 }
 
 /** Everything that differs between the web deployment and the Capacitor app. Chosen at build time. */

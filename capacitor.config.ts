@@ -8,6 +8,10 @@ const config: CapacitorConfig = {
   appId: 'com.volleystats.app',
   appName: 'VolleyStats',
   webDir: 'out',
+  plugins: {
+    // Same navy as the icon and splash images (scripts/make-app-assets.mjs).
+    SplashScreen: { launchAutoHide: true, backgroundColor: '#294460' },
+  },
   ...(devHttp ? { server: { cleartext: true }, android: { allowMixedContent: true } } : {}),
 };
 

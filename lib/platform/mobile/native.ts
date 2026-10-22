@@ -1,6 +1,7 @@
 import { App } from "@capacitor/app";
 import { KeepAwake } from "@capacitor-community/keep-awake";
 import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
 import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { webNative } from "../web/native";
 import type { NativeFeatures } from "../types";
@@ -68,5 +69,17 @@ export const mobileNative: NativeFeatures = {
   },
   exitApp() {
     if (native()) void App.exitApp();
+  },
+  watchStatusBar() {
+    if (!native()) return () => {};
+    const root = document.documentElement;
+    // Light theme: dark text; dark theme: light text. The page draws under the bar (edge to edge).
+    const apply = () =>
+      void StatusBar.setStyle({ style: root.classList.contains("dark") ? Style.Dark : Style.Light }).catch(() => {});
+    void StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+    apply();
+    const observer = new MutationObserver(apply);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
   },
 };

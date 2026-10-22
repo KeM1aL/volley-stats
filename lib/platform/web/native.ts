@@ -25,4 +25,5 @@ export const webNative: NativeFeatures = {
   onAppUrlOpen: () => noopUnsubscribe,
   onBackButton: () => noopUnsubscribe,
   exitApp: () => {},
+  watchStatusBar: () => noopUnsubscribe,
 };
