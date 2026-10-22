@@ -119,6 +119,11 @@ jobs:
           CODE_SIGNING_ALLOWED=NO build -derivedDataPath build
       - name: Privacy manifest is bundled in the app
         run: |
-          manifest=$(find build -name PrivacyInfo.xcprivacy -path '*App.app*')
+          # The app's own manifest, at the root of the bundle. Capacitor and its plugins embed manifests of their own deeper in App.app, which must not satisfy this check.
+          manifest=build/Build/Products/Debug-iphonesimulator/App.app/PrivacyInfo.xcprivacy
+          if [ ! -f "$manifest" ]; then
+            echo "::error::$manifest is missing (ios/App/App/PrivacyInfo.xcprivacy is not bundled in the app). Manifests found in the build:"
+            find build -name PrivacyInfo.xcprivacy
+            exit 1
+          fi
           echo "Found: $manifest"
-          test -n "$manifest"
