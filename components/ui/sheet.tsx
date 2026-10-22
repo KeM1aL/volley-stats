@@ -7,6 +7,7 @@ import { X } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import { cn } from "@/lib/utils"
+import { isMobileBuild } from "@/lib/platform/build-target"
 
 const Sheet = SheetPrimitive.Root
 
@@ -56,6 +57,14 @@ interface SheetContentProps
   title?: string;
 }
 
+// Mobile build: the sheet reaches the screen edges, so its content stays clear of the system bars.
+const safeAreaPadding = {
+  top: "pt-[calc(1.5rem+var(--safe-area-inset-top))] pb-[calc(1.5rem+var(--safe-area-inset-bottom))] pl-[calc(1.5rem+var(--safe-area-inset-left))] pr-[calc(1.5rem+var(--safe-area-inset-right))]",
+  bottom: "pt-[calc(1.5rem+var(--safe-area-inset-top))] pb-[calc(1.5rem+var(--safe-area-inset-bottom))] pl-[calc(1.5rem+var(--safe-area-inset-left))] pr-[calc(1.5rem+var(--safe-area-inset-right))]",
+  left: "pt-[calc(1.5rem+var(--safe-area-inset-top))] pb-[calc(1.5rem+var(--safe-area-inset-bottom))] pl-[calc(1.5rem+var(--safe-area-inset-left))]",
+  right: "pt-[calc(1.5rem+var(--safe-area-inset-top))] pb-[calc(1.5rem+var(--safe-area-inset-bottom))] pr-[calc(1.5rem+var(--safe-area-inset-right))]",
+} as const
+
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
@@ -67,14 +76,14 @@ const SheetContent = React.forwardRef<
       <SheetOverlay />
       <SheetPrimitive.Content
         ref={ref}
-        className={cn(sheetVariants({ side }), className)}
+        className={cn(sheetVariants({ side }), isMobileBuild && safeAreaPadding[side ?? "right"], className)}
         {...props}
       >
         <SheetPrimitive.Title className="sr-only">
           {title || t("panel")}
         </SheetPrimitive.Title>
         {children}
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+        <SheetPrimitive.Close className={cn("absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary", isMobileBuild && "top-[calc(1rem+var(--safe-area-inset-top))] right-[calc(1rem+var(--safe-area-inset-right))]")}>
           <X className="h-4 w-4" />
           <span className="sr-only">{t("closeButton")}</span>
         </SheetPrimitive.Close>

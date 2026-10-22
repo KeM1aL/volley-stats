@@ -1,6 +1,9 @@
 // Builds the source images for the app icon and the splash screen from public/logo.png:
 // only the ball on the logo's navy, never the lettering of the ring (the name is not part of the icon).
 // `pnpm app:assets` runs this, then @capacitor/assets turns the images into the native resources.
+// Notes: the package.json script passes --android --ios on purpose (without them the tool also writes a PWA
+// `icons/` folder and `public/manifest.webmanifest` into the repo), and the tool reformats
+// android/app/src/main/AndroidManifest.xml: revert it after a run (`git checkout android/app/src/main/AndroidManifest.xml`).
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

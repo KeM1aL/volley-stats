@@ -16,6 +16,7 @@ import { OfflineGate } from '@/components/offline-gate';
 import { KeyboardProvider } from '@/contexts/keyboard-context';
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider';
+import { isMobileBuild } from '@/lib/platform/build-target';
 import { StatusBarSync } from '@/components/providers/status-bar-sync';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -95,10 +96,10 @@ export default function RootLayout({
                     <SyncStatusProvider>
                       <LeaveGuardProvider>
                         <Suspense fallback={null}><LoadingBar /></Suspense>
-                        {/* In the installed app the page draws under the system bars: these strips (zero high on the web) keep scrolled content out from under them. */}
-                        <div className="fixed inset-x-0 top-0 z-[60] h-(--safe-area-inset-top) bg-background" aria-hidden="true" />
-                        <div className="fixed inset-x-0 bottom-0 z-[60] h-(--safe-area-inset-bottom) bg-background" aria-hidden="true" />
-                        <div className="keyboard-layout-grid safe-area-inset bg-background">
+                        {/* Mobile build only: the page draws under the system bars, so these strips keep scrolled content out from under them. Below the dialog overlays (z-50). */}
+                        {isMobileBuild && <div className="fixed inset-x-0 top-0 z-40 h-(--safe-area-inset-top) bg-background" aria-hidden="true" />}
+                        {isMobileBuild && <div className="fixed inset-x-0 bottom-0 z-40 h-(--safe-area-inset-bottom) bg-background" aria-hidden="true" />}
+                        <div className={isMobileBuild ? "keyboard-layout-grid safe-area-inset bg-background" : "keyboard-layout-grid bg-background"}>
                           <header>
                             <Navigation />
                           </header>
