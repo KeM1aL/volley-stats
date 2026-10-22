@@ -129,5 +129,6 @@
     "discardConfirm": "Discard them",
     "discardFailed": "The changes could not be discarded. Check your connection and try again.",
     "discardOtherTab": "The app is open in another tab. Close the app's other tabs, then try again."
-  }
+  },
+  "privacyLink": "Privacy policy"
 }

@@ -4,7 +4,7 @@ import path from 'node:path';
 export const EXPECTED_PAGES = [
   '/', '/auth', '/auth/confirm', '/auth/reset-password', '/matches', '/matches/live', '/matches/score',
   '/matches/stats', '/teams', '/teams/new', '/teams/view', '/teams/players', '/championships',
-  '/championships/view', '/settings',
+  '/championships/view', '/settings', '/privacy',
 ];
 
 export function missingPages(outDir, pages = EXPECTED_PAGES) {

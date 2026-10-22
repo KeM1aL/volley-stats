@@ -1,0 +1,43 @@
+{
+  "title": "Politique de confidentialité",
+  "intro": "VolleyStats est édité par {publisher}. Cette page explique ce que l'application et le site enregistrent à votre sujet, pourquoi, et comment le faire supprimer.",
+  "collected": {
+    "title": "Données collectées",
+    "intro": "Nous n'enregistrons que ce que vous nous donnez ou ce dont l'application a besoin pour fonctionner :",
+    "items": {
+      "account": "votre adresse e-mail et votre mot de passe (le mot de passe est conservé sous forme hachée par notre service d'authentification, nous ne le voyons jamais) ;",
+      "profile": "vos nom et prénom, votre langue, votre club et votre équipe favoris ;",
+      "content": "les clubs, équipes, joueurs, matchs et statistiques de match saisis dans l'application par vous ou par les personnes avec qui vous les partagez ;",
+      "device": "un identifiant aléatoire créé pour chaque installation de l'application et un nom d'appareil (par exemple son modèle). Ils servent uniquement à savoir quel appareil est en train de marquer un match, afin que deux appareils ne marquent pas le même match en même temps."
+    }
+  },
+  "purpose": {
+    "title": "Pourquoi nous les utilisons",
+    "body": "Vos données servent uniquement à faire fonctionner l'application : vous connecter, afficher vos équipes et vos matchs, enregistrer et partager les statistiques que vous saisissez, et garder un match cohérent lorsque plusieurs appareils sont concernés. Elles ne sont utilisées à aucune autre fin."
+  },
+  "noSelling": {
+    "title": "Pas de publicité, pas de revente",
+    "body": "VolleyStats n'affiche aucune publicité. Nous ne vendons pas vos données, nous ne les partageons ni avec des annonceurs ni avec des courtiers en données, et nous ne les utilisons pas pour vous suivre dans d'autres applications ou sur d'autres sites."
+  },
+  "analytics": {
+    "title": "Statistiques d'usage",
+    "app": "L'application mobile n'utilise aucun outil de statistiques d'usage.",
+    "web": "Le site web peut collecter des statistiques d'usage anonymes via Google Analytics. Ces statistiques ne sont pas liées à votre compte."
+  },
+  "processor": {
+    "title": "Qui héberge vos données",
+    "body": "Vos données sont stockées et traitées pour notre compte par Supabase, notre fournisseur de base de données et d'authentification, dans la région d'hébergement configurée pour le projet VolleyStats. Une copie du match que vous marquez est aussi conservée sur votre appareil pour que l'application fonctionne hors connexion."
+  },
+  "retention": {
+    "title": "Conservation et suppression du compte",
+    "body": "Nous conservons vos données tant que votre compte existe. Vous pouvez supprimer votre compte à tout moment dans les réglages de l'application ou du site. La suppression efface votre profil et votre accès. Les équipes, matchs et statistiques que vous avez saisis restent avec leurs équipes, et vous choisissez ce que deviennent les équipes dont vous êtes propriétaire. Les données stockées uniquement sur votre appareil disparaissent quand vous désinstallez l'application."
+  },
+  "rights": {
+    "title": "Vos droits",
+    "body": "Vous pouvez consulter et corriger vos nom, langue et favoris dans les réglages. Vous pouvez aussi nous demander une copie de vos données, leur rectification ou leur suppression, ou vous opposer à leur utilisation. Si vous résidez dans l'Union européenne, vous pouvez également saisir votre autorité de protection des données (en France, la CNIL)."
+  },
+  "contact": {
+    "title": "Contact",
+    "body": "Pour toute question sur vos données, écrivez à {email}."
+  }
+}

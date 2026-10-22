@@ -53,6 +53,8 @@ import { DeleteAccountCard } from "@/components/settings/delete-account-card";
 import { useAppLocale } from "@/hooks/use-app-locale";
 import type { Locale } from "@/lib/i18n/config";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { routes } from "@/lib/routes";
 
 const STATS_TABLES = ["events", "score_points", "player_stats"] as const;
 
@@ -754,6 +756,12 @@ export default function SettingsPage() {
           onDiscardRejected={() => (db ? db.syncManager.discardRejected() : Promise.reject(new Error("local database not open")))}
         />
       )}
+
+      <p className="text-center text-sm">
+        <Link href={routes.privacy()} className="text-muted-foreground underline underline-offset-4 hover:text-foreground" data-testid="privacy-link">
+          {t("privacyLink")}
+        </Link>
+      </p>
     </div>
   );
 }

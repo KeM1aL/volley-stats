@@ -1,0 +1,43 @@
+{
+  "title": "Privacy policy",
+  "intro": "VolleyStats is published by {publisher}. This page explains what the app and the website store about you, why, and how to have it deleted.",
+  "collected": {
+    "title": "Data we collect",
+    "intro": "We only store what you give us or what the app needs to work:",
+    "items": {
+      "account": "your email address and your password (the password is stored hashed by our authentication provider, we never see it);",
+      "profile": "your first and last name, your language and your favourite club and team;",
+      "content": "the clubs, teams, players, matches and match statistics that you or the people you share them with enter in the app;",
+      "device": "a random identifier created for each installation of the app and a label for the device (for example its model). They are used only to know which device is scoring a match, so that two devices do not score the same match at the same time."
+    }
+  },
+  "purpose": {
+    "title": "Why we use it",
+    "body": "Your data is used only to run the app: to sign you in, to show your teams and matches, to save and share the statistics you record, and to keep a match consistent when several devices are involved. It is not used for anything else."
+  },
+  "noSelling": {
+    "title": "No advertising, no selling",
+    "body": "VolleyStats shows no advertising. We do not sell your data, we do not share it with advertisers or data brokers, and we do not use it to track you across other apps or websites."
+  },
+  "analytics": {
+    "title": "Analytics",
+    "app": "The mobile app does not use any analytics.",
+    "web": "The website may collect anonymous usage statistics through Google Analytics. These statistics are not linked to your account."
+  },
+  "processor": {
+    "title": "Who stores your data",
+    "body": "Your data is stored and processed on our behalf by Supabase, our database and authentication provider, in the hosting region configured for the VolleyStats project. A copy of the match you are scoring is also kept on your device so that the app works offline."
+  },
+  "retention": {
+    "title": "Retention and account deletion",
+    "body": "We keep your data for as long as your account exists. You can delete your account at any time in the settings of the app or of the website. Deleting your account removes your profile and your sign-in. The teams, matches and statistics you entered stay with their teams, and you choose what happens to the teams you own. Data stored only on your device is removed when you uninstall the app."
+  },
+  "rights": {
+    "title": "Your rights",
+    "body": "You can see and correct your name, language and favourites in the settings. You may also ask us for a copy of your data, for it to be corrected or deleted, or object to how it is used. If you are in the European Union, you can also complain to your data protection authority."
+  },
+  "contact": {
+    "title": "Contact",
+    "body": "For any question about your data, write to {email}."
+  }
+}

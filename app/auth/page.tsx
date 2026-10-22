@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { isSafeRedirectTarget, routes } from "@/lib/routes";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useTranslations } from "next-intl";
@@ -38,6 +39,11 @@ function AuthPage() {
           <AuthForm />
         </CardContent>
       </Card>
+      <p className="mt-4 text-center text-sm">
+        <Link href={routes.privacy()} className="text-muted-foreground underline underline-offset-4 hover:text-foreground" data-testid="privacy-link">
+          {t("privacyLink")}
+        </Link>
+      </p>
     </div>
   );
 }

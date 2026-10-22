@@ -11,13 +11,14 @@ describe("routes", () => {
     expect(routes.championship(ID)).toBe(`/championships/view?id=${ID}`);
     expect(routes.signIn("/teams?x=1")).toBe("/auth?redirectTo=%2Fteams%3Fx%3D1");
     expect(routes.signIn()).toBe("/auth");
+    expect(routes.privacy()).toBe("/privacy");
   });
   it("normalizes trailing slashes", () => {
     expect(normalizePath("/matches/live/")).toBe("/matches/live");
     expect(normalizePath("/")).toBe("/");
   });
   it("knows the public paths", () => {
-    for (const p of ["/", "/auth", "/auth/confirm", "/auth/reset-password/", "/matches/stats", "/matches/stats/"]) expect(isPublicPath(p)).toBe(true);
+    for (const p of ["/", "/auth", "/auth/confirm", "/auth/reset-password/", "/matches/stats", "/matches/stats/", "/privacy", "/privacy/"]) expect(isPublicPath(p)).toBe(true);
     for (const p of ["/matches", "/matches/live", "/teams", "/settings", "/authx"]) expect(isPublicPath(p)).toBe(false);
   });
   it("accepts only in-app redirect targets", () => {

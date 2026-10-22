@@ -11,6 +11,7 @@ const withQuery = (path: string, params: QueryParams = {}): string => {
 export const routes = {
   home: () => "/",
   signIn: (redirectTo?: string | null) => withQuery("/auth", { redirectTo }),
+  privacy: () => "/privacy",
   matches: () => "/matches",
   matchLive: (id: string, params: QueryParams = {}) => withQuery("/matches/live", { id, ...params }),
   matchScore: (id: string, params: QueryParams = {}) => withQuery("/matches/score", { id, ...params }),
@@ -26,10 +27,10 @@ export function normalizePath(pathname: string): string {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
 }
 
-/** Pages a signed-out visitor may open: the landing page, sign-in and email links, shared match stats. */
+/** Pages a signed-out visitor may open: the landing page, sign-in and email links, shared match stats, the privacy policy. */
 export function isPublicPath(pathname: string): boolean {
   const path = normalizePath(pathname);
-  return path === "/" || path === "/auth" || path.startsWith("/auth/") || path === "/matches/stats";
+  return path === "/" || path === "/auth" || path.startsWith("/auth/") || path === "/matches/stats" || path === "/privacy";
 }
 
 /** Screens that load everything from Supabase: offline they would open empty (the live match works offline). */
