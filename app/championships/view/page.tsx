@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
 import { Championship, Season } from "@/lib/types";
+import { AppBreadcrumb } from "@/components/native/app-breadcrumb";
 import { LoadingPage } from "@/components/loading-page";
 import { MatchHistoryTable } from "@/components/matches/history/match-history-table";
 import { DateRange } from "react-day-picker";
@@ -225,6 +226,7 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
 
   return (
     <div className="space-y-8">
+      <AppBreadcrumb names={{ championship: championship.name }} />
       <div className="space-y-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">

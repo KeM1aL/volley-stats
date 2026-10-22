@@ -55,6 +55,9 @@ import type { Locale } from "@/lib/i18n/config";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
+import { useNativeApp } from "@/components/navigation/use-native-app";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { SyncBadge } from "@/components/sync/sync-badge";
 
 const STATS_TABLES = ["events", "score_points", "player_stats"] as const;
 
@@ -88,6 +91,9 @@ const emailChangeSchema = z.object({
 export default function SettingsPage() {
   const t = useTranslations('settings');
   const tSync = useTranslations("sync");
+  const tNav = useTranslations("navigation");
+  // Installed app: this page is the Profile tab (name, email, sync status, sign-out); the website header holds those instead.
+  const nativeApp = useNativeApp();
   // null (not counted yet) blocks too: clearing stays disabled until nothing unsent is confirmed.
   const unsentStats = useUnsentCountFor(STATS_TABLES);
   const unsentMatchData = useUnsentCountFor(MATCH_COLLECTIONS);
@@ -97,6 +103,7 @@ export default function SettingsPage() {
   const { localDb: db } = useLocalDb();
   const { theme, setTheme } = useTheme();
   const { session, reloadUser, user } = useAuth();
+  const profileName = [user?.profile?.first_name, user?.profile?.last_name].filter(Boolean).join(" ");
   const { setLocale } = useAppLocale();
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -375,11 +382,30 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">{t('title')}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">{nativeApp ? tNav('menu.profile') : t('title')}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
           {t('description')}
         </p>
       </div>
+
+      {nativeApp && user && (
+        <Card data-testid="profile-header">
+          <CardContent className="space-y-3 p-4">
+            <div className="min-w-0">
+              {profileName && <p className="truncate font-semibold" data-testid="profile-name">{profileName}</p>}
+              {user.email && (
+                <p className={profileName ? "truncate text-sm text-muted-foreground" : "truncate font-semibold"} data-testid="profile-email">
+                  {user.email}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <SyncBadge fullLabel />
+              <SignOutButton variant="outline" size="default" className="" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Account Security Card */}
       <Card>

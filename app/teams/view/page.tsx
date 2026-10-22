@@ -28,6 +28,7 @@ import { useTranslations } from "next-intl";
 import { useRouteId } from "@/hooks/use-route-id";
 import { LoadingPage } from "@/components/loading-page";
 import { routes } from "@/lib/routes";
+import { AppBreadcrumb } from "@/components/native/app-breadcrumb";
 
 function TeamDetailsPage({ id }: { id: string }) {
   const t = useTranslations('teams');
@@ -196,6 +197,7 @@ function TeamDetailsPage({ id }: { id: string }) {
 
   return (
     <div className="space-y-8">
+      <AppBreadcrumb names={{ team: team?.name }} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { useKeyboard } from "@/contexts/keyboard-context";
+import { useSyncStatus } from "@/hooks/use-sync-status";
 import { GuardedLink } from "@/components/guarded-link";
 import { activeSection, showTabBar } from "@/lib/native/tab-bar";
 import { navItems } from "./nav-items";
@@ -45,6 +46,9 @@ export function BottomTabBar() {
   const t = useTranslations("navigation");
   const pathname = usePathname();
   const visible = useTabBarVisible();
+  const syncStatus = useSyncStatus();
+  // Match changes waiting to upload (or rejected): a dot on Matches; the full status is on the Profile page.
+  const unsent = (syncStatus?.pendingCount ?? 0) + (syncStatus?.rejectedCount ?? 0) > 0;
 
   if (!visible) return null;
   const current = activeSection(pathname ?? "/");
@@ -55,7 +59,7 @@ export function BottomTabBar() {
       data-testid="bottom-tab-bar"
     >
       <ul className="flex h-(--tab-bar-height)">
-        {navItems(t).map(({ href, label, icon: Icon }) => {
+        {navItems(t, { nativeApp: true }).map(({ href, label, icon: Icon }) => {
           const active = current === href;
           return (
             <li key={href} className="flex-1">
@@ -67,7 +71,16 @@ export function BottomTabBar() {
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className="h-5 w-5" aria-hidden="true" />
+                <span className="relative">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                  {href === "/matches" && unsent && (
+                    <span
+                      className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+                      data-testid="tab-unsent-dot"
+                      aria-hidden="true"
+                    />
+                  )}
+                </span>
                 <span>{label}</span>
               </GuardedLink>
             </li>

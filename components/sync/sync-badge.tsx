@@ -37,9 +37,9 @@ function SupersededLine({ holder }: { holder: ScorerInfo | null }) {
 
 /**
  * Whether this device's match data is on the server (spec section 8).
- * `compact` (live match header) shows the icon only and never toasts.
+ * `compact` (live match header) shows the icon only and never toasts. `fullLabel` (the app's Profile page) always shows the status text, on any width.
  */
-export function SyncBadge({ compact = false }: { compact?: boolean }) {
+export function SyncBadge({ compact = false, fullLabel = false }: { compact?: boolean; fullLabel?: boolean }) {
   const t = useTranslations("sync");
   const { toast } = useToast();
   const { localDb } = useLocalDb();
@@ -81,7 +81,7 @@ export function SyncBadge({ compact = false }: { compact?: boolean }) {
     problem: t("badge.problem", { count: status.rejectedCount }),
     "other-account": t("badge.otherAccount"),
   }[status.state];
-  const showLabel = !compact && (status.state !== "saved" || showSavedLabel);
+  const showLabel = fullLabel || (!compact && (status.state !== "saved" || showSavedLabel));
 
   return (
     <Popover>
@@ -100,7 +100,7 @@ export function SyncBadge({ compact = false }: { compact?: boolean }) {
           )}
         >
           <Icon className={cn("h-4 w-4", status.state === "uploading" && "animate-spin")} />
-          {showLabel && <span className="hidden sm:inline max-w-56 truncate">{label}</span>}
+          {showLabel && <span className={cn("max-w-56 truncate", !fullLabel && "hidden sm:inline")}>{label}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 space-y-3" data-testid="sync-details">

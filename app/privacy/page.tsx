@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { AppBreadcrumb } from "@/components/native/app-breadcrumb";
 
 /** Placeholders the publisher fills in before the store release; they stay visible until then. */
 const PUBLISHER_NAME = "[Publisher name]";
@@ -13,6 +14,7 @@ export default function PrivacyPage() {
 
   return (
     <div className="container max-w-3xl mx-auto px-4 py-8 sm:py-12" data-testid="privacy-policy">
+      <AppBreadcrumb />
       <h1 className="text-2xl sm:text-3xl font-bold mb-4">{t("title")}</h1>
       <p className="text-muted-foreground mb-8">{t("intro", { publisher: PUBLISHER_NAME })}</p>
 

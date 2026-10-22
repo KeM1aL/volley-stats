@@ -34,6 +34,8 @@ import { fileNameFromDisposition } from "@/lib/report/download";
 import { useRouteId } from "@/hooks/use-route-id";
 import { routes } from "@/lib/routes";
 import { LoadingPage } from "@/components/loading-page";
+import { AppBreadcrumb } from "@/components/native/app-breadcrumb";
+import { matchLabel } from "@/lib/native/breadcrumb";
 import { ArchivedMatchNotice } from "@/components/matches/archived-match-notice";
 
 class ReportRequestError extends Error {
@@ -324,6 +326,7 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
 
   return (
     <div className="space-y-6">
+      <AppBreadcrumb names={{ match: matchLabel(match.home_team?.name, match.away_team?.name) }} />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">{t("stats.title")}</h1>
