@@ -20,6 +20,7 @@ import { isMobileBuild } from '@/lib/platform/build-target';
 import { StatusBarSync } from '@/components/providers/status-bar-sync';
 import { NativeBridge } from '@/components/native/native-bridge';
 import { UpdateGate } from '@/components/native/update-gate';
+import { BottomTabBar, TabBarSpacer } from '@/components/navigation/bottom-tab-bar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -108,9 +109,11 @@ export default function RootLayout({
                           </header>
                           <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
                             <AuthGuard><OfflineGate>{children}</OfflineGate></AuthGuard>
+                            <TabBarSpacer />
                           </main>
                           <div className="keyboard-spacer" aria-hidden="true" />
                         </div>
+                        <BottomTabBar />
                         <Toaster />
                       </LeaveGuardProvider>
                     </SyncStatusProvider>

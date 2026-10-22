@@ -82,7 +82,7 @@ export function UpdateGate() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(var(--safe-area-inset-bottom)+0.75rem)]"
+      className="fixed inset-x-0 bottom-(--tab-bar-offset) z-40 px-3 pb-[calc(var(--fixed-bottom-safe-area)+0.75rem)]"
       data-testid="update-banner"
     >
       <div className="mx-auto flex max-w-md items-center gap-2 rounded-lg border bg-background p-3 shadow-lg">

@@ -4,15 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import {
-  Volleyball,
-  BarChart3,
-  Users,
-  Settings,
-  Menu,
-  LogOut,
-  Trophy,
-} from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -37,6 +29,8 @@ import { SyncBadge } from "@/components/sync/sync-badge";
 import { useSyncStatus } from "@/hooks/use-sync-status";
 import { allowNextUnload } from "@/hooks/use-unsent-guard";
 import { normalizePath } from "@/lib/routes";
+import { navItems } from "@/components/navigation/nav-items";
+import { useNativeApp } from "@/components/navigation/use-native-app";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -62,28 +56,9 @@ export function Navigation() {
   const isLandscape = useLandscape();
   const t = useTranslations('navigation');
 
-  const routes = [
-    {
-      href: "/championships",
-      label: t('menu.championships'),
-      icon: Trophy,
-    },
-    {
-      href: "/matches",
-      label: t('menu.matches'),
-      icon: Volleyball,
-    },
-    {
-      href: "/teams",
-      label: t('menu.teams'),
-      icon: Users,
-    },
-    {
-      href: "/settings",
-      label: t('menu.settings'),
-      icon: Settings,
-    },
-  ];
+  const routes = navItems(t);
+  // The installed app navigates with the bottom tab bar: no hamburger and no header links (the compact live-page header keeps its menu).
+  const nativeApp = useNativeApp();
 
   // Compact navigation in landscape mode on live match pages
   const isLivePage = normalizePath(pathname ?? "") === "/matches/live";
@@ -149,7 +124,7 @@ export function Navigation() {
     <header className="top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <div className="container flex mx-auto h-14 items-center justify-between">
         <div className="flex items-center">
-          {user && (
+          {user && !nativeApp && (
             <div className="md:hidden">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
@@ -192,7 +167,7 @@ export function Navigation() {
                           className="rounded-lg object-cover w-10 h-10 md:w-12 md:h-12"
                         />
           </GuardedLink>
-          {user && (
+          {user && !nativeApp && (
             <nav className="hidden md:flex items-center gap-6 mx-6">
               {routes.map((route) => {
                 const Icon = route.icon;
