@@ -271,6 +271,10 @@
       "added": "{name} ajouté à la feuille de match",
       "addError": "Impossible d'ajouter le joueur. Veuillez réessayer."
     },
+    "landscapeHint": {
+      "message": "Tournez votre appareil à l'horizontale pour mieux voir le terrain.",
+      "dismiss": "Fermer l'astuce"
+    },
     "left": {
       "title": "Ce match n'a pas pu être chargé sur cet appareil",
       "reasons": {
