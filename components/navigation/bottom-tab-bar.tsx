@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -15,14 +15,29 @@ import { useTextEntryKeyboard } from "./use-text-entry-keyboard";
 /** Body class while the bar shows: `--tab-bar-offset` (globals.css) lifts other fixed bottom elements (the update banner) above it. */
 const VISIBLE_CLASS = "tab-bar-visible";
 
-/** Whether the bottom tab bar shows: installed app, signed in, not on the live match or sign-in pages, keyboard closed. */
-export function useTabBarVisible(): boolean {
+const TabBarVisibleContext = createContext(false);
+
+/** Decides once whether the bottom tab bar shows (installed app, signed in, not on the live match or sign-in pages, keyboard closed), for the bar and the content spacer. */
+export function TabBarProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const { visible: keyboardOpen } = useKeyboard();
-  const textEntryKeyboard = useTextEntryKeyboard();
   const nativeApp = useNativeApp();
-  return !!user && showTabBar({ nativeApp, pathname: pathname ?? "/", keyboardOpen: keyboardOpen || textEntryKeyboard });
+  const textEntryKeyboard = useTextEntryKeyboard(nativeApp);
+  const visible = !!user && showTabBar({ nativeApp, pathname: pathname ?? "/", keyboardOpen: keyboardOpen || textEntryKeyboard });
+
+  useEffect(() => {
+    if (!visible) return;
+    document.body.classList.add(VISIBLE_CLASS);
+    return () => document.body.classList.remove(VISIBLE_CLASS);
+  }, [visible]);
+
+  return <TabBarVisibleContext.Provider value={visible}>{children}</TabBarVisibleContext.Provider>;
+}
+
+/** Whether the bottom tab bar shows. Needs `TabBarProvider`. */
+export function useTabBarVisible(): boolean {
+  return useContext(TabBarVisibleContext);
 }
 
 /** Installed app only: the four main sections as a bar above the home indicator / gesture bar. */
@@ -30,12 +45,6 @@ export function BottomTabBar() {
   const t = useTranslations("navigation");
   const pathname = usePathname();
   const visible = useTabBarVisible();
-
-  useEffect(() => {
-    if (!visible) return;
-    document.body.classList.add(VISIBLE_CLASS);
-    return () => document.body.classList.remove(VISIBLE_CLASS);
-  }, [visible]);
 
   if (!visible) return null;
   const current = activeSection(pathname ?? "/");

@@ -10,19 +10,30 @@ function focusedFieldTakesText(): boolean {
 
 /**
  * True while a text field has focus and the keyboard has shrunk the viewport. The installed app's WebView resizes the page for
- * the keyboard and does not report it through `useKeyboard()`, so the tab bar watches for this itself.
+ * the keyboard and does not report it through `useKeyboard()`, so the tab bar watches for this itself. Registers nothing when disabled.
  */
-export function useTextEntryKeyboard(): boolean {
+export function useTextEntryKeyboard(enabled: boolean): boolean {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    let baseline = { width: window.innerWidth, height: window.innerHeight };
+    if (!enabled) return;
+    // The keyboard-free viewport height for the current width; null after a rotation with the keyboard open, until one is seen.
+    let baseline: { width: number; height: number | null } = { width: window.innerWidth, height: window.innerHeight };
     let editing = focusedFieldTakesText();
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const evaluate = () => setOpen(editing && resizedByKeyboard(baseline.height, window.innerHeight));
+    const evaluate = () => {
+      const keyboard = editing && resizedByKeyboard(baseline.height, window.innerHeight, window.screen.height);
+      // Editing but not shrunk (keyboard closed, field still focused): this is the keyboard-free height.
+      if (editing && !keyboard) baseline.height = Math.max(baseline.height ?? 0, window.innerHeight);
+      setOpen(keyboard);
+    };
     const onResize = () => {
-      // The page at full height (no keyboard) is the reference; a change of width is a rotation, which has a new reference.
-      if (!editing || window.innerWidth !== baseline.width) baseline = { width: window.innerWidth, height: window.innerHeight };
+      if (window.innerWidth !== baseline.width) {
+        // Rotated: the old height means nothing. While editing, the keyboard may be shrinking the new one, so wait for a reliable height.
+        baseline = { width: window.innerWidth, height: editing ? null : window.innerHeight };
+      } else if (!editing) {
+        baseline.height = window.innerHeight;
+      }
       evaluate();
     };
     const onFocusIn = () => {
@@ -47,7 +58,7 @@ export function useTextEntryKeyboard(): boolean {
       document.removeEventListener("focusout", onFocusOut);
       window.removeEventListener("resize", onResize);
     };
-  }, []);
+  }, [enabled]);
 
-  return open;
+  return enabled && open;
 }

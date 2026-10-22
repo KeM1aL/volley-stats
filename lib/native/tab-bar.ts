@@ -31,7 +31,11 @@ export function takesTextInput({ tagName, type, isContentEditable }: { tagName: 
   return !!isContentEditable;
 }
 
-/** The Android WebView resizes the page for the keyboard instead of reporting it: a viewport that shrank this much is the keyboard. */
-export function resizedByKeyboard(baselineHeight: number, height: number): boolean {
-  return baselineHeight - height >= 100;
+/**
+ * The Android WebView resizes the page for the keyboard instead of reporting it: a viewport that lost this much is the keyboard.
+ * `baselineHeight` is the full-height viewport seen before; null after a rotation with the keyboard open (no keyboard-free height
+ * known yet), when the screen height stands in for it.
+ */
+export function resizedByKeyboard(baselineHeight: number | null, height: number, screenHeight: number): boolean {
+  return (baselineHeight ?? screenHeight) - height >= 100;
 }

@@ -20,7 +20,7 @@ import { isMobileBuild } from '@/lib/platform/build-target';
 import { StatusBarSync } from '@/components/providers/status-bar-sync';
 import { NativeBridge } from '@/components/native/native-bridge';
 import { UpdateGate } from '@/components/native/update-gate';
-import { BottomTabBar, TabBarSpacer } from '@/components/navigation/bottom-tab-bar';
+import { BottomTabBar, TabBarProvider, TabBarSpacer } from '@/components/navigation/bottom-tab-bar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -103,17 +103,19 @@ export default function RootLayout({
                         {/* Mobile build only: the page draws under the system bars, so these strips keep scrolled content out from under them. Below the dialog overlays (z-50). */}
                         {isMobileBuild && <div className="fixed inset-x-0 top-0 z-40 h-(--safe-area-inset-top) bg-background" aria-hidden="true" />}
                         {isMobileBuild && <div className="fixed inset-x-0 bottom-0 z-40 h-(--safe-area-inset-bottom) bg-background" aria-hidden="true" />}
-                        <div className={isMobileBuild ? "keyboard-layout-grid safe-area-inset bg-background" : "keyboard-layout-grid bg-background"}>
-                          <header>
-                            <Navigation />
-                          </header>
-                          <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
-                            <AuthGuard><OfflineGate>{children}</OfflineGate></AuthGuard>
-                            <TabBarSpacer />
-                          </main>
-                          <div className="keyboard-spacer" aria-hidden="true" />
-                        </div>
-                        <BottomTabBar />
+                        <TabBarProvider>
+                          <div className={isMobileBuild ? "keyboard-layout-grid safe-area-inset bg-background" : "keyboard-layout-grid bg-background"}>
+                            <header>
+                              <Navigation />
+                            </header>
+                            <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
+                              <AuthGuard><OfflineGate>{children}</OfflineGate></AuthGuard>
+                              <TabBarSpacer />
+                            </main>
+                            <div className="keyboard-spacer" aria-hidden="true" />
+                          </div>
+                          <BottomTabBar />
+                        </TabBarProvider>
                         <Toaster />
                       </LeaveGuardProvider>
                     </SyncStatusProvider>

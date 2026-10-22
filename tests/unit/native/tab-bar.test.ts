@@ -64,6 +64,11 @@ describe("takesTextInput", () => {
 });
 
 describe("resizedByKeyboard", () => {
-  it("is true when the viewport lost at least 100px", () => expect(resizedByKeyboard(900, 600)).toBe(true));
-  it("ignores small changes such as a collapsing address bar", () => expect(resizedByKeyboard(900, 850)).toBe(false));
+  it("is true when the viewport lost at least 100px against the baseline", () => expect(resizedByKeyboard(900, 600, 900)).toBe(true));
+  it("ignores small changes such as a collapsing address bar", () => expect(resizedByKeyboard(900, 850, 900)).toBe(false));
+  it("compares with the screen height while the baseline is unknown (rotated with the keyboard open)", () => {
+    expect(resizedByKeyboard(null, 200, 448)).toBe(true);
+    expect(resizedByKeyboard(null, 448, 448)).toBe(false);
+  });
+  it("prefers the baseline over the screen when both are known", () => expect(resizedByKeyboard(500, 450, 900)).toBe(false));
 });
