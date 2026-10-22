@@ -13,6 +13,7 @@ export interface BackState {
 export function backAction({ dialogOpen, guardActive, canGoBack, pathname }: BackState): BackAction {
   if (dialogOpen) return "close-dialog";
   if (guardActive) return "confirm-leave";
-  if (canGoBack) return "back";
-  return normalizePath(pathname) === "/" ? "exit" : "home";
+  // The home page closes the app, whatever the history holds.
+  if (normalizePath(pathname) === "/") return "exit";
+  return canGoBack ? "back" : "home";
 }

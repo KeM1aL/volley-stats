@@ -10,6 +10,10 @@ describe("backAction", () => {
     expect(backAction({ dialogOpen: false, guardActive: true, canGoBack: true, pathname: "/matches/live/" })).toBe("confirm-leave"));
   it("goes back when the history allows it", () =>
     expect(backAction({ ...idle, canGoBack: true, pathname: "/teams/" })).toBe("back"));
+  it("exits from the home page even when the history holds entries", () =>
+    expect(backAction({ ...idle, canGoBack: true, pathname: "/" })).toBe("exit"));
+  it("still asks before leaving a live match when the history is empty", () =>
+    expect(backAction({ ...idle, guardActive: true, pathname: "/matches/live/" })).toBe("confirm-leave"));
   it("exits from the home page and goes home elsewhere", () => {
     expect(backAction({ ...idle, pathname: "/" })).toBe("exit");
     expect(backAction({ ...idle, pathname: "/teams/" })).toBe("home");

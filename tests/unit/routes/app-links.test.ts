@@ -27,4 +27,17 @@ describe("appRouteFromUrl", () => {
     expect(appRouteFromUrl("http://app.example/teams/new", web)).toBe("/");
     expect(appRouteFromUrl("https://app.example/teams/new", "https://app.example/")).toBe("/teams/new");
   });
+
+  it("never returns a path another origin could read from", () => {
+    expect(appRouteFromUrl("https://app.example//evil.com/x", web)).toBe("/evil.com/x");
+    expect(appRouteFromUrl("https://app.example///evil.com/x?a=1", web)).toBe("/evil.com/x?a=1");
+    expect(appRouteFromUrl("https://app.example/\\evil.com/x", web)).toBe("/evil.com/x");
+    expect(appRouteFromUrl("https://app.example/%5Cevil.com", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example/%5cevil.com/x", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example/%09/evil.com", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example/%E0%A4%A", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example//teams/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed", web)).toBe(
+      "/teams/view?id=1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed",
+    );
+  });
 });

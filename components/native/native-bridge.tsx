@@ -45,7 +45,10 @@ export function NativeBridge() {
           break;
         case "confirm-leave":
           void ask().then((decision) => {
-            if (decision === "leave") current.back();
+            if (decision !== "leave") return;
+            // Opened as the first history entry (a link): there is nothing to go back to.
+            if (canGoBack) current.back();
+            else current.replace("/");
           });
           break;
         case "back":

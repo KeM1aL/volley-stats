@@ -172,13 +172,23 @@ export function appRouteFromUrl(url: string, webOrigin: string): string {
     return "/";
   }
   if (link.origin !== origin) return "/";
+  // "//host/x" and "/\host" read as another origin to the router: no backslash or control character (also
+  // percent-encoded), and leading slashes collapse to one.
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(link.pathname);
+  } catch {
+    return "/";
+  }
+  if (/[\\\u0000-\u001f\u007f]/.test(decoded)) return "/";
+  const path = link.pathname.replace(/^\/{2,}/, "/");
   const query = link.search.replace(/^\?/, "");
   for (const { pattern, destination } of LEGACY_ROUTE_MATCHERS) {
-    const match = pattern.exec(link.pathname);
+    const match = pattern.exec(path);
     if (match) {
       const route = destination.replace(":id", match[1].toLowerCase());
       return query ? `${route}&${query}` : route;
     }
   }
-  return link.pathname + link.search;
+  return path + link.search;
 }
