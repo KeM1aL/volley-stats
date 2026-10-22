@@ -95,7 +95,47 @@ export function reloadRedirectTarget(pathname: string, search: string): string |
   return isBootTarget(target) ? target : null;
 }
 
-const UUID =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** The last target the root page forwarded to, kept for a short time to stop a path the router cannot open from looping. */
+export interface BootForward {
+  target: string;
+  at: number;
+}
+
+export const BOOT_FORWARD_WINDOW_MS = 5000;
+
+const sameTarget = (a: string, b: string): boolean => {
+  const split = (value: string): [string, string] => {
+    const index = value.search(/[?#]/);
+    return index === -1 ? [value, ""] : [value.slice(0, index), value.slice(index)];
+  };
+  const [pathA, restA] = split(a);
+  const [pathB, restB] = split(b);
+  return normalizePath(pathA) === normalizePath(pathB) && restA === restB;
+};
+
+export type BootRedirectDecision = { action: "none" } | { action: "forward"; target: string } | { action: "abort" };
+
+/**
+ * What the root page does on load: `?to=` is read on the root path only; on any other path (a reload) that path is opened
+ * again. A target already forwarded to within the last few seconds is not forwarded twice: the router could not open it
+ * (unknown path) and fell back to a page load that brought us here again, so the caller stays on the landing page.
+ */
+export function bootRedirectDecision(
+  pathname: string,
+  search: string,
+  previous: BootForward | null,
+  now: number,
+): BootRedirectDecision {
+  const onRoot = normalizePath(pathname) === "/";
+  const target = onRoot ? bootRedirectTarget(search) : reloadRedirectTarget(pathname, search);
+  if (!target) return { action: "none" };
+  if (previous && now - previous.at >= 0 && now - previous.at < BOOT_FORWARD_WINDOW_MS && sameTarget(previous.target, target)) {
+    return { action: "abort" };
+  }
+  return { action: "forward", target };
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function parseRouteId(value: string | null | undefined): string | null {
   return value && UUID.test(value) ? value.toLowerCase() : null;
