@@ -6,7 +6,7 @@ export default defineConfig([
   {
     // Server-only modules: only in *.web.ts(x) files (web target), proxy.ts and lib/server/.
     files: ['**/*.{ts,tsx}'],
-    ignores: ['**/*.web.ts', '**/*.web.tsx', 'proxy.ts', 'lib/server/**', 'tests/**', 'scripts/**'],
+    ignores: ['**/*.web.ts', '**/*.web.tsx', 'proxy.ts', 'lib/server/**', 'tests/**', 'scripts/**', 'capacitor.config.ts'],
     rules: {
       'no-restricted-imports': ['error', {
         paths: [
@@ -39,6 +39,9 @@ export default defineConfig([
   globalIgnores([
     '.next/**',
     '.worktrees/**',
+    'android/**',
+    'ios/**',
+    'out/**',
     'next-env.d.ts',
     'node_modules/**',
     'playwright/**',
