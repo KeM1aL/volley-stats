@@ -79,8 +79,7 @@ pnpm test:e2e         # Full E2E, before merging
 3. **Error Handling**: Try-catch with toast notifications
 4. **Type Safety**: Use types from [lib/types.ts](lib/types.ts)
 5. **Two targets**: server-only files are `*.web.ts(x)` (or in `lib/server/`, or `proxy.ts`); target-specific code lives behind `lib/platform`; in-app URLs come from `lib/routes.ts` (ids as `?id=`); the API is called with `apiFetch`. See [.claude/docs/02-architecture.md](.claude/docs/02-architecture.md).
-
-6. **Migrations**: installed apps update late, so every migration only adds (tables, nullable or defaulted columns, functions) and starts with a header comment answering "does an app built three months ago still work?"; renames, drops, changed function parameters and tighter policies take two releases (`app_config.min_version`). `/api/v1` never changes incompatibly. See [.claude/docs/11-mobile-app.md](.claude/docs/11-mobile-app.md).
+6. **Migrations**: only additive, with a header comment answering "does an app built three months ago still work?"; breaking changes take two releases, `/api/v1` never breaks. See [.claude/docs/11-mobile-app.md](.claude/docs/11-mobile-app.md).
 
 ### When to Read Detailed Documentation
 

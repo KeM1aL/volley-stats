@@ -4,8 +4,8 @@ Executed once the Apple and Google accounts, the production domain and the store
 
 ## Open items carried over from part A
 
-- [ ] Run `supabase/migrations/20261023000100_protect_profile_role_empty_claims.sql` in the Supabase dashboard (the first migration of the pair, `20261023000000_app_role_and_config.sql`, must already be applied; confirm both).
-- [ ] Make yourself an admin (dashboard SQL): `update public.profiles set role = 'admin' where id = '<your user id>';`
+- [ ] Run `supabase/migrations/20261023000100_protect_profile_role_empty_claims.sql` in the Supabase dashboard (`20261023000000_app_role_and_config.sql` is already applied, and the account is already an admin).
+- [ ] Real FFVB import as an admin on the web app (Task 9 Step 5): the "Import" button on a championship page runs the import and shows the result toast; not done yet (the 401 / 403 / 200 cases are covered by unit and e2e tests only).
 - [ ] Deploy the `send-email` edge function (`pnpm supabase:functions:deploy:send-email`) so emails link to `/auth/confirm`; then delete `app/auth/callback/route.web.ts` and its mentions in the docs (`.claude/docs/02-architecture.md`, the `send-email` comment and test about old `/auth/callback` redirects stay: they filter old `redirect_to` values).
 - [ ] Add `capacitor://localhost,https://localhost` to `API_CORS_ORIGINS` on the deployed web app (Android's origin is `https://localhost`, iOS's is `capacitor://localhost`).
 - [ ] Set the four GitHub Actions repository variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_WEB_ORIGIN`); CI fails without them.

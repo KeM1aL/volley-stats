@@ -93,7 +93,7 @@ Table `app_config`: one row per platform (`ios`, `android`) with `min_version`, 
 
 ### Admin role
 
-`profiles.role` (`user` / `admin`) is protected by the trigger `protect_profile_role`: a request with the `anon` or `authenticated` role cannot set or change it; SQL in the dashboard and the service role can. Making a user an admin: `update public.profiles set role = 'admin' where id = '<user id>';` in the dashboard. The FFVB import (`app/api/import/ffvb/route.web.ts`, web target only) returns 403 to everyone else (`lib/server/admin.ts`), and its button on the championship page shows only to admins on the web build.
+`profiles.role` (`user` / `admin`) is protected by the trigger `protect_profile_role`: a request with the `anon` or `authenticated` role cannot set or change it; SQL in the dashboard and the service role can. Making a user an admin: `update public.profiles set role = 'admin' where id = '<user id>';` in the dashboard. The FFVB import (`app/api/import/ffvb/route.web.ts`, web target only) returns 401 when signed out and 403 to non-admins (`lib/server/admin.ts`), and its button on the championship page shows only to admins on the web build.
 
 ### Link association files
 
@@ -105,7 +105,7 @@ The native side (iOS Associated Domains entitlement, Android intent filter with 
 
 ### Migrations of this sub-project
 
-- `20261023000000_app_role_and_config.sql`: `profiles.role`, `protect_profile_role` trigger, `app_config` table with an `ios` and an `android` row.
+- `20261023000000_app_role_and_config.sql` (already applied): `profiles.role`, `protect_profile_role` trigger, `app_config` table with an `ios` and an `android` row.
 - `20261023000100_protect_profile_role_empty_claims.sql`: replaces the trigger function so an empty `request.jwt.claims` setting reads as "no claims". **Must be run by the user in the Supabase dashboard** (pending until confirmed).
 
 Regenerate the types with `pnpm supabase:types` after a schema change.

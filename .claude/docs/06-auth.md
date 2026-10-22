@@ -84,7 +84,7 @@ if (isTeamOwner) {
 
 Auth emails (sign-up confirmation, password recovery, email change, invitation) are sent by the `send-email` edge function. Their links point to the app's own `/auth/confirm?token_hash=...&type=...&next=...`, built by `buildConfirmUrl` ([supabase/functions/send-email/_confirm-url.ts](supabase/functions/send-email/_confirm-url.ts); plain TypeScript, unit-tested from the app). [app/auth/confirm/page.tsx](app/auth/confirm/page.tsx) calls `supabase.auth.verifyOtp({ token_hash, type })` in the browser, then goes to `/auth/reset-password` (recovery), or to `next` (checked with `isSafeRedirectTarget`), or to `/`. It needs no server route and no PKCE verifier on the device, so it works in any browser and, later, in the mobile app through universal links.
 
-The old PKCE route [app/auth/callback/route.web.ts](app/auth/callback/route.web.ts) (`?code=`) stays for one release so emails already sent keep working; remove it afterwards.
+The old PKCE route [app/auth/callback/route.web.ts](app/auth/callback/route.web.ts) (`?code=`) is kept only until the `send-email` edge function is deployed (emails then link to `/auth/confirm`); remove it, and its mentions in the docs, once that is done.
 
 The Supabase Auth redirect allow-list (dashboard, Authentication, URL configuration) must contain `<web origin>/` and `<web origin>/auth/reset-password`.
 
