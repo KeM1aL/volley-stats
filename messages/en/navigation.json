@@ -24,6 +24,7 @@
     "team": "Team",
     "match": "Match",
     "championship": "Championship",
+    "home": "Home",
     "ariaLabel": "Breadcrumb"
   }
 }

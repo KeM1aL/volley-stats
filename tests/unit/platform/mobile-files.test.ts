@@ -3,7 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { Directory, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { saveBlob } from "@/lib/report/download";
-import { saveFileNative } from "@/lib/platform/mobile/files";
+import { safeFileName, saveFileNative } from "@/lib/platform/mobile/files";
 
 vi.mock("@capacitor/core", () => ({ Capacitor: { isNativePlatform: vi.fn() } }));
 vi.mock("@capacitor/filesystem", () => ({
@@ -12,6 +12,24 @@ vi.mock("@capacitor/filesystem", () => ({
 }));
 vi.mock("@capacitor/share", () => ({ Share: { share: vi.fn() } }));
 vi.mock("@/lib/report/download", () => ({ saveBlob: vi.fn() }));
+
+describe("safeFileName", () => {
+  it("keeps an ordinary name", () => expect(safeFileName("Report U15 - Lions.pdf")).toBe("Report U15 - Lions.pdf"));
+  it("replaces a slash", () => expect(safeFileName("U15/U17 - Lions.pdf")).toBe("U15-U17 - Lions.pdf"));
+  it("replaces a backslash", () => expect(safeFileName("U15\\U17.pdf")).toBe("U15-U17.pdf"));
+  it("cannot leave the cache folder", () => {
+    expect(safeFileName("../x.pdf")).toBe("-x.pdf");
+    expect(safeFileName("../../etc/passwd")).toBe("-..-etc-passwd");
+    expect(safeFileName("..")).toBe("report.pdf");
+  });
+  it("replaces control characters", () => expect(safeFileName("a\u0000b\nc\u007fd.pdf")).toBe("a-b-c-d.pdf"));
+  it("strips leading dots", () => expect(safeFileName("...hidden.pdf")).toBe("hidden.pdf"));
+  it("falls back when nothing is left", () => {
+    expect(safeFileName("")).toBe("report.pdf");
+    expect(safeFileName("   ")).toBe("report.pdf");
+    expect(safeFileName("...")).toBe("report.pdf");
+  });
+});
 
 const blob = new Blob(["hello"], { type: "text/plain" });
 
@@ -40,6 +58,14 @@ describe("saveFileNative", () => {
     });
     expect(Share.share).toHaveBeenCalledWith({ files: ["file:///cache/report.pdf"], title: "report.pdf" });
     expect(saveBlob).not.toHaveBeenCalled();
+  });
+
+  it("writes and shares a sanitised name", async () => {
+    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+    vi.mocked(Share.share).mockResolvedValue({ activityType: undefined });
+    await saveFileNative(blob, "U15/U17 - Lions.pdf");
+    expect(Filesystem.writeFile).toHaveBeenCalledWith(expect.objectContaining({ path: "U15-U17 - Lions.pdf" }));
+    expect(Share.share).toHaveBeenCalledWith({ files: ["file:///cache/report.pdf"], title: "U15-U17 - Lions.pdf" });
   });
 
   it("treats a cancelled share as success", async () => {

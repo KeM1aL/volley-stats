@@ -33,6 +33,18 @@ export function isPublicPath(pathname: string): boolean {
   return path === "/" || path === "/auth" || path.startsWith("/auth/") || path === "/matches/stats" || path === "/privacy";
 }
 
+/**
+ * Every page of the app (the static export has one HTML file for each). Links opened with the app only go to these; the export
+ * check keeps its own copy in scripts/lib/export-check.mjs (a script cannot import this file), and a unit test keeps both equal.
+ */
+export const APP_PAGES = [
+  "/", "/auth", "/auth/confirm", "/auth/confirm-email", "/auth/reset-password", "/matches", "/matches/live", "/matches/score",
+  "/matches/stats", "/teams", "/teams/new", "/teams/view", "/teams/players", "/championships",
+  "/championships/view", "/settings", "/privacy",
+] as const;
+
+const APP_PAGE_SET: ReadonlySet<string> = new Set(APP_PAGES);
+
 /** Screens that load everything from Supabase: offline they would open empty (the live match works offline). */
 const CONNECTED_PATHS = new Set([
   "/matches",
@@ -161,7 +173,8 @@ const LEGACY_ROUTE_MATCHERS = LEGACY_ROUTE_REDIRECTS.map(({ source, destination 
 
 /**
  * The in-app route for a link opened with the app (https://<web origin>/…): old path forms become the new route (query
- * kept), any other path is kept as is. A link to another origin, or one that does not parse, opens the home page.
+ * kept), a path of a known page is kept as is. A link to another origin, one that does not parse, or one to an unknown path
+ * opens the home page.
  */
 export function appRouteFromUrl(url: string, webOrigin: string): string {
   let link: URL;
@@ -191,5 +204,6 @@ export function appRouteFromUrl(url: string, webOrigin: string): string {
       return query ? `${route}&${query}` : route;
     }
   }
-  return path + link.search;
+  const page = normalizePath(path);
+  return APP_PAGE_SET.has(page) ? page + link.search : "/";
 }

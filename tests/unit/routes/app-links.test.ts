@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appRouteFromUrl } from "@/lib/routes";
+import { APP_PAGES, appRouteFromUrl } from "@/lib/routes";
 
 const web = "https://app.example";
 
@@ -28,10 +28,26 @@ describe("appRouteFromUrl", () => {
     expect(appRouteFromUrl("https://app.example/teams/new", "https://app.example/")).toBe("/teams/new");
   });
 
+  it("opens the home page for a path that is not a page of the app", () => {
+    expect(appRouteFromUrl("https://app.example/nope", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example/api/v1/matches?x=1", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example/_next/static/x.js", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example/teams/not-a-uuid", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example/teams/view/extra", web)).toBe("/");
+  });
+
+  it("keeps every known page, with or without a trailing slash, query included", () => {
+    for (const page of APP_PAGES) {
+      expect(appRouteFromUrl(`https://app.example${page}`, web)).toBe(page);
+      expect(appRouteFromUrl(`https://app.example${page === "/" ? "" : page}/?a=1`, web)).toBe(`${page}?a=1`);
+    }
+  });
+
   it("never returns a path another origin could read from", () => {
-    expect(appRouteFromUrl("https://app.example//evil.com/x", web)).toBe("/evil.com/x");
-    expect(appRouteFromUrl("https://app.example///evil.com/x?a=1", web)).toBe("/evil.com/x?a=1");
-    expect(appRouteFromUrl("https://app.example/\\evil.com/x", web)).toBe("/evil.com/x");
+    expect(appRouteFromUrl("https://app.example//evil.com/x", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example///evil.com/x?a=1", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example/\\evil.com/x", web)).toBe("/");
+    expect(appRouteFromUrl("https://app.example//teams/new?a=1", web)).toBe("/teams/new?a=1");
     expect(appRouteFromUrl("https://app.example/%5Cevil.com", web)).toBe("/");
     expect(appRouteFromUrl("https://app.example/%5cevil.com/x", web)).toBe("/");
     expect(appRouteFromUrl("https://app.example/%09/evil.com", web)).toBe("/");

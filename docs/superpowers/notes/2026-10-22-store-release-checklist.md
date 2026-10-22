@@ -13,6 +13,8 @@ Executed once the Apple and Google accounts, the production domain and the store
 - [ ] Real dashboard check of the update screen on a device (last open item of the Android manual checklist).
 - [ ] Run the haptics check on an Android phone (no vibration on the emulator).
 - [ ] Decide `loggingBehavior` in `capacitor.config.ts` (see step 4): the shipped file sets nothing.
+- [ ] Decide `android:allowBackup` and the backup rules in `AndroidManifest.xml` (Android backups include the Preferences session token and the IndexedDB match data; exclude them with `android:allowBackup="false"` or `dataExtractionRules` / `fullBackupContent` if that is not wanted).
+- [ ] Test the update page's store button in the app once `store_url` exists (`window.open(url, '_system')` must open the Play Store / App Store, not an in-app view).
 
 ## 1. Accounts
 

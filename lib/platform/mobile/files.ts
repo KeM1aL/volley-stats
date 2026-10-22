@@ -13,15 +13,29 @@ async function toBase64(blob: Blob): Promise<string> {
   return btoa(binary);
 }
 
+/**
+ * A file name that is safe to write in the cache folder: report names are built from team names, which may hold "/" ("U15/U17":
+ * the parent folder would not exist) or "../". Separators and control characters become "-", leading dots go (no "..", no hidden
+ * file), and an empty result becomes "report.pdf".
+ */
+export function safeFileName(name: string): string {
+  const cleaned = name
+    .replace(/[\\/\u0000-\u001f\u007f]/g, "-")
+    .replace(/^\.+/, "")
+    .trim();
+  return cleaned || "report.pdf";
+}
+
 /** Browser: a download. Native app: a cache file handed to the system share sheet (save, mail, open in...). */
 export async function saveFileNative(data: Blob, fileName: string): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
     saveBlob(data, fileName);
     return;
   }
-  const { uri } = await Filesystem.writeFile({ path: fileName, data: await toBase64(data), directory: Directory.Cache });
+  const safeName = safeFileName(fileName);
+  const { uri } = await Filesystem.writeFile({ path: safeName, data: await toBase64(data), directory: Directory.Cache });
   try {
-    await Share.share({ files: [uri], title: fileName });
+    await Share.share({ files: [uri], title: safeName });
   } catch (error) {
     // Closing the share sheet is not a failure.
     if (error instanceof Error && /cancel/i.test(error.message)) return;

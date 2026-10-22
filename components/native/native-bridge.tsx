@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useConfirmLeave } from "@/components/providers/leave-guard-provider";
-import { backAction } from "@/lib/native/back-action";
+import { leaveLiveMatch } from "@/components/native/leave-live-match";
+import { UPDATE_BLOCK_ATTRIBUTE, backAction } from "@/lib/native/back-action";
 import { platform } from "@/lib/platform";
 import { appRouteFromUrl } from "@/lib/routes";
 
@@ -31,6 +32,7 @@ export function NativeBridge() {
     const offBack = platform.onBackButton((canGoBack) => {
       const { router: current, pathname: path, isActive: guardActive, confirmLeave: ask } = latest.current;
       const action = backAction({
+        blocked: !!document.querySelector(`[${UPDATE_BLOCK_ATTRIBUTE}]`),
         dialogOpen: !!document.querySelector(OPEN_DIALOG),
         guardActive: guardActive(),
         canGoBack,
@@ -44,12 +46,8 @@ export function NativeBridge() {
           );
           break;
         case "confirm-leave":
-          void ask().then((decision) => {
-            if (decision !== "leave") return;
-            // Opened as the first history entry (a link): there is nothing to go back to.
-            if (canGoBack) current.back();
-            else current.replace("/");
-          });
+          // Shared with the live toolbar's back button; with nothing behind (a link) it goes to Matches.
+          void ask().then((decision) => leaveLiveMatch(current, decision, canGoBack));
           break;
         case "back":
           current.back();

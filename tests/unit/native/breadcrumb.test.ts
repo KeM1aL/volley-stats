@@ -11,6 +11,7 @@ const LABELS: Record<string, string> = {
   "breadcrumb.newTeam": "New team",
   "breadcrumb.score": "Score",
   "breadcrumb.privacy": "Privacy",
+  "breadcrumb.home": "Home page",
   "breadcrumb.team": "Team",
   "breadcrumb.match": "Match",
   "breadcrumb.championship": "Championship",
@@ -91,13 +92,15 @@ describe("breadcrumbFor signed out", () => {
   const out = { signedIn: false };
   it("sends the first crumb home on the public stats page", () =>
     expect(breadcrumbFor("/matches/stats", { match: "Home – Away" }, t, out)).toEqual([
-      { label: "Matches", href: "/" },
+      { label: "Home page", href: "/" },
       { label: "Home – Away" },
     ]));
   it("sends the first crumb home on the privacy page", () =>
-    expect(breadcrumbFor("/privacy", {}, t, out)).toEqual([{ label: "Profile", href: "/" }, { label: "Privacy" }]));
-  it("keeps the signed-in links by default", () =>
-    expect(breadcrumbFor("/privacy", {}, t, { signedIn: true })[0].href).toBe("/settings"));
+    expect(breadcrumbFor("/privacy", {}, t, out)).toEqual([{ label: "Home page", href: "/" }, { label: "Privacy" }]));
+  it("keeps the signed-in labels and links", () => {
+    expect(breadcrumbFor("/privacy", {}, t, { signedIn: true })[0]).toEqual({ label: "Profile", href: "/settings" });
+    expect(breadcrumbFor("/privacy", {}, t)[0]).toEqual({ label: "Profile", href: "/settings" });
+  });
 });
 
 describe("matchLabel", () => {

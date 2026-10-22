@@ -61,7 +61,7 @@ export function LandscapeHint({ matchId }: { matchId: string }) {
         type="button"
         variant="ghost"
         size="icon"
-        className="h-7 w-7 shrink-0"
+        className="h-10 w-10 shrink-0"
         aria-label={t("live.landscapeHint.dismiss")}
         data-testid="landscape-hint-dismiss"
         onClick={dismiss}

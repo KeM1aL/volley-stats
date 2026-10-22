@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAppConfig } from "@/lib/api/app-config";
+import { UPDATE_BLOCK_ATTRIBUTE } from "@/lib/native/back-action";
 import { platform } from "@/lib/platform";
 import { normalizePath } from "@/lib/routes";
 import { supabase } from "@/lib/supabase/client";
@@ -65,6 +66,7 @@ export function UpdateGate() {
         aria-modal="true"
         aria-labelledby="update-required-title"
         data-testid="update-required"
+        {...{ [UPDATE_BLOCK_ATTRIBUTE]: "" }}
       >
         <div className="w-full max-w-sm space-y-4 text-center">
           <RefreshCw className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />

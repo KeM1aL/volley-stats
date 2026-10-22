@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useConfirmLeave } from "@/components/providers/leave-guard-provider";
 import { useNativeApp } from "@/components/navigation/use-native-app";
 import { SyncBadge } from "@/components/sync/sync-badge";
-import { allowNextUnload } from "@/hooks/use-unsent-guard";
-import { routes } from "@/lib/routes";
+import { leaveLiveMatch } from "@/components/native/leave-live-match";
+import { canGoBackIn, type HistoryEnv } from "@/lib/native/history";
 
 /**
  * Installed app only: the live match page has no header and no tab bar, so this small bar holds the back button (through the
@@ -22,11 +22,7 @@ export function LiveAppToolbar() {
   if (!nativeApp) return null;
 
   const goBack = async () => {
-    const decision = await confirmLeave();
-    if (decision === "stay") return;
-    if (decision === "leave") allowNextUnload();
-    if (window.history.length > 1) router.back();
-    else router.replace(routes.matches());
+    leaveLiveMatch(router, await confirmLeave(), canGoBackIn(window as unknown as HistoryEnv));
   };
 
   return (

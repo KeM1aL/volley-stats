@@ -4,6 +4,10 @@ import { backAction } from "@/lib/native/back-action";
 const idle = { dialogOpen: false, guardActive: false, canGoBack: false, pathname: "/" };
 
 describe("backAction", () => {
+  it("exits while the update page is up, before anything else", () => {
+    expect(backAction({ ...idle, blocked: true, canGoBack: true, pathname: "/teams/" })).toBe("exit");
+    expect(backAction({ dialogOpen: true, guardActive: true, canGoBack: true, pathname: "/matches/live/", blocked: true })).toBe("exit");
+  });
   it("closes a dialog before anything else, even on the live page", () =>
     expect(backAction({ dialogOpen: true, guardActive: true, canGoBack: true, pathname: "/matches/live/" })).toBe("close-dialog"));
   it("asks before leaving a live match", () =>

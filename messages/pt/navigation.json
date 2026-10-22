@@ -24,6 +24,7 @@
     "team": "Equipa",
     "match": "Jogo",
     "championship": "Campeonato",
+    "home": "Início",
     "ariaLabel": "Caminho de navegação"
   }
 }
