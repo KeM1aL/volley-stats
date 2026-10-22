@@ -527,3 +527,20 @@ Added after Task 13 at the user's request (spec §4 "No top bar, Profile tab, br
 
 - [ ] **Step 1: Write the failing tests** (mock `@capacitor/share`, `@capacitor/core`): native → `Share.share` called with url and title, `"shared"`; native cancel ("Share canceled") → `"cancelled"`, no throw; non-native without `navigator.share` → clipboard written, `"copied"`.
 - [ ] **Step 2: Run** — FAIL. **Step 3: Implement.** **Step 4: Run** `pnpm test`, gates, the stats e2e project on web (`--project=stats`). **Step 5: Emulator**: the stats page Share opens the Android chooser with the link. **Step 6: Commit** — `feat(mobile): native share sheet for the stats link`.
+
+### Task 17: No web header flash at app start
+
+Added 2026-10-23 at the user's request. In the app, `Navigation` and the other app-only pieces decide after mount (`useNativeApp()`), so the first paint shows the web header (logo, sync badge, language, full screen, sign-out) for a frame before it disappears.
+
+**Files:**
+- Create: `lib/platform/native-boot.ts` (the inline script source), a test `tests/unit/platform/native-boot.test.ts`
+- Modify: `app/layout.tsx` (inline script in `<head>`, mobile build only via `isMobileBuild`), `app/globals.css` (rules keyed on the attribute), `components/navigation.tsx` (a class or `data-` hook on its root so CSS can hide it)
+
+**Interfaces:**
+- Produces: before hydration, in the mobile build only, an inline `<script>` sets `document.documentElement.dataset.nativeApp = "ios" | "android"` when `window.Capacitor?.isNativePlatform?.()` is true (Capacitor injects `window.Capacitor` into the WebView before page scripts run; verify on the emulator). `NATIVE_BOOT_SCRIPT: string` exported from `lib/platform/native-boot.ts` (plain JS, no imports, never throws). CSS: `html[data-native-app] [data-web-header] { display: none }`. `<html>` already has `suppressHydrationWarning`. The web build renders no script and no attribute; the browser export renders the script but the attribute is never set there (not native), so the export e2e is unaffected.
+
+- [ ] **Step 1: Write the failing test**: evaluate `NATIVE_BOOT_SCRIPT` with `new Function` against a fake `window`/`document`: native ios → attribute "ios"; `isNativePlatform()` false → no attribute; no `window.Capacitor` → no attribute; `isNativePlatform` throwing → no attribute and no throw.
+- [ ] **Step 2: Run** — FAIL. **Step 3: Implement.** Keep `useNativeApp()` as the source of truth for rendering; the CSS only prevents the first-frame flash.
+- [ ] **Step 4: Run** `pnpm test`, lint gate, `npx tsc --noEmit`, `pnpm build:mobile && pnpm check:export` (the export check's secret scan must still pass), web `pnpm test:e2e:quick` (rebuild web after build:mobile), and the export suite (core, live, stats).
+- [ ] **Step 5: Emulator check**: cold start (`adb shell am force-stop com.volleystats.app` then launch) with a screen recording (`adb shell screenrecord`, pull and inspect frames) or rapid screenshots: no web header is ever visible; then on a sub-page, `location.reload()` — still no header.
+- [ ] **Step 6: Commit** — `fix(mobile): no web header flash at app start`.
