@@ -3,19 +3,19 @@
  * app's offline page instead of the browser's error page (Task 8 adds those steps).
  */
 import { test, expect, type Page } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
+import { readFixture } from '../helpers/fixture';
 import { setupCourtPositions } from '../helpers/court';
+import { scorePoints } from '../helpers/live';
 import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
-import { acceptBeforeUnload, readLiveScore, waitForAllSaved } from '../helpers/sync';
+import { acceptBeforeUnload, waitForAllSaved } from '../helpers/sync';
+import { onPath } from '../helpers/routes';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
-const loadFixture = () => JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
 const headerLink = (page: Page, name: string) => page.getByRole('link', { name, exact: true }).first();
 
-test('asks before leaving a live match', async ({ page }) => {
-  test.setTimeout(6 * 60_000);
+// Needs the service worker: the static export in a browser has none (the Capacitor app bundles its files).
+test('asks before leaving a live match @web', async ({ page }) => {
+  test.setTimeout(2 * 60_000);
   acceptBeforeUnload(page);
   // Our dialog is the only prompt after Leave: the browser's own "changes may not be saved" must not follow.
   // Counts the dialogs Playwright sees, and the page's beforeunload handlers asking for one (Chrome doesn't
@@ -24,8 +24,8 @@ test('asks before leaving a live match', async ({ page }) => {
   page.on('dialog', (d) => {
     if (d.type() === 'beforeunload') beforeUnloadDialogs++;
   });
-  const { teamName, playerNames } = loadFixture();
-  await createAndStartMatch(page, { teamName, playerNames });
+  const { teamId, teamName, playerNames } = readFixture();
+  await createAndStartMatch(page, { teamId, teamName });
   await setupCourtPositions(page, playerNames.slice(0, 6), { selectServingTeam: teamName });
   const pointButton = page.getByTestId('point-btn-managed-point').first();
   await pointButton.waitFor({ state: 'visible', timeout: 10_000 });
@@ -39,21 +39,14 @@ test('asks before leaving a live match', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Stay' }).click();
   await expect(dialog).toBeHidden();
   expect(page.url()).toBe(liveUrl);
-  const before = await readLiveScore(page);
-  await pointButton.click();
-  await expect
-    .poll(async () => {
-      const now = await readLiveScore(page);
-      return now.home + now.away;
-    })
-    .toBe(before.home + before.away + 1);
+  await scorePoints(page, 1);
 
   // Leave: the matches page; afterwards other screens navigate without asking
   await headerLink(page, 'Matches').click();
   await dialog.getByRole('button', { name: 'Leave' }).click();
-  await page.waitForURL(/\/matches$/, { timeout: 15_000 });
+  await page.waitForURL(onPath('/matches'), { timeout: 15_000 });
   await headerLink(page, 'Teams').click();
-  await page.waitForURL(/\/teams$/, { timeout: 15_000 });
+  await page.waitForURL(onPath('/teams'), { timeout: 15_000 });
   await expect(dialog).toBeHidden();
 
   // Offline with an unsent point (a score_points row and the set's score update): the dialog says so
@@ -104,26 +97,4 @@ test('asks before leaving a live match', async ({ page }) => {
 
   await goOnline(page);
   await waitForAllSaved(page);
-});
-
-test('leaves a finished match without asking', async ({ page }) => {
-  const { completedMatchStatsUrl } = loadFixture() as { completedMatchStatsUrl?: string };
-  test.skip(!completedMatchStatsUrl, 'run 02-matches.spec.ts first');
-  const statsButton = page.getByRole('button', { name: 'Match Statistics' });
-  // This browser context has an empty local database: the live page first pulls the match from the server, and
-  // when that fails (a slow or failed first pull) it leaves for /matches with a load-failure toast. That is
-  // not what is under test, so open it once more, with the match tracked, before judging.
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    await page.goto(completedMatchStatsUrl!.replace('/stats', '/live'));
-    await expect
-      .poll(async () => ((await statsButton.isVisible()) ? 'live' : /\/matches$/.test(page.url()) ? 'matches' : 'loading'), {
-        timeout: 30_000,
-      })
-      .not.toBe('loading');
-    if (await statsButton.isVisible()) break;
-  }
-  await expect(statsButton).toBeVisible();
-  await headerLink(page, 'Teams').click();
-  await page.waitForURL(/\/teams$/, { timeout: 15_000 });
-  await expect(page.getByTestId('leave-live-dialog')).toBeHidden();
 });

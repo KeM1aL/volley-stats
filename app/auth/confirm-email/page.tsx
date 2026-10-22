@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
+import { LoadingPage } from "@/components/loading-page";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
-export default function ConfirmEmailPage() {
+function ConfirmEmailPage() {
   const t = useTranslations('auth');
   const [isResending, setIsResending] = useState(false);
   const [canResend, setCanResend] = useState(true);
@@ -171,5 +172,13 @@ export default function ConfirmEmailPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <ConfirmEmailPage />
+    </Suspense>
   );
 }

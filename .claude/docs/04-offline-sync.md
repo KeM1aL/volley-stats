@@ -56,6 +56,7 @@ Design: [docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md](.
 | `conflict-handler.ts` | The scoring device wins conflicts on match data |
 | `tracked-matches.ts`, `sync-state.ts` | Local documents shared by every tab |
 | `scorer-claim.ts` | `claim_match_scorer` / `get_match_scorer` RPCs |
+| `take-back.ts` | Discards superseded (take-back) or rejected (account deletion) changes: rows and replication meta set to the server's version |
 | `platform/` | `SyncPlatform` (connectivity, foreground, device id); `web.ts` for the browser |
 | `status.ts` | Sync badge state |
 
@@ -76,6 +77,7 @@ Design: [docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md](.
 
 - `_modified` (all 12 tables): server-clock checkpoint, set on every insert/update. Not in local schemas; `pickSchemaFields` drops it and any other column the local schema doesn't know.
 - `updated_at`: time of the last edit. Requests with `x-device-id` (sync) keep the device's value; other requests (API layer) get `now()`.
+- `matches.archived_at` is deliberately **not** in the RxDB `matchSchema`: pull and push carry schema fields only, so a device never reads, sets or resets the archive (a push can't unarchive a match). Archive, restore and delete go through the API layer. After deleting an upcoming match, `SyncManager.forgetMatch(matchId)` stops tracking it on that device (unless it still has pending, rejected or superseded changes); other devices drop it through the usual pruning of untouched tracked matches.
 - `matches.scorer_*` + `claim_match_scorer` / `get_match_scorer`: one scoring device per match. A trigger refuses sync writes from another device (`P0001 scorer_mismatch`).
 
 ### Push rules
@@ -86,6 +88,8 @@ Design: [docs/superpowers/specs/2026-10-07-offline-sync-reliability-design.md](.
 - Conflicts on match data: if the device knew a previous server version, the device wins; otherwise the later `updated_at` wins.
 - Errors: network/auth/server errors retry forever without counting; `parent_missing`/unknown errors count, and are rejected after 20 attempts (`too_many_attempts`). These permanent errors are rejected at once: `rls`, `invalid_data`, `schema_mismatch`, `duplicate` (unique violation), `reference_missing` (a foreign key to a table outside the match), `deleted_on_server` (the row is gone from the server) and `parent_rejected` (the parent row was rejected, so its children are rejected with it and re-queued with it on **Retry**). A rejected row never blocks later rows, except as a rejected unsent parent insert. `scorer_mismatch` marks the match's unsent rows `superseded`.
 - Rejected rows stay in `pending_changes` with a reason; the badge's **Retry** re-queues them (an entry whose row is gone from the device entirely is dropped with a warning).
+- **Discarding rejected rows** (`SyncManager.discardRejected(matchId?)`, used by the account deletion card): the same alignment as a take-back (`planRejectedDiscard` + `applyDiscardPlan` in `take-back.ts`): each rejected row becomes the server's version, or a local tombstone that is never pushed, the replication meta is set to the same state, and the entries are deleted. It stops the affected matches' replications, reads the server's version of every refused row (bounded by 15 s, `DISCARD_TIMEOUT_MS`, the request is aborted), and only then writes, locally; the replications restart whatever happened. Before writing, the local rows are read, then the entries' status straight from storage (not the document cache); only rows whose entry is still rejected are written, against the rows read, and an entry is deleted only if unchanged since it was read. Because the pending hook marks an entry before its row is written, an edit made meanwhile is either seen as pending (left alone) or makes the write conflict (left as it is). This relies on that mark-then-write order; rows and entries are separate collections, so it is not one atomic step. Pending entries are never touched. Leader tab only (it waits up to 5 s to lead). Failures change nothing: `DiscardBlockedError` (`other-tab`: another tab leads, the card says to close the other tabs; `timeout`) or the server's error.
+- A `pending` entry is cleared when its version is uploaded, or by the settle check that runs when the table's replication for the match is idle and in sync (`clearSettled`). An entry whose write never landed (the hook marks the row before writing it, so closing the app in between leaves an entry for a version the device doesn't have) is dropped by that check once it is 30 s old (`SETTLE_GRACE_MS`); if it is younger, the check runs again when the 30 s are up, so the badge doesn't wait for other activity on the table.
 - An UPDATE that matches no row while the server row is unchanged is a refusal: `rls` with a session, a temporary `auth` error without one (match tables are publicly readable, so a lost session reads the row back unchanged).
 - After a claim is lost, the live page is read-only: scoring, set setup, substitutions/events and undo are blocked, because the match is no longer replicated.
 
@@ -121,18 +125,18 @@ Replications are never paused: RxDB's retry waits for the `online` event. Reconn
 **Requires Online**:
 ❌ Opening a match for the first time on a device
 ❌ Starting the app offline on a device that has never signed in online (no saved profile)
-❌ Teams, championships, match list, settings and other non-live screens (direct Supabase via the API layer)
+❌ Teams, championships, match list, settings and other non-live screens (direct Supabase via the API layer); opened offline from inside the app, the teams, championships and match list screens show the in-app offline screen (`OfflineGate`, see [07-features.md](07-features.md#offline-gate)) instead of an empty page
 ❌ Match statistics page from the live page (its stats button is disabled offline; the stats page itself falls back to local data)
 ❌ Real-time updates from other users
 ❌ Authentication (login/signup)
 ❌ Avatar uploads
-❌ FFVB match imports
+❌ FFVB match imports (the button is disabled for now on both targets)
 
 **Service worker** ([app/sw.ts](../../app/sw.ts), Serwist):
 - Precaches the build's JS/CSS and runtime-caches pages, images and fonts (`defaultCache`); Supabase API calls are NetworkOnly, so non-live screens always read live data and no user data sits in Cache Storage.
 - `SerwistProvider` keeps `cacheOnNavigation` on: each client-side navigation asks the worker to fetch and cache that page, which is what lets the live page load again offline (together with the saved profile, see below). It costs one extra page request per navigation.
 - `reloadOnOnline` is off so reconnecting does not reload a live match.
-- A page that can't load (offline or a weak signal) gets `public/offline.html` (Serwist `fallbacks`, document requests only; precached through the default `public/**/*` glob). It is static (inline CSS and texts in five languages, picked from the `NEXT_LOCALE` cookie or the browser language) and its **Back to the live match** button opens the URL the live page saves in `sessionStorage` (`volleystats:last-live-match`), or goes back in history when there is none.
+- A page that can't load (offline or a weak signal) gets `public/offline.html` (Serwist `fallbacks`, document requests only; precached through the default `public/**/*` glob). It is static (inline CSS and texts in five languages, picked from the language saved on the device (`localStorage` key `volleystats:locale`) or the browser language) and its **Back to the live match** button opens the URL the live page saves in `sessionStorage` (`volleystats:last-live-match`), or goes back in history when there is none.
 - `skipWaiting` + `clientsClaim`: a new deploy takes over open tabs immediately. A tab still running the previous build that then goes offline and needs a chunk it never loaded can fail to load it; reload once online.
 - After an RxDB major upgrade (`DB_GENERATION` bump), the new build deletes the old local databases. A tab still running the old build loses its database connection mid-session; reload it.
 

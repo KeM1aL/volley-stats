@@ -104,5 +104,30 @@
   },
   "errors": {
     "generic": "Error"
+  },
+  "deleteAccount": {
+    "title": "Delete account",
+    "description": "Permanently delete your account. Matches and statistics stay with their teams.",
+    "button": "Delete account",
+    "unsentBlocked": "Wait until your changes are uploaded before deleting your account.",
+    "dialogTitle": "Delete your account?",
+    "deleted": "Deleted: your sign-in, your profile, your club and team memberships.",
+    "kept": "Kept: matches and statistics, and the teams you hand over.",
+    "teamsIntro": "You created these teams. Choose who takes each one over, or delete it.",
+    "choosePlaceholder": "Choose a new owner or delete the team",
+    "deleteTeam": "Delete the team",
+    "handOver": "Hand over to {name}",
+    "noCandidate": "No member of this team has an account to take it over.",
+    "confirmLabel": "Type your email to confirm",
+    "confirm": "Delete my account",
+    "cancel": "Cancel",
+    "failed": "Your account could not be deleted. Nothing was changed. Try again.",
+    "rejectedBlocked": "{count, plural, one {# change was refused by the server and can't be uploaded.} other {# changes were refused by the server and can't be uploaded.}}",
+    "discardRejected": "Discard them",
+    "discardTitle": "Discard the refused changes?",
+    "discardBody": "These changes exist only on this device and will be dropped. This device will then show the matches as they are on the server.",
+    "discardConfirm": "Discard them",
+    "discardFailed": "The changes could not be discarded. Check your connection and try again.",
+    "discardOtherTab": "The app is open in another tab. Close the app's other tabs, then try again."
   }
 }

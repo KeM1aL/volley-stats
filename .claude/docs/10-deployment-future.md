@@ -23,7 +23,7 @@
 - ✅ Row Level Security (RLS) in Supabase enforces authorization
 - ✅ Service role key only on server (never exposed to client)
 - ✅ Anon key for client (limited permissions)
-- ✅ Auth middleware for protected routes
+- ✅ Session refresh in `proxy.ts` (web only) plus a client-side route guard for protected routes (works in the static export too)
 - ✅ HTTPS enforced (via Supabase and Vercel)
 - ⚠️ Consider rate limiting for API calls
 - ⚠️ Add CSRF protection for mutations
@@ -109,7 +109,7 @@ pnpm test:e2e:ui     # Playwright UI mode
 - Supabase Client: [lib/supabase/client.ts](lib/supabase/client.ts)
 - Types: [lib/types.ts](lib/types.ts), generated DB types [lib/supabase/database.types.ts](lib/supabase/database.types.ts)
 - Commands: [lib/commands/match-commands.ts](lib/commands/match-commands.ts)
-- Live Match: [app/matches/[id]/live/page.tsx](app/matches/[id]/live/page.tsx)
+- Live Match: [app/matches/live/page.tsx](app/matches/live/page.tsx)
 
 ### Important Patterns
 - **Data Access**: Screens other than the live match read and write live data through the API layer via hooks (e.g. `useTeamApi()`), which call Supabase directly

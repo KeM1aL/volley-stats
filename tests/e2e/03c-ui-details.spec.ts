@@ -3,6 +3,8 @@
  * don't pin down.
  */
 import { test, expect, type Locator } from '@playwright/test';
+import { readFixture } from '../helpers/fixture';
+import { routes } from '@/lib/routes';
 
 /** WCAG contrast ratio between an element's text colour and the first opaque background behind it. */
 async function textContrast(target: Locator): Promise<number> {
@@ -50,8 +52,21 @@ test('days in the middle of a selected date range stay readable', async ({ page 
 
   const middleDay = firstMonth.getByRole('button', { name: /\b10(th)?\b/ }).first();
   await expect(middleDay).toHaveAttribute('aria-label', /selected/);
-  await page.waitForTimeout(500); // day buttons animate colour changes (transition-colors)
-  expect(await textContrast(middleDay)).toBeGreaterThanOrEqual(3);
+  // Day buttons animate colour changes (transition-colors): the contrast of the old colour already passes,
+  // so first wait for the transition to end (no running animation and the same colour twice in a row).
+  let previousColor = '';
+  await expect
+    .poll(
+      async () => {
+        const state = await middleDay.evaluate((el) => ({ animations: el.getAnimations().length, color: getComputedStyle(el).color + getComputedStyle(el).backgroundColor }));
+        const settled = state.animations === 0 && state.color === previousColor;
+        previousColor = state.color;
+        return settled;
+      },
+      { message: 'the day colour transition ends' }
+    )
+    .toBe(true);
+  expect(await textContrast(middleDay), 'text contrast of a day inside the range').toBeGreaterThanOrEqual(3);
 });
 
 test('buttons show a pointer cursor', async ({ page }) => {
@@ -59,4 +74,55 @@ test('buttons show a pointer cursor', async ({ page }) => {
   const newMatch = page.getByRole('button', { name: 'New Match' });
   await expect(newMatch).toBeVisible({ timeout: 30_000 });
   expect(await newMatch.evaluate((el) => getComputedStyle(el).cursor)).toBe('pointer');
+});
+
+test('team dialog status menu fits on screen', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  const { teamName } = readFixture();
+  await page.goto(routes.teams());
+
+  // Find the run's team (the mobile card list shows at this width)
+  const searchBox = page.getByPlaceholder('Search by team name...');
+  if (!(await searchBox.isVisible())) {
+    await page.getByRole('button', { name: 'Filters' }).click();
+    await expect(searchBox).toBeVisible({ timeout: 30_000 });
+  }
+  await searchBox.fill(teamName);
+  const card = page.locator('div.border.rounded-lg').filter({ has: page.getByRole('heading', { name: teamName }) });
+  await expect(card).toBeVisible({ timeout: 30_000 });
+  // Card buttons: 0=View, 1=Players, 2=Edit, 3=Archive
+  await card.getByRole('button').nth(2).click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  const status = dialog.locator('.react-select-container').getByRole('combobox');
+  const scrollBefore = await dialog.evaluate((el) => [el.scrollHeight, el.scrollTop]);
+  await status.click();
+
+  // The whole menu shows above the dialog, inside the viewport, and its options can be clicked
+  const archived = page.getByRole('option', { name: 'Archived' });
+  await expect(archived).toBeVisible();
+  const box = (await archived.boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+  // The menu is on top of everything (not clipped by the dialog)...
+  expect(await archived.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+  })).toBe(true);
+  // ...and lives outside the dialog's scroll area, which neither grows nor scrolls to make room for it
+  await expect(dialog.getByRole('option')).toHaveCount(0);
+  expect(await dialog.evaluate((el) => [el.scrollHeight, el.scrollTop])).toEqual(scrollBefore);
+  await archived.click();
+
+  // Picking an option doesn't close the dialog
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('.react-select-container')).toContainText('Archived');
+
+  // Close without saving
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(dialog).not.toBeVisible();
 });

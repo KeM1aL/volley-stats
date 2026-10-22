@@ -50,7 +50,8 @@
     "createSuccess": "{item} créé avec succès",
     "createError": "Échec de la création de {item}",
     "languageChanged": "Langue modifiée avec succès",
-    "languageChangeError": "Échec du changement de langue"
+    "languageChangeError": "Échec du changement de langue",
+    "languageNotSaved": "Langue changée sur cet appareil uniquement : elle n'a pas pu être enregistrée dans votre profil."
   },
   "messages": {
     "noData": "Aucune donnée disponible",
@@ -132,5 +133,12 @@
       "schemaIncompatible": "Le schéma de la base de données a été mis à jour et est incompatible avec les données existantes.",
       "resyncInstructions": "Cliquez ci-dessous pour effacer la base de données locale. Vos données seront resynchronisées depuis le serveur lors de la prochaine connexion."
     }
+  },
+  "offline": {
+    "title": "Vous êtes hors ligne",
+    "body": "Cet écran nécessite une connexion.",
+    "backToLive": "Retour au match en direct",
+    "retry": "Réessayer",
+    "goBack": "Retour"
   }
 }

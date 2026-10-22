@@ -26,6 +26,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@platform-impl": [
+        "./lib/platform/web/index.ts"
       ]
     }
   },

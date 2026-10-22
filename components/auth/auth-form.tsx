@@ -18,9 +18,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from "@/contexts/auth-context";
+import { isSafeRedirectTarget, routes } from "@/lib/routes";
+import { platform } from "@/lib/platform";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranslations, useLocale } from "next-intl";
-import { syncLocaleFromProfile } from '@/lib/i18n/actions';
 import { SignInWithPasswordCredentials, SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 
 export function AuthForm() {
@@ -58,7 +59,7 @@ export function AuthForm() {
         const { error } = await supabase.auth.resetPasswordForEmail(
           values.email,
           {
-            redirectTo: `${window.location.origin}/auth/callback?type=recovery&next=/auth/reset-password`,
+            redirectTo: `${platform.webOrigin()}/auth/reset-password`,
           }
         );
 
@@ -98,6 +99,7 @@ export function AuthForm() {
           data: {
             lang: locale,
           },
+          emailRedirectTo: `${platform.webOrigin()}/`,
         }
       }
 
@@ -113,11 +115,8 @@ export function AuthForm() {
       } else {
         // Update session in context
         setSession(authResponse.data.session);
-        // Sync profile language to cookie so future visits use the correct locale
-        await syncLocaleFromProfile();
         const redirectTo = searchParams.get("redirectTo");
-        router.replace(redirectTo || "/");
-        router.refresh();
+        router.replace(isSafeRedirectTarget(redirectTo) ? redirectTo : routes.home());
       }
     } catch (error) {
       console.error("Failed to sign in:", error);

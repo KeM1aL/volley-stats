@@ -36,6 +36,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MatchFormatSelect } from "../match-formats/match-format-select";
 import { SeasonSelect } from "../seasons/season-select";
 import CreatableSelect from "react-select/creatable";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useTranslations } from "next-intl";
 
 const supabase = createClient();
@@ -194,6 +195,7 @@ export function NewChampionshipDialog({
                   <FormLabel>{t('form.type')} *</FormLabel>
                   <FormControl>
                     <CreatableSelect<TypeOption>
+                      {...selectMenuPortalProps()}
                       options={TYPE_SUGGESTIONS}
                       value={selectedType}
                       onChange={(option) => {

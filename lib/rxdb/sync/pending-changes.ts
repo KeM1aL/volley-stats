@@ -262,12 +262,16 @@ export class PendingChanges {
    * the replication (the server's version won a conflict); or when the entry is older than
    * SETTLE_GRACE_MS (its write failed after the hook marked it). An entry whose write hasn't landed
    * yet (the hook runs before the write) is kept.
+   *
+   * Returns in how many ms the oldest kept entry passes SETTLE_GRACE_MS (null: none kept). The caller
+   * checks again then: a write lost when the app was closed leaves an entry that nothing else clears
+   * once the rest of the match is uploaded.
    */
-  async clearSettled(db: RxDatabase<any>, matchId: string, table: MatchCollectionName, before: string): Promise<void> {
+  async clearSettled(db: RxDatabase<any>, matchId: string, table: MatchCollectionName, before: string): Promise<number | null> {
     const entries = await this.collection
       .find({ selector: { match_id: matchId, table_name: table, status: "pending", updated_at: { $lt: before } } })
       .exec();
-    if (entries.length === 0) return;
+    if (entries.length === 0) return null;
     const collection = db.collections[table] as RxCollection<any>;
     const primaryPath = collection.schema.primaryPath as string;
     const local = new Map(
@@ -276,7 +280,8 @@ export class PendingChanges {
         doc,
       ])
     );
-    const failedBefore = Date.parse(this.now()) - SETTLE_GRACE_MS;
+    const now = Date.parse(this.now());
+    const failedBefore = now - SETTLE_GRACE_MS;
     const settled = entries.filter((entry) => {
       if (Date.parse(entry.updated_at) < failedBefore) return true;
       const doc = local.get(entry.doc_id);
@@ -287,6 +292,11 @@ export class PendingChanges {
     });
     // An entry marked again meanwhile no longer matches its read revision: bulkRemove leaves it.
     if (settled.length > 0) await this.collection.bulkRemove(settled);
+    const graceEnds = entries
+      .filter((entry) => !settled.includes(entry))
+      .map((entry) => Date.parse(entry.updated_at) + SETTLE_GRACE_MS)
+      .filter(Number.isFinite);
+    return graceEnds.length > 0 ? Math.max(0, Math.min(...graceEnds) - now) : null;
   }
 
   async list(filter: PendingFilter = {}): Promise<PendingChange[]> {
@@ -294,9 +304,30 @@ export class PendingChanges {
     return docs.map((doc) => doc.toJSON() as PendingChange);
   }
 
-  /** Deletes entries by id (taking scoring back discards the superseded ones). */
-  async removeEntries(ids: string[]): Promise<void> {
-    if (ids.length > 0) await this.collection.bulkRemove(ids);
+  /**
+   * The entries among these ids that have this status, read from storage (not RxDB's document cache,
+   * which can lag behind another tab's write). Their revision guards removeUnchanged: a rejected row
+   * edited meanwhile turns its entry pending.
+   */
+  async withStatus(ids: string[], status: PendingStatus): Promise<RxDocumentData<PendingChange>[]> {
+    if (ids.length === 0) return [];
+    const stored = await this.collection.storageInstance.findDocumentsById(ids, false);
+    return stored.filter((entry) => entry.status === status);
+  }
+
+  /**
+   * Deletes these entries unless they changed since they were read (the write is checked against the
+   * revision read). Returns the ids removed.
+   */
+  async removeUnchanged(entries: RxDocumentData<PendingChange>[]): Promise<Set<string>> {
+    if (entries.length === 0) return new Set();
+    // The wrapped storage instance sets `_rev` and `_meta.lwt`; the collection sees the removal (counts update).
+    const result = await this.collection.storageInstance.bulkWrite(
+      entries.map((previous) => ({ previous, document: { ...previous, _deleted: true } })),
+      "sync-discard-entries"
+    );
+    const failed = new Set(result.error.map((error) => error.documentId));
+    return new Set(entries.map((entry) => entry.id).filter((id) => !failed.has(id)));
   }
 
   count(filter: PendingFilter = {}): Promise<number> {

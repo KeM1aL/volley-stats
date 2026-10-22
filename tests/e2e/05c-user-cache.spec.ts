@@ -21,6 +21,10 @@ test('profile is saved on the device and cleared without a session', async ({ pa
   expect(saved.userId).toBe(saved.user.id);
 
   await context.clearCookies();
+  // The static export keeps the session in localStorage instead of cookies.
+  await page.evaluate(() => {
+    for (const key of Object.keys(localStorage)) if (key.startsWith('sb-')) localStorage.removeItem(key);
+  });
   await page.goto('/');
   await expect
     .poll(() => page.evaluate((key) => localStorage.getItem(key), CACHE_KEY))

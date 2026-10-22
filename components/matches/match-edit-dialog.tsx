@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { useLocalDb } from "../providers/local-database-provider";
 import { toast } from "@/hooks/use-toast";
+import { routes } from "@/lib/routes";
 import { useAuth } from "@/contexts/auth-context"; // Import useAuth
 
 type MatchStartDialogProps = {
@@ -52,7 +53,7 @@ export default function MatchEditDialog({ match }: MatchStartDialogProps) {
   async function onManagedTeamSelected(teamId: string): Promise<void> {
     const params = new URLSearchParams();
     params.set("team", teamId);
-    router.push(`/matches/${match.id}/live?${params.toString()}`);
+    router.push(routes.matchLive(match.id, Object.fromEntries(params)));
     setIsDialogOpen(false); // Close dialog after selection
   }
 

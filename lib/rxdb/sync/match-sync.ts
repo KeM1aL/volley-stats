@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RxReplicationState } from "rxdb/plugins/replication";
-import { exhaustMap, filter, from, type Subscription } from "rxjs";
+import { exhaustMap, filter, from, merge, Subject, type Subscription } from "rxjs";
 import type { LocalDatabase } from "../collections";
 import { createPushGate, type ClaimCheck } from "./dependencies";
 import { matchIdOf, type PendingChanges } from "./pending-changes";
@@ -26,6 +26,8 @@ export const matchReplicationIdentifier = (table: MatchCollectionName, matchId: 
 export class MatchSync {
   private readonly states = new Map<MatchCollectionName, RxReplicationState<any, SupabaseCheckpoint>>();
   private subscriptions: Subscription[] = [];
+  /** Per table: the settle check scheduled for when a kept pending entry passes its grace. */
+  private readonly settleTimers = new Map<MatchCollectionName, ReturnType<typeof setTimeout>>();
 
   constructor(
     readonly matchId: string,
@@ -53,13 +55,14 @@ export class MatchSync {
         },
       });
       this.states.set(table, state);
+      const settleAgain = new Subject<void>();
       this.subscriptions.push(
         state.sent$.subscribe((doc) => {
           this.deps.pending.onSent(table, doc as any).catch((error) => this.warn(table, "could not clear the pending entry", error));
         }),
-        state.active$
+        // Idle, or a kept entry's grace just ended (no replication activity may follow to trigger a check).
+        merge(state.active$.pipe(filter((active) => !active)), settleAgain)
           .pipe(
-            filter((active) => !active),
             // Not switchMap: the promise below cannot be cancelled, so ignore idle signals while a check is running.
             exhaustMap(() => {
               const before = new Date().toISOString();
@@ -67,6 +70,7 @@ export class MatchSync {
                 state
                   .awaitInSync()
                   .then(() => this.deps.pending.clearSettled(this.deps.db, this.matchId, table, before))
+                  .then((graceEndsInMs) => this.scheduleSettleCheck(table, graceEndsInMs, settleAgain))
                   // Keep the error inside the inner stream so the outer subscription survives.
                   .catch((error) => this.warn(table, "settle check failed", error))
               );
@@ -93,9 +97,25 @@ export class MatchSync {
   async cancel(): Promise<void> {
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.subscriptions = [];
+    this.settleTimers.forEach((timer) => clearTimeout(timer));
+    this.settleTimers.clear();
     const states = [...this.states.values()];
     this.states.clear();
     await Promise.all(states.map((state) => state.cancel()));
+  }
+
+  /** Checks the table again once a kept pending entry passes its grace (null: nothing kept). */
+  private scheduleSettleCheck(table: MatchCollectionName, inMs: number | null, settleAgain: Subject<void>): void {
+    clearTimeout(this.settleTimers.get(table));
+    this.settleTimers.delete(table);
+    if (inMs === null || this.subscriptions.length === 0) return;
+    this.settleTimers.set(
+      table,
+      setTimeout(() => {
+        this.settleTimers.delete(table);
+        settleAgain.next();
+      }, inMs + 1)
+    );
   }
 
   private warn(scope: string, message: string, error: unknown): void {

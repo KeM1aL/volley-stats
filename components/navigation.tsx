@@ -36,6 +36,7 @@ import { useConfirmLeave } from "@/components/providers/leave-guard-provider";
 import { SyncBadge } from "@/components/sync/sync-badge";
 import { useSyncStatus } from "@/hooks/use-sync-status";
 import { allowNextUnload } from "@/hooks/use-unsent-guard";
+import { normalizePath } from "@/lib/routes";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -85,7 +86,7 @@ export function Navigation() {
   ];
 
   // Compact navigation in landscape mode on live match pages
-  const isLivePage = pathname?.includes('/live');
+  const isLivePage = normalizePath(pathname ?? "") === "/matches/live";
   if (isLandscape && isLivePage) {
     return (
       <header className="h-10 top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
@@ -109,7 +110,7 @@ export function Navigation() {
                           onClick={() => setMobileMenuOpen(false)}
                           className={cn(
                             "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground",
-                            pathname === route.href
+                            normalizePath(pathname ?? "") === route.href
                               ? "bg-accent text-accent-foreground"
                               : "transparent"
                           )}
@@ -167,7 +168,7 @@ export function Navigation() {
                           onClick={() => setMobileMenuOpen(false)}
                           className={cn(
                             "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground",
-                            pathname === route.href
+                            normalizePath(pathname ?? "") === route.href
                               ? "bg-accent text-accent-foreground"
                               : "transparent"
                           )}
@@ -201,7 +202,7 @@ export function Navigation() {
                     href={route.href}
                     className={cn(
                       "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-                      pathname === route.href
+                      normalizePath(pathname ?? "") === route.href
                         ? "text-primary"
                         : "text-muted-foreground"
                     )}

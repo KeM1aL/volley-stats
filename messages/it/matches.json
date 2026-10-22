@@ -54,6 +54,7 @@
     "selectPlayer": "Seleziona giocatore",
     "selectServingTeam": "Seleziona la squadra al servizio",
     "allPositionsMustBeSpecified": "Tutte le posizioni devono essere specificate",
+    "rolesMissing": "Scegli un ruolo per il giocatore in {positions}",
     "servingTeamMustBeSpecified": "La squadra al servizio deve essere specificata",
     "libero": "Libero"
   },
@@ -269,6 +270,19 @@
       "none": "Tutti i membri attivi della squadra sono già in formazione.",
       "added": "{name} aggiunto alla formazione",
       "addError": "Impossibile aggiungere il giocatore. Riprova."
+    },
+    "left": {
+      "title": "Impossibile caricare questa partita su questo dispositivo",
+      "reasons": {
+        "missingTeam": "Il link non indica per quale squadra registri. Riapri la partita dall'elenco delle partite.",
+        "notOnDevice": "Non è ancora stata scaricata su questo dispositivo e sei offline. Riaprila quando torni online.",
+        "notDownloaded": "Non è stato possibile scaricarla in tempo. Controlla la connessione e riaprila.",
+        "matchNotFound": "Non esiste più, oppure non hai accesso.",
+        "dataMissing": "Le sue squadre o il formato della partita mancano su questo dispositivo. Controlla la connessione e riaprila.",
+        "teamNotInMatch": "La squadra indicata nel link non gioca questa partita. Riapri la partita dall'elenco delle partite.",
+        "archived": "Questa partita è archiviata. Ripristinala dall'elenco delle partite per segnarla.",
+        "unknown": "Controlla la connessione e riaprila."
+      }
     }
   },
   "stats": {
@@ -472,5 +486,33 @@
     "unsent": "{count, plural, one {# modifica non è ancora stata caricata} other {# modifiche non sono ancora state caricate}}. Verranno caricate automaticamente quando tornerai online.",
     "stay": "Resta",
     "leave": "Esci"
+  },
+  "removal": {
+    "deleteTitle": "Eliminare questa partita?",
+    "deleteDesc": "{home} contro {away} del {date} verrà eliminata definitivamente.",
+    "deleteAction": "Elimina",
+    "deleteAriaLabel": "Elimina la partita {home} contro {away}",
+    "archiveTitle": "Archiviare questa partita?",
+    "archiveDesc": "{home} contro {away} e le sue statistiche scompariranno dagli elenchi e dalle statistiche. Puoi ripristinarla da «Mostra archiviati».",
+    "archiveAction": "Archivia",
+    "archiveAriaLabel": "Archivia la partita {home} contro {away}",
+    "restore": "Ripristina",
+    "restoreAriaLabel": "Ripristina la partita {home} contro {away}",
+    "showArchived": "Mostra archiviati ({count})",
+    "badge": "Archiviata",
+    "archivedNotice": "Questa partita è archiviata.",
+    "unsent": "Questo dispositivo ha modifiche a questa partita non ancora caricate. Aspetta che vengano caricate.",
+    "toast": {
+      "deleted": "Partita eliminata",
+      "archived": "Partita archiviata",
+      "archivedDesc": "Non conta più nelle statistiche. Mostra le partite archiviate per ripristinarla.",
+      "restored": "Partita ripristinata"
+    },
+    "errors": {
+      "started": "Questa partita è iniziata nel frattempo: archiviala invece.",
+      "notFound": "Questa partita non esiste più.",
+      "forbidden": "Non puoi modificare questa partita.",
+      "unknown": "Qualcosa è andato storto. Riprova."
+    }
   }
 }

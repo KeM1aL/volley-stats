@@ -54,6 +54,7 @@
     "selectPlayer": "Selecionar jogador",
     "selectServingTeam": "Selecione o time sacando",
     "allPositionsMustBeSpecified": "Todas as posições devem ser especificadas",
+    "rolesMissing": "Escolha uma função para o jogador em {positions}",
     "servingTeamMustBeSpecified": "O time sacando deve ser especificado",
     "libero": "Líbero"
   },
@@ -269,6 +270,19 @@
       "none": "Todos os membros ativos da equipa já estão na escalação.",
       "added": "{name} adicionado à escalação",
       "addError": "Não foi possível adicionar o jogador. Tente novamente."
+    },
+    "left": {
+      "title": "Não foi possível carregar este jogo neste dispositivo",
+      "reasons": {
+        "missingTeam": "A ligação não indica a equipa para a qual regista. Abra o jogo novamente a partir da lista de jogos.",
+        "notOnDevice": "Ainda não foi transferido para este dispositivo e está offline. Abra-o novamente quando voltar a estar online.",
+        "notDownloaded": "Não foi possível transferi-lo a tempo. Verifique a ligação e abra-o novamente.",
+        "matchNotFound": "Já não existe, ou não tem acesso a ele.",
+        "dataMissing": "As equipas ou o formato do jogo estão em falta neste dispositivo. Verifique a ligação e abra-o novamente.",
+        "teamNotInMatch": "A equipa indicada na ligação não joga este jogo. Abra o jogo novamente a partir da lista de jogos.",
+        "archived": "Este jogo está arquivado. Restaure-o a partir da lista de jogos para o marcar.",
+        "unknown": "Verifique a ligação e abra-o novamente."
+      }
     }
   },
   "stats": {
@@ -472,5 +486,33 @@
     "unsent": "{count, plural, one {# alteração ainda não foi enviada} other {# alterações ainda não foram enviadas}}. Serão enviadas automaticamente quando voltar a estar online.",
     "stay": "Ficar",
     "leave": "Sair"
+  },
+  "removal": {
+    "deleteTitle": "Eliminar este jogo?",
+    "deleteDesc": "{home} contra {away} de {date} será eliminado definitivamente.",
+    "deleteAction": "Eliminar",
+    "deleteAriaLabel": "Eliminar o jogo {home} contra {away}",
+    "archiveTitle": "Arquivar este jogo?",
+    "archiveDesc": "{home} contra {away} e as suas estatísticas vão desaparecer das listas e das estatísticas. Pode restaurá-lo em «Mostrar arquivados».",
+    "archiveAction": "Arquivar",
+    "archiveAriaLabel": "Arquivar o jogo {home} contra {away}",
+    "restore": "Restaurar",
+    "restoreAriaLabel": "Restaurar o jogo {home} contra {away}",
+    "showArchived": "Mostrar arquivados ({count})",
+    "badge": "Arquivado",
+    "archivedNotice": "Este jogo está arquivado.",
+    "unsent": "Este dispositivo tem alterações a este jogo que ainda não foram enviadas. Aguarde até serem enviadas.",
+    "toast": {
+      "deleted": "Jogo eliminado",
+      "archived": "Jogo arquivado",
+      "archivedDesc": "Já não conta nas estatísticas. Mostre os jogos arquivados para o restaurar.",
+      "restored": "Jogo restaurado"
+    },
+    "errors": {
+      "started": "Este jogo começou entretanto: arquive-o em vez disso.",
+      "notFound": "Este jogo já não existe.",
+      "forbidden": "Não pode alterar este jogo.",
+      "unknown": "Algo correu mal. Tente novamente."
+    }
   }
 }

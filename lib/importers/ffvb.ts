@@ -95,6 +95,7 @@ export async function importFfvbMatches(seasonId: number, championshipId: number
 
     const { set, score, total } = row;
 
+    // Not filtered on archived_at: an archived match still exists, so it is not imported a second time.
     const existingMatches = await api.matches.getMatchs([
       { field: "ext_code", operator: "eq", value: matchCode },
       { field: "ext_source", operator: "eq", value: "ffvb" },
@@ -143,7 +144,11 @@ export async function importFfvbMatches(seasonId: number, championshipId: number
       if (match.status === 'completed') {
         continue;
       }
-      matchesToUpdate.push({ ...matchData, id: match.id });
+      // Only a match that is still upcoming takes its status from the import: a started match keeps its own,
+      // so a re-run can't turn a played match back into 'upcoming' (and so deletable).
+      const update: Partial<Match> = { ...matchData, id: match.id };
+      if (match.status !== 'upcoming') delete update.status;
+      matchesToUpdate.push(update);
       continue;
     }
 

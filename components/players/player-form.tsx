@@ -42,6 +42,7 @@ export function PlayerForm({
 }: PlayerFormProps) {
   const t = useTranslations('players');
   const tc = useTranslations('common');
+  const te = useTranslations('enums');
 
   const formSchema = z.object({
     name: z.string().min(1, t('validation.nameRequired')),
@@ -114,7 +115,7 @@ export function PlayerForm({
                 <SelectContent>
                   {Object.values(TeamMemberRole).map((role) => (
                     <SelectItem key={role} value={role} className="capitalize">
-                      {role}
+                      {te(`teamMemberRole.${role}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>

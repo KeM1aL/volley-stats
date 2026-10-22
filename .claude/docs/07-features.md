@@ -2,7 +2,7 @@
 
 ## 1. Live Match Tracking (Core Feature)
 
-**Location**: [app/matches/[id]/live/page.tsx](app/matches/[id]/live/page.tsx)
+**Location**: [app/matches/live/page.tsx](app/matches/live/page.tsx) (`/matches/live?id=<matchId>`)
 
 **Purpose**: Real-time point-by-point match scoring with comprehensive statistics tracking. This is the most critical feature of the application and must work offline. It is the only screen that reads and writes RxDB; see [04-offline-sync.md](04-offline-sync.md).
 
@@ -18,6 +18,8 @@
 - Visual court positions
 - Live score updates
 - Works offline once the match has been pulled with `syncMatch(matchId)`
+- **Set start** ([components/sets/set-setup.tsx](components/sets/set-setup.tsx), logic in [lib/matches/set-lineup.ts](lib/matches/set-lineup.ts)): a picked player goes on court at once; the default position is copied into the role only when it is a field role (setter, opposite, outside hitter, middle hitter), so a libero played on court has no role. Each player appears once in the lineup with one role (changing a position drops the previous player's role). A player on court without a role gets a red role select and a red court position, and Start set is blocked with a message naming those positions. A player on court can't be chosen as libero.
+- When the match can't be loaded (no `?team=`, not on the device, download not finished, its teams or format missing, a team that doesn't play it, any other error), the page returns to the match list with a destructive toast that says why (`LiveLoadError` reasons in [lib/matches/live-load-failure.ts](lib/matches/live-load-failure.ts), `matches.live.left.*`). Leaving through Cancel or Leave needs no toast.
 
 **Data Flow**:
 ```
@@ -34,7 +36,7 @@ User taps "Point" button
 
 **Implementation Pattern**:
 ```typescript
-// app/matches/[id]/live/page.tsx
+// app/matches/live/page.tsx
 const { localDb: db } = useLocalDb()
 const [matchState, setMatchState] = useState<MatchState>(initialMatchState)
 
@@ -73,6 +75,7 @@ const handleUndo = async () => {
   - Role (player, coach, staff, owner)
 - Assign teams to clubs and championships
 - Team status: incomplete, active, archived
+- **Archive a team**: the teams list's Archive action sets `status = 'archived'` (`teamApi.archiveTeam`); teams are never hard-deleted. Archived teams show under the "Archived" status filter, are not offered in the new-match team picker, and are restored by setting the status back to Active in the team dialog. Their matches stay where they are.
 - Teams can also be created by the FFVB match import ([lib/importers/ffvb.ts](lib/importers/ffvb.ts))
 
 **API Usage** (direct Supabase via the API layer):
@@ -108,7 +111,9 @@ const teams = await teamApi.getTeams(
 
 ## 3. Statistics & Analytics
 
-**Location**: [app/matches/[id]/stats/](app/matches/[id]/stats/), [lib/stats/](lib/stats/)
+**Delete or archive a match** (matches list, [components/matches/history/match-removal-action.tsx](components/matches/history/match-removal-action.tsx)): an `upcoming` match is deleted for real (`matchApi.deleteUnstartedMatch`, RPC `delete_unstarted_match`, no restore); a `live` or `completed` match is archived (`matchApi.archiveMatch` sets `matches.archived_at`) and can be restored (`restoreMatch`). The rule is `matchRemoval` in [lib/matches/removal.ts](lib/matches/removal.ts), errors map through `removalError`. Only the creator of either team may do it (`canRemoveMatch`). It is refused while this device has unsent changes for the match. An archived match disappears from the matches list, team and championship views, team statistics and report access (`isMatchArchived`); the "Show archived (N)" toggle on the matches list shows them with a Restore action. The stats and score pages show an archived notice (with Restore for those allowed) instead of the data, and the live page leaves to the matches list with an "archived" toast. The deleting device calls `SyncManager.forgetMatch` (see [04-offline-sync.md](04-offline-sync.md)).
+
+**Location**: [app/matches/stats/](app/matches/stats/) (`/matches/stats?id=<matchId>`), [lib/stats/](lib/stats/)
 
 **Features**:
 - Individual player performance metrics
@@ -132,7 +137,7 @@ const teams = await teamApi.getTeams(
 - Points scored per player
 
 **PDF Report**:
-- Generated on the server by `GET /api/v1/matches/[id]/report?team=<teamId>&locale=<locale>` ([app/api/v1/matches/[id]/report/route.ts](app/api/v1/matches/[id]/report/route.ts)) with `@react-pdf/renderer`
+- Generated on the server by `GET /api/v1/matches/[id]/report?team=<teamId>&locale=<locale>` ([app/api/v1/matches/[id]/report/route.web.ts](app/api/v1/matches/[id]/report/route.web.ts), web target only; the pages call it with `apiFetch`) with `@react-pdf/renderer`
 - Only for signed-in members of the analysed team, its creator, and owners/admins of its club ([lib/report/access.ts](lib/report/access.ts)); the route reads with the caller's session (anon key), never the service role; `/api/v1/` is exempt from the proxy's sign-in redirect so it answers 401
 - Metrics are pure functions in [lib/report/metrics/](lib/report/metrics/) assembled by `buildMatchReport` ([lib/report/build.ts](lib/report/build.ts)); the stats screen's MVP uses the same `mvp()`
 - Pages: summary, match detail, one per set (timeline with events and their impact). Text in `messages/<locale>/report.json`
@@ -151,9 +156,32 @@ const teams = await teamApi.getTeams(
   - Age category: U10, U12, U14, U16, U18, U21, Senior
   - Gender: Female, Male, Mixed
   - Match format rules (sets to win, points per set, rotation)
-- Import matches (and missing teams) for a championship from FFVB via `/api/import/ffvb` ([lib/importers/ffvb.ts](lib/importers/ffvb.ts))
+- Import matches (and missing teams) for a championship from FFVB via `/api/import/ffvb` ([lib/importers/ffvb.ts](lib/importers/ffvb.ts)). For now the championship page shows its button on both targets but disabled ("Coming soon", `championships.import.comingSoon`) and never calls the route; the route itself is unchanged (web only, 401 for signed-out callers).
 - Assign teams to championships
 - Track championship seasons
 - View championship standings (future feature)
 
 **Implementation Note**: Championships use UUID IDs, like every table. The volleyball format (2x2, 3x3, 4x4, 6x6) is defined in the associated match_format record, allowing different match formats to share the same volleyball format specification.
+
+---
+
+## Offline gate
+
+Screens that load everything from Supabase (`requiresConnection` in [lib/routes.ts](lib/routes.ts): the match list `/matches`, `/teams`, `/teams/new`, `/teams/view`, `/teams/players`, `/championships`, `/championships/view`) would open empty offline: on the web when the page comes from the cache, and always in the static export / Capacitor app (no service worker). `OfflineGate` ([components/offline-gate.tsx](components/offline-gate.tsx), around the page in `app/layout.tsx`, inside `AuthGuard`) decides when such a screen opens: offline, it shows an in-app offline screen instead (`data-testid="offline-page"`, the texts of `public/offline.html`, `common.offline.*`) and does not mount the page; **Back to the live match** when the live page saved its URL (`volleystats:last-live-match` in `sessionStorage`), otherwise **Go back**; **Retry** re-reads `navigator.onLine` and, if it still says offline, probes Supabase (`/auth/v1/health`, 5 s): some Android WebViews keep `navigator.onLine` false while online, and an answer opens the screen. When the connection comes back the page mounts and loads its data. A screen already open when the connection drops keeps what it shows. On the web, a screen the router doesn't hold yet can't be fetched offline: the navigation becomes a full page load and the service worker answers with `public/offline.html`, which reloads by itself on the `online` event. E2E: `tests/e2e/14-offline-gate.spec.ts`; for the static export it goes offline like the app (`goOfflineKeepingAppFiles`: the app's files still load), since `setOffline` would cut them too. The live match, stats, score, settings, home and auth screens are never gated.
+
+## Language
+
+One client-side path on both targets (`LocaleProvider`, [components/providers/locale-provider.tsx](components/providers/locale-provider.tsx); rules in [lib/i18n/resolve-locale.ts](lib/i18n/resolve-locale.ts)). The language is chosen after mount, first match wins:
+
+1. `?lang=` in the URL (the proxy turns `/fr/matches` into `/matches?lang=fr`; the parameter is removed from the address bar afterwards). It counts as an explicit choice.
+2. The language saved on the device (`localStorage`, key `volleystats:locale`).
+3. The browser language (`navigator.languages`).
+4. English.
+
+The profile language is adopted once per user per device: on a signed-in user's first load on a device, if the choice was not explicit, the profile language replaces the current one and the user id is stored (`volleystats:locale-user`). After that the device's choice wins. An explicit `?lang=` also writes the mark as soon as the session user is known, so a reload right after sign-in keeps it. Changing the language (`useAppLocale().setLocale`) writes the device and, when signed in, the profile. Accepted cost: the web's first HTML is untranslated (a spinner), and crawlers see the landing page in English. Static `public/offline.html` reads the same `localStorage` key.
+
+---
+
+## Account deletion
+
+Settings, "Delete account" card (both targets). For each team the user created, they choose to hand it over to a member who has an account or to delete it, confirm by typing their email, and the RPC `delete_my_account(decisions)` removes the account. Blocked while live-match changes are still unsent. When only changes the server refused are left (rejected: they will never upload), the card says how many and offers **Discard them**: after a confirmation, `SyncManager.discardRejected()` drops them and the device shows the server's version of those rows (see [04-offline-sync.md](04-offline-sync.md#push-rules)); pending changes are never discarded. Details: [06-auth.md](06-auth.md#account-deletion).

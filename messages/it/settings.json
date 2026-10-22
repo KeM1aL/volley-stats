@@ -104,5 +104,30 @@
   },
   "errors": {
     "generic": "Errore"
+  },
+  "deleteAccount": {
+    "title": "Elimina account",
+    "description": "Elimina definitivamente il tuo account. Partite e statistiche restano nelle loro squadre.",
+    "button": "Elimina account",
+    "unsentBlocked": "Attendi che le modifiche siano inviate prima di eliminare l'account.",
+    "dialogTitle": "Eliminare il tuo account?",
+    "deleted": "Eliminati: il tuo accesso, il tuo profilo, le iscrizioni a club e squadre.",
+    "kept": "Conservati: partite e statistiche, e le squadre che affidi.",
+    "teamsIntro": "Hai creato queste squadre. Scegli chi prende in carico ciascuna, o eliminala.",
+    "choosePlaceholder": "Scegli un nuovo proprietario o elimina la squadra",
+    "deleteTeam": "Elimina la squadra",
+    "handOver": "Affida a {name}",
+    "noCandidate": "Nessun membro di questa squadra ha un account per prenderla in carico.",
+    "confirmLabel": "Scrivi la tua email per confermare",
+    "confirm": "Elimina il mio account",
+    "cancel": "Annulla",
+    "failed": "Impossibile eliminare l'account. Non è stato modificato nulla. Riprova.",
+    "rejectedBlocked": "{count, plural, one {# modifica è stata rifiutata dal server e non può essere inviata.} other {# modifiche sono state rifiutate dal server e non possono essere inviate.}}",
+    "discardRejected": "Scartale",
+    "discardTitle": "Scartare le modifiche rifiutate?",
+    "discardBody": "Queste modifiche esistono solo su questo dispositivo e verranno eliminate. Il dispositivo mostrerà poi le partite come sono sul server.",
+    "discardConfirm": "Scartale",
+    "discardFailed": "Impossibile scartare le modifiche. Controlla la connessione e riprova.",
+    "discardOtherTab": "L'app è aperta in un'altra scheda. Chiudi le altre schede dell'app, poi riprova."
   }
 }

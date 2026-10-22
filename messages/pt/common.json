@@ -50,7 +50,8 @@
     "createSuccess": "{item} criado com sucesso",
     "createError": "Erro ao criar {item}",
     "languageChanged": "Idioma alterado com sucesso",
-    "languageChangeError": "Erro ao alterar idioma"
+    "languageChangeError": "Erro ao alterar idioma",
+    "languageNotSaved": "Idioma alterado apenas neste dispositivo: não foi possível guardá-lo no seu perfil."
   },
   "messages": {
     "noData": "Sem dados disponíveis",
@@ -132,5 +133,12 @@
       "schemaIncompatible": "O esquema do banco de dados foi atualizado e é incompatível com os dados existentes.",
       "resyncInstructions": "Clique abaixo para limpar o banco de dados local. Seus dados serão ressincronizados do servidor no próximo login."
     }
+  },
+  "offline": {
+    "title": "Está offline",
+    "body": "Este ecrã precisa de ligação.",
+    "backToLive": "Voltar ao jogo ao vivo",
+    "retry": "Tentar novamente",
+    "goBack": "Voltar"
   }
 }

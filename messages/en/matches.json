@@ -54,6 +54,7 @@
     "selectPlayer": "Select player",
     "selectServingTeam": "Select serving team",
     "allPositionsMustBeSpecified": "All positions must be specified",
+    "rolesMissing": "Choose a role for the player at {positions}",
     "servingTeamMustBeSpecified": "Serving team must be specified",
     "libero": "Libero"
   },
@@ -269,6 +270,19 @@
       "none": "Every active team member is already in the roster.",
       "added": "{name} added to the roster",
       "addError": "Couldn't add the player. Please try again."
+    },
+    "left": {
+      "title": "This match couldn't be loaded on this device",
+      "reasons": {
+        "missingTeam": "The link doesn't say which team you score for. Open the match again from the match list.",
+        "notOnDevice": "It hasn't been downloaded to this device yet, and you're offline. Open it again once you're back online.",
+        "notDownloaded": "It couldn't be downloaded in time. Check your connection and open it again.",
+        "matchNotFound": "It no longer exists, or you don't have access to it.",
+        "dataMissing": "Its teams or match format are missing on this device. Check your connection and open it again.",
+        "teamNotInMatch": "The team in the link doesn't play in this match. Open the match again from the match list.",
+        "archived": "This match is archived. Restore it from the match list to score it.",
+        "unknown": "Check your connection and open it again."
+      }
     }
   },
   "stats": {
@@ -472,5 +486,33 @@
     "unsent": "{count, plural, one {# change hasn't} other {# changes haven't}} been uploaded yet. They'll upload automatically once you're back online.",
     "stay": "Stay",
     "leave": "Leave"
+  },
+  "removal": {
+    "deleteTitle": "Delete this match?",
+    "deleteDesc": "{home} vs {away} on {date} will be deleted for good.",
+    "deleteAction": "Delete",
+    "deleteAriaLabel": "Delete match {home} vs {away}",
+    "archiveTitle": "Archive this match?",
+    "archiveDesc": "{home} vs {away} and its statistics will disappear from lists and statistics. You can restore it from \"Show archived\".",
+    "archiveAction": "Archive",
+    "archiveAriaLabel": "Archive match {home} vs {away}",
+    "restore": "Restore",
+    "restoreAriaLabel": "Restore match {home} vs {away}",
+    "showArchived": "Show archived ({count})",
+    "badge": "Archived",
+    "archivedNotice": "This match is archived.",
+    "unsent": "This device has changes to this match that aren't uploaded yet. Wait until they're uploaded.",
+    "toast": {
+      "deleted": "Match deleted",
+      "archived": "Match archived",
+      "archivedDesc": "It no longer counts in statistics. Show archived matches to restore it.",
+      "restored": "Match restored"
+    },
+    "errors": {
+      "started": "This match has started in the meantime: archive it instead.",
+      "notFound": "This match no longer exists.",
+      "forbidden": "You can't change this match.",
+      "unknown": "Something went wrong. Please try again."
+    }
   }
 }

@@ -1,8 +1,8 @@
 import './globals.css';
+import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages } from 'next-intl/server';
+import { LocaleProvider, ProfileLocaleSync } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LocalDatabaseProvider } from '@/components/providers/local-database-provider';
 import { SyncStatusProvider } from '@/components/providers/sync-status-provider';
@@ -11,6 +11,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { Navigation } from '@/components/navigation';
 import { LoadingBar } from '@/components/ui/loading-bar';
 import { AuthProvider } from '@/contexts/auth-context';
+import { AuthGuard } from '@/components/auth/auth-guard';
+import { OfflineGate } from '@/components/offline-gate';
 import { KeyboardProvider } from '@/contexts/keyboard-context';
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider';
@@ -57,16 +59,13 @@ export const metadata: Metadata = {
 // These metadata values are in English (default). For locale-specific metadata, use generateMetadata()
 // in individual page files or consider using a metadata route handler.
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
@@ -80,7 +79,7 @@ export default async function RootLayout({
       </head>
       <body>
         <ServiceWorkerProvider>
-          <NextIntlClientProvider messages={messages} locale={locale}>
+          <LocaleProvider>
             <KeyboardProvider>
               <ThemeProvider
                 attribute="class"
@@ -90,16 +89,17 @@ export default async function RootLayout({
                 disableTransitionOnChange
               >
                 <AuthProvider>
+                  <ProfileLocaleSync />
                   <LocalDatabaseProvider>
                     <SyncStatusProvider>
                       <LeaveGuardProvider>
-                        <LoadingBar />
+                        <Suspense fallback={null}><LoadingBar /></Suspense>
                         <div className="keyboard-layout-grid bg-background">
                           <header>
                             <Navigation />
                           </header>
                           <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
-                            {children}
+                            <AuthGuard><OfflineGate>{children}</OfflineGate></AuthGuard>
                           </main>
                           <div className="keyboard-spacer" aria-hidden="true" />
                         </div>
@@ -110,7 +110,7 @@ export default async function RootLayout({
                 </AuthProvider>
               </ThemeProvider>
             </KeyboardProvider>
-          </NextIntlClientProvider>
+          </LocaleProvider>
         </ServiceWorkerProvider>
       </body>
       {process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}

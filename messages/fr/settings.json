@@ -104,5 +104,30 @@
   },
   "errors": {
     "generic": "Erreur"
+  },
+  "deleteAccount": {
+    "title": "Supprimer le compte",
+    "description": "Supprime définitivement votre compte. Les matchs et statistiques restent dans leurs équipes.",
+    "button": "Supprimer le compte",
+    "unsentBlocked": "Attendez que vos modifications soient envoyées avant de supprimer votre compte.",
+    "dialogTitle": "Supprimer votre compte ?",
+    "deleted": "Supprimé : votre connexion, votre profil, vos adhésions aux clubs et équipes.",
+    "kept": "Conservé : les matchs et statistiques, et les équipes que vous confiez.",
+    "teamsIntro": "Vous avez créé ces équipes. Choisissez qui reprend chacune, ou supprimez-la.",
+    "choosePlaceholder": "Choisir un nouveau propriétaire ou supprimer l'équipe",
+    "deleteTeam": "Supprimer l'équipe",
+    "handOver": "Confier à {name}",
+    "noCandidate": "Aucun membre de cette équipe n'a de compte pour la reprendre.",
+    "confirmLabel": "Saisissez votre e-mail pour confirmer",
+    "confirm": "Supprimer mon compte",
+    "cancel": "Annuler",
+    "failed": "Votre compte n'a pas pu être supprimé. Rien n'a été modifié. Réessayez.",
+    "rejectedBlocked": "{count, plural, one {# modification a été refusée par le serveur et ne peut pas être envoyée.} other {# modifications ont été refusées par le serveur et ne peuvent pas être envoyées.}}",
+    "discardRejected": "Les abandonner",
+    "discardTitle": "Abandonner les modifications refusées ?",
+    "discardBody": "Ces modifications n'existent que sur cet appareil et seront supprimées. L'appareil affichera ensuite les matchs tels qu'ils sont sur le serveur.",
+    "discardConfirm": "Les abandonner",
+    "discardFailed": "Les modifications n'ont pas pu être abandonnées. Vérifiez votre connexion et réessayez.",
+    "discardOtherTab": "L'application est ouverte dans un autre onglet. Fermez les autres onglets de l'application, puis réessayez."
   }
 }

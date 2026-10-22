@@ -3,20 +3,18 @@
  */
 
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
 import { createAndStartMatch } from '../helpers/match-setup';
+import { readFixture } from '../helpers/fixture';
 import { setupCourtPositions } from '../helpers/court';
 import { goOffline, goOnline, waitForServiceWorker } from '../helpers/network';
 import { acceptBeforeUnload, waitForAllSaved } from '../helpers/sync';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 
 test('warns before signing out with unsent changes', async ({ page }) => {
-  test.setTimeout(5 * 60_000);
+  test.setTimeout(2 * 60_000);
   acceptBeforeUnload(page);
-  const { teamName, playerNames } = JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
-  await createAndStartMatch(page, { teamName, playerNames });
+  const { teamId, teamName, playerNames } = readFixture();
+  await createAndStartMatch(page, { teamId, teamName });
   await setupCourtPositions(page, playerNames.slice(0, 6), { selectServingTeam: teamName });
   const pointButton = page.getByTestId('point-btn-managed-point').first();
   await pointButton.waitFor({ state: 'visible', timeout: 10_000 });

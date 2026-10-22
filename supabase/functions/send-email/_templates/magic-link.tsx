@@ -8,11 +8,9 @@ import { EmailLayout } from './_layout.tsx'
 interface MagicLinkEmailProps {
   lang: string
   token: string
-  supabase_url: string
   site_url: string
+  confirm_url: string
   email_action_type: string
-  redirect_to: string
-  token_hash: string
 }
 
 type OtpKey = keyof Pick<
@@ -31,17 +29,14 @@ const actionTypeToKey: Record<string, OtpKey> = {
 export const MagicLinkEmail = ({
   lang,
   token,
-  supabase_url,
   site_url,
+  confirm_url,
   email_action_type,
-  redirect_to,
-  token_hash,
 }: MagicLinkEmailProps) => {
   const locale = getLocale(lang)
   const translations = getTranslations(locale)
   const key = actionTypeToKey[email_action_type] ?? 'magiclink'
   const t = translations[key]
-  const confirmUrl = `${supabase_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`
 
   return (
     <EmailLayout preview={t.preview} site_url={site_url} locale={locale}>
@@ -51,14 +46,14 @@ export const MagicLinkEmail = ({
 
       {t.timeWarning && <Text style={warningBox}>{t.timeWarning}</Text>}
 
-      <Button href={confirmUrl} style={button}>
+      <Button href={confirm_url} style={button}>
         {t.ctaText}
       </Button>
 
       <Text style={linkParagraph}>
         {t.linkLabel}{' '}
-        <Link href={confirmUrl} style={link}>
-          {confirmUrl}
+        <Link href={confirm_url} style={link}>
+          {confirm_url}
         </Link>
       </Text>
 
@@ -75,11 +70,9 @@ export const MagicLinkEmail = ({
 MagicLinkEmail.PreviewProps = {
   lang: 'en',
   token: '123456',
-  supabase_url: 'https://example.supabase.co',
   site_url: 'https://volleystats.app',
+  confirm_url: 'https://volleystats.app/auth/confirm?token_hash=abc123&type=magiclink',
   email_action_type: 'magiclink',
-  redirect_to: 'https://volleystats.app',
-  token_hash: 'abc123',
 } as MagicLinkEmailProps
 
 export default MagicLinkEmail

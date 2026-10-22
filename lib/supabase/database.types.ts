@@ -29,7 +29,7 @@ export type Database = {
           season_id: string | null
           type: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           _deleted?: boolean
@@ -45,7 +45,7 @@ export type Database = {
           season_id?: string | null
           type: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           _deleted?: boolean
@@ -61,7 +61,7 @@ export type Database = {
           season_id?: string | null
           type?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -131,7 +131,7 @@ export type Database = {
           id: string
           name: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           website: string | null
         }
         Insert: {
@@ -143,7 +143,7 @@ export type Database = {
           id?: string
           name: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           website?: string | null
         }
         Update: {
@@ -155,7 +155,7 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           website?: string | null
         }
         Relationships: []
@@ -319,6 +319,7 @@ export type Database = {
         Row: {
           _deleted: boolean
           _modified: string
+          archived_at: string | null
           away_available_players: string[] | null
           away_score: number | null
           away_team_id: string
@@ -348,6 +349,7 @@ export type Database = {
         Insert: {
           _deleted?: boolean
           _modified?: string
+          archived_at?: string | null
           away_available_players?: string[] | null
           away_score?: number | null
           away_team_id: string
@@ -377,6 +379,7 @@ export type Database = {
         Update: {
           _deleted?: boolean
           _modified?: string
+          archived_at?: string | null
           away_available_players?: string[] | null
           away_score?: number | null
           away_team_id?: string
@@ -950,6 +953,8 @@ export type Database = {
         Returns: Json
       }
       clean_match: { Args: { match_uuid: string }; Returns: undefined }
+      delete_my_account: { Args: { decisions: Json }; Returns: undefined }
+      delete_unstarted_match: { Args: { match_id: string }; Returns: undefined }
       get_match_scorer: { Args: { p_match_id: string }; Returns: Json }
       request_device_id: { Args: never; Returns: string }
     }

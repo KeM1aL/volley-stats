@@ -2,6 +2,7 @@
 
 import { Club } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useClubApi } from "@/hooks/use-club-api";
 import { useTranslations } from "next-intl";
 
@@ -35,6 +36,7 @@ export function ClubSelect({
 
   return (
     <AsyncSelect
+      {...selectMenuPortalProps()}
       cacheOptions
       loadOptions={(inputValue) => loadOptions(inputValue, clubApi)}
       defaultOptions

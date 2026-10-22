@@ -7,7 +7,7 @@ import type { FakeSupabaseServer } from "../fakes/fake-supabase";
 import { createTestDb } from "../helpers/test-db";
 import { createFakeServer } from "../helpers/server";
 import { aSet, seedServerMatch, seedTeams } from "../helpers/fixtures";
-import { sleep, waitFor } from "../helpers/wait";
+import { holdsFor, waitFor } from "../helpers/wait";
 
 function recordingReporter(neverUploaded = new Set<string>(), notCreatedHere = new Set<string>()) {
   const calls = {
@@ -206,9 +206,8 @@ describe("replicateSupabase", () => {
     const state = replicate("sets", { reporter, identifier: "fresh_after_upgrade" });
     await waitFor(() => calls.rejected.length > 0, { message: "the edited row rejected" });
     await state.awaitInSync();
-    await sleep(200);
+    await holdsFor(() => calls.rejected.length === 1 && calls.superseded.length === 0, 200, "the edited row stays the only rejection");
     expect(calls.rejected).toEqual([{ id: edited.id, code: "rls", neverUploaded: true }]);
-    expect(calls.superseded).toEqual([]);
   });
 
   it("holds back rows the gate says must wait, without sending them", async () => {
@@ -219,8 +218,7 @@ describe("replicateSupabase", () => {
     await state.awaitInitialReplication();
     const set = aSet(matchId);
     await db.sets.insert(set as any);
-    await sleep(200);
-    expect(server.log.some((entry) => entry.table === "sets" && entry.op === "insert")).toBe(false);
+    await holdsFor(() => !server.log.some((entry) => entry.table === "sets" && entry.op === "insert"), 200, "no insert while the gate says wait");
     ready = true;
     await waitFor(() => !!server.row("sets", set.id), { message: "set uploaded once the gate opened" });
   });
@@ -276,9 +274,16 @@ describe("replicateSupabase", () => {
     const second = aSet(matchId, { set_number: 2 });
     // bulkInsert so that both rows are in the same push batch
     await db.sets.bulkInsert([first as any, second as any]);
-    await sleep(300); // several retry cycles while the second set waits
+    await waitFor(() => calls.rejected.length === 1, { message: "the first set rejected" });
+    // several retry cycles while the second set waits
+    await holdsFor(
+      () =>
+        calls.rejected.length === 1 &&
+        server.log.filter((entry) => entry.table === "sets" && entry.op === "insert" && entry.ids.includes(first.id)).length === 1,
+      300,
+      "the first set is rejected once and sent once while the second waits"
+    );
     expect(calls.rejected).toEqual([{ id: first.id, code: "rls", neverUploaded: true }]);
-    expect(server.log.filter((entry) => entry.table === "sets" && entry.op === "insert" && entry.ids.includes(first.id))).toHaveLength(1);
     ready = true;
     await waitFor(() => !!server.row("sets", second.id), { message: "second set uploaded once the gate opened" });
     expect(calls.rejected).toHaveLength(1);
@@ -304,8 +309,7 @@ describe("replicateSupabase", () => {
     server.offline = true;
     const set = aSet(matchId);
     await db.sets.insert(set as any);
-    await sleep(300);
-    expect(server.row("sets", set.id)).toBeUndefined();
+    await holdsFor(() => server.row("sets", set.id) === undefined, 300, "nothing stored while the server is offline");
     server.offline = false;
     await waitFor(() => !!server.row("sets", set.id), { message: "uploaded after the outage" });
     expect(calls.attempts).toEqual([]);
@@ -352,10 +356,9 @@ describe("replicateSupabase", () => {
     const before = updates();
     await db.sets.findOne(set.id).update({ $set: { home_score: 2 } });
     await waitFor(() => calls.rejected.some((call) => call.id === set.id), { message: "update rejected" });
-    await sleep(300);
     // One UPDATE is sent and its refusal is final, so the row is not sent again. The margin of 2 allows
     // for a push RxDB may already have queued; a conflict loop sends dozens in 300 ms (no retryTime applies).
-    expect(updates() - before).toBeLessThanOrEqual(3);
+    await holdsFor(() => updates() - before <= 3, 300, "no request loop after the refusal");
     expect(calls.rejected).toEqual([{ id: set.id, code: "rls", neverUploaded: false }]);
     expect(server.row("sets", set.id)!.home_score).toBe(0);
   });
@@ -373,8 +376,7 @@ describe("replicateSupabase", () => {
     signedIn = false;
     server.hideFromUpdates("sets", (row) => row.id === set.id, { unreadable: true });
     await db.sets.findOne(set.id).update({ $set: { home_score: 2 } });
-    await sleep(300);
-    expect(calls.rejected).toEqual([]);
+    await holdsFor(() => calls.rejected.length === 0, 300, "no rejection while signed out");
     signedIn = true;
     server.showToUpdates("sets");
     await waitFor(() => server.row("sets", set.id)?.home_score === 2, { message: "update uploaded once signed in again" });
@@ -415,7 +417,7 @@ describe("replicateSupabase", () => {
     const set = aSet(matchId);
     neverUploaded.add(set.id);
     await db.sets.insert(set as any);
-    await sleep(200);
+    await holdsFor(() => server.row("sets", set.id) === undefined, 200, "the denied row is not stored");
     server.allowWrites("sets");
     await db.sets.findOne(set.id).update({ $set: { home_score: 1 } });
     await waitFor(() => server.row("sets", set.id)?.home_score === 1, { message: "row inserted on retry" });

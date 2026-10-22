@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, Trash2, Users, Search } from "lucide-react";
+import { Eye, Pencil, Archive, Users, Search } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Team, TeamStatus } from "@/lib/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslations } from "next-intl";
+import { routes } from "@/lib/routes";
 
 // Helper function to get badge variant based on team status
 function getTeamStatusVariant(status: TeamStatus): "default" | "secondary" | "outline" {
@@ -34,11 +35,11 @@ function getTeamStatusVariant(status: TeamStatus): "default" | "secondary" | "ou
 type TeamTableProps = {
   teams: Team[];
   onEdit: (team: Team) => void;
-  onDelete: (team: Team) => void;
+  onArchive: (team: Team) => void;
   canManage: (team: Team) => boolean;
 };
 
-export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps) {
+export function TeamTable({ teams, onEdit, onArchive, canManage }: TeamTableProps) {
   const t = useTranslations('teams');
   const router = useRouter();
   const { user } = useAuth();
@@ -96,7 +97,7 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(`/teams/${team.id}`)}
+                onClick={() => router.push(routes.team(team.id))}
               >
                 <Eye className="h-4 w-4 mr-1" />
                 <span className="text-xs">{t('table.view')}</span>
@@ -106,7 +107,7 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => router.push(`/teams/${team.id}/players`)}
+                    onClick={() => router.push(routes.teamPlayers(team.id))}
                   >
                     <Users className="h-4 w-4 mr-1" />
                     <span className="text-xs">{t('table.players')}</span>
@@ -121,9 +122,10 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onDelete(team)}
+                    onClick={() => onArchive(team)}
+                    aria-label={t('archive.ariaLabel', { name: team.name })}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Archive className="h-4 w-4" />
                   </Button>
                 </>
               )}
@@ -161,7 +163,7 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => router.push(`/teams/${team.id}`)}
+                        onClick={() => router.push(routes.team(team.id))}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -170,7 +172,7 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/teams/${team.id}/players`)}
+                          onClick={() => router.push(routes.teamPlayers(team.id))}
                         >
                           <Users className="h-4 w-4" />
                         </Button>
@@ -184,9 +186,10 @@ export function TeamTable({ teams, onEdit, onDelete, canManage }: TeamTableProps
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onDelete(team)}
+                          onClick={() => onArchive(team)}
+                          aria-label={t('archive.ariaLabel', { name: team.name })}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Archive className="h-4 w-4" />
                         </Button>
                       </>
                     )}

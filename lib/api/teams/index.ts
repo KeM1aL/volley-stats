@@ -17,8 +17,8 @@ export const createTeamApi = (supabaseClient?: SupabaseClient) => {
     getTeam: (teamId: string) => {
       return dataStore.get(teamId);
     },
-    deleteTeam: (teamId: string) => {
-      return dataStore.delete(teamId);
+    archiveTeam: (teamId: string) => {
+      return dataStore.update(teamId, { status: "archived" });
     },
   };
 };

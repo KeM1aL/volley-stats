@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Club } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useClubApi } from "@/hooks/use-club-api";
 import { Filter } from "@/lib/api/types";
 import { QuickCreateClubDialog } from "./quick-create-club-dialog";
@@ -107,6 +108,7 @@ export function ClubSelectWithQuickCreate({
   return (
     <>
       <AsyncSelect<ClubOption>
+        {...selectMenuPortalProps()}
         cacheOptions
         loadOptions={(inputValue) => loadOptions(inputValue, clubApi, t("quickCreateOption"))}
         defaultOptions

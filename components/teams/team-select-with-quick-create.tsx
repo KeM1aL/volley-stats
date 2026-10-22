@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Team } from "@/lib/types";
 import AsyncSelect from "react-select/async";
+import { selectMenuPortalProps } from "@/components/ui/select-menu-portal";
 import { useTeamApi } from "@/hooks/use-team-api";
 import { Filter } from "@/lib/api/types";
 import { QuickCreateTeamDialog } from "./quick-create-team-dialog";
@@ -27,15 +28,11 @@ const loadOptions = async (
   teamApi: ReturnType<typeof useTeamApi>,
 ): Promise<TeamOption[]> => {
   try {
-    const filters: Filter[] = inputValue
-      ? [
-          {
-            field: "name",
-            operator: "ilike",
-            value: `%${inputValue}%`,
-          },
-        ]
-      : [];
+    // Archived teams can't be picked for a new match
+    const filters: Filter[] = [{ field: "status", operator: "neq", value: "archived" }];
+    if (inputValue) {
+      filters.push({ field: "name", operator: "ilike", value: `%${inputValue}%` });
+    }
 
     const teams = await teamApi.getTeams(filters);
 
@@ -118,6 +115,7 @@ export function TeamSelectWithQuickCreate({
   return (
     <>
       <AsyncSelect<TeamOption>
+        {...selectMenuPortalProps()}
         cacheOptions
         loadOptions={(inputValue) => loadOptions(inputValue, teamApi)}
         defaultOptions

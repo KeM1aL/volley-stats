@@ -38,7 +38,7 @@ import { getDatabase, getDatabaseName, getStorage } from "@/lib/rxdb/database";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
-import { useUnsentCountFor } from "@/hooks/use-unsent-guard";
+import { useUnsentBreakdownFor, useUnsentCountFor } from "@/hooks/use-unsent-guard";
 import { MATCH_COLLECTIONS, type MatchCollectionName } from "@/lib/rxdb/sync/types";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -49,9 +49,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import * as z from "zod";
 import { FavoritesSection } from "@/components/settings/favorites-section";
-import { updateLocale } from "@/lib/i18n/actions";
-import { Locale } from "@/lib/i18n/config";
-import { useRouter } from "next/navigation";
+import { DeleteAccountCard } from "@/components/settings/delete-account-card";
+import { useAppLocale } from "@/hooks/use-app-locale";
+import type { Locale } from "@/lib/i18n/config";
 import { useTranslations } from "next-intl";
 
 const STATS_TABLES = ["events", "score_points", "player_stats"] as const;
@@ -89,12 +89,13 @@ export default function SettingsPage() {
   // null (not counted yet) blocks too: clearing stays disabled until nothing unsent is confirmed.
   const unsentStats = useUnsentCountFor(STATS_TABLES);
   const unsentMatchData = useUnsentCountFor(MATCH_COLLECTIONS);
+  const unsentMatchBreakdown = useUnsentBreakdownFor(MATCH_COLLECTIONS);
   const statsClearBlocked = unsentStats !== 0;
   const matchDataClearBlocked = unsentMatchData !== 0;
   const { localDb: db } = useLocalDb();
   const { theme, setTheme } = useTheme();
   const { session, reloadUser, user } = useAuth();
-  const router = useRouter();
+  const { setLocale } = useAppLocale();
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingCache, setIsDeletingCache] = useState(false);
@@ -156,13 +157,8 @@ export default function SettingsPage() {
   const onSubmit = async (values: Settings) => {
     setIsSaving(true);
     try {
-      // Update language via i18n system if changed
-      if (values.language !== settings.language) {
-        const localeResult = await updateLocale(values.language as Locale);
-        if (!localeResult.success) {
-          throw new Error(t('sync.failedUpdateLanguage'));
-        }
-      }
+      // Switch the UI language (and save it to the profile) if changed
+      if (values.language !== settings.language) await setLocale(values.language as Locale);
 
       // Update other settings via existing system
       const result = await updateSettings(values);
@@ -174,11 +170,6 @@ export default function SettingsPage() {
         title: t('toast.saved'),
         description: t('toast.savedDesc'),
       });
-
-      // Refresh to apply new locale if language changed
-      if (values.language !== settings.language) {
-        router.refresh();
-      }
     } catch (error) {
       console.error("Failed to save settings:", error);
       toast({
@@ -752,6 +743,16 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {session?.user?.email && session.user.id && (
+        // Until the local database is open the unsent count is unknown (null): the button stays disabled.
+        <DeleteAccountCard
+          email={session.user.email}
+          userId={session.user.id}
+          unsentChanges={db ? unsentMatchBreakdown : null}
+          onDiscardRejected={() => (db ? db.syncManager.discardRejected() : Promise.reject(new Error("local database not open")))}
+        />
       )}
     </div>
   );

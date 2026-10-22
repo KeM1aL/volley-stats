@@ -104,5 +104,30 @@
   },
   "errors": {
     "generic": "Erro"
+  },
+  "deleteAccount": {
+    "title": "Eliminar conta",
+    "description": "Elimina a sua conta de forma permanente. Jogos e estatísticas ficam nas suas equipas.",
+    "button": "Eliminar conta",
+    "unsentBlocked": "Aguarde até as suas alterações serem enviadas antes de eliminar a conta.",
+    "dialogTitle": "Eliminar a sua conta?",
+    "deleted": "Eliminado: o seu acesso, o seu perfil, as suas associações a clubes e equipas.",
+    "kept": "Mantido: os jogos e estatísticas, e as equipas que entrega.",
+    "teamsIntro": "Criou estas equipas. Escolha quem assume cada uma, ou elimine-a.",
+    "choosePlaceholder": "Escolha um novo proprietário ou elimine a equipa",
+    "deleteTeam": "Eliminar a equipa",
+    "handOver": "Entregar a {name}",
+    "noCandidate": "Nenhum membro desta equipa tem conta para a assumir.",
+    "confirmLabel": "Escreva o seu e-mail para confirmar",
+    "confirm": "Eliminar a minha conta",
+    "cancel": "Cancelar",
+    "failed": "Não foi possível eliminar a conta. Nada foi alterado. Tente novamente.",
+    "rejectedBlocked": "{count, plural, one {# alteração foi recusada pelo servidor e não pode ser enviada.} other {# alterações foram recusadas pelo servidor e não podem ser enviadas.}}",
+    "discardRejected": "Descartá-las",
+    "discardTitle": "Descartar as alterações recusadas?",
+    "discardBody": "Estas alterações existem apenas neste dispositivo e serão eliminadas. O dispositivo passará a mostrar os jogos tal como estão no servidor.",
+    "discardConfirm": "Descartá-las",
+    "discardFailed": "Não foi possível descartar as alterações. Verifique a ligação e tente novamente.",
+    "discardOtherTab": "A aplicação está aberta noutro separador. Feche os outros separadores da aplicação e tente novamente."
   }
 }

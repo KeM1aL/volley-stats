@@ -102,15 +102,19 @@
     "createdDesc": "A sua nova equipa foi criada com sucesso.",
     "updated": "Equipa atualizada",
     "updatedDesc": "A equipa foi atualizada com sucesso.",
-    "deleted": "Equipa eliminada",
-    "deletedDesc": "A equipa foi eliminada com sucesso.",
     "error": "Erro",
     "createError": "Falha ao criar equipa. Tente novamente.",
     "updateError": "Falha ao atualizar equipa. Tente novamente.",
-    "deleteError": "Falha ao eliminar equipa. Tente novamente."
+    "archived": "Equipa arquivada",
+    "archivedDesc": "{name} foi arquivada.",
+    "archiveError": "Não foi possível arquivar a equipa. Tente novamente."
   },
-  "confirmDelete": "Tem a certeza?",
-  "confirmDeleteDesc": "Esta ação não pode ser desfeita. Isto eliminará permanentemente a equipa e todos os dados associados.",
+  "archive": {
+    "action": "Arquivar",
+    "ariaLabel": "Arquivar {name}",
+    "confirmTitle": "Arquivar {name}?",
+    "confirmDesc": "A equipa desaparece das listas e já não pode ser escolhida para novos jogos. Os seus jogos, jogadores e estatísticas ficam guardados. Pode restaurá-la voltando a pôr o estado em Ativo."
+  },
   "selectPlaceholder": "Selecione uma equipa...",
   "seasonSelectPlaceholder": "Selecione uma época..."
 }

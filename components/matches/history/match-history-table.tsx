@@ -9,6 +9,7 @@ import {
   Volleyball,
   Pencil,
   Search,
+  ArchiveRestore,
 } from "lucide-react";
 import {
   Table,
@@ -19,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Match, Team } from "@/lib/types";
 import { MatchStatus } from "@/lib/enums";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -28,6 +30,12 @@ import MatchEditDialog from "../match-edit-dialog";
 import MatchStatsDialog from "../match-stats-dialog";
 import MatchScoreDialog from "../match-score-dialog";
 import { useAuth } from "@/contexts/auth-context";
+import { canManageMatch, canRemoveMatch } from "@/lib/matches/can-manage-match";
+import { removalError } from "@/lib/matches/removal";
+import { MatchRemovalAction } from "./match-removal-action";
+import { useMatchApi } from "@/hooks/use-match-api";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { SyncFlag } from "@/components/sync/sync-flag";
 import { useSyncStatus } from "@/hooks/use-sync-status";
@@ -39,16 +47,22 @@ type MatchHistoryTableProps = {
   matches: Match[];
   error?: Error | null;
   isLoading?: boolean;
+  /** Called after a match was deleted, archived or restored (or the attempt failed): reload the list. */
+  onChange?: () => void;
 };
 
 export function MatchHistoryTable({
   matches,
   error,
   isLoading,
+  onChange,
 }: MatchHistoryTableProps) {
   const t = useTranslations("matches");
   const te = useTranslations("enums");
   const { user } = useAuth();
+  const matchApi = useMatchApi();
+  const { toast } = useToast();
+  const [restoringId, setRestoringId] = useState<string | null>(null);
   const syncStatus = useSyncStatus();
   const syncByMatch = useMemo(
     () => new Map((syncStatus?.matches ?? []).map((summary) => [summary.matchId, summary])),
@@ -59,7 +73,7 @@ export function MatchHistoryTable({
 
   // Must be declared before any early returns to satisfy Rules of Hooks.
   const sortedMatches = useMemo(() => {
-    return [...matches].sort((a, b) => {
+    const sorted = [...matches].sort((a, b) => {
       switch (sortField) {
         case "date":
           return sortDirection === "asc"
@@ -74,31 +88,9 @@ export function MatchHistoryTable({
           return 0;
       }
     });
+    // Archived matches come after the active ones, each group in the chosen order.
+    return [...sorted.filter((match) => !match.archived_at), ...sorted.filter((match) => !!match.archived_at)];
   }, [matches, sortField, sortDirection]);
-
-  const isMemberOfTeamOrClub = (match: Match) => {
-    if (!user) return false;
-
-    if(match.home_team?.user_id === user.id || match.away_team?.user_id === user.id) {
-      return true;
-    }
-
-    const isHomeTeamMember = user.teamMembers?.some(
-      (member) => member.team_id === match.home_team_id
-    );
-    const isAwayTeamMember = user.teamMembers?.some(
-      (member) => member.team_id === match.away_team_id
-    );
-
-    const isHomeClubMember = user.clubMembers?.some(
-      (member) => member.club_id === match.home_team?.club_id
-    );
-    const isAwayClubMember = user.clubMembers?.some(
-      (member) => member.club_id === match.away_team?.club_id
-    );
-
-    return isHomeTeamMember || isAwayTeamMember || isHomeClubMember || isAwayClubMember;
-  };
 
   const toggleSort = (field: SortField) => {
     if (field === sortField) {
@@ -108,6 +100,72 @@ export function MatchHistoryTable({
       setSortDirection("asc");
     }
   };
+
+  const handleRestore = async (match: Match) => {
+    setRestoringId(match.id);
+    try {
+      await matchApi.restoreMatch(match.id);
+      toast({ title: t("removal.toast.restored") });
+    } catch (error) {
+      console.error("Failed to restore match:", error);
+      toast({
+        variant: "destructive",
+        title: t("toast.error"),
+        description: t(`removal.errors.${removalError(error)}`),
+      });
+    } finally {
+      setRestoringId(null);
+      onChange?.();
+    }
+  };
+
+  const hasActions = (match: Match) => canManageMatch(user, match) || canRemoveMatch(user, match);
+
+  /** Start, edit or statistics for who manages the match; delete, archive or restore for who may remove it. */
+  const renderActions = (match: Match) => {
+    if (match.archived_at) {
+      return canRemoveMatch(user, match) ? (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={restoringId === match.id}
+          onClick={() => void handleRestore(match)}
+          aria-label={t("removal.restoreAriaLabel", {
+            home: match.home_team?.name ?? t("table.unknown"),
+            away: match.away_team?.name ?? t("table.unknown"),
+          })}
+        >
+          <ArchiveRestore className="h-4 w-4 mr-2" />
+          {t("removal.restore")}
+        </Button>
+      ) : null;
+    }
+    return (
+      <>
+        {canManageMatch(user, match) &&
+          (() => {
+            switch (match.status) {
+              case MatchStatus.UPCOMING:
+                return <MatchStartDialog match={match} />;
+              case MatchStatus.COMPLETED:
+                return <MatchStatsDialog match={match} />;
+              case MatchStatus.LIVE:
+                return <MatchEditDialog match={match} />;
+              default:
+                return null;
+            }
+          })()}
+        {canRemoveMatch(user, match) && <MatchRemovalAction match={match} onDone={() => onChange?.()} />}
+      </>
+    );
+  };
+
+  const archivedBadge = (match: Match) =>
+    match.archived_at ? (
+      <Badge variant="outline" className="ml-2">
+        {t("removal.badge")}
+      </Badge>
+    ) : null;
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (field !== sortField) return null;
@@ -169,7 +227,8 @@ export function MatchHistoryTable({
         {sortedMatches.map((match) => (
           <div
             key={match.id}
-            className="border rounded-lg p-4 space-y-2"
+            data-testid={match.archived_at ? "archived-match-row" : "match-row"}
+            className={cn("border rounded-lg p-4 space-y-2", match.archived_at && "opacity-60")}
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm text-muted-foreground">
@@ -180,6 +239,7 @@ export function MatchHistoryTable({
                 <span className="text-sm capitalize px-2 py-0.5 bg-muted rounded">
                   {te(`matchStatus.${match.status}`)}
                 </span>
+                {archivedBadge(match)}
               </span>
             </div>
             <div className="space-y-1">
@@ -196,21 +256,8 @@ export function MatchHistoryTable({
                 <span className="font-bold text-lg ml-2">{match.away_score}</span>
               </div>
             </div>
-            {user && isMemberOfTeamOrClub(match) && (
-              <div className="flex gap-2 pt-2 border-t">
-                {(() => {
-                  switch (match.status) {
-                    case MatchStatus.UPCOMING:
-                      return <MatchStartDialog match={match} />;
-                    case MatchStatus.COMPLETED:
-                      return <MatchStatsDialog match={match} />;
-                    case MatchStatus.LIVE:
-                      return <MatchEditDialog match={match} />;
-                    default:
-                      return null;
-                  }
-                })()}
-              </div>
+            {hasActions(match) && (
+              <div className="flex gap-2 pt-2 border-t">{renderActions(match)}</div>
             )}
           </div>
         ))}
@@ -247,7 +294,11 @@ export function MatchHistoryTable({
           </TableHeader>
           <TableBody>
             {sortedMatches.map((match) => (
-              <TableRow key={match.id}>
+              <TableRow
+                key={match.id}
+                data-testid={match.archived_at ? "archived-match-row" : "match-row"}
+                className={cn(match.archived_at && "opacity-60")}
+              >
                 <TableCell className="whitespace-nowrap">{new Date(match.date).toLocaleDateString()}</TableCell>
                 <TableCell>
                   {match.home_team?.name || t("table.unknown")} {t("table.vs")}{" "}
@@ -260,25 +311,12 @@ export function MatchHistoryTable({
                   <span className="flex items-center gap-1.5">
                     <span className="capitalize">{te(`matchStatus.${match.status}`)}</span>
                     <SyncFlag summary={syncByMatch.get(match.id)} />
+                    {archivedBadge(match)}
                   </span>
                 </TableCell>
-                {user && isMemberOfTeamOrClub(match) && (
+                {hasActions(match) && (
                   <TableCell>
-                    <div className="flex gap-2">
-                      {(() => {
-                        switch (match.status) {
-                          case MatchStatus.UPCOMING:
-                            return <MatchStartDialog match={match} />;
-                          case MatchStatus.COMPLETED:
-                            return <MatchStatsDialog match={match} />;
-                          case MatchStatus.LIVE:
-                            return <MatchEditDialog match={match} />;
-                          default:
-                            return null;
-                        }
-                      })()}
-
-                    </div>
+                    <div className="flex gap-2">{renderActions(match)}</div>
                   </TableCell>
                 )}
               </TableRow>

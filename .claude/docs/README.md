@@ -17,7 +17,7 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 ### [02-architecture.md](02-architecture.md)
 **Purpose**: System architecture, data flow, and directory structure
 **When to read**: Understanding system design, component relationships, or data flow patterns
-**Contains**: High-level architecture diagrams, the two data paths (API layer → Supabase for most screens; RxDB + sync for the live match), directory structure
+**Contains**: High-level architecture diagrams, the two data paths (API layer → Supabase for most screens; RxDB + sync for the live match), the two build targets (`web` / `mobile` static export), `lib/platform`, `lib/server`, ESLint import boundaries, directory structure
 **Reading time**: ~5 minutes
 
 ### [03-code-patterns.md](03-code-patterns.md)

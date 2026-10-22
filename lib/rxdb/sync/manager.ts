@@ -9,7 +9,8 @@ import type { SyncPlatform } from "./platform/types";
 import { ReferenceSync } from "./reference-sync";
 import { claimMatchScorer, getMatchScorer, isClaimForbidden, type ClaimResult, type ScorerInfo } from "./scorer-claim";
 import { SyncStates } from "./sync-state";
-import { discardSupersededChanges } from "./take-back";
+import { applyDiscardPlan, discardSupersededChanges, planRejectedDiscard, type DiscardPlan } from "./take-back";
+import { DiscardBlockedError } from "./errors";
 import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatch, type TrackedMatchMap } from "./tracked-matches";
 import type { SyncUser } from "./types";
 import { runSyncUpgrade } from "./upgrade";
@@ -19,6 +20,10 @@ export const SYNC_TIMEOUT_MS = 30_000;
 const DEFAULT_RETRY_MS = 5_000;
 /** How long aligning a lost match with the server may take before pruning it is left for the next start. */
 export const PRUNE_ALIGN_TIMEOUT_MS = 10_000;
+/** How long discarding refused changes waits for this tab to lead (another tab replicates meanwhile). */
+export const DISCARD_LEADERSHIP_TIMEOUT_MS = 5_000;
+/** How long discarding refused changes may wait for the server's version of the rows. */
+export const DISCARD_TIMEOUT_MS = 15_000;
 
 export interface SyncManagerOptions {
   db: LocalDatabase;
@@ -30,6 +35,10 @@ export interface SyncManagerOptions {
   retryTime?: number;
   /** Bound of the server work that prunes a lost match (default PRUNE_ALIGN_TIMEOUT_MS). */
   pruneAlignTimeoutMs?: number;
+  /** Bound of the server reads of discardRejected (default DISCARD_TIMEOUT_MS). */
+  discardTimeoutMs?: number;
+  /** How long discardRejected waits for this tab to lead (default DISCARD_LEADERSHIP_TIMEOUT_MS). */
+  discardLeadershipTimeoutMs?: number;
 }
 
 export function toSyncUser(user: User): SyncUser {
@@ -176,6 +185,72 @@ export class SyncManager {
     return this.pendingChanges.retryRejected(this.options.db, matchId);
   }
 
+  /**
+   * Discards this device's rejected changes (the server refused them, so they never upload), all
+   * matches or one: each row becomes the server's version, or a local tombstone that is never pushed,
+   * as a take-back does (take-back.ts). Pending changes are untouched, and so is a refused row edited
+   * while this runs (its entry is pending again).
+   *
+   * The affected matches' replications are stopped, the server's version of every refused row is read
+   * (bounded by `discardTimeoutMs`), then the rows are written, and the replications restart, whatever
+   * happened. Runs in the leader tab only, where the replications run: another tab would push the rows
+   * while they are being aligned.
+   *
+   * Returns how many changes were discarded. Throws DiscardBlockedError ("other-tab": this tab doesn't
+   * lead within `discardLeadershipTimeoutMs`; "timeout": the server read took too long) or the server's
+   * error; in those cases nothing was changed.
+   */
+  async discardRejected(matchId?: string): Promise<number> {
+    await this.waitToLead(this.options.discardLeadershipTimeoutMs ?? DISCARD_LEADERSHIP_TIMEOUT_MS);
+    const deviceId = await this.deviceId;
+    const { db, client } = this.options;
+    return this.enqueue(async () => {
+      const entries = await this.pendingChanges.list({ matchId, statuses: ["rejected"] });
+      const matchIds = [...new Set(entries.map((entry) => entry.match_id))];
+      // The queue must not wait for the server for long: syncMatch, setUser and destroy queue behind it.
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), this.options.discardTimeoutMs ?? DISCARD_TIMEOUT_MS);
+      try {
+        for (const id of matchIds) await this.stopMatch(id);
+        const plans: DiscardPlan[] = [];
+        try {
+          for (const id of matchIds) {
+            plans.push(
+              await planRejectedDiscard({ db, client, pending: this.pendingChanges, deviceId, matchId: id }, controller.signal)
+            );
+          }
+        } catch (error) {
+          if (controller.signal.aborted) throw new DiscardBlockedError("timeout");
+          throw error;
+        }
+        if (controller.signal.aborted) throw new DiscardBlockedError("timeout");
+        clearTimeout(timer);
+        // Local only from here: every server read succeeded.
+        let discarded = 0;
+        for (const plan of plans) discarded += await applyDiscardPlan(db, this.pendingChanges, plan);
+        return discarded;
+      } finally {
+        clearTimeout(timer);
+        await this.reconcile(await this.tracked.get());
+      }
+    });
+  }
+
+  /** Resolves once this tab leads (at once when leadership isn't used); throws DiscardBlockedError("other-tab") after `timeoutMs`. */
+  private async waitToLead(timeoutMs: number): Promise<void> {
+    const { db } = this.options;
+    if (this.options.waitForLeadership === false || db.isLeader()) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new DiscardBlockedError("other-tab")), timeoutMs);
+    });
+    try {
+      await Promise.race([db.waitForLeadership(), timedOut]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   /** Claims the match for this device (spec section 7). Throws ScorerRpcError when the server can't be reached. */
   async claimMatch(matchId: string, force = false): Promise<ClaimResult> {
     const user = this.user;
@@ -242,6 +317,19 @@ export class SyncManager {
       matchId,
     });
     await this.tracked.setClaim(matchId, "held");
+  }
+
+  /**
+   * Stops tracking a match deleted on the server, unless it still has pending, rejected or superseded
+   * changes on this device (they stay until they are uploaded, discarded or taken back). Runs on the
+   * lifecycle queue, like the other tracked-match writes; the replications stop through the tracked subscription.
+   */
+  forgetMatch(matchId: string): Promise<void> {
+    return this.enqueue(async () => {
+      if (!(await this.tracked.entry(matchId))) return;
+      if ((await this.pendingChanges.count({ matchId, statuses: ["pending", "rejected", "superseded"] })) > 0) return;
+      await this.tracked.remove(matchId);
+    });
   }
 
   /** Stops the match's replications; it stays in `matches` (isTracking) until they are cancelled. */

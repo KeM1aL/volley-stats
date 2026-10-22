@@ -19,7 +19,7 @@ import {
   seedServerMatch,
   seedTeams,
 } from "../helpers/fixtures";
-import { sleep, waitFor } from "../helpers/wait";
+import { holdsFor, waitFor } from "../helpers/wait";
 
 describe("MatchSync", () => {
   let db: LocalDatabase;
@@ -139,11 +139,9 @@ describe("MatchSync", () => {
     await db.sets.insert(a as any);
     await db.sets.insert(b as any);
     await waitFor(() => !!server.row("sets", a.id) && !!server.row("sets", b.id), { message: "both sets uploaded" });
-    await sleep(200);
     const inserts = (id: string) =>
       server.log.filter((entry) => entry.table === "sets" && entry.op === "insert" && entry.ids.includes(id)).length;
-    expect(inserts(a.id)).toBe(1);
-    expect(inserts(b.id)).toBe(1);
+    await holdsFor(() => inserts(a.id) === 1 && inserts(b.id) === 1, 200, "each set is inserted exactly once");
   });
 
   it("records a rejected row without blocking the rest", async () => {

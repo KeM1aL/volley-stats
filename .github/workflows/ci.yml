@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      # Public values only (GitHub Actions variables). No secret is needed to lint, test or build.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_API_ORIGIN: ${{ vars.NEXT_PUBLIC_API_ORIGIN }}
+      NEXT_PUBLIC_WEB_ORIGIN: ${{ vars.NEXT_PUBLIC_WEB_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint (no new errors compared with the baseline)
+        run: |
+          node scripts/lint-report.mjs
+          node scripts/lint-summary.mjs test-results/lint.json --baseline docs/superpowers/notes/lint-baseline.json
+      - run: pnpm test
+      - name: Web build
+        run: pnpm build
+      - name: Mobile export
+        run: pnpm build:mobile
+      - name: Export check
+        run: pnpm check:export

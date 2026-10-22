@@ -26,7 +26,7 @@
    ┌──────▼──────────┐            ┌──────────▼──────────┐
    │   API Layer     │            │  RxDB (Local DB)    │
    │   (lib/api/)    │            │  - Dexie Storage    │
-   │  - Repository   │            │  - 12 Collections   │
+   │  - Repository   │            │  - 13 Collections   │
    │    Pattern      │            │  - Commands write   │
    │  - Factory      │            │    here             │
    │    Pattern      │            └──────────┬──────────┘
@@ -53,7 +53,7 @@ Custom Hook (e.g., useTeamApi)
 API Layer (lib/api/) → Supabase (direct calls, requires connectivity)
 
 
-Live match tracking (app/matches/[id]/live)
+Live match tracking (app/matches/live?id=<matchId>)
       ↓
 syncMatch(matchId) pulls that one match into RxDB on page load
       ↓
@@ -64,6 +64,54 @@ SyncManager replication pushes to Supabase when online
 
 Local data stays scoped to what a match needs: reference data plus the matches opened with `syncMatch(matchId)`. Don't sync whole tables to the device. See [04-offline-sync.md](04-offline-sync.md).
 
+## Build targets
+
+`next.config.js` reads `BUILD_TARGET` (`web` when unset). One codebase, two builds:
+
+| | `web` (Vercel) | `mobile` (`BUILD_TARGET=mobile`, `pnpm build:mobile`) |
+|---|---|---|
+| Output | server build (`pnpm build`, `pnpm start`) | `output: 'export'`, `trailingSlash: true`: `out/matches/live/index.html` |
+| `pageExtensions` | `web.tsx`, `web.ts`, `tsx`, `ts`, `jsx`, `js` | `tsx`, `jsx` only |
+| Server-only files | `proxy.ts` and `app/**/route.web.ts` are Next files | left out of the build (they match no extension) |
+| Service worker (Serwist) | applied (`withSerwist`) | not applied |
+| `redirects()` | 308 redirects from the old `/matches/<uuid>/live`... URLs | none |
+| `@platform-impl` alias | `lib/platform/web` | `lib/platform/mobile` |
+| API calls (`apiFetch`) | same origin | `NEXT_PUBLIC_API_ORIGIN` (the web deployment) |
+
+Limitation: the mobile target leaves out every `.ts` file, because `proxy.ts` must keep that exact name (Next 16 only recognises `proxy`) and cannot carry a `.web` suffix. A future `.ts` Next convention file (e.g. `app/robots.ts`, `app/sitemap.ts`) would be silently left out of the export: write it as `.tsx` or add it to the export check. Every page and layout is `.tsx`.
+
+Environment variables (names only; values in `.env.local` or the host):
+- `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_WEB_ORIGIN`: the origin of the web deployment's API and of the web app. Required by `pnpm build:mobile` (the build fails without them); the web target does not need them. They are inlined in the bundle, so they must be public values.
+- `API_CORS_ORIGINS`: comma-separated origins allowed to call `/api/v1` from another origin (the static export). Web server only; see `lib/server/cors.ts`.
+- CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) reads four GitHub Actions *repository variables* (Settings, Secrets and variables, Actions, Variables; public values, no secret): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_WEB_ORIGIN`. Without them the web build fails at prerender (the Supabase config throws) and `build:mobile` fails.
+- `E2E_API_URL`: only for the export e2e suite; the web server that the export under test calls for `/api/v1`.
+
+Commands:
+- `pnpm build:mobile`: static export in `out/`.
+- `pnpm check:export`: checks `out/` (expected pages exist, no server-only file, secret scan).
+- `pnpm serve:mobile`: serves `out/` on port 3200.
+- Export e2e suite: start the web server with `API_CORS_ORIGINS=http://localhost:3200 pnpm start -p 3100` and `pnpm serve:mobile`, then `CI=1 BASE_URL=http://localhost:3200 E2E_TARGET=mobile E2E_API_URL=http://localhost:3100 npx playwright test --project=core --project=live --project=stats`. Tests tagged `@web` are skipped on the mobile target.
+
+### `lib/platform/`
+
+The only module that knows the target: `lib/platform/index.ts` re-exports `@platform-impl` (`web/` or `mobile/`); `types.ts` holds the `Platform` interface (`target`, `apiOrigin`, `webOrigin()`, `createSupabaseClient()`, `ServiceWorker`, `saveFile()`, `createSyncPlatform()`); `shared/` holds what both implementations reuse (the browser sync signals, a passthrough provider). The mobile implementations are browser stand-ins until the Capacitor shell replaces them behind the same interface. Components call `platform.*`; they never test the target themselves.
+
+### `lib/server/`
+
+Server-only helpers for route handlers and the proxy: `supabase.ts` (service-role client, read on use), `session.ts` (`updateSession`: refreshes the session cookie), `report-caller.ts` (`getReportCaller`: the signed-in caller from a Bearer token or the cookie, RLS applying), `cors.ts` (`/api/v1` CORS from `API_CORS_ORIGINS`).
+
+### ESLint import boundaries
+
+[eslint.config.mjs](../../eslint.config.mjs) enforces the split:
+- `next/headers`, `next/server`, `next-intl/server` and `@supabase/ssr` can only be imported in `*.web.ts(x)`, `proxy.ts` and `lib/server/` (Supabase clients are only created in `lib/platform/` and `lib/server/`).
+- The core folders (`lib/{api,auth,commands,importers,keyboard,matches,rxdb,stats,templates,types,utils}`) import no React or Next.
+
+### Routes
+
+Dynamic segments cannot be exported for ids created at runtime (and offline), so ids travel as `?id=`: `/matches/{live,score,stats}`, `/teams/{view,players}`, `/championships/view`. [lib/routes.ts](../../lib/routes.ts) builds every in-app URL (`routes.matchLive(id)`...); on web, the old `/matches/<uuid>/live`... URLs 308-redirect to them.
+
+---
+
 ## Directory Structure
 
 ```
@@ -72,13 +120,16 @@ volley-stats/
 │   ├── auth/                     # Authentication pages
 │   ├── championships/            # Championship management
 │   ├── matches/                  # Match management
-│   │   ├── [id]/live/           # Live match tracking (CORE FEATURE)
-│   │   ├── [id]/score/          # Score entry
-│   │   └── [id]/stats/          # Match statistics
+│   │   ├── live/                # Live match tracking (CORE FEATURE), ?id=<matchId>
+│   │   ├── score/               # Score entry, ?id=
+│   │   └── stats/               # Match statistics, ?id=
 │   ├── settings/                 # User settings
-│   ├── teams/                    # Team management
-│   ├── api/import/ffvb/          # FFVB match import route
-│   └── api/v1/matches/[id]/report/  # Match PDF report (server)
+│   ├── teams/                    # Team management (view/, players/ with ?id=)
+│   ├── api/import/ffvb/route.web.ts             # FFVB match import (web target only; its UI button is disabled for now)
+│   ├── api/v1/matches/[id]/report/route.web.ts  # Match PDF report (web target only)
+│   ├── auth/confirm/             # Verifies token_hash email links
+│   ├── auth/callback/route.web.ts  # Old PKCE link handler, kept one release
+│   └── serwist/[path]/route.web.ts # Service worker (web target only)
 │
 ├── components/                   # React components (feature-based)
 │   ├── auth/                     # Authentication UI
@@ -122,7 +173,11 @@ volley-stats/
 │   ├── commands/                 # Command pattern (undo/redo)
 │   │   ├── command.ts           # Command, MatchState, CommandHistory
 │   │   └── match-commands.ts    # SetSetup, Substitution, PlayerStat, ScorePoint commands
-│   ├── i18n/                     # next-intl helpers
+│   ├── i18n/                     # Locale list, ?lang= / localStorage / browser resolution, /fr/ path helpers
+│   ├── platform/                 # Web / mobile implementations behind @platform-impl
+│   ├── server/                   # Server-only helpers (service-role client, session refresh, report caller, CORS)
+│   ├── routes.ts                 # Every in-app URL (ids as ?id=)
+│   ├── api-client.ts             # apiFetch: calls the web API with the Bearer token
 │   ├── importers/                # Data import utilities (FFVB)
 │   ├── report/                   # Match PDF report: metrics, model, loading, access
 │   ├── rxdb/                     # RxDB configuration
@@ -143,16 +198,15 @@ volley-stats/
 │   │   │   ├── timestamps.ts        # Microsecond timestamp helpers
 │   │   │   ├── helper.ts            # Query and schema helpers for the adapter
 │   │   │   ├── types.ts             # Shared sync types and table lists
-│   │   │   └── platform/            # SyncPlatform (connectivity, foreground, device id); web.ts
+│   │   │   └── platform/            # SyncPlatform interface (connectivity, foreground, device id); the browser implementation is lib/platform/shared/sync.ts
 │   │   ├── collections.ts       # Collection setup (13 collections incl. pending_changes)
 │   │   ├── database.ts          # RxDB setup
 │   │   ├── pending-hint.ts      # Unsent-changes hint in localStorage
 │   │   ├── reset-policy.ts      # When a database reset is allowed
 │   │   └── schema.ts            # RxDB schemas
 │   ├── stats/                    # Statistics calculation
-│   ├── supabase/                 # Supabase client setup
-│   │   ├── client.ts            # Browser client
-│   │   ├── server.ts            # Server client
+│   ├── supabase/                 # Supabase types and the browser client
+│   │   ├── client.ts            # Browser client (created by lib/platform)
 │   │   └── database.types.ts    # Generated DB types (pnpm supabase:types)
 │   ├── utils/                    # Utility functions
 │   ├── types.ts                  # TypeScript type definitions
@@ -160,6 +214,8 @@ volley-stats/
 │   └── enums.ts                  # Enums for constants
 │
 ├── messages/                     # next-intl translations (en, es, fr, it, pt)
+├── proxy.ts                      # Web only: refreshes the session cookie, /fr/... becomes ?lang=fr
+├── scripts/                      # build-mobile, check-export, serve-export, lint report
 ├── tests/e2e/                    # Playwright E2E tests
 │
 └── supabase/                     # Supabase configuration

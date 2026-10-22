@@ -54,6 +54,7 @@
     "selectPlayer": "Sélectionner un joueur",
     "selectServingTeam": "Sélectionnez l'équipe au service",
     "allPositionsMustBeSpecified": "Toutes les positions doivent être spécifiées",
+    "rolesMissing": "Choisissez un rôle pour le joueur en {positions}",
     "servingTeamMustBeSpecified": "L'équipe au service doit être spécifiée",
     "libero": "Libéro"
   },
@@ -269,6 +270,19 @@
       "none": "Tous les membres actifs de l'équipe sont déjà sur la feuille de match.",
       "added": "{name} ajouté à la feuille de match",
       "addError": "Impossible d'ajouter le joueur. Veuillez réessayer."
+    },
+    "left": {
+      "title": "Ce match n'a pas pu être chargé sur cet appareil",
+      "reasons": {
+        "missingTeam": "Le lien n'indique pas l'équipe dont vous tenez les statistiques. Rouvrez le match depuis la liste des matchs.",
+        "notOnDevice": "Il n'a pas encore été téléchargé sur cet appareil, et vous êtes hors ligne. Rouvrez-le une fois la connexion revenue.",
+        "notDownloaded": "Il n'a pas pu être téléchargé à temps. Vérifiez votre connexion et rouvrez-le.",
+        "matchNotFound": "Il n'existe plus, ou vous n'y avez pas accès.",
+        "dataMissing": "Ses équipes ou son format de match manquent sur cet appareil. Vérifiez votre connexion et rouvrez-le.",
+        "teamNotInMatch": "L'équipe indiquée dans le lien ne joue pas ce match. Rouvrez le match depuis la liste des matchs.",
+        "archived": "Ce match est archivé. Restaurez-le depuis la liste des matchs pour le marquer.",
+        "unknown": "Vérifiez votre connexion et rouvrez-le."
+      }
     }
   },
   "stats": {
@@ -472,5 +486,33 @@
     "unsent": "{count, plural, one {# modification n'a pas encore été envoyée} other {# modifications n'ont pas encore été envoyées}}. Elles seront envoyées automatiquement dès le retour de la connexion.",
     "stay": "Rester",
     "leave": "Quitter"
+  },
+  "removal": {
+    "deleteTitle": "Supprimer ce match ?",
+    "deleteDesc": "{home} contre {away} du {date} sera supprimé définitivement.",
+    "deleteAction": "Supprimer",
+    "deleteAriaLabel": "Supprimer le match {home} contre {away}",
+    "archiveTitle": "Archiver ce match ?",
+    "archiveDesc": "{home} contre {away} et ses statistiques disparaîtront des listes et des statistiques. Vous pouvez le restaurer depuis « Afficher les archivés ».",
+    "archiveAction": "Archiver",
+    "archiveAriaLabel": "Archiver le match {home} contre {away}",
+    "restore": "Restaurer",
+    "restoreAriaLabel": "Restaurer le match {home} contre {away}",
+    "showArchived": "Afficher les archivés ({count})",
+    "badge": "Archivé",
+    "archivedNotice": "Ce match est archivé.",
+    "unsent": "Cet appareil a des changements sur ce match qui ne sont pas encore envoyés. Attendez qu'ils soient envoyés.",
+    "toast": {
+      "deleted": "Match supprimé",
+      "archived": "Match archivé",
+      "archivedDesc": "Il ne compte plus dans les statistiques. Affichez les matchs archivés pour le restaurer.",
+      "restored": "Match restauré"
+    },
+    "errors": {
+      "started": "Ce match a démarré entre-temps : archivez-le plutôt.",
+      "notFound": "Ce match n'existe plus.",
+      "forbidden": "Vous ne pouvez pas modifier ce match.",
+      "unknown": "Une erreur s'est produite. Réessayez."
+    }
   }
 }

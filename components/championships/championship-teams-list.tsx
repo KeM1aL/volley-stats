@@ -21,6 +21,7 @@ import { ChevronDown, Eye, Users } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
+import { routes } from "@/lib/routes";
 
 type ChampionshipTeamsListProps = {
   teams: Team[];
@@ -116,14 +117,14 @@ export function ChampionshipTeamsList({
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/teams/${team.id}`}>
+                          <Link href={routes.team(team.id)}>
                             <Eye className="h-4 w-4 mr-1" />
                             {tc("actions.view")}
                           </Link>
                         </Button>
                         {canManage(team) && (
                           <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/teams/${team.id}/players`}>
+                            <Link href={routes.teamPlayers(team.id)}>
                               <Users className="h-4 w-4 mr-1" />
                               {t("teamsList.players")}
                             </Link>

@@ -26,7 +26,7 @@ const timestampFields = {
 
 // Championship Schema
 export const championshipSchema = toTypedRxJsonSchema({
-  version: 0, // Incremented: Removed format field (moved to match_formats)
+  version: 1, // 1: user_id may be null (account deletion; migrationStrategies in collections.ts)
   primaryKey: "id",
   type: "object",
   properties: {
@@ -35,7 +35,7 @@ export const championshipSchema = toTypedRxJsonSchema({
     type: { type: "string" },
     season_id: { type: ["string", "null"], maxLength: 36 }, // UUID
     default_match_format: { type: "string", maxLength: 36 }, // UUID
-    user_id: { type: "string", maxLength: 36 }, // UUID
+    user_id: { type: ["string", "null"], maxLength: 36 }, // UUID, null once the creator deleted their account
     age_category: {
       type: "string",
       enum: ["U10", "U12", "U14", "U16", "U18", "U21", "senior"],
@@ -149,20 +149,21 @@ export const teamSchema = toTypedRxJsonSchema({
 
 // Club Schema
 export const clubSchema = toTypedRxJsonSchema({
-  version: 0,
+  version: 1, // 1: user_id may be null (account deletion; migrationStrategies in collections.ts)
   primaryKey: "id",
   type: "object",
   properties: {
     id: { type: "string", maxLength: 36 },
     name: { type: "string" },
-    user_id: { type: "string", maxLength: 36 },
+    user_id: { type: ["string", "null"], maxLength: 36 },
     website: { type: ["string", "null"] },
     contact_email: { type: ["string", "null"] },
     contact_phone: { type: ["string", "null"] },
     ...timestampFields,
   },
-  required: ["id", "name", "user_id", "created_at", "updated_at"],
-  indexes: ["user_id", "created_at", "updated_at"],
+  required: ["id", "name", "created_at", "updated_at"],
+  // user_id is not indexed: RxDB cannot index a nullable field.
+  indexes: ["created_at", "updated_at"],
 });
 
 // Club Member Schema

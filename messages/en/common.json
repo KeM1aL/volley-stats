@@ -50,7 +50,8 @@
     "createSuccess": "{item} created successfully",
     "createError": "Failed to create {item}",
     "languageChanged": "Language changed successfully",
-    "languageChangeError": "Failed to change language"
+    "languageChangeError": "Failed to change language",
+    "languageNotSaved": "Language changed on this device only: it could not be saved to your profile."
   },
   "messages": {
     "noData": "No data available",
@@ -132,5 +133,12 @@
       "schemaIncompatible": "The database schema has been updated and is incompatible with existing data.",
       "resyncInstructions": "Click below to clear the local database. Your data will be re-synced from the server on next login."
     }
+  },
+  "offline": {
+    "title": "You're offline",
+    "body": "This screen needs a connection.",
+    "backToLive": "Back to the live match",
+    "retry": "Retry",
+    "goBack": "Go back"
   }
 }

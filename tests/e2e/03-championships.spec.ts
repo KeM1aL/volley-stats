@@ -5,24 +5,12 @@
  * 4.2  Create a new championship
  * 4.3  Verify it appears in the list
  * 4.4  Navigate to detail page via "View Details"
- * 4.5  Save championshipId to fixture
+ * 4.5  Save championshipId to the run fixture
  */
 
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
-
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
-
-function loadFixture(): Record<string, unknown> {
-  const raw = fs.readFileSync(FIXTURE_PATH, 'utf-8');
-  return JSON.parse(raw);
-}
-
-function saveFixture(data: Record<string, unknown>): void {
-  const existing = loadFixture();
-  fs.writeFileSync(FIXTURE_PATH, JSON.stringify({ ...existing, ...data }, null, 2));
-}
+import { updateFixture } from '../helpers/fixture';
+import { onPath, routeId } from '../helpers/routes';
 
 test.describe('Championships — CRUD', () => {
   test('create championship, view detail, save fixture', async ({ page }) => {
@@ -46,16 +34,10 @@ test.describe('Championships — CRUD', () => {
     // Type: CreatableSelect — click to open, type to filter/create, then select or create
     await dialog.getByRole('combobox').nth(0).click();
     await page.keyboard.type('Regional');
-    // Wait for either an existing option or the "Create Regional" option
-    await page.waitForTimeout(300);
-    const regionalOption = page.getByRole('option', { name: /regional/i });
-    await regionalOption.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => null);
-    const optionVisible = await regionalOption.isVisible().catch(() => false);
-    if (optionVisible) {
-      await regionalOption.click();
-    } else {
-      await page.keyboard.press('Enter');
-    }
+    // The select always offers either the existing "Regional" or "Create Regional"
+    const regionalOption = page.getByRole('option', { name: /regional/i }).first();
+    await expect(regionalOption).toBeVisible();
+    await regionalOption.click();
 
     // Gender: shadcn Select (combobox index 1 within dialog)
     // Use exact:true — "Male" is a substring of "Female", causing strict-mode violations.
@@ -101,19 +83,23 @@ test.describe('Championships — CRUD', () => {
       .getByRole('link', { name: 'View Details' })
       .click();
 
-    await page.waitForURL(/\/championships\/[a-f0-9-]+/, { timeout: 10_000 });
+    await page.waitForURL(onPath('/championships/view'), { timeout: 10_000 });
 
     // Extract championship ID from URL
-    const url = page.url();
-    const urlMatch = url.match(/\/championships\/([a-f0-9-]+)/);
-    const championshipId = urlMatch ? urlMatch[1] : '';
+    const championshipId = routeId(page.url());
     expect(championshipId, 'Could not extract championshipId from URL').toBeTruthy();
 
     // Verify detail page content
     await expect(page.getByText(championshipName).first()).toBeVisible({ timeout: 5_000 });
 
+    // The FFVB import is shown on both targets but disabled for now
+    const importButton = page.getByTestId('ffvb-import-button');
+    await expect(importButton).toBeVisible();
+    await expect(importButton).toBeDisabled();
+    await expect(importButton).toHaveAttribute('title', 'Coming soon');
+
     // ── 4.5 Save fixture ─────────────────────────────────────────────────────
-    saveFixture({ championshipId, championshipName });
+    updateFixture({ championshipId });
   });
 
   test('empty form shows translated required-field messages', async ({ page }) => {

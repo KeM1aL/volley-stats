@@ -50,7 +50,8 @@
     "createSuccess": "{item} creato con successo",
     "createError": "Errore nella creazione di {item}",
     "languageChanged": "Lingua modificata con successo",
-    "languageChangeError": "Errore nel cambio della lingua"
+    "languageChangeError": "Errore nel cambio della lingua",
+    "languageNotSaved": "Lingua cambiata solo su questo dispositivo: non è stato possibile salvarla nel profilo."
   },
   "messages": {
     "noData": "Nessun dato disponibile",
@@ -132,5 +133,12 @@
       "schemaIncompatible": "Lo schema del database è stato aggiornato ed è incompatibile con i dati esistenti.",
       "resyncInstructions": "Fai clic qui sotto per cancellare il database locale. I tuoi dati verranno risincronizzati dal server al prossimo accesso."
     }
+  },
+  "offline": {
+    "title": "Sei offline",
+    "body": "Questa schermata richiede una connessione.",
+    "backToLive": "Torna alla partita in diretta",
+    "retry": "Riprova",
+    "goBack": "Indietro"
   }
 }

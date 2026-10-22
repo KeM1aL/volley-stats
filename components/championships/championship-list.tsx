@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { routes } from "@/lib/routes";
 
 type ChampionshipListProps = {
   refreshKey?: number;
@@ -114,7 +115,7 @@ export function ChampionshipList({ refreshKey }: ChampionshipListProps) {
                       </CardContent>
                       <CardFooter>
                         <Button asChild variant="outline" className="w-full">
-                          <Link href={`/championships/${championship.id}`}>
+                          <Link href={routes.championship(championship.id)}>
                             {t("list.viewDetails")}
                           </Link>
                         </Button>

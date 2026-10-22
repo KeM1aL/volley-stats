@@ -87,9 +87,17 @@ function installTimestampHooks(db: LocalDatabase): void {
 /** Adds the app's collections to `db`, with conflict handlers and hooks. */
 export async function setupCollections(db: LocalDatabase): Promise<PendingChanges> {
   await db.addCollections({
-    championships: { schema: championshipSchema },
+    championships: {
+      schema: championshipSchema,
+      // The creator may now be null (account deletion); existing documents are unchanged.
+      migrationStrategies: { 1: (doc: any) => doc },
+    },
     match_formats: { schema: matchFormatSchema },
-    clubs: { schema: clubSchema },
+    clubs: {
+      schema: clubSchema,
+      // The creator may now be null (account deletion); existing documents are unchanged.
+      migrationStrategies: { 1: (doc: any) => doc },
+    },
     club_members: { schema: clubMemberSchema },
     seasons: { schema: seasonSchema },
     teams: { schema: teamSchema },

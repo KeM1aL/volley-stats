@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
 // Volleyball roles to cycle through for the 6 court positions
 const ROLES = [
@@ -52,31 +52,23 @@ export async function setupCourtPositions(
     // Click the court position circle
     await page.getByTestId(`court-position-${pos}`).first().click();
 
-    // Wait for player selector card to appear
-    await page.waitForTimeout(100);
-
-    // Click the player — use getByRole button with the player name
+    // Click the player — use getByRole button with the player name; the selector card appears after the click.
     // Players show as buttons with name + number (e.g. "Player 1 #1")
-    // Use locator scoped to the player selector card area to avoid ambiguity
-    await page.getByRole('button', { name: new RegExp(players[i], 'i') }).first().click();
+    const playerButton = page.getByRole('button', { name: new RegExp(players[i], 'i') }).first();
+    await expect(playerButton).toBeVisible();
+    await playerButton.click();
 
-    // The role select appears in the card. If it shows "Select role", we need to pick one.
-    // After a player with a volleyball `position` field is selected the role auto-fills,
-    // but as a safety net we also handle the manual selection case.
-    await page.waitForTimeout(150);
+    // The role select appears in the card and is never empty: it shows the player's volleyball position
+    // (auto-filled), or the "Select role" placeholder.
+    const lastCombobox = page.locator('[role="combobox"]').filter({ hasNotText: 'Select serving' }).last();
+    await expect(lastCombobox).not.toHaveText(/^\s*$/);
 
-    // If role select shows "Select role" placeholder, pick a role manually.
-    // (Happens when the player has no volleyball position field set.)
-    const roleComboboxes = page.locator('[role="combobox"]').filter({ hasNotText: 'Select serving' });
-    const roleComboboxCount = await roleComboboxes.count();
-    if (roleComboboxCount > 0) {
-      const lastCombobox = roleComboboxes.last();
-      const comboboxText = await lastCombobox.innerText().catch(() => '');
-      if (/Select role/i.test(comboboxText) || comboboxText.trim() === '') {
-        await lastCombobox.click();
-        await page.getByRole('option', { name: ROLES[i] }).click();
-        await page.waitForTimeout(150);
-      }
+    // If it still shows the placeholder, pick a role manually.
+    // (Happens when the player has no volleyball position field set; the seeded teams all have one.)
+    if (/Select role/i.test(await lastCombobox.innerText())) {
+      await lastCombobox.click();
+      await page.getByRole('option', { name: ROLES[i] }).click();
+      await expect(lastCombobox).not.toHaveText(/Select role/i);
     }
   }
 

@@ -1,7 +1,7 @@
 /**
  * Match Statistics E2E tests
  *
- * 7.1  Load completedMatchStatsUrl from fixture
+ * 7.1  Build the stats URL from completedMatchId in the fixture
  * 7.2  Navigate directly to the stats page (URL includes ?team= param)
  * 7.3  Verify page heading and basic structure
  * 7.4  Verify player stats are visible (via Players tab)
@@ -10,17 +10,17 @@
 
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
-import path from 'path';
+import { readFixture } from '../helpers/fixture';
+import { routes } from '@/lib/routes';
+import { routeId } from '../helpers/routes';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
-
-function loadFixture(): {
-  completedMatchStatsUrl?: string;
-  playerNames?: string[];
-  [key: string]: unknown;
-} {
-  const raw = fs.readFileSync(FIXTURE_PATH, 'utf-8');
-  return JSON.parse(raw);
+/** The finished match written by the finished-match project (02-matches), with its stats URL (?team= included). */
+function loadFixture() {
+  const { completedMatchId, teamId, playerNames } = readFixture();
+  return {
+    completedMatchStatsUrl: completedMatchId ? routes.matchStats(completedMatchId, { team: teamId }) : undefined,
+    playerNames,
+  };
 }
 
 test.describe('Match Statistics', () => {
@@ -82,7 +82,7 @@ test.describe('Match Statistics', () => {
     const { completedMatchStatsUrl } = loadFixture();
     expect(completedMatchStatsUrl).toBeTruthy();
     const statsUrl = new URL(completedMatchStatsUrl!, baseURL);
-    const matchId = statsUrl.pathname.split('/')[2];
+    const matchId = routeId(statsUrl.toString());
     const teamId = statsUrl.searchParams.get('team');
 
     // The stats page stays public, without the export button.
@@ -93,7 +93,8 @@ test.describe('Match Statistics', () => {
     await expect(visitorPage.getByRole('button', { name: /export pdf/i })).toHaveCount(0);
     await visitor.close();
 
-    const anonymous = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
+    // The static export has no API: E2E_API_URL points at the web deployment that serves it.
+    const anonymous = await playwright.request.newContext({ baseURL: process.env.E2E_API_URL ?? baseURL, storageState: { cookies: [], origins: [] } });
     const path = `/api/v1/matches/${matchId}/report?team=${teamId}`;
     expect((await anonymous.get(path, { maxRedirects: 0 })).status()).toBe(401);
     expect((await anonymous.get(path, { maxRedirects: 0, headers: { Authorization: 'Bearer not-a-token' } })).status()).toBe(401);

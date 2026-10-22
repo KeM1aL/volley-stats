@@ -4,20 +4,20 @@
  * Output (git-ignored): playwright/.auth/rxdb-legacy-state.json
  */
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
 import path from 'path';
+import { readFixture } from '../helpers/fixture';
+import { routes } from '@/lib/routes';
 
-const FIXTURE_PATH = path.join(__dirname, '../fixtures/test-data.json');
 const OUT = path.join(__dirname, '../../playwright/.auth/rxdb-legacy-state.json');
 
 test('capture legacy RxDB IndexedDB state', async ({ page }) => {
   test.skip(!process.env.CAPTURE_LEGACY_DB, 'Set CAPTURE_LEGACY_DB=1 on RxDB 16 to capture');
 
   // Full URL incl. ?team=: the live page redirects to /matches without it.
-  const { offlineMatchLiveUrl } = JSON.parse(fs.readFileSync(FIXTURE_PATH, 'utf-8'));
-  expect(offlineMatchLiveUrl, 'run 04-live-offline.spec.ts first').toBeTruthy();
+  const { offlineMatchId, teamId } = readFixture();
+  expect(offlineMatchId, 'run 04-live-offline.spec.ts first').toBeTruthy();
 
-  await page.goto(offlineMatchLiveUrl);
+  await page.goto(routes.matchLive(offlineMatchId!, { team: teamId }));
   await expect(
     page.getByTestId('point-btn-managed-point').first()
       .or(page.getByTestId('set-setup').first())

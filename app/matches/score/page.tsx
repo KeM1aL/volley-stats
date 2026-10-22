@@ -1,0 +1,235 @@
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { notFound, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useLocalDb } from "@/components/providers/local-database-provider";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Download, Share2 } from "lucide-react";
+import type {
+  Match,
+  TeamMember,
+  PlayerStat,
+  ScorePoint,
+  Set,
+  Team,
+} from "@/lib/types";
+import { toast } from "@/hooks/use-toast";
+import { SetBreakdown } from "@/components/matches/stats/set-breakdown";
+import { PlayerPerformance } from "@/components/matches/stats/player-performance";
+import { ScoreProgression } from "@/components/matches/stats/score-progression";
+import { TeamPerformance } from "@/components/matches/stats/team-performance";
+import { MVPAnalysis } from "@/components/matches/stats/mvp-analysis";
+import { MatchScoreDetails } from "@/components/matches/match-score-details";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { supabase } from "@/lib/supabase/client";
+import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { useRouteId } from "@/hooks/use-route-id";
+import { LoadingPage } from "@/components/loading-page";
+import { ArchivedMatchNotice } from "@/components/matches/archived-match-notice";
+
+function LiveScorePage({ matchId }: { matchId: string }) {
+  const t = useTranslations("matches");
+  const { isOnline, wasOffline } = useOnlineStatus();
+  const searchParams = useSearchParams();
+  const { localDb: db } = useLocalDb();
+  const [match, setMatch] = useState<Match | null>(null);
+  const [homeTeam, setHomeTeam] = useState<Team>();
+  const [awayTeam, setAwayTeam] = useState<Team>();
+  const [managedTeam, setManagedTeam] = useState<Team>();
+  const [opponentTeam, setOpponentTeam] = useState<Team>();
+  const [points, setPoints] = useState<ScorePoint[]>([]);
+  const [stats, setStats] = useState<PlayerStat[]>([]);
+  const [sets, setSets] = useState<Set[]>([]);
+  const [set, setSet] = useState<Set | undefined>();
+  const [players, setPlayers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+
+        const { data: matchData, error: matchError } = await supabase
+          .from("matches")
+          .select("*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)")
+          .eq("id", matchId as string)
+          .single();
+
+        if (matchError) throw matchError;
+        setMatch(matchData);
+        // An archived match shows a notice instead of its data.
+        if (matchData.archived_at) return;
+
+        const { data: setsData, error: setsError } = await supabase
+          .from("sets")
+          .select("*")
+          .eq("match_id", matchId as string)
+          .order("set_number", { ascending: true });
+        if (setsError) throw setsError;
+        setSets(setsData);
+
+        const { data: playerStatsData, error: playerStatsError } =
+          await supabase
+            .from("player_stats")
+            .select("*")
+            .eq("match_id", matchId as string)
+            .order("created_at", { ascending: true });
+        if (playerStatsError) throw playerStatsError;
+        setStats(playerStatsData);
+
+        const { data: scorePointsData, error: scorePointsError } =
+          await supabase
+            .from("score_points")
+            .select("*")
+            .eq("match_id", matchId as string)
+            .order("created_at", { ascending: true });
+        if (scorePointsError) throw scorePointsError;
+        setPoints(scorePointsData);
+
+        const managedTeamParam = searchParams.get("team");
+        if (!managedTeamParam) {
+          throw new Error(t("errors.selectTeam"));
+        }
+
+        const teamId = searchParams.get("team");
+
+        if (
+          teamId !== matchData.home_team_id &&
+          teamId !== matchData.away_team_id
+        ) {
+          throw new Error(t("errors.managedTeamNotFound"));
+        }
+
+        const playerIds =
+          teamId === matchData.home_team_id
+            ? matchData.home_available_players
+            : matchData.away_available_players;
+        const { data: availablePlayersData, error: availablePlayersError } =
+          await supabase // @ts-ignore
+            .from("team_members")
+            .select("*")
+            .in("id", playerIds as string[]);
+        if (availablePlayersError) throw availablePlayersError;
+        setPlayers(availablePlayersData);
+
+        const { data: teamsData, error: teamsError } = await supabase
+          .from("teams")
+          .select("*")
+          .in("id", [matchData.home_team_id, matchData.away_team_id]);
+        if (teamsError) throw teamsError;
+        setHomeTeam(
+          teamsData.find((team) => team.id === matchData.home_team_id)
+        );
+        setAwayTeam(
+          teamsData.find((team) => team.id === matchData.away_team_id)
+        );
+        setManagedTeam(teamsData.find((team) => team.id === teamId));
+        setOpponentTeam(teamsData.find((team) => team.id !== teamId));
+      } catch (error) {
+        console.error("Failed to load match data:", error);
+        toast({
+          variant: "destructive",
+          title: t("toast.error"),
+          description: t("toast.loadError"),
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [db, matchId, isOnline, t, reloadKey]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "sets",
+          filter: "match_id=eq." + matchId,
+        },
+        (payload) => setSet(payload.new as Set)
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (set) {
+      if (!sets || sets.length == 0) {
+        setSets([set]);
+      } else {
+        const lastSet = sets[sets.length - 1];
+        if (lastSet.set_number !== set.set_number) {
+          setSets([...sets, set]);
+        } else {
+          setSets(sets.map((s) => (s.set_number === set.set_number ? set : s)));
+        }
+      }
+    }
+  }, [set]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-[100px] w-full" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
+
+  if (!match) {
+    return <div>{t("live.matchNotFound")}</div>;
+  }
+  if (match.archived_at) {
+    return <ArchivedMatchNotice match={match} onRestored={() => setReloadKey((key) => key + 1)} />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">{t("score.title")}</h1>
+          <p className="text-muted-foreground">
+            {new Date(match.date).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <LiveMatchHeader
+          match={match}
+          sets={sets}
+          homeTeam={homeTeam!}
+          awayTeam={awayTeam!}
+        />
+      </div>
+    </div>
+  );
+}
+
+function LiveScorePageRoute() {
+  const matchId = useRouteId();
+  if (!matchId) notFound();
+  return <LiveScorePage key={matchId} matchId={matchId} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <LiveScorePageRoute />
+    </Suspense>
+  );
+}

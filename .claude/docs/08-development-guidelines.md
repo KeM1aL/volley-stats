@@ -99,9 +99,9 @@ const matchApi = useMatchApi()
 import { getApi } from '@/lib/api'
 const api = getApi()
 
-// In route handlers (server): build an API on the server client
+// In route handlers (server, *.web.ts files only): build an API on the server client
 import { createApi } from '@/lib/api'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/server/supabase'
 const api = createApi(await createClient())
 ```
 
@@ -134,8 +134,8 @@ const updated = await teamApi.updateTeam(teamId, {
   name: 'Updated Name'
 })
 
-// Delete (hard delete in Supabase)
-await teamApi.deleteTeam(teamId)
+// Archive (sets status 'archived'; teams are never hard-deleted)
+await teamApi.archiveTeam(teamId)
 ```
 
 ### Filter Operators

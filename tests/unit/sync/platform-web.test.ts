@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWebPlatform, deviceLabelFromUserAgent, generateDeviceId } from "@/lib/rxdb/sync/platform/web";
+import { createWebPlatform, deviceLabelFromUserAgent, generateDeviceId } from "@/lib/platform/shared/sync";
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
