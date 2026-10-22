@@ -174,6 +174,23 @@ Closes an open dialog or sheet first (my call: dispatch Escape, which Radix hand
 goes back in history; on the home page it closes the app. On the live match page, going back
 goes through the existing leave-match flow, not around it.
 
+### Bottom tab bar (installed app only)
+
+Added 2026-10-22 at the user's request: the installed app (iOS and Android, phone and iPad) uses
+a bottom tab bar instead of the header menu. The website is unchanged on every screen size, and
+so is the export opened in a browser (the e2e export suite keeps the current navigation).
+- Four tabs, the current navigation entries: Championships, Matches, Teams, Settings, each with
+  its icon and label; the active tab follows the section (`/teams/view?id=…` → Teams).
+- In the app the header keeps the logo (home), the sync indicator and sign-out; the hamburger
+  menu and the header links are not rendered.
+- Hidden on the live match page (the court needs the space; leaving goes through the existing
+  leave flow and the Android back button) and while the on-screen keyboard is open.
+- Sits above the home indicator / gesture bar (`env(safe-area-inset-bottom)`); page content is
+  padded so nothing hides behind it.
+- Tab links go through the existing leave guard like the header links.
+- Decided by `platform.nativePlatform !== null` (my call: "the app" means the installed app, not
+  the mobile build in a browser).
+
 ### Status bar and safe areas
 
 The WebView draws under the status bar; the existing `viewportFit: 'cover'` and safe-area

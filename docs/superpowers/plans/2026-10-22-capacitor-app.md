@@ -54,6 +54,7 @@
 | `components/analytics.tsx`, deleted `app/auth/callback/route.web.ts` | Analytics web-only, old callback removed | 10 |
 | `app/privacy/page.tsx`, `messages/*/privacy.json`, `ios/App/App/PrivacyInfo.xcprivacy` | Privacy policy and manifest | 11 |
 | `.github/workflows/ci.yml` | Android and iOS CI jobs | 12 |
+| `lib/native/tab-bar.ts`, `components/navigation/{nav-items.ts,bottom-tab-bar.tsx}` | Bottom tab bar in the installed app | 14 |
 | `.claude/docs/11-mobile-app.md`, `docs/superpowers/notes/2026-10-22-*.md`, `CLAUDE.md` | Compatibility policy, checklists, docs | 13 |
 
 ---
@@ -453,6 +454,30 @@ it("computes the Android version code", () => expect(versionCode("1.4.10")).toBe
 - [ ] **Step 4: Ask the user** to confirm the four repository variables are set (open item) and whether to push the branch; on yes, `git push -u origin feature/capacitor-app` and `gh workflow run ci.yml --ref feature/capacitor-app`, then `gh run watch`. Expected: `checks`, `android`, `ios` all green. Fix and repeat on failure.
 - [ ] **Step 5: Commit** — `ci: Android debug build and unsigned iOS simulator build`.
 
+### Task 14: Bottom tab bar in the installed app (run before Task 13)
+
+Added after the plan was approved (spec §4 "Bottom tab bar"). Run it after Task 12 and before Task 13.
+
+**Files:**
+- Create: `lib/native/tab-bar.ts`, `components/navigation/nav-items.ts`, `components/navigation/bottom-tab-bar.tsx`
+- Modify: `components/navigation.tsx` (use the shared items; in the app render no hamburger and no header links), `app/layout.tsx` (render `<BottomTabBar />` after `<main>`, pad the content when it shows)
+- Test: `tests/unit/native/tab-bar.test.ts`
+
+**Interfaces:**
+- Consumes: `platform.nativePlatform` (Task 3), `useKeyboard().visible` (`contexts/keyboard-context.tsx`), `normalizePath` (`lib/routes.ts`), `GuardedLink` as used in `components/navigation.tsx`, the `navigation.menu.*` labels.
+- Produces:
+  - `NAV_SECTIONS = ["/championships", "/matches", "/teams", "/settings"] as const` in `lib/native/tab-bar.ts`.
+  - `activeSection(pathname: string): (typeof NAV_SECTIONS)[number] | null` — the section whose path equals `normalizePath(pathname)` or prefixes it followed by `/` (`/teams/view` → `/teams`, `/matches/stats` → `/matches`); `null` for `/`, `/auth…`, `/privacy`.
+  - `showTabBar({ nativeApp, pathname, keyboardOpen }: { nativeApp: boolean; pathname: string; keyboardOpen: boolean }): boolean` — `nativeApp && !keyboardOpen && normalizePath(pathname) !== "/matches/live"` and not on `/auth` pages (signed-out screens keep no tab bar).
+  - `navItems(t)` in `components/navigation/nav-items.ts`: the four `{ href, label, icon }` entries now inlined in `navigation.tsx` (Trophy, Volleyball, Users, Settings), shared by the header and the tab bar.
+
+- [ ] **Step 1: Write the failing tests**: `activeSection` — `/teams/view/` → `/teams`, `/matches/stats` → `/matches`, `/matches/live` → `/matches`, `/championships/view` → `/championships`, `/settings/` → `/settings`, `/` → null, `/teamsx` → null; `showTabBar` — false when not native, false with the keyboard open, false on `/matches/live/`, false on `/auth` and `/auth/confirm`, true on `/teams/view` in the app.
+- [ ] **Step 2: Run** them — FAIL.
+- [ ] **Step 3: Implement.** `BottomTabBar` (client): renders only when `showTabBar(...)` with `nativeApp = platform.nativePlatform !== null` and a signed-in user; fixed to the bottom, full width, four equal `GuardedLink` tabs (icon above a short label, `aria-current="page"` on the active one, `data-testid="bottom-tab-bar"`), `padding-bottom: env(safe-area-inset-bottom)`, theme colours like the header. The layout adds bottom padding to `<main>` equal to the bar height plus the safe-area inset only while the bar shows (expose the visibility through a small hook `useTabBarVisible()` in `bottom-tab-bar.tsx` so both use the same rule). In `navigation.tsx`, when `platform.nativePlatform !== null`, skip the hamburger `Sheet` and the `md:flex` header links; the landscape live-page header stays as it is.
+- [ ] **Step 4: Run** `pnpm test` — PASS; web e2e `pnpm test:e2e:quick` — PASS (web unchanged); export e2e (Task 3 Step 6 command) — PASS (browser export unchanged).
+- [ ] **Step 5: Emulator check**, phone (Pixel_9_Pro_XL) and a tablet AVD if one exists (create a Pixel Tablet AVD with the installed android-36 image if not): tab bar visible on matches/teams/championships/settings with the right active tab; hidden on the live match page and while typing in a form; content not hidden behind it; above the gesture bar in portrait and landscape; the header shows no hamburger.
+- [ ] **Step 6: Commit** — `feat(mobile): bottom tab bar in the installed app`.
+
 ### Task 13: Policy, checklists, docs, final verification
 
 **Files:**
@@ -460,7 +485,7 @@ it("computes the Android version code", () => expect(versionCode("1.4.10")).toBe
 - Modify: `CLAUDE.md`, `.claude/docs/README.md`, `.claude/docs/02-architecture.md` (Capacitor, `lib/platform` members, `.well-known`, env vars `APPLE_TEAM_ID`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `ANDROID_CERT_SHA256`, `CAP_DEV_HTTP`), `.claude/docs/05-database-schema.md` (`profiles.role`, `app_config`), `.claude/docs/capacitor-integration.md` (replace with a pointer to `11-mobile-app.md`)
 
 - [ ] **Step 1: Write `11-mobile-app.md`**: how to build and run the Android app (commands, emulator build values, JDK), how CI builds iOS, the native features and where they live, and the compatibility policy of §5 verbatim (rules 1–4) with the migration header question; add the "migration header" rule to `CLAUDE.md` and a line pointing at the doc.
-- [ ] **Step 2: Write the Android manual checklist**: the "Done when" 1 items of the spec, plus keep-awake, rotation during a live match, update banner/block (Task 8 Step 5), back button cases (Review Focus 3), share sheet with the PDF.
+- [ ] **Step 2: Write the Android manual checklist**: the "Done when" 1 items of the spec, plus the bottom tab bar (Task 14), keep-awake, rotation during a live match, update banner/block (Task 8 Step 5), back button cases (Review Focus 3), share sheet with the PDF.
 - [ ] **Step 3: Write the store release checklist** from §11, with exact files and commands, including the drafted store answers of §8 (Apple privacy labels matching `PrivacyInfo.xcprivacy`, the Google Play data safety form, the account-deletion URL `<web origin>/settings`, age rating notes); in step 2 of it, list every "For Dummies" occurrence found by `grep -rn "For Dummies\|for Dummies\|FOR DUMMIES" app components messages public supabase` (file:line), plus `public/logo.png`.
 - [ ] **Step 4: Full verification**: `pnpm test`; lint gate; `npx tsc --noEmit`; `pnpm i18n:check`; `pnpm build` + full web e2e `CI=1 BASE_URL=http://localhost:3100 pnpm test:e2e`; the export suite (Task 3 Step 6 command); the Android manual checklist on the emulator, every item ticked with notes. Stop every server by PID.
 - [ ] **Step 5: Remind the user** of their open actions: `API_CORS_ORIGINS` on the deployed web app gains `capacitor://localhost,https://localhost`; the GitHub variables; `send-email` deploy (and Task 10's callback deletion if it was deferred); their admin role SQL.
