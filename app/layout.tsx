@@ -19,6 +19,7 @@ import { ServiceWorkerProvider } from '@/components/providers/service-worker-pro
 import { isMobileBuild } from '@/lib/platform/build-target';
 import { StatusBarSync } from '@/components/providers/status-bar-sync';
 import { NativeBridge } from '@/components/native/native-bridge';
+import { UpdateGate } from '@/components/native/update-gate';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -115,6 +116,8 @@ export default function RootLayout({
                     </SyncStatusProvider>
                   </LocalDatabaseProvider>
                 </AuthProvider>
+                {/* Outside AuthProvider, which replaces its children with a loading screen while the profile loads: inside, the check would run again each time. It needs no session (app_config is public). */}
+                <UpdateGate />
                 <StatusBarSync />
               </ThemeProvider>
             </KeyboardProvider>
