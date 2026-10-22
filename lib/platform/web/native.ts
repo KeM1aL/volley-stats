@@ -1,6 +1,21 @@
-import type { NativeFeatures } from "../types";
+import type { NativeFeatures, ShareLinkResult } from "../types";
 
 const noopUnsubscribe = () => {};
+
+/** Web Share API when the browser has it (closing the dialog is not a failure), otherwise the link goes to the clipboard. */
+async function shareLinkWeb({ url, title, text }: { url: string; title: string; text?: string }): Promise<ShareLinkResult> {
+  if (typeof navigator.share === "function") {
+    try {
+      await navigator.share({ title, text, url });
+      return "shared";
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return "cancelled";
+      throw error;
+    }
+  }
+  await navigator.clipboard.writeText(url);
+  return "copied";
+}
 
 export const webNative: NativeFeatures = {
   nativePlatform: null,
@@ -26,4 +41,5 @@ export const webNative: NativeFeatures = {
   onBackButton: () => noopUnsubscribe,
   exitApp: () => {},
   watchStatusBar: () => noopUnsubscribe,
+  shareLink: shareLinkWeb,
 };

@@ -70,12 +70,17 @@ All device access sits behind `lib/platform` (`NativeFeatures` in [lib/platform/
 | Auth session in native storage | `lib/platform/mobile/storage.ts` (`@capacitor/preferences` as the supabase-js storage) |
 | Sync signals, device id and label | `lib/platform/mobile/sync.ts` (Network, App, Device, Preferences) |
 | Report share sheet | `lib/platform/mobile/files.ts` (`saveFile`: Filesystem cache file, then Share; browser fallback is a download; iPad shows the sheet centred) |
+| Stats link share | `lib/platform/mobile/share.ts` (`platform.shareLink({ url, title, text? })`: the system share sheet in the app; on web and in a browser the Web Share API, else the link is copied to the clipboard). Returns `"shared"`, `"copied"` or `"cancelled"` (sheet closed, not an error); the stats page shows a "Link copied" toast for `"copied"` only. The Android WebView has no `navigator.share`, which is why the app goes through `@capacitor/share` |
 | Keep the screen awake | `hooks/use-keep-awake.ts`, used by the live match page (`platform.keepAwake()`: plugin in the app, Screen Wake Lock in browsers) |
 | Haptics | `lib/matches/haptics.ts` decides the pattern (tap / success), the live match page calls `platform.haptics`. Live match only |
 | Landscape hint | `components/matches/live/landscape-hint.tsx`, `lib/matches/landscape-hint.ts`, `hooks/use-landscape.ts` (both targets, touch devices; dismissal remembered per match) |
 | Incoming links and Android back button | `components/native/native-bridge.tsx` (renders nothing; `appRouteFromUrl` in `lib/routes.ts` maps links, `lib/native/back-action.ts` decides the back button) |
 | Update banner / block | `components/native/update-gate.tsx`, `lib/api/app-config.ts`, `lib/utils/version.ts` |
 | Bottom tab bar | `components/navigation/bottom-tab-bar.tsx`, `lib/native/tab-bar.ts`, `components/navigation/use-text-entry-keyboard.ts` |
+| Profile tab, sign-out | `app/settings/page.tsx` (the Profile tab in the app), `components/auth/sign-out-button.tsx` (shared with the website header) |
+| Breadcrumb | `lib/native/breadcrumb.ts` (`breadcrumbFor`, `matchLabel`), `components/native/app-breadcrumb.tsx` |
+| Live page back button and sync status | `components/native/live-app-toolbar.tsx` |
+| "All saved" toast | `components/sync/all-saved-toast.tsx` (mounted in `SyncStatusProvider`), `lib/rxdb/sync/all-saved.ts` |
 | Status bar, splash, safe areas | `platform.watchStatusBar()`, `@capacitor/splash-screen` (config in `capacitor.config.ts`), `viewportFit: 'cover'` |
 | Analytics | Web only, through the `platform.Analytics` seam (a no-op component in the mobile build, so the script is not in the export) |
 
@@ -83,9 +88,15 @@ All device access sits behind `lib/platform` (`NativeFeatures` in [lib/platform/
 
 Subscribing replaces the system behaviour, so `backAction` decides every case, in this order: (1) an open dialog or sheet closes (Escape is dispatched, which Radix handles); (2) an active leave guard (live match with unsent or unfinished work) asks through the existing leave flow, then goes back, or home when the page was the first history entry; (3) on the home page the app exits; (4) otherwise back when there is history; (5) otherwise home.
 
-### Bottom tab bar
+### No top bar, bottom tab bar, Profile, breadcrumb
 
-Only in the installed app (`platform.nativePlatform !== null`); the website and the export opened in a browser keep the header navigation. Four tabs (Championships, Matches, Teams, Settings); the active one follows the section. Hidden on the live match page, on the sign-in pages and while a text field has the on-screen keyboard open. The tab links go through the leave guard. Known limit: `useKeyboard()` does not detect the Android WebView keyboard (the WebView resizes the page instead), so the tab bar uses `useTextEntryKeyboard` (a focused text field plus a viewport that lost at least 100 px).
+Only in the installed app (`platform.nativePlatform !== null`, read through `useNativeApp()`); the website and the export opened in a browser keep the header navigation. The app renders **no header** (`Navigation` returns null): the room goes to the content, and what the header held moves elsewhere.
+
+- **Bottom tab bar**: four tabs (Championships, Matches, Teams, Profile); the active one follows the section. The last tab is the `/settings` page, shown with a person icon and the label "Profile" (`navItems(t, { nativeApp: true })`). Hidden on the live match page, on the sign-in pages and while a text field has the on-screen keyboard open. The tab links go through the leave guard. The Matches tab shows an amber dot (`tab-unsent-dot`) while changes wait to upload (pending or rejected, from `useSyncStatus`). Known limit: `useKeyboard()` does not detect the Android WebView keyboard (the WebView resizes the page instead), so the tab bar uses `useTextEntryKeyboard` (a focused text field plus a viewport that lost at least 100 px).
+- **Profile tab** (`app/settings/page.tsx`): above the settings, a header card with the profile name and email, the full sync status (`SyncBadge fullLabel`) and the "Sign Out" button. `components/auth/sign-out-button.tsx` is shared with the website header: with unsent changes it asks (they upload at the next sign-in), otherwise it asks only when leaving a live match.
+- **Breadcrumb** (`components/native/app-breadcrumb.tsx`, trail from `breadcrumbFor` in `lib/native/breadcrumb.ts`): sub-pages (team, players, new team, championship, match stats, match score, privacy) show "Section > name > page" at the top. Every crumb but the last is a link through the leave guard; long names are truncated. A page passes the names it already shows (`team`, `championship`, `match` as "Home - Away" via `matchLabel`, and `teamHref` / `matchHref` for the middle crumb of the players and score pages). Tab roots, the landing page, the sign-in pages and the live page show none. Signed out (public stats and privacy pages) the first crumb leads home, since the sections behind it need a sign-in.
+- **Live match page**: no header and no tab bar, so `components/native/live-app-toolbar.tsx` is a small bar with a back button (through the existing leave confirmation, then back, or to Matches when the page was opened with nothing behind it) and the compact sync badge (`SyncBadge compact`).
+- **"All saved" toast**: fired by `AllSavedToast`, mounted in `SyncStatusProvider` (always present, so it works without the header badge): one toast when the upload queue empties after the sync status was "waiting" (decided by `trackAllSaved`). Web and app behave the same.
 
 ### Minimum-version check (update gate)
 

@@ -5,6 +5,9 @@ import type { SyncPlatform } from "@/lib/rxdb/sync/platform/types";
 
 export type BuildTarget = "web" | "mobile";
 
+/** What `shareLink` did: handed the link to a share dialog, copied it to the clipboard, or the person closed the dialog. */
+export type ShareLinkResult = "shared" | "copied" | "cancelled";
+
 /** Device features the app uses; no-ops or browser equivalents on web. */
 export interface NativeFeatures {
   /** "ios" or "android" inside the Capacitor app; null on web and in a browser. */
@@ -24,6 +27,11 @@ export interface NativeFeatures {
   exitApp(): void;
   /** Keeps the system status bar readable (light or dark text) as the theme changes. No-op on web. Returns the stop function. */
   watchStatusBar(): () => void;
+  /**
+   * Shares a link: the system share sheet in the app, the Web Share API in a browser that has it, otherwise a copy to the
+   * clipboard. `text` is only used by the Web Share API. Rejects when sharing fails (not when the dialog is closed).
+   */
+  shareLink(link: { url: string; title: string; text?: string }): Promise<ShareLinkResult>;
 }
 
 /** Everything that differs between the web deployment and the Capacitor app. Chosen at build time. */

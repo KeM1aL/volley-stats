@@ -26,7 +26,24 @@ Format "Test (6x6)" (5 points a set), a fresh team with 8 players and one match 
 ## Report through the share sheet ("Done when" 1)
 
 - [x] Stats page of that match (with the managed team), "Export PDF": the Android chooser opens ("Sharing 1 file", `<team>-vs-Team 1-2026-10-22.pdf`, Quick Share, Print, Drive, Messages, Bluetooth). The request crossed origins (`https://localhost` to `http://10.0.2.2:3100`), so CORS and Bearer auth work. Closing the chooser with back returns to the app.
-- Finding (not changed here): the separate "Share" button on the stats page calls `navigator.share`, which is `undefined` in the Android WebView, so it does nothing there (the error is only logged). Pre-existing; it needs a `@capacitor/share` path behind `lib/platform` if the app should share the stats link.
+- Finding (fixed by Task 16): the separate "Share" button on the stats page called `navigator.share`, which is `undefined` in the Android WebView, so it did nothing there. It now goes through `platform.shareLink` (see the next section).
+
+## Share the stats link (Task 16)
+
+- [x] Stats page, "Share" button: the Android chooser opens ("Sharing link", `http://10.0.2.2:3100/matches/stats?id=<match id>`, copy button, Quick Share, Chrome, Drive, Messages, Bluetooth). Run on 2026-10-22 on the emulator (`navigator.share` is `undefined` in the WebView, confirmed). The emulator's IntentResolver showed an "isn't responding" dialog while the chooser loaded (emulator slowness); "Wait" kept it, and back closed the chooser and returned to the app with no error.
+- [ ] Phone: pick a target (for example Messages) and check the link arrives.
+
+## App without a top bar (Tasks 15-16)
+
+To run on the final pass; none of these was looked at on the device yet.
+
+- [ ] No header on any page in the app (no logo, language, theme or Sign Out at the top); the content starts under the status bar.
+- [ ] Bottom tab bar: the last tab is "Profile" (person icon). It opens the Profile page: name and email card, the sync status with its text, and "Sign Out"; the settings cards follow.
+- [ ] Sign out from the Profile page: with nothing unsent it signs out (asks first only when leaving a live match); with unsent changes it shows the sign-out warning.
+- [ ] Matches tab shows an amber dot while changes wait to upload (airplane mode, play a point) and loses it once the badge is "saved".
+- [ ] Breadcrumb on sub-pages: team page (Teams > team), players (Teams > team > Players, the team crumb links back), new team, championship, match stats (Matches > Home - Away), match score (the match crumb links to the stats), privacy (Profile > Privacy). Each link goes back to the right page; names truncate. No breadcrumb on the four tab roots, the sign-in pages and the live page. Offline, the stats crumb shows the team names.
+- [ ] Live match page: back arrow at the top left with the compact sync badge next to it; back asks "Leave the live match?" when work is unsent or unfinished, then goes back (or to Matches when opened with nothing behind it).
+- [ ] "All saved" toast appears once after airplane mode is turned off with changes waiting, on any page (no header badge needed).
 
 ## Android back button ("Done when" 1, Review Focus 3)
 
@@ -63,7 +80,7 @@ Verified by intercepting the Supabase `app_config` response in the WebView (the 
 
 ## Bottom tab bar (Task 14)
 
-- [x] Four tabs (Championships, Matches, Teams, Settings) at the bottom of the home page and the four sections; the active tab is highlighted (`/teams/view?id=...` highlights Teams); the header has no hamburger or links outside the live page, only logo, sync indicator, language, theme and Sign Out.
+- [x] Four tabs (Championships, Matches, Teams, Settings) at the bottom of the home page and the four sections; the active tab is highlighted (`/teams/view?id=...` highlights Teams); the header has no hamburger or links outside the live page, only logo, sync indicator, language, theme and Sign Out. (Superseded by Task 15: no header in the app, the last tab is Profile; see "App without a top bar".)
 - [x] Sits above the gesture bar in portrait and landscape; the update banner sits above the bar.
 - [x] Hidden on the live match page. (Hidden on the sign-in pages: covered by the unit tests of `showTabBar`, not looked at on the device.)
 - [x] Hidden while the on-screen keyboard is open (settings page, tap in a text field: viewport 997 to 661 px, bar gone; closing the keyboard with back brings it back); also hidden after rotating to landscape with the keyboard open, and back again once it is closed.

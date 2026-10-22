@@ -288,11 +288,13 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
 
   const shareStats = async () => {
     try {
-      await navigator.share({
+      const result = await platform.shareLink({
         title: t("stats.title"),
         text: "Check out the statistics from our latest match!",
         url: platform.webOrigin() + routes.matchStats(matchId, Object.fromEntries(searchParams)),
       });
+      // The share dialog confirms itself; a copy to the clipboard does not.
+      if (result === "copied") toast({ title: t("stats.linkCopied") });
     } catch (error) {
       console.error("Error sharing:", error);
     }

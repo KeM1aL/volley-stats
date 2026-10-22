@@ -4,6 +4,7 @@ import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { webNative } from "../web/native";
+import { shareLinkNative } from "./share";
 import type { NativeFeatures } from "../types";
 
 /** Subscribes to a Capacitor listener and returns a synchronous unsubscribe (removes the listener once registered). */
@@ -82,4 +83,5 @@ export const mobileNative: NativeFeatures = {
     observer.observe(root, { attributes: true, attributeFilter: ["class"] });
     return () => observer.disconnect();
   },
+  shareLink: shareLinkNative,
 };

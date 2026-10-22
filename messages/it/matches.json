@@ -291,6 +291,7 @@
   },
   "stats": {
     "title": "Statistiche Partita",
+    "linkCopied": "Link copiato negli appunti",
     "matchOverview": "Panoramica Partita",
     "scoreProgression": "Progressione del Punteggio",
     "setBreakdown": "Analisi dei Set",
