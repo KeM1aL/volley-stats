@@ -35,6 +35,8 @@ export interface Platform extends NativeFeatures {
   webOrigin(): string;
   createSupabaseClient(): SupabaseClient<Database>;
   ServiceWorker: ComponentType<{ children: ReactNode }>;
+  /** Google Analytics script: rendered by the web build only (a no-op component on mobile, so the script is not in the export). */
+  Analytics: ComponentType;
   saveFile(data: Blob, fileName: string): Promise<void>;
   createSyncPlatform(): SyncPlatform;
   /** Full page load of an in-app path (the app serves its root page for sub-paths, so mobile goes through `/?to=`). */

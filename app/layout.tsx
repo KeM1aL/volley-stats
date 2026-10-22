@@ -14,7 +14,7 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { OfflineGate } from '@/components/offline-gate';
 import { KeyboardProvider } from '@/contexts/keyboard-context';
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { Analytics } from '@/components/analytics';
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider';
 import { isMobileBuild } from '@/lib/platform/build-target';
 import { StatusBarSync } from '@/components/providers/status-bar-sync';
@@ -124,7 +124,7 @@ export default function RootLayout({
           </LocaleProvider>
         </ServiceWorkerProvider>
       </body>
-      {process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
+      <Analytics />
     </html>
   );
 }

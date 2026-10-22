@@ -37,6 +37,7 @@ export const platform: Platform = {
     });
   },
   ServiceWorker: Passthrough,
+  Analytics: () => null,
   saveFile: saveFileNative,
   createSyncPlatform: () => (Capacitor.isNativePlatform() ? createNativeSyncPlatform() : createWebPlatform()),
   // Capacitor answers every extension-less path with the root index.html: the root page forwards to the target.
