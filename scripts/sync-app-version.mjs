@@ -6,9 +6,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** major * 10000 + minor * 100 + patch (a missing part is 0). Grows with every release, as the stores require. */
+/** major * 10000 + minor * 100 + patch. Grows with every release, as the stores require; minor and patch stay below 100 so two versions never share a code. */
 export function versionCode(version) {
-  const [major = 0, minor = 0, patch = 0] = version.split('.').map(Number);
+  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`Version "${version}" is not major.minor.patch (digits only)`);
+  const [major, minor, patch] = version.split('.').map(Number);
+  if (minor > 99 || patch > 99) throw new Error(`Version "${version}": minor and patch must be 99 or less, or version codes collide`);
   return major * 10000 + minor * 100 + patch;
 }
 
@@ -20,20 +22,21 @@ function replaceAll(text, pattern, replacement, file) {
 
 export function syncAppVersion(root = process.cwd()) {
   const { version } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`package.json version "${version}" is not major.minor.patch`);
   const code = versionCode(version);
 
   const gradle = path.join(root, 'android/app/build.gradle');
-  let text = fs.readFileSync(gradle, 'utf8');
-  text = replaceAll(text, /versionCode\s+\d+/g, `versionCode ${code}`, gradle);
-  text = replaceAll(text, /versionName\s+"[^"]*"/g, `versionName "${version}"`, gradle);
-  fs.writeFileSync(gradle, text);
+  let gradleText = fs.readFileSync(gradle, 'utf8');
+  gradleText = replaceAll(gradleText, /versionCode\s+\d+/g, `versionCode ${code}`, gradle);
+  gradleText = replaceAll(gradleText, /versionName\s+"[^"]*"/g, `versionName "${version}"`, gradle);
 
   const pbxproj = path.join(root, 'ios/App/App.xcodeproj/project.pbxproj');
-  text = fs.readFileSync(pbxproj, 'utf8');
-  text = replaceAll(text, /MARKETING_VERSION = [^;]*;/g, `MARKETING_VERSION = ${version};`, pbxproj);
-  text = replaceAll(text, /CURRENT_PROJECT_VERSION = [^;]*;/g, `CURRENT_PROJECT_VERSION = ${code};`, pbxproj);
-  fs.writeFileSync(pbxproj, text);
+  let pbxText = fs.readFileSync(pbxproj, 'utf8');
+  pbxText = replaceAll(pbxText, /MARKETING_VERSION = [^;]*;/g, `MARKETING_VERSION = ${version};`, pbxproj);
+  pbxText = replaceAll(pbxText, /CURRENT_PROJECT_VERSION = [^;]*;/g, `CURRENT_PROJECT_VERSION = ${code};`, pbxproj);
+
+  // Both files are computed and checked before either is written, so a failure leaves the projects untouched.
+  fs.writeFileSync(gradle, gradleText);
+  fs.writeFileSync(pbxproj, pbxText);
 
   console.log(`App version ${version} (build ${code}) written to the Android and iOS projects.`);
 }

@@ -21,7 +21,7 @@ function openStore(url: string) {
 
 /**
  * Checks the minimum app version in `app_config` at start and whenever the app returns to the foreground.
- * A newer version available: a dismissible banner. Below the minimum: a full-screen page, but never over a live match
+ * A newer version available: a dismissible banner. Below the minimum: a full-screen page. Neither is shown over a live match
  * (it appears once the live page is left). Renders nothing on web, and nothing when the check cannot be made.
  */
 export function UpdateGate() {
@@ -61,11 +61,14 @@ export function UpdateGate() {
     return (
       <div
         className="safe-area-inset fixed inset-0 z-[100] flex items-center justify-center bg-background p-6"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="update-required-title"
         data-testid="update-required"
       >
         <div className="w-full max-w-sm space-y-4 text-center">
           <RefreshCw className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />
-          <h1 className="text-xl font-semibold">{t("requiredTitle")}</h1>
+          <h1 id="update-required-title" className="text-xl font-semibold">{t("requiredTitle")}</h1>
           <p className="text-muted-foreground">{t("requiredBody")}</p>
           {storeUrl && (
             <Button type="button" className="w-full" onClick={() => openStore(storeUrl)}>

@@ -29,12 +29,13 @@ export function updateStatus(
   return "ok";
 }
 
-/** What to show. A live match is never interrupted: the block waits until the live page is left. */
+/** What to show. A live match is never interrupted: neither the block nor the banner shows on the live page; they wait until it is left. */
 export function updateUi(
   status: UpdateStatus,
   { onLivePage, bannerDismissed }: { onLivePage: boolean; bannerDismissed: boolean },
 ): "none" | "banner" | "block" {
-  if (status === "required") return onLivePage ? "none" : "block";
+  if (onLivePage) return "none";
+  if (status === "required") return "block";
   if (status === "available") return bannerDismissed ? "none" : "banner";
   return "none";
 }

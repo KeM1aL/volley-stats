@@ -18,6 +18,9 @@ describe("version check", () => {
     expect(updateUi("required", { onLivePage: false, bannerDismissed: true })).toBe("block");
     expect(updateUi("available", { onLivePage: false, bannerDismissed: true })).toBe("none");
   });
+  it("never shows the banner over a live match", () => {
+    expect(updateUi("available", { onLivePage: true, bannerDismissed: false })).toBe("none");
+  });
   it("shows the banner when an update is available and not dismissed", () => {
     expect(updateUi("available", { onLivePage: false, bannerDismissed: false })).toBe("banner");
     expect(updateUi("ok", { onLivePage: false, bannerDismissed: false })).toBe("none");
