@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { writeUnsentHint } from "@/lib/rxdb/pending-hint";
 import type { SyncManager } from "@/lib/rxdb/sync/manager";
+import { AllSavedToast } from "@/components/sync/all-saved-toast";
 import { deriveSyncStatus, type SyncStatus } from "@/lib/rxdb/sync/status";
 
 export const SyncStatusContext = createContext<SyncStatus | null>(null);
@@ -37,5 +38,10 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
 
   // A status computed for another manager (a replaced database) is not shown.
   const status = computed && computed.manager === manager ? computed.status : null;
-  return <SyncStatusContext.Provider value={status}>{children}</SyncStatusContext.Provider>;
+  return (
+    <SyncStatusContext.Provider value={status}>
+      <AllSavedToast state={status?.state ?? null} />
+      {children}
+    </SyncStatusContext.Provider>
+  );
 }

@@ -1,4 +1,4 @@
-import { normalizePath } from "@/lib/routes";
+import { normalizePath, routes } from "@/lib/routes";
 
 export type Crumb = { label: string; href?: string };
 
@@ -20,10 +20,17 @@ const name = (value: string | null | undefined, fallback: string): string => val
  * The trail shown at the top of sub-pages in the installed app. Empty for tab roots, the landing page, sign-in pages and the
  * live match (it has its own back button). `t` is the `navigation` translator (`menu.*` and `breadcrumb.*` keys). Every crumb
  * but the last is a link; the middle crumb of the players / score pages links only when the page passes its href.
+ * Signed out (public stats and privacy pages) the first crumb leads home: the sections behind it need a sign-in.
  */
-export function breadcrumbFor(pathname: string, names: BreadcrumbNames, t: (key: string) => string): Crumb[] {
-  const teams: Crumb = { label: t("menu.teams"), href: "/teams" };
-  const matches: Crumb = { label: t("menu.matches"), href: "/matches" };
+export function breadcrumbFor(
+  pathname: string,
+  names: BreadcrumbNames,
+  t: (key: string) => string,
+  { signedIn = true }: { signedIn?: boolean } = {},
+): Crumb[] {
+  const first = (href: string) => (signedIn ? href : routes.home());
+  const teams: Crumb = { label: t("menu.teams"), href: first(routes.teams()) };
+  const matches: Crumb = { label: t("menu.matches"), href: first(routes.matches()) };
   const team = name(names.team, t("breadcrumb.team"));
   const match = name(names.match, t("breadcrumb.match"));
 
@@ -36,7 +43,7 @@ export function breadcrumbFor(pathname: string, names: BreadcrumbNames, t: (key:
       return [teams, { label: t("breadcrumb.newTeam") }];
     case "/championships/view":
       return [
-        { label: t("menu.championships"), href: "/championships" },
+        { label: t("menu.championships"), href: first("/championships") },
         { label: name(names.championship, t("breadcrumb.championship")) },
       ];
     case "/matches/stats":
@@ -44,7 +51,7 @@ export function breadcrumbFor(pathname: string, names: BreadcrumbNames, t: (key:
     case "/matches/score":
       return [matches, names.matchHref ? { label: match, href: names.matchHref } : { label: match }, { label: t("breadcrumb.score") }];
     case "/privacy":
-      return [{ label: t("menu.profile"), href: "/settings" }, { label: t("breadcrumb.privacy") }];
+      return [{ label: t("menu.profile"), href: first("/settings") }, { label: t("breadcrumb.privacy") }];
     default:
       return [];
   }

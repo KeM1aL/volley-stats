@@ -87,6 +87,19 @@ describe("breadcrumbFor", () => {
   });
 });
 
+describe("breadcrumbFor signed out", () => {
+  const out = { signedIn: false };
+  it("sends the first crumb home on the public stats page", () =>
+    expect(breadcrumbFor("/matches/stats", { match: "Home – Away" }, t, out)).toEqual([
+      { label: "Matches", href: "/" },
+      { label: "Home – Away" },
+    ]));
+  it("sends the first crumb home on the privacy page", () =>
+    expect(breadcrumbFor("/privacy", {}, t, out)).toEqual([{ label: "Profile", href: "/" }, { label: "Privacy" }]));
+  it("keeps the signed-in links by default", () =>
+    expect(breadcrumbFor("/privacy", {}, t, { signedIn: true })[0].href).toBe("/settings"));
+});
+
 describe("matchLabel", () => {
   it("joins the two team names", () => expect(matchLabel("Home", "Away")).toBe("Home – Away"));
   it("is undefined while a name is missing", () => {

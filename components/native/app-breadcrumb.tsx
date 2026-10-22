@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronRight } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 import { GuardedLink } from "@/components/guarded-link";
 import { useNativeApp } from "@/components/navigation/use-native-app";
 import { breadcrumbFor, type BreadcrumbNames, type Crumb } from "@/lib/native/breadcrumb";
@@ -17,9 +18,10 @@ export function AppBreadcrumb({ items, names = {} }: { items?: Crumb[]; names?: 
   const nativeApp = useNativeApp();
   const pathname = usePathname();
   const t = useTranslations("navigation");
+  const { user } = useAuth();
   if (!nativeApp) return null;
 
-  const crumbs = items ?? breadcrumbFor(pathname ?? "/", names, t);
+  const crumbs = items ?? breadcrumbFor(pathname ?? "/", names, t, { signedIn: !!user });
   if (crumbs.length === 0) return null;
 
   return (

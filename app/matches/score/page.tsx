@@ -204,7 +204,7 @@ function LiveScorePage({ matchId }: { matchId: string }) {
     <div className="space-y-6">
       <AppBreadcrumb
         names={{
-          match: matchLabel(match.home_team?.name, match.away_team?.name),
+          match: matchLabel(match.home_team?.name ?? homeTeam?.name, match.away_team?.name ?? awayTeam?.name),
           // The match's stats page needs the managed team, which this page has in its own URL.
           matchHref: routes.matchStats(matchId, { team: searchParams.get("team") }),
         }}

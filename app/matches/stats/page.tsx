@@ -326,7 +326,15 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
 
   return (
     <div className="space-y-6">
-      <AppBreadcrumb names={{ match: matchLabel(match.home_team?.name, match.away_team?.name) }} />
+      {/* The offline copy of the match has no joined teams: the loaded managed/opponent teams give the names, home first. */}
+      <AppBreadcrumb
+        names={{
+          match: matchLabel(
+            match.home_team?.name ?? (managedTeam?.id === match.home_team_id ? managedTeam : opponentTeam)?.name,
+            match.away_team?.name ?? (managedTeam?.id === match.away_team_id ? managedTeam : opponentTeam)?.name,
+          ),
+        }}
+      />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">{t("stats.title")}</h1>

@@ -10,9 +10,6 @@ import { SyncBadge } from "@/components/sync/sync-badge";
 import { allowNextUnload } from "@/hooks/use-unsent-guard";
 import { routes } from "@/lib/routes";
 
-/** Height of the toolbar, for the live layout (it has no header in the installed app). */
-export const LIVE_APP_TOOLBAR_CLASS = "h-9";
-
 /**
  * Installed app only: the live match page has no header and no tab bar, so this small bar holds the back button (through the
  * existing leave confirmation, then back, or to Matches when the page was opened with nothing behind it) and the compact sync status.
@@ -33,7 +30,7 @@ export function LiveAppToolbar() {
   };
 
   return (
-    <div className={`flex ${LIVE_APP_TOOLBAR_CLASS} shrink-0 items-center gap-1 px-1`} data-testid="live-app-toolbar">
+    <div className="flex h-9 shrink-0 items-center gap-1 px-1" data-testid="live-app-toolbar">
       <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t("actions.back")} data-testid="live-back" onClick={() => void goBack()}>
         <ArrowLeft className="h-5 w-5" />
       </Button>
