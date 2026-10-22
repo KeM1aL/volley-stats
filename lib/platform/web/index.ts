@@ -4,9 +4,11 @@ import { saveBlob } from "@/lib/report/download";
 import { createWebPlatform } from "../shared/sync";
 import { supabaseConfig } from "../supabase-config";
 import type { Platform } from "../types";
+import { webNative } from "./native";
 import { WebServiceWorker } from "./service-worker";
 
 export const platform: Platform = {
+  ...webNative,
   target: "web",
   apiOrigin: "",
   webOrigin: () => (typeof window === "undefined" ? process.env.NEXT_PUBLIC_WEB_ORIGIN ?? "" : window.location.origin),

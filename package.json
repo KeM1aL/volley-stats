@@ -34,9 +34,17 @@
     "test:e2e:cleanup": "tsx tests/tools/cleanup-e2e-data.ts"
   },
   "dependencies": {
+    "@capacitor-community/keep-awake": "^8.0.1",
     "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
+    "@capacitor/device": "^8.0.3",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.5.3",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.3",
     "@hookform/resolvers": "5.9.1",
     "@next/third-parties": "16.3.8",
     "@radix-ui/react-accordion": "^1.2.20",
