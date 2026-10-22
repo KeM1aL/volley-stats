@@ -23,6 +23,14 @@ describe("shareLinkNative", () => {
     expect(Share.share).toHaveBeenCalledWith({ url: link.url, title: link.title });
   });
 
+  it("drops the web-only text in the app", async () => {
+    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+    vi.mocked(Share.share).mockResolvedValue({ activityType: undefined });
+    await shareLinkNative({ ...link, text: "Check it out" });
+    expect(vi.mocked(Share.share).mock.calls[0][0]).toEqual({ url: link.url, title: link.title });
+    expect(vi.mocked(Share.share).mock.calls[0][0]).not.toHaveProperty("text");
+  });
+
   it("reports a closed share sheet as cancelled", async () => {
     vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
     vi.mocked(Share.share).mockRejectedValue(new Error("Share canceled"));

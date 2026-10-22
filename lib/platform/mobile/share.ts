@@ -10,7 +10,7 @@ export async function shareLinkNative(link: { url: string; title: string; text?:
     await Share.share({ url: link.url, title: link.title });
     return "shared";
   } catch (error) {
-    // Closing the share sheet is not a failure.
+    // Closing the share sheet is not a failure (the plugin rejects with "Share canceled").
     if (error instanceof Error && /cancel/i.test(error.message)) return "cancelled";
     throw error;
   }

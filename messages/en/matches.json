@@ -292,6 +292,7 @@
   "stats": {
     "title": "Match Statistics",
     "linkCopied": "Link copied to the clipboard",
+    "shareFailed": "Could not share the link",
     "matchOverview": "Match Overview",
     "setBreakdown": "Set Breakdown",
     "playerPerformance": "Player Performance Analysis",

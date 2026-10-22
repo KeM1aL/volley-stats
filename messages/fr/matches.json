@@ -292,6 +292,7 @@
   "stats": {
     "title": "Statistiques du match",
     "linkCopied": "Lien copié dans le presse-papiers",
+    "shareFailed": "Impossible de partager le lien",
     "matchOverview": "Aperçu du Match",
     "scoreProgression": "Progression du Score",
     "setBreakdown": "Analyse des Sets",

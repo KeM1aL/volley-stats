@@ -26,6 +26,11 @@ describe("webNative.shareLink", () => {
     await expect(webNative.shareLink(link)).rejects.toThrow("boom");
   });
 
+  it("rejects when there is neither the Web Share API nor a clipboard", async () => {
+    vi.stubGlobal("navigator", {});
+    await expect(webNative.shareLink(link)).rejects.toThrow("share_unavailable");
+  });
+
   it("copies the link without the Web Share API", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal("navigator", { clipboard: { writeText } });

@@ -292,6 +292,7 @@
   "stats": {
     "title": "Estatísticas da Partida",
     "linkCopied": "Link copiado para a área de transferência",
+    "shareFailed": "Não foi possível compartilhar o link",
     "matchOverview": "Visão Geral da Partida",
     "scoreProgression": "Progressão da Pontuação",
     "setBreakdown": "Análise dos Jogos",

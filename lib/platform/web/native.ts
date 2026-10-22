@@ -13,6 +13,8 @@ async function shareLinkWeb({ url, title, text }: { url: string; title: string; 
       throw error;
     }
   }
+  // Neither the Web Share API nor the Clipboard API (insecure context, older browser): the caller tells the person.
+  if (!navigator.clipboard?.writeText) throw new Error("share_unavailable");
   await navigator.clipboard.writeText(url);
   return "copied";
 }

@@ -297,6 +297,7 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
       if (result === "copied") toast({ title: t("stats.linkCopied") });
     } catch (error) {
       console.error("Error sharing:", error);
+      toast({ variant: "destructive", title: t("stats.shareFailed") });
     }
   };
 
