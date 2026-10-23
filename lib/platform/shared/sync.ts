@@ -59,6 +59,14 @@ export function generateDeviceId(cryptoApi: Partial<Crypto> | undefined = global
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+export async function requestPersistentStorage(): Promise<boolean> {
+  try {
+    return (await navigator.storage?.persist?.()) ?? false;
+  } catch {
+    return false;
+  }
+}
+
 export function createWebPlatform(): SyncPlatform {
   const connectivity$: Observable<boolean> = defer(() =>
     merge(
@@ -75,13 +83,7 @@ export function createWebPlatform(): SyncPlatform {
   return {
     connectivity$,
     foreground$,
-    async requestPersistentStorage() {
-      try {
-        return (await navigator.storage?.persist?.()) ?? false;
-      } catch {
-        return false;
-      }
-    },
+    requestPersistentStorage,
     async getDeviceId() {
       try {
         const saved = localStorage.getItem(DEVICE_ID_KEY);

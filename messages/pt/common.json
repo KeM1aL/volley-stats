@@ -140,5 +140,12 @@
     "backToLive": "Voltar ao jogo ao vivo",
     "retry": "Tentar novamente",
     "goBack": "Voltar"
+  },
+  "update": {
+    "available": "Há uma nova versão do VolleyStats disponível.",
+    "action": "Atualizar",
+    "dismiss": "Fechar",
+    "requiredTitle": "Atualização necessária",
+    "requiredBody": "Esta versão do VolleyStats já não é suportada. Atualize a aplicação para continuar a usá-la."
   }
 }

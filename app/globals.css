@@ -191,6 +191,22 @@
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
+
+    /* Bottom tab bar (installed app): its height above the safe area, and the space it takes at the bottom edge (0 while hidden). */
+    --tab-bar-height: 3.5rem;
+    --tab-bar-offset: 0px;
+    --fixed-bottom-safe-area: var(--safe-area-inset-bottom);
+  }
+
+  /* BottomTabBar adds this class to body while it shows: fixed bottom elements (update banner) sit above it, which already covers the inset. */
+  body.tab-bar-visible {
+    --tab-bar-offset: calc(var(--tab-bar-height) + var(--safe-area-inset-bottom));
+    --fixed-bottom-safe-area: 0px;
+  }
+
+  /* The installed app has no web header. native-boot.ts sets the attribute before the first paint; React removes the header after mount (useNativeApp). */
+  html[data-native-app] [data-web-header] {
+    display: none;
   }
 
   .dark {

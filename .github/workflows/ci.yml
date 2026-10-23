@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -23,9 +24,9 @@ jobs:
       NEXT_PUBLIC_API_ORIGIN: ${{ vars.NEXT_PUBLIC_API_ORIGIN }}
       NEXT_PUBLIC_WEB_ORIGIN: ${{ vars.NEXT_PUBLIC_WEB_ORIGIN }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -41,3 +42,88 @@ jobs:
         run: pnpm build:mobile
       - name: Export check
         run: pnpm check:export
+      - name: Upload the static export (for the native builds)
+        uses: actions/upload-artifact@v7
+        with:
+          name: mobile-export
+          path: out
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  android:
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - uses: actions/download-artifact@v8
+        with:
+          name: mobile-export
+          path: out
+      - name: Copy the export into the Android project
+        run: |
+          node scripts/sync-app-version.mjs
+          npx cap sync android
+      - name: Debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v7
+        with:
+          name: volleystats-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  ios:
+    needs: checks
+    # macos-26 is GitHub's arm64 macOS 26 image; it ships several Xcode 26.x versions (runner-images macos-26-arm64 README).
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Select Xcode 26
+        run: |
+          ls -d /Applications/Xcode*.app
+          if ! xcodebuild -version | grep -q '^Xcode 26'; then
+            XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)
+            sudo xcode-select -s "$XCODE"
+          fi
+          xcodebuild -version
+      - uses: actions/download-artifact@v8
+        with:
+          name: mobile-export
+          path: out
+      - name: Copy the export into the iOS project
+        run: |
+          node scripts/sync-app-version.mjs
+          npx cap sync ios
+      - name: Unsigned simulator build
+        run: >
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO build -derivedDataPath build
+      - name: Privacy manifest is bundled in the app
+        run: |
+          # The app's own manifest, at the root of the bundle. Capacitor and its plugins embed manifests of their own deeper in App.app, which must not satisfy this check.
+          manifest=build/Build/Products/Debug-iphonesimulator/App.app/PrivacyInfo.xcprivacy
+          if [ ! -f "$manifest" ]; then
+            echo "::error::$manifest is missing (ios/App/App/PrivacyInfo.xcprivacy is not bundled in the app). Manifests found in the build:"
+            find build -name PrivacyInfo.xcprivacy
+            exit 1
+          fi
+          echo "Found: $manifest"

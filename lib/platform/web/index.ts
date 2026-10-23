@@ -4,9 +4,12 @@ import { saveBlob } from "@/lib/report/download";
 import { createWebPlatform } from "../shared/sync";
 import { supabaseConfig } from "../supabase-config";
 import type { Platform } from "../types";
+import { webNative } from "./native";
+import { WebAnalytics } from "./analytics";
 import { WebServiceWorker } from "./service-worker";
 
 export const platform: Platform = {
+  ...webNative,
   target: "web",
   apiOrigin: "",
   webOrigin: () => (typeof window === "undefined" ? process.env.NEXT_PUBLIC_WEB_ORIGIN ?? "" : window.location.origin),
@@ -16,6 +19,8 @@ export const platform: Platform = {
     return createBrowserClient<Database>(url, anonKey, { auth: { persistSession: true, detectSessionInUrl: true } });
   },
   ServiceWorker: WebServiceWorker,
+  Analytics: WebAnalytics,
   saveFile: async (data, fileName) => saveBlob(data, fileName),
   createSyncPlatform: createWebPlatform,
+  hardNavigate: (path) => window.location.assign(path),
 };

@@ -2,12 +2,16 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { findSecrets, forbiddenPaths, missingPages } from "../../../scripts/lib/export-check.mjs";
+import { APP_PAGES } from "@/lib/routes";
+import { EXPECTED_PAGES, findSecrets, forbiddenPaths, missingPages } from "../../../scripts/lib/export-check.mjs";
 
 const jwt = (payload: object) =>
   ["eyJhbGciOiJIUzI1NiJ9", Buffer.from(JSON.stringify(payload)).toString("base64url"), "c2lnbmF0dXJlc2lnbmF0dXJl"].join(".");
 
 describe("export check", () => {
+  it("expects exactly the pages the app opens links to", () => {
+    expect([...EXPECTED_PAGES].sort()).toEqual([...APP_PAGES].sort());
+  });
   it("lists pages without an index.html", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "out-"));
     fs.mkdirSync(path.join(dir, "teams"), { recursive: true });

@@ -15,6 +15,7 @@ import debug from './debug.json';
 import errors from './errors.json';
 import sync from './sync.json';
 import report from './report.json';
+import privacy from './privacy.json';
 
 export default {
   common,
@@ -34,4 +35,5 @@ export default {
   errors,
   sync,
   report,
+  privacy,
 };

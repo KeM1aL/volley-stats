@@ -8,10 +8,23 @@
     "championships": "Championnats",
     "matches": "Matchs",
     "teams": "Équipes",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "profile": "Profil"
   },
   "actions": {
     "signOut": "Se déconnecter",
-    "openMenu": "Ouvrir le menu"
+    "openMenu": "Ouvrir le menu",
+    "back": "Retour"
+  },
+  "breadcrumb": {
+    "players": "Joueurs",
+    "newTeam": "Nouvelle équipe",
+    "score": "Score",
+    "privacy": "Confidentialité",
+    "team": "Équipe",
+    "match": "Match",
+    "championship": "Championnat",
+    "home": "Accueil",
+    "ariaLabel": "Fil d'Ariane"
   }
 }

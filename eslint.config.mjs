@@ -6,7 +6,7 @@ export default defineConfig([
   {
     // Server-only modules: only in *.web.ts(x) files (web target), proxy.ts and lib/server/.
     files: ['**/*.{ts,tsx}'],
-    ignores: ['**/*.web.ts', '**/*.web.tsx', 'proxy.ts', 'lib/server/**', 'tests/**', 'scripts/**'],
+    ignores: ['**/*.web.ts', '**/*.web.tsx', 'proxy.ts', 'lib/server/**', 'tests/**', 'scripts/**', 'capacitor.config.ts'],
     rules: {
       'no-restricted-imports': ['error', {
         paths: [
@@ -27,7 +27,7 @@ export default defineConfig([
   },
   {
     // Core folders stay free of React and Next.
-    files: ['lib/{api,auth,commands,importers,keyboard,matches,rxdb,stats,templates,types,utils}/**/*.{ts,tsx}'],
+    files: ['lib/{api,auth,commands,importers,keyboard,matches,native,rxdb,stats,templates,types,utils}/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
         paths: ['react', 'react-dom', 'next', 'next-intl', 'next/headers', 'next/server', 'next-intl/server', '@supabase/ssr', '@platform-impl']
@@ -39,6 +39,9 @@ export default defineConfig([
   globalIgnores([
     '.next/**',
     '.worktrees/**',
+    'android/**',
+    'ios/**',
+    'out/**',
     'next-env.d.ts',
     'node_modules/**',
     'playwright/**',

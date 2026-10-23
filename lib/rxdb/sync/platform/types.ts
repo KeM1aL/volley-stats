@@ -2,7 +2,7 @@ import type { Observable } from "rxjs";
 
 /**
  * Platform signals the sync core needs. The web implementation uses browser
- * events; a Capacitor or Expo build provides its own without touching the core.
+ * events; the Capacitor app provides its own (lib/platform/mobile/sync.ts) without touching the core.
  */
 export interface SyncPlatform {
   /** Emits the current connectivity, then every change. */

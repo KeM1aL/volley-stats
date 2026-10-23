@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocalDb } from "@/components/providers/local-database-provider";
 import { useSyncStatus } from "@/hooks/use-sync-status";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { ScorerInfo } from "@/lib/rxdb/sync/scorer-claim";
 import type { SyncBadgeState } from "@/lib/rxdb/sync/status";
@@ -37,30 +36,23 @@ function SupersededLine({ holder }: { holder: ScorerInfo | null }) {
 
 /**
  * Whether this device's match data is on the server (spec section 8).
- * `compact` (live match header) shows the icon only and never toasts.
+ * `compact` (live match header) shows the icon only. The "All saved" toast is not here: `AllSavedToast` (in `SyncStatusProvider`) fires it. `fullLabel` (the app's Profile page) always shows the status text, on any width.
  */
-export function SyncBadge({ compact = false }: { compact?: boolean }) {
+export function SyncBadge({ compact = false, fullLabel = false }: { compact?: boolean; fullLabel?: boolean }) {
   const t = useTranslations("sync");
-  const { toast } = useToast();
   const { localDb } = useLocalDb();
   const status = useSyncStatus();
   const [showSavedLabel, setShowSavedLabel] = useState(false);
   const previousState = useRef<SyncBadgeState | null>(null);
-  const sawWaiting = useRef(false);
   const state = status?.state ?? null;
 
   useEffect(() => {
     if (!state) return;
-    if (state === "waiting") sawWaiting.current = true;
     const previous = previousState.current;
     previousState.current = state;
     if (state !== "saved" || !previous || previous === "saved") return;
-    if (sawWaiting.current && !compact) {
-      sawWaiting.current = false;
-      toast({ title: t("badge.allSavedToast") });
-    }
     setShowSavedLabel(true);
-  }, [state, compact, t, toast]);
+  }, [state]);
 
   // The "All saved" label fades after a moment. Its own effect: whatever re-runs the one above
   // (a new `t`, `toast`...) must neither cancel the fade nor leave the label up for good.
@@ -81,7 +73,7 @@ export function SyncBadge({ compact = false }: { compact?: boolean }) {
     problem: t("badge.problem", { count: status.rejectedCount }),
     "other-account": t("badge.otherAccount"),
   }[status.state];
-  const showLabel = !compact && (status.state !== "saved" || showSavedLabel);
+  const showLabel = fullLabel || (!compact && (status.state !== "saved" || showSavedLabel));
 
   return (
     <Popover>
@@ -100,7 +92,7 @@ export function SyncBadge({ compact = false }: { compact?: boolean }) {
           )}
         >
           <Icon className={cn("h-4 w-4", status.state === "uploading" && "animate-spin")} />
-          {showLabel && <span className="hidden sm:inline max-w-56 truncate">{label}</span>}
+          {showLabel && <span className={cn("max-w-56 truncate", !fullLabel && "hidden sm:inline")}>{label}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 space-y-3" data-testid="sync-details">

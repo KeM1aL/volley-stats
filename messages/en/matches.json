@@ -271,6 +271,10 @@
       "added": "{name} added to the roster",
       "addError": "Couldn't add the player. Please try again."
     },
+    "landscapeHint": {
+      "message": "Turn your device sideways for a better view of the court.",
+      "dismiss": "Dismiss"
+    },
     "left": {
       "title": "This match couldn't be loaded on this device",
       "reasons": {
@@ -287,6 +291,8 @@
   },
   "stats": {
     "title": "Match Statistics",
+    "linkCopied": "Link copied to the clipboard",
+    "shareFailed": "Could not share the link",
     "matchOverview": "Match Overview",
     "setBreakdown": "Set Breakdown",
     "playerPerformance": "Player Performance Analysis",

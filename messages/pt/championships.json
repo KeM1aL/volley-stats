@@ -152,6 +152,8 @@
     "viewDetails": "Ver detalhes"
   },
   "import": {
-    "comingSoon": "Brevemente"
+    "success": "Importação concluída",
+    "successDesc": "Os jogos da FFVB foram importados.",
+    "failure": "Falha na importação"
   }
 }

@@ -34,6 +34,8 @@ import { fileNameFromDisposition } from "@/lib/report/download";
 import { useRouteId } from "@/hooks/use-route-id";
 import { routes } from "@/lib/routes";
 import { LoadingPage } from "@/components/loading-page";
+import { AppBreadcrumb } from "@/components/native/app-breadcrumb";
+import { matchLabel } from "@/lib/native/breadcrumb";
 import { ArchivedMatchNotice } from "@/components/matches/archived-match-notice";
 
 class ReportRequestError extends Error {
@@ -286,13 +288,16 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
 
   const shareStats = async () => {
     try {
-      await navigator.share({
+      const result = await platform.shareLink({
         title: t("stats.title"),
         text: "Check out the statistics from our latest match!",
         url: platform.webOrigin() + routes.matchStats(matchId, Object.fromEntries(searchParams)),
       });
+      // The share dialog confirms itself; a copy to the clipboard does not.
+      if (result === "copied") toast({ title: t("stats.linkCopied") });
     } catch (error) {
       console.error("Error sharing:", error);
+      toast({ variant: "destructive", title: t("stats.shareFailed") });
     }
   };
 
@@ -324,6 +329,15 @@ function MatchStatsPage({ matchId }: { matchId: string }) {
 
   return (
     <div className="space-y-6">
+      {/* The offline copy of the match has no joined teams: the loaded managed/opponent teams give the names, home first. */}
+      <AppBreadcrumb
+        names={{
+          match: matchLabel(
+            match.home_team?.name ?? (managedTeam?.id === match.home_team_id ? managedTeam : opponentTeam)?.name,
+            match.away_team?.name ?? (managedTeam?.id === match.away_team_id ? managedTeam : opponentTeam)?.name,
+          ),
+        }}
+      />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">{t("stats.title")}</h1>

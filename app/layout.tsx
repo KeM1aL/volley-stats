@@ -14,8 +14,14 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { OfflineGate } from '@/components/offline-gate';
 import { KeyboardProvider } from '@/contexts/keyboard-context';
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { Analytics } from '@/components/analytics';
 import { ServiceWorkerProvider } from '@/components/providers/service-worker-provider';
+import { isMobileBuild } from '@/lib/platform/build-target';
+import { NATIVE_BOOT_SCRIPT } from '@/lib/platform/native-boot';
+import { StatusBarSync } from '@/components/providers/status-bar-sync';
+import { NativeBridge } from '@/components/native/native-bridge';
+import { UpdateGate } from '@/components/native/update-gate';
+import { BottomTabBar, TabBarProvider, TabBarSpacer } from '@/components/navigation/bottom-tab-bar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -67,6 +73,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Mobile build only: marks <html> as the installed app before the first paint, so the web header never flashes (globals.css). */}
+        {isMobileBuild && <script dangerouslySetInnerHTML={{ __html: NATIVE_BOOT_SCRIPT }} />}
         {/* <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" /> */}
@@ -93,27 +101,38 @@ export default function RootLayout({
                   <LocalDatabaseProvider>
                     <SyncStatusProvider>
                       <LeaveGuardProvider>
+                        <NativeBridge />
                         <Suspense fallback={null}><LoadingBar /></Suspense>
-                        <div className="keyboard-layout-grid bg-background">
-                          <header>
-                            <Navigation />
-                          </header>
-                          <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
-                            <AuthGuard><OfflineGate>{children}</OfflineGate></AuthGuard>
-                          </main>
-                          <div className="keyboard-spacer" aria-hidden="true" />
-                        </div>
+                        {/* Mobile build only: the page draws under the system bars, so these strips keep scrolled content out from under them. Below the dialog overlays (z-50). */}
+                        {isMobileBuild && <div className="fixed inset-x-0 top-0 z-40 h-(--safe-area-inset-top) bg-background" aria-hidden="true" />}
+                        {isMobileBuild && <div className="fixed inset-x-0 bottom-0 z-40 h-(--safe-area-inset-bottom) bg-background" aria-hidden="true" />}
+                        <TabBarProvider>
+                          <div className={isMobileBuild ? "keyboard-layout-grid safe-area-inset bg-background" : "keyboard-layout-grid bg-background"}>
+                            <header>
+                              <Navigation />
+                            </header>
+                            <main className="keyboard-main-content 2xl:container 2xl:mx-auto px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
+                              <AuthGuard><OfflineGate>{children}</OfflineGate></AuthGuard>
+                              <TabBarSpacer />
+                            </main>
+                            <div className="keyboard-spacer" aria-hidden="true" />
+                          </div>
+                          <BottomTabBar />
+                        </TabBarProvider>
                         <Toaster />
                       </LeaveGuardProvider>
                     </SyncStatusProvider>
                   </LocalDatabaseProvider>
                 </AuthProvider>
+                {/* Outside AuthProvider, which replaces its children with a loading screen while the profile loads: inside, the check would run again each time. It needs no session (app_config is public). */}
+                <UpdateGate />
+                <StatusBarSync />
               </ThemeProvider>
             </KeyboardProvider>
           </LocaleProvider>
         </ServiceWorkerProvider>
       </body>
-      {process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
+      <Analytics />
     </html>
   );
 }

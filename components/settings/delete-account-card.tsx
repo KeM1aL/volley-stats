@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/lib/supabase/client";
+import { platform } from "@/lib/platform";
 import { clearCachedUser } from "@/lib/auth/user-cache";
 import { LOCALE_ADOPTED_KEY, LOCALE_STORAGE_KEY } from "@/lib/i18n/resolve-locale";
 import { getDatabaseName, getStorage } from "@/lib/rxdb/database";
@@ -158,7 +159,7 @@ export function DeleteAccountCard({ email, userId, unsentChanges, onDiscardRejec
     } catch (removeError) {
       console.warn("Could not remove the local database:", removeError);
     }
-    window.location.assign(new URL("/auth?account-deleted=1", window.location.origin).href);
+    platform.hardNavigate("/auth?account-deleted=1");
   };
 
   return (

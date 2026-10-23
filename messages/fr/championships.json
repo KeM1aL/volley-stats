@@ -152,6 +152,8 @@
     "viewDetails": "Voir les détails"
   },
   "import": {
-    "comingSoon": "Bientôt disponible"
+    "success": "Import terminé",
+    "successDesc": "Les matchs FFVB ont été importés.",
+    "failure": "Échec de l'import"
   }
 }

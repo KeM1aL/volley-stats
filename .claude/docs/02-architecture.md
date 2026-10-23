@@ -85,6 +85,8 @@ Environment variables (names only; values in `.env.local` or the host):
 - `API_CORS_ORIGINS`: comma-separated origins allowed to call `/api/v1` from another origin (the static export). Web server only; see `lib/server/cors.ts`.
 - CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) reads four GitHub Actions *repository variables* (Settings, Secrets and variables, Actions, Variables; public values, no secret): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_WEB_ORIGIN`. Without them the web build fails at prerender (the Supabase config throws) and `build:mobile` fails.
 - `E2E_API_URL`: only for the export e2e suite; the web server that the export under test calls for `/api/v1`.
+- `CAP_DEV_HTTP=1`: read by [capacitor.config.ts](../../capacitor.config.ts) at `cap sync` / `cap run`; allows cleartext HTTP for local development against a PC web server (`http://10.0.2.2:<port>` from the Android emulator). Never for a release build.
+- `APPLE_TEAM_ID`, `IOS_BUNDLE_ID`, `ANDROID_PACKAGE`, `ANDROID_CERT_SHA256` (comma-separated fingerprints): web server only; the values of the `/.well-known` association files (see below). Each file answers 404 while its values are unset.
 
 Commands:
 - `pnpm build:mobile`: static export in `out/`.
@@ -94,11 +96,19 @@ Commands:
 
 ### `lib/platform/`
 
-The only module that knows the target: `lib/platform/index.ts` re-exports `@platform-impl` (`web/` or `mobile/`); `types.ts` holds the `Platform` interface (`target`, `apiOrigin`, `webOrigin()`, `createSupabaseClient()`, `ServiceWorker`, `saveFile()`, `createSyncPlatform()`); `shared/` holds what both implementations reuse (the browser sync signals, a passthrough provider). The mobile implementations are browser stand-ins until the Capacitor shell replaces them behind the same interface. Components call `platform.*`; they never test the target themselves.
+The only module that knows the target: `lib/platform/index.ts` re-exports `@platform-impl` (`web/` or `mobile/`); `types.ts` holds the `Platform` interface (`target`, `apiOrigin`, `webOrigin()`, `createSupabaseClient()`, `ServiceWorker`, `Analytics`, `saveFile()`, `createSyncPlatform()`); `shared/` holds what both implementations reuse (the browser sync signals, a passthrough provider). The `Platform` also carries `hardNavigate()` (a full page load; on mobile it goes through `/?to=`, see [11-mobile-app.md](11-mobile-app.md)) and the device features (`nativePlatform`, `keepAwake`, `haptics`, `appVersion`, `onForeground`, `onAppUrlOpen`, `onBackButton`, `exitApp`, `watchStatusBar`, `shareLink`): `web/native.ts` uses browser APIs or no-ops, `mobile/native.ts` the Capacitor plugins. The mobile implementation uses Capacitor plugins (Preferences for the auth session, Network/App for the sync signals, Filesystem + Share for `saveFile`, Share for `shareLink`) only when `Capacitor.isNativePlatform()`; the same export opened in a browser behaves like web. Components call `platform.*`; they never test the target themselves.
+
+### Capacitor app
+
+The `mobile` export runs inside a Capacitor 8 shell (`capacitor.config.ts`, committed `android/` and `ios/`, `webDir: 'out'`). Capacitor's local server answers every path without an extension with the root `index.html`, so full page loads of sub-paths go through `platform.hardNavigate` and `components/native/boot-redirect.tsx`. Build, run, native features, compatibility policy for old app versions: [11-mobile-app.md](11-mobile-app.md).
+
+### `.well-known` association files
+
+`app/.well-known/apple-app-site-association/route.web.ts` and `app/.well-known/assetlinks.json/route.web.ts` (web target only; content built in `lib/server/app-links.ts` from `APPLE_TEAM_ID` + `IOS_BUNDLE_ID` and `ANDROID_PACKAGE` + `ANDROID_CERT_SHA256`). They tie the web origin to the apps for universal links and Android app links; 404 while the variables are unset.
 
 ### `lib/server/`
 
-Server-only helpers for route handlers and the proxy: `supabase.ts` (service-role client, read on use), `session.ts` (`updateSession`: refreshes the session cookie), `report-caller.ts` (`getReportCaller`: the signed-in caller from a Bearer token or the cookie, RLS applying), `cors.ts` (`/api/v1` CORS from `API_CORS_ORIGINS`).
+Server-only helpers for route handlers and the proxy: `supabase.ts` (service-role client, read on use), `session.ts` (`updateSession`: refreshes the session cookie), `report-caller.ts` (`getReportCaller`: the signed-in caller from a Bearer token or the cookie, RLS applying), `admin.ts` (`requireAdmin`: 401 / 403 unless `profiles.role` is `admin`), `app-links.ts` (the `.well-known` file contents), `cors.ts` (`/api/v1` CORS from `API_CORS_ORIGINS`).
 
 ### ESLint import boundaries
 
@@ -125,10 +135,10 @@ volley-stats/
 │   │   └── stats/               # Match statistics, ?id=
 │   ├── settings/                 # User settings
 │   ├── teams/                    # Team management (view/, players/ with ?id=)
-│   ├── api/import/ffvb/route.web.ts             # FFVB match import (web target only; its UI button is disabled for now)
+│   ├── api/import/ffvb/route.web.ts             # FFVB match import (web target only; admin only: lib/server/admin.ts requireAdmin; its button shows only for admins on the web build)
 │   ├── api/v1/matches/[id]/report/route.web.ts  # Match PDF report (web target only)
 │   ├── auth/confirm/             # Verifies token_hash email links
-│   ├── auth/callback/route.web.ts  # Old PKCE link handler, kept one release
+│   ├── .well-known/              # apple-app-site-association and assetlinks.json (web target only)
 │   └── serwist/[path]/route.web.ts # Service worker (web target only)
 │
 ├── components/                   # React components (feature-based)
@@ -215,7 +225,9 @@ volley-stats/
 │
 ├── messages/                     # next-intl translations (en, es, fr, it, pt)
 ├── proxy.ts                      # Web only: refreshes the session cookie, /fr/... becomes ?lang=fr
-├── scripts/                      # build-mobile, check-export, serve-export, lint report
+├── scripts/                      # build-mobile, cap-sync, sync-app-version, make-app-assets, check-export, serve-export, lint report
+├── capacitor.config.ts           # Capacitor shell config (app id, name, CAP_DEV_HTTP)
+├── android/, ios/                # Native projects (committed)
 ├── tests/e2e/                    # Playwright E2E tests
 │
 └── supabase/                     # Supabase configuration

@@ -129,5 +129,6 @@
     "discardConfirm": "Les abandonner",
     "discardFailed": "Les modifications n'ont pas pu être abandonnées. Vérifiez votre connexion et réessayez.",
     "discardOtherTab": "L'application est ouverte dans un autre onglet. Fermez les autres onglets de l'application, puis réessayez."
-  }
+  },
+  "privacyLink": "Politique de confidentialité"
 }

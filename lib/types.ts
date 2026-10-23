@@ -52,6 +52,7 @@ export type Profile = {
   language: string;
   favorite_team_id: string | null;
   favorite_club_id: string | null;
+  role?: "user" | "admin";             // Absent on profiles cached before the role migration: not admin
   favorite_team?: Team | null;         // Joined relation
   favorite_club?: Club | null;         // Joined relation
 };

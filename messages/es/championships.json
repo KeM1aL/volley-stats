@@ -152,6 +152,8 @@
     "viewDetails": "Ver detalles"
   },
   "import": {
-    "comingSoon": "Próximamente"
+    "success": "Importación terminada",
+    "successDesc": "Los partidos de la FFVB se han importado.",
+    "failure": "Error de importación"
   }
 }

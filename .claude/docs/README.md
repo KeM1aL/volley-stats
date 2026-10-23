@@ -166,6 +166,21 @@ Complete technical documentation for the VolleyStats volleyball statistics manag
 
 **Reading time**: ~5 minutes
 
+### [11-mobile-app.md](11-mobile-app.md)
+**Purpose**: The Capacitor app (Android/iOS): build and run, native features, compatibility policy for old app versions
+**When to read**:
+- Building or running the Android app, or changing CI for the native builds
+- Writing a migration or changing `/api/v1` (compatibility policy)
+- Working on native features (back button, tab bar, update gate, links, keep-awake, haptics)
+
+**Contains**:
+- Compatibility policy (rules 1-4, migration header question, `min_version`)
+- Android build commands, emulator values, JDK, version stamping
+- Where each native feature lives, `.well-known` files, admin role, known limits
+- Pointers to the Android manual checklist and the store release checklist (`docs/superpowers/notes/`)
+
+**Reading time**: ~8 minutes
+
 ---
 
 ## Task-Based Documentation Guide
@@ -200,6 +215,11 @@ Read in this order:
 1. **Quick reference**: Check main CLAUDE.md (table names & relationships)
 2. **Full details**: [05-database-schema.md](05-database-schema.md) (tables, relationships, RLS) and `lib/supabase/database.types.ts` (columns)
 3. **Adding tables**: [08-development-guidelines.md](08-development-guidelines.md) + [04-offline-sync.md](04-offline-sync.md)
+
+### "I'm working on the mobile app or writing a migration"
+1. [11-mobile-app.md](11-mobile-app.md) - Build, native features, compatibility policy
+2. [02-architecture.md](02-architecture.md) - Build targets, `lib/platform`
+3. [05-database-schema.md](05-database-schema.md) - `profiles.role`, `app_config`
 
 ### "I need to deploy or optimize"
 1. [10-deployment-future.md](10-deployment-future.md) - Deployment & optimization

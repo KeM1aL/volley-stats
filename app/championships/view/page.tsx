@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useChampionshipApi } from "@/hooks/use-championship-api";
 import { Championship, Season } from "@/lib/types";
+import { AppBreadcrumb } from "@/components/native/app-breadcrumb";
 import { LoadingPage } from "@/components/loading-page";
 import { MatchHistoryTable } from "@/components/matches/history/match-history-table";
 import { DateRange } from "react-day-picker";
@@ -21,13 +22,14 @@ import { useClubApi } from "@/hooks/use-club-api";
 import { useSeasonApi } from "@/hooks/use-season-api";
 import { TeamStats } from "@/components/matches/history/team-stats";
 import { StatisticsDialog } from "@/components/matches/history/statistics-dialog";
-import { BarChart3, Filter, Plus, RefreshCw } from "lucide-react";
+import { BarChart3, Filter, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { FfvbImportButton } from "@/components/championships/ffvb-import-button";
 import { ChampionshipTeamsSummary } from "@/components/championships/championship-teams-summary";
 import { ChampionshipTeamsList } from "@/components/championships/championship-teams-list";
 import { useTeamApi } from "@/hooks/use-team-api";
@@ -224,6 +226,7 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
 
   return (
     <div className="space-y-8">
+      <AppBreadcrumb names={{ championship: championship.name }} />
       <div className="space-y-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">
@@ -234,19 +237,7 @@ function ChampionshipDetailPage({ id: championshipId }: { id: string }) {
           </p>
         </div>
         <div className="flex gap-2">
-          {/* FFVB import: shown on both targets, disabled until it ships (the /api/import/ffvb route stays). */}
-          <span title={t("import.comingSoon")} className="flex flex-1 sm:flex-none">
-            <Button
-              variant="outline"
-              disabled
-              title={t("import.comingSoon")}
-              className="w-full text-xs sm:text-sm"
-              data-testid="ffvb-import-button"
-            >
-              <RefreshCw className="h-4 w-4 mr-1 sm:mr-2" />
-              {t("actions.refresh")}
-            </Button>
-          </span>
+          <FfvbImportButton seasonId={championship.season_id} championshipId={championship.id} />
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}

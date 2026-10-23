@@ -271,6 +271,10 @@
       "added": "{name} añadido a la alineación",
       "addError": "No se pudo añadir al jugador. Inténtelo de nuevo."
     },
+    "landscapeHint": {
+      "message": "Gire el dispositivo en horizontal para ver mejor la cancha.",
+      "dismiss": "Cerrar el consejo"
+    },
     "left": {
       "title": "No se pudo cargar este partido en este dispositivo",
       "reasons": {
@@ -287,6 +291,8 @@
   },
   "stats": {
     "title": "Estadísticas del Partido",
+    "linkCopied": "Enlace copiado al portapapeles",
+    "shareFailed": "No se pudo compartir el enlace",
     "matchOverview": "Resumen del Partido",
     "scoreProgression": "Progresión de Puntuación",
     "setBreakdown": "Desglose de Sets",

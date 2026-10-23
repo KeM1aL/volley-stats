@@ -6,6 +6,6 @@ allowBuilds:
   esbuild: true
   protobufjs: false
   rxdb: true
-  sharp: false
+  sharp: true
   supabase: true
   unrs-resolver: false

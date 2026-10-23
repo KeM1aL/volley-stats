@@ -271,6 +271,10 @@
       "added": "{name} adicionado à escalação",
       "addError": "Não foi possível adicionar o jogador. Tente novamente."
     },
+    "landscapeHint": {
+      "message": "Rode o dispositivo na horizontal para ver melhor a quadra.",
+      "dismiss": "Fechar a dica"
+    },
     "left": {
       "title": "Não foi possível carregar este jogo neste dispositivo",
       "reasons": {
@@ -287,6 +291,8 @@
   },
   "stats": {
     "title": "Estatísticas da Partida",
+    "linkCopied": "Link copiado para a área de transferência",
+    "shareFailed": "Não foi possível compartilhar o link",
     "matchOverview": "Visão Geral da Partida",
     "scoreProgression": "Progressão da Pontuação",
     "setBreakdown": "Análise dos Jogos",

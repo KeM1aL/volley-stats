@@ -65,6 +65,11 @@ import { useRouteId } from "@/hooks/use-route-id";
 import { routes } from "@/lib/routes";
 import { LiveLoadError, liveLoadFailureReason, missingMatchReason } from "@/lib/matches/live-load-failure";
 import { LoadingPage } from "@/components/loading-page";
+import { LandscapeHint } from "@/components/matches/live/landscape-hint";
+import { useKeepAwake } from "@/hooks/use-keep-awake";
+import { hapticFor } from "@/lib/matches/haptics";
+import { platform } from "@/lib/platform";
+import { useNativeApp } from "@/components/navigation/use-native-app";
 
 type PanelType = "stats" | "events" | "court" | "points" | null;
 
@@ -122,6 +127,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
   // In-app navigation asks first while a match in progress is on screen (finished matches leave freely).
   const guardActive = !isLoading && !!matchState.match && matchState.match.status !== "completed";
   useLeaveGuard({ active: guardActive, unsentCount });
+  useKeepAwake(!!matchState.match && matchState.match.status !== "completed");
   // The offline page's "Back to the live match" button reads it (public/offline.html).
   const matchLoaded = !!matchState.match;
   useEffect(() => {
@@ -148,6 +154,8 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [navExpanded, setNavExpanded] = useState(false);
   const isLandscape = useLandscape();
+  // Installed app: the layout's toolbar already shows the sync status.
+  const nativeApp = useNativeApp();
 
   const ensureScorerClaim = useCallback(async () => {
     if (!db) return;
@@ -652,6 +660,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
       const command = new PlayerStatCommand(matchState, stat, db);
       try {
         const newMatchState = await history.executeCommand(command);
+        void platform.haptics[hapticFor(matchState, newMatchState)]().catch(() => {});
         setMatchState(newMatchState);
         if (newMatchState.match!.status === "completed") {
           onMatchCompleted();
@@ -677,6 +686,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
       const command = new ScorePointCommand(matchState, point, myTeam, db);
       try {
         const newMatchState = await history.executeCommand(command);
+        void platform.haptics[hapticFor(matchState, newMatchState)]().catch(() => {});
         setMatchState(newMatchState);
         if (newMatchState.match!.status === "completed") {
           onMatchCompleted();
@@ -981,7 +991,7 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
             awayTeam={awayTeam}
           />
         </div>
-        <SyncBadge compact />
+        {!nativeApp && <SyncBadge compact />}
         {matchState.currentSet && (
           <span
             hidden
@@ -992,6 +1002,8 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
           />
         )}
       </div>
+
+      <LandscapeHint matchId={matchId} />
 
       {/* Row 2: Content - Responsive Layout */}
       <div className="flex-1 overflow-hidden">

@@ -1,17 +1,17 @@
 import { createApi } from "@/lib/api";
 import { importFfvbMatches } from "@/lib/importers/ffvb";
-import { getReportCaller } from "@/lib/server/report-caller";
+import { requireAdmin } from "@/lib/server/admin";
 import { createClient } from "@/lib/server/supabase";
-import { create } from "lodash";
 import { createTranslator } from "next-intl";
 import messages from "@/messages/en";
 
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  // The import runs with service-role rights below, so only a signed-in caller may start it.
-  if (!(await getReportCaller(request))) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  // The import runs with service-role rights below, so only an application admin may start it.
+  const access = await requireAdmin(request);
+  if ("status" in access) {
+    return NextResponse.json({ error: access.status === 401 ? "unauthorized" : "forbidden" }, { status: access.status });
   }
   const { seasonId, championshipId } = await request.json();
   const t = createTranslator({ locale: "en", messages, namespace: "common" });

@@ -165,7 +165,7 @@ export const getTeamMembers = async (userId: string): Promise<TeamMember[]> => {
   return data || [];
 };
 
-export const updateProfile = async (userId: string, profile: Partial<Profile>): Promise<Profile> => {
+export const updateProfile = async (userId: string, profile: Partial<Omit<Profile, 'role'>>): Promise<Profile> => {
   const { data, error } = await supabase.from('profiles').update(profile as TablesUpdate<'profiles'>).eq('id', userId).select(`
       *,
       favorite_team:teams!profiles_favorite_team_id_fkey(*),

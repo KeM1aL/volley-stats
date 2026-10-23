@@ -13,12 +13,19 @@ test('a /fr/ link shows French and ends on a clean URL @web', async ({ page }) =
 test('the language switcher changes the language without a reload', async ({ page }) => {
   await page.goto('/teams');
   await page.evaluate(() => ((window as unknown as { __noReload: boolean }).__noReload = true));
+  const isProfileSave = (r: import('@playwright/test').Response) =>
+    r.url().includes('/rest/v1/profiles') && r.request().method() === 'PATCH';
   await page.getByRole('button', { name: 'Change language' }).click();
+  // The profile save must succeed (pins the profiles.role protecting trigger against blocking normal edits)
+  const saveFr = page.waitForResponse(isProfileSave);
   await page.getByRole('menuitem', { name: /Français/ }).click();
+  expect((await saveFr).ok()).toBe(true);
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
   expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
   await page.getByRole('button', { name: 'Changer la langue' }).click();
+  const saveEn = page.waitForResponse(isProfileSave);
   await page.getByRole('menuitem', { name: /English/ }).click();
+  expect((await saveEn).ok()).toBe(true);
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 

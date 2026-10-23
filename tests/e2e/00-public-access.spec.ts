@@ -11,4 +11,10 @@ test.describe('Public access', () => {
     expect(response.status()).toBe(200);
     expect(response.headers()['content-type']).toContain('javascript');
   });
+
+  test('a signed-out visitor can read the privacy policy', async ({ page }) => {
+    await page.goto('/privacy');
+    await expect(page.getByTestId('privacy-policy')).toBeVisible();
+    await expect(page).toHaveURL(/\/privacy\/?$/);
+  });
 });

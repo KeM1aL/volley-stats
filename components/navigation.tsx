@@ -4,15 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import {
-  Volleyball,
-  BarChart3,
-  Users,
-  Settings,
-  Menu,
-  LogOut,
-  Trophy,
-} from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -21,75 +13,30 @@ import { ThemeToggle } from "./theme-toggle";
 import { FullScreenToggle } from "./fullscreen-toggle";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLandscape } from "@/hooks/use-landscape";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { GuardedLink } from "@/components/guarded-link";
-import { useConfirmLeave } from "@/components/providers/leave-guard-provider";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { SyncBadge } from "@/components/sync/sync-badge";
-import { useSyncStatus } from "@/hooks/use-sync-status";
-import { allowNextUnload } from "@/hooks/use-unsent-guard";
 import { normalizePath } from "@/lib/routes";
+import { navItems } from "@/components/navigation/nav-items";
+import { useNativeApp } from "@/components/navigation/use-native-app";
 
 export function Navigation() {
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
-  const tSync = useTranslations("sync");
-  const syncStatus = useSyncStatus();
-  const unsentCount = (syncStatus?.pendingCount ?? 0) + (syncStatus?.rejectedCount ?? 0);
-  const [confirmSignOut, setConfirmSignOut] = useState(false);
-  const { confirmLeave } = useConfirmLeave();
-  const handleSignOut = async () => {
-    // Unsent changes: the sign-out warning says where they go (they upload at the next sign-in), and it
-    // stands for leaving a live match too, so it is the only dialog. Otherwise ask before leaving a live match.
-    if (unsentCount > 0) {
-      setConfirmSignOut(true);
-      return;
-    }
-    const decision = await confirmLeave();
-    if (decision === "stay") return;
-    if (decision === "leave") allowNextUnload();
-    void signOut();
-  };
+  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isLandscape = useLandscape();
   const t = useTranslations('navigation');
 
-  const routes = [
-    {
-      href: "/championships",
-      label: t('menu.championships'),
-      icon: Trophy,
-    },
-    {
-      href: "/matches",
-      label: t('menu.matches'),
-      icon: Volleyball,
-    },
-    {
-      href: "/teams",
-      label: t('menu.teams'),
-      icon: Users,
-    },
-    {
-      href: "/settings",
-      label: t('menu.settings'),
-      icon: Settings,
-    },
-  ];
+  const routes = navItems(t);
+  // The installed app has no top bar: it navigates with the bottom tab bar (pages show their own breadcrumb, the live page its back button).
+  const nativeApp = useNativeApp();
+  if (nativeApp) return null;
 
   // Compact navigation in landscape mode on live match pages
   const isLivePage = normalizePath(pathname ?? "") === "/matches/live";
   if (isLandscape && isLivePage) {
     return (
-      <header className="h-10 top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
+      <header data-web-header className="h-10 top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         <div className="flex h-8 items-center justify-between px-2">
           <div className="flex items-center">
             {user && (
@@ -146,7 +93,7 @@ export function Navigation() {
   }
 
   return (
-    <header className="top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
+    <header data-web-header className="top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <div className="container flex mx-auto h-14 items-center justify-between">
         <div className="flex items-center">
           {user && (
@@ -220,34 +167,9 @@ export function Navigation() {
           <FullScreenToggle />
           <LanguageSwitcher />
           <ThemeToggle />
-          {user && (
-            <Button variant="ghost" size="sm" onClick={() => void handleSignOut()} className="px-2 md:px-3 text-xs md:text-sm">
-              <LogOut className="h-4 w-4 mr-1 md:mr-2" />
-              <span>{t('actions.signOut')}</span>
-            </Button>
-          )}
+          {user && <SignOutButton />}
         </div>
       </div>
-      <AlertDialog open={confirmSignOut} onOpenChange={setConfirmSignOut}>
-        <AlertDialogContent data-testid="sign-out-warning">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{tSync("guards.signOutTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>{tSync("guards.signOutBody", { count: unsentCount })}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{tSync("claim.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirmSignOut(false);
-                allowNextUnload();
-                void signOut();
-              }}
-            >
-              {tSync("guards.signOutConfirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </header>
   );
 }

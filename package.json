@@ -9,6 +9,9 @@
     "build": "next build",
     "build:mobile": "node scripts/build-mobile.mjs",
     "check:export": "node scripts/check-export.mjs",
+    "cap:sync": "node scripts/cap-sync.mjs",
+    "cap:android": "npx cap run android --target Pixel_9_Pro_XL",
+    "app:assets": "node scripts/make-app-assets.mjs && npx @capacitor/assets generate --android --ios",
     "serve:mobile": "node scripts/serve-export.mjs out 3200",
     "start": "next start",
     "start:inspect": "next start --inspect=0.0.0.0",
@@ -32,6 +35,19 @@
     "test:e2e:cleanup": "tsx tests/tools/cleanup-e2e-data.ts"
   },
   "dependencies": {
+    "@capacitor-community/keep-awake": "^8.0.1",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/device": "^8.0.3",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.3",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
     "@hookform/resolvers": "5.9.1",
     "@next/third-parties": "16.3.8",
     "@radix-ui/react-accordion": "^1.2.20",
@@ -105,6 +121,8 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.3",
     "@lingual/i18n-check": "0.9.5",
     "@playwright/test": "^1.63.0",
     "@types/lodash": "^4.17.25",
@@ -116,6 +134,7 @@
     "dotenv": "18.0.5",
     "esbuild": "0.28.2",
     "react-email": "6.11.0",
+    "sharp": "^0.35.5",
     "supabase": "^2.119.0",
     "tsx": "^4.23.15",
     "vitest": "5.0.3"

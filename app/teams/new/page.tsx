@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { TeamForm } from "@/components/teams/team-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslations } from "next-intl";
+import { AppBreadcrumb } from "@/components/native/app-breadcrumb";
 
 export default function NewTeamPage() {
   const t = useTranslations('teams');
@@ -14,15 +15,18 @@ export default function NewTeamPage() {
   };
 
   return (
-    <Card className="max-w-2xl mx-auto p-6">
-      <CardHeader>
-        <CardTitle className="text-2xl text-center">
-          {t('createNewTeam')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <TeamForm onSuccess={onTeamCreated} />
-      </CardContent>
-    </Card>
+    <>
+      <AppBreadcrumb />
+      <Card className="max-w-2xl mx-auto p-6">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">
+            {t('createNewTeam')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TeamForm onSuccess={onTeamCreated} />
+        </CardContent>
+      </Card>
+    </>
   );
 }

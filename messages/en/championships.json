@@ -152,6 +152,8 @@
     "viewDetails": "View Details"
   },
   "import": {
-    "comingSoon": "Coming soon"
+    "success": "Import finished",
+    "successDesc": "The FFVB matches were imported.",
+    "failure": "Import failed"
   }
 }

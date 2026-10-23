@@ -130,7 +130,7 @@ Replications are never paused: RxDB's retry waits for the `online` event. Reconn
 ❌ Real-time updates from other users
 ❌ Authentication (login/signup)
 ❌ Avatar uploads
-❌ FFVB match imports (the button is disabled for now on both targets)
+❌ FFVB match imports (admin only, web build only)
 
 **Service worker** ([app/sw.ts](../../app/sw.ts), Serwist):
 - Precaches the build's JS/CSS and runtime-caches pages, images and fonts (`defaultCache`); Supabase API calls are NetworkOnly, so non-live screens always read live data and no user data sits in Cache Storage.

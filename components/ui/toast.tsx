@@ -5,6 +5,7 @@ import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
+import { isMobileBuild } from "@/lib/platform/build-target"
 import { cn } from "@/lib/utils"
 
 const ToastProvider = ToastPrimitives.Provider
@@ -18,6 +19,7 @@ const ToastViewport = React.forwardRef<
     className={cn(
       // "fixed top-0 z-100 flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
       "fixed top-0 z-100 flex max-h-screen w-full flex-col-reverse p-4  sm:right-0 sm:flex-col md:max-w-[420px]",
+      isMobileBuild && "pt-[calc(1rem+var(--safe-area-inset-top))]",
       className
     )}
     {...props}

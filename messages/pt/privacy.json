@@ -1,0 +1,43 @@
+{
+  "title": "Política de privacidade",
+  "intro": "O VolleyStats é publicado por {publisher}. Esta página explica que dados seus a aplicação e o site guardam, para quê, e como os fazer eliminar.",
+  "collected": {
+    "title": "Dados que recolhemos",
+    "intro": "Guardamos apenas o que nos fornece ou o que a aplicação precisa para funcionar:",
+    "items": {
+      "account": "o seu endereço de e-mail e a sua palavra-passe (a palavra-passe é guardada de forma cifrada pelo nosso fornecedor de autenticação, nunca a vemos);",
+      "profile": "o seu nome e apelido, o seu idioma e o seu clube e equipa favoritos;",
+      "content": "os clubes, equipas, jogadores, jogos e estatísticas de jogo introduzidos na aplicação por si ou pelas pessoas com quem os partilha;",
+      "device": "um identificador aleatório criado para cada instalação da aplicação e um nome do dispositivo (por exemplo, o modelo). Servem apenas para saber que dispositivo está a registar um jogo, para que dois dispositivos não registem o mesmo jogo ao mesmo tempo."
+    }
+  },
+  "purpose": {
+    "title": "Para que os usamos",
+    "body": "Os seus dados servem apenas para fazer a aplicação funcionar: iniciar a sua sessão, mostrar as suas equipas e jogos, guardar e partilhar as estatísticas que regista e manter um jogo coerente quando há vários dispositivos envolvidos. Não são usados para mais nada."
+  },
+  "noSelling": {
+    "title": "Sem publicidade, sem venda de dados",
+    "body": "O VolleyStats não mostra publicidade. Não vendemos os seus dados, não os partilhamos com anunciantes nem com intermediários de dados e não os usamos para o seguir noutras aplicações ou sites."
+  },
+  "analytics": {
+    "title": "Estatísticas de utilização",
+    "app": "A aplicação móvel não utiliza nenhuma ferramenta de estatísticas de utilização.",
+    "web": "O site pode recolher estatísticas de utilização anónimas através do Google Analytics. Estas estatísticas não estão associadas à sua conta."
+  },
+  "processor": {
+    "title": "Quem guarda os seus dados",
+    "body": "Os seus dados são guardados e tratados em nosso nome pela Supabase, o nosso fornecedor de base de dados e autenticação, na região de alojamento configurada para o projeto VolleyStats. Uma cópia do jogo que está a registar é também guardada no seu dispositivo para que a aplicação funcione sem ligação."
+  },
+  "retention": {
+    "title": "Conservação e eliminação da conta",
+    "body": "Conservamos os seus dados enquanto a sua conta existir. Pode eliminar a conta a qualquer momento nas definições da aplicação ou do site. A eliminação remove o seu perfil e o seu acesso. As equipas, os jogos e as estatísticas que introduziu ficam com as respetivas equipas, e é você quem decide o que acontece às equipas de que é proprietário. Os dados guardados apenas no seu dispositivo desaparecem quando desinstala a aplicação."
+  },
+  "rights": {
+    "title": "Os seus direitos",
+    "body": "Pode consultar e corrigir o seu nome, idioma e favoritos nas definições. Pode também pedir-nos uma cópia dos seus dados, a sua retificação ou eliminação, ou opor-se à sua utilização. Se reside na União Europeia, pode ainda apresentar uma reclamação à sua autoridade de proteção de dados."
+  },
+  "contact": {
+    "title": "Contacto",
+    "body": "Para qualquer questão sobre os seus dados, escreva para {email}."
+  }
+}

@@ -30,6 +30,9 @@ import { LiveMatchHeader } from "@/components/matches/live/live-match-header";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useRouteId } from "@/hooks/use-route-id";
 import { LoadingPage } from "@/components/loading-page";
+import { AppBreadcrumb } from "@/components/native/app-breadcrumb";
+import { matchLabel } from "@/lib/native/breadcrumb";
+import { routes } from "@/lib/routes";
 import { ArchivedMatchNotice } from "@/components/matches/archived-match-notice";
 
 function LiveScorePage({ matchId }: { matchId: string }) {
@@ -199,6 +202,13 @@ function LiveScorePage({ matchId }: { matchId: string }) {
 
   return (
     <div className="space-y-6">
+      <AppBreadcrumb
+        names={{
+          match: matchLabel(match.home_team?.name ?? homeTeam?.name, match.away_team?.name ?? awayTeam?.name),
+          // The match's stats page needs the managed team, which this page has in its own URL.
+          matchHref: routes.matchStats(matchId, { team: searchParams.get("team") }),
+        }}
+      />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">{t("score.title")}</h1>

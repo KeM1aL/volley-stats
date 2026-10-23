@@ -8,10 +8,23 @@
     "championships": "Campionati",
     "matches": "Partite",
     "teams": "Squadre",
-    "settings": "Impostazioni"
+    "settings": "Impostazioni",
+    "profile": "Profilo"
   },
   "actions": {
     "signOut": "Esci",
-    "openMenu": "Apri menu"
+    "openMenu": "Apri menu",
+    "back": "Indietro"
+  },
+  "breadcrumb": {
+    "players": "Giocatori",
+    "newTeam": "Nuova squadra",
+    "score": "Punteggio",
+    "privacy": "Privacy",
+    "team": "Squadra",
+    "match": "Partita",
+    "championship": "Campionato",
+    "home": "Home",
+    "ariaLabel": "Percorso di navigazione"
   }
 }

@@ -8,10 +8,23 @@
     "championships": "Championships",
     "matches": "Matches",
     "teams": "Teams",
-    "settings": "Settings"
+    "settings": "Settings",
+    "profile": "Profile"
   },
   "actions": {
     "signOut": "Sign Out",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "back": "Back"
+  },
+  "breadcrumb": {
+    "players": "Players",
+    "newTeam": "New team",
+    "score": "Score",
+    "privacy": "Privacy",
+    "team": "Team",
+    "match": "Match",
+    "championship": "Championship",
+    "home": "Home",
+    "ariaLabel": "Breadcrumb"
   }
 }

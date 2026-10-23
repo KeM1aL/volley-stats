@@ -129,5 +129,6 @@
     "discardConfirm": "Descartá-las",
     "discardFailed": "Não foi possível descartar as alterações. Verifique a ligação e tente novamente.",
     "discardOtherTab": "A aplicação está aberta noutro separador. Feche os outros separadores da aplicação e tente novamente."
-  }
+  },
+  "privacyLink": "Política de privacidade"
 }
