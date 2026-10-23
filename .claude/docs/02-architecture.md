@@ -138,7 +138,6 @@ volley-stats/
 │   ├── api/import/ffvb/route.web.ts             # FFVB match import (web target only; admin only: lib/server/admin.ts requireAdmin; its button shows only for admins on the web build)
 │   ├── api/v1/matches/[id]/report/route.web.ts  # Match PDF report (web target only)
 │   ├── auth/confirm/             # Verifies token_hash email links
-│   ├── auth/callback/route.web.ts  # Old PKCE link handler (to delete once the send-email function is deployed)
 │   ├── .well-known/              # apple-app-site-association and assetlinks.json (web target only)
 │   └── serwist/[path]/route.web.ts # Service worker (web target only)
 │

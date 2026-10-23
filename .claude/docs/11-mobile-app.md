@@ -128,4 +128,3 @@ Regenerate the types with `pnpm supabase:types` after a schema change.
 - Debug builds log plugin calls (the Preferences session token appears in logcat); see `loggingBehavior` in the store checklist.
 - Haptics do nothing on the emulator and on iPads (no vibration motor).
 - No live updates: a new web build only reaches installed apps through a store release.
-- Open item: delete `app/auth/callback/route.web.ts` and its mentions in the docs once the `send-email` edge function is deployed (emails then link to `/auth/confirm`).
