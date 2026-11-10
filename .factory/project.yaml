@@ -37,3 +37,4 @@ blocking_decisions:
   - a change to the Supabase schema or row-level security
 default_capabilities: [code, tests]
 parallel_worktrees: false
+base_branch: develop             # tickets branch from develop and their PRs target it; main is production
