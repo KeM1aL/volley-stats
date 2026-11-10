@@ -2,10 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
+    inputs:
+      ios:
+        description: Also build iOS (always built for main and for pull requests into main)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -86,6 +91,8 @@ jobs:
 
   ios:
     needs: checks
+    # The macOS runner is costly: iOS builds for main and pull requests into main (required there), elsewhere only on demand.
+    if: github.ref == 'refs/heads/main' || github.base_ref == 'main' || (github.event_name == 'workflow_dispatch' && inputs.ios)
     # macos-26 is GitHub's arm64 macOS 26 image; it ships several Xcode 26.x versions (runner-images macos-26-arm64 README).
     runs-on: macos-26
     steps:
