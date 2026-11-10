@@ -1,0 +1,13 @@
+{
+  "enabledPlugins": { "telegram@claude-plugins-official": false },
+  "env": { "BASH_DEFAULT_TIMEOUT_MS": "600000", "BASH_MAX_TIMEOUT_MS": "1200000" },
+  "permissions": {
+    "deny": [
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr ready:*)",
+      "mcp__claude_ai_Linear__*",
+      "mcp__plugin_linear_linear__*",
+      "Edit(~/.factory/**)"
+    ]
+  }
+}
