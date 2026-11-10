@@ -16,10 +16,10 @@ suites:
     list: "pnpm vitest list --json={report}"
     format: vitest-json
   e2e:
-    run: "pnpm playwright test --reporter=json --output={evidence}/playwright"
+    run: "node .factory/e2e-with-server.mjs --reporter=json --output={evidence}/playwright"
     list: "pnpm playwright test --list --reporter=json"
     format: playwright-json
-    env: { PLAYWRIGHT_JSON_OUTPUT_FILE: "{report}" }
+    env: { PLAYWRIGHT_JSON_OUTPUT_FILE: "{report}", CI: "1" }   # CI: headless (the protected config runs headed otherwise); the script starts and stops the dev server
     capabilities: [browser-headless]
 patterns:
   migrations: ["supabase/migrations/**"]
