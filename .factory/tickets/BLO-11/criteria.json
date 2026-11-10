@@ -1,0 +1,59 @@
+[
+  {
+    "id": "C1",
+    "text": "Right after sign-in on a device whose match formats and teams are not yet downloaded, while online, opening the live page of a match opens the scoring screen on the first attempt: no redirect to the match list and no \"data missing\" message.",
+    "type": "e2e",
+    "tests": [
+      "tests/unit/sync/manager-reference-rows.test.ts::SyncManager.awaitReferenceRows > waits for a match format and teams still being downloaded after sign-in",
+      "tests/e2e/19-live-reference-data.spec.ts::opens the scoring screen on the first attempt while the match format and teams are still downloading"
+    ],
+    "capabilities": [
+      "browser-headless"
+    ]
+  },
+  {
+    "id": "C2",
+    "text": "While online, if the match's opponent team (or format) was created on the server after this device last downloaded teams and formats, opening the live page still opens the scoring screen on the first attempt.",
+    "type": "unit",
+    "tests": [
+      "tests/unit/sync/manager-reference-rows.test.ts::SyncManager.awaitReferenceRows > pulls the reference tables again for a team created on the server after the last download"
+    ]
+  },
+  {
+    "id": "C3",
+    "text": "While the format or teams are being waited for, the live page keeps showing its loading screen; it does not show the scoring screen half-filled or a blank page.",
+    "type": "e2e",
+    "capabilities": [
+      "browser-headless"
+    ],
+    "tests": [
+      "tests/e2e/19-live-reference-data.spec.ts::opens the scoring screen on the first attempt while the match format and teams are still downloading"
+    ]
+  },
+  {
+    "id": "C4",
+    "text": "When the format and both teams are already on the device, the live page opens with no added waiting compared with today.",
+    "type": "unit",
+    "tests": [
+      "tests/unit/sync/manager-reference-rows.test.ts::SyncManager.awaitReferenceRows > resolves at once when the rows are already on the device"
+    ]
+  },
+  {
+    "id": "C5",
+    "text": "Online, when the format or a team still cannot be obtained within the time limit (server unreachable, or the row does not exist or is not visible to the user), the page leaves for the match list with the existing \"Its teams or match format are missing on this device\u2026\" reason; it never stays on the loading screen indefinitely.",
+    "type": "unit",
+    "tests": [
+      "tests/unit/sync/manager-reference-rows.test.ts::SyncManager.awaitReferenceRows > resolves false once the time limit is over when a row does not exist on the server",
+      "tests/unit/sync/manager-reference-rows.test.ts::SyncManager.awaitReferenceRows > resolves false once the time limit is over when the server cannot be reached",
+      "tests/unit/matches/live-load-failure.test.ts::how long the live page waits for the match format and teams > waits at most the match download limit online"
+    ]
+  },
+  {
+    "id": "C6",
+    "text": "Offline, when the format or a team is missing on the device, the page leaves for the match list at once with the same \"data missing\" reason, without waiting for the time limit.",
+    "type": "unit",
+    "tests": [
+      "tests/unit/matches/live-load-failure.test.ts::how long the live page waits for the match format and teams > does not wait offline"
+    ]
+  }
+]

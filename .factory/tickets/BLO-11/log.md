@@ -1,0 +1,1 @@
+- 2026-11-10 implement: small ticket, light path (code and tests only); mini plan and criteria written.
