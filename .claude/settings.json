@@ -5,14 +5,9 @@
     "deny": [
       "Bash(gh pr merge:*)",
       "Bash(gh pr ready:*)",
-      "mcp__claude_ai_Linear__save_issue",
-      "mcp__claude_ai_Linear__save_comment",
-      "mcp__claude_ai_Linear__delete_comment",
-      "mcp__claude_ai_Linear__save_issue_label",
-      "mcp__plugin_linear_linear__save_issue",
-      "mcp__plugin_linear_linear__save_comment",
-      "mcp__plugin_linear_linear__delete_comment",
-      "mcp__plugin_linear_linear__save_issue_label"
+      "mcp__claude_ai_Linear__*",
+      "mcp__plugin_linear_linear__*",
+      "Edit(~/.factory/**)"
     ]
   }
 }

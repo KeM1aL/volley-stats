@@ -31,6 +31,8 @@ protected_files:
   - tsconfig.json
   - ".github/workflows/**"
   - docs/superpowers/notes/lint-baseline.json
+  - .factory/e2e-with-server.mjs   # the e2e wrapper: the evidence depends on it
+  - ".claude/**"                   # deny rules and Bash timeouts
 blocking_decisions:
   - a change to the Supabase schema or row-level security
 default_capabilities: [code, tests]
