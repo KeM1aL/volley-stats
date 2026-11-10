@@ -1,0 +1,37 @@
+# Factory project configuration (https://github.com/blockservice/t3-factory).
+linear:
+  team: BLO
+  project: VolleyStats
+commands:
+  setup: pnpm install --frozen-lockfile
+  lint: pnpm lint
+  types: pnpm exec tsc --noEmit
+  android:                       # device-test stage (palier 4, on the PC); to confirm there
+    build: pnpm cap:sync         # static export, version stamp, npx cap sync (needs NEXT_PUBLIC_API_ORIGIN, NEXT_PUBLIC_WEB_ORIGIN)
+    install: cd android && ./gradlew installDebug   # run once the emulator is open
+    app_id: com.volleystats.app
+suites:
+  unit:
+    run: "pnpm vitest run --reporter=json --outputFile={report}"
+    list: "pnpm vitest list --json={report}"
+    format: vitest-json
+  e2e:
+    run: "pnpm playwright test --reporter=json --output={evidence}/playwright"
+    list: "pnpm playwright test --list --reporter=json"
+    format: playwright-json
+    env: { PLAYWRIGHT_JSON_OUTPUT_FILE: "{report}" }
+    capabilities: [browser-headless]
+patterns:
+  migrations: ["supabase/migrations/**"]
+env_file: volley-stats.env       # in ~/.factory/env/ on each machine, copied to the worktree's .env; test-only values, never committed
+protected_files:
+  - playwright.config.ts
+  - vitest.config.ts
+  - eslint.config.mjs
+  - tsconfig.json
+  - ".github/workflows/**"
+  - docs/superpowers/notes/lint-baseline.json
+blocking_decisions:
+  - a change to the Supabase schema or row-level security
+default_capabilities: [code, tests]
+parallel_worktrees: false
