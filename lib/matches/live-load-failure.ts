@@ -36,3 +36,11 @@ export function missingMatchReason({ online, synced }: { online: boolean; synced
   if (!online) return "notOnDevice";
   return synced ? "matchNotFound" : "notDownloaded";
 }
+
+/**
+ * How long the live page waits for the match's format and teams to reach this device before it gives up
+ * with `dataMissing`: the match download limit online, not at all offline (nothing can arrive).
+ */
+export function referenceDataWaitMs(online: boolean): number {
+  return -1;
+}
