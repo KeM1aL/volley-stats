@@ -10,6 +10,7 @@ import net from 'node:net';
 const require = createRequire(import.meta.url);
 const isWindows = process.platform === 'win32';
 const STARTUP_TIMEOUT_MS = 180_000;
+const SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'];
 
 function freePort() {
   return new Promise((resolve, reject) => {
@@ -22,11 +23,14 @@ function freePort() {
   });
 }
 
+const exited = (child) => child.exitCode !== null || child.signalCode !== null;
+
 function stopTree(child) {
-  if (child.exitCode !== null || child.pid === undefined) return;
+  if (child.pid === undefined) return;
   try {
-    if (isWindows) spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
-    else process.kill(-child.pid, 'SIGKILL'); // the server runs in its own process group
+    if (isWindows) {
+      if (!exited(child)) spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+    } else process.kill(-child.pid, 'SIGKILL'); // the server runs in its own process group; its children too
   } catch {
     /* already gone */
   }
@@ -35,7 +39,7 @@ function stopTree(child) {
 async function waitUntilUp(url, server) {
   const deadline = Date.now() + STARTUP_TIMEOUT_MS;
   while (Date.now() < deadline) {
-    if (server.exitCode !== null) throw new Error(`the dev server exited early (code ${server.exitCode})`);
+    if (exited(server)) throw new Error(`the dev server exited early (${server.signalCode ?? `code ${server.exitCode}`})`);
     try {
       await fetch(url, { signal: AbortSignal.timeout(10_000), redirect: 'manual' }); // any HTTP answer means it is up
       return;
@@ -46,36 +50,65 @@ async function waitUntilUp(url, server) {
   throw new Error(`the dev server did not answer on ${url} within ${STARTUP_TIMEOUT_MS / 1000}s`);
 }
 
-// `next dev` rewrites CLAUDE.md / AGENTS.md (Next.js agent rules): put them back so the worktree stays clean.
-const agentFiles = ['CLAUDE.md', 'AGENTS.md'].map((f) => [f, fs.existsSync(f) ? fs.readFileSync(f) : null]);
+// `next dev` rewrites CLAUDE.md / AGENTS.md (Next.js agent rules). The tracked ones are restored from git at start and
+// end, so the worktree stays clean; an untracked one that did not exist at start is removed.
+const AGENT_FILES = ['CLAUDE.md', 'AGENTS.md'];
+const tracked = spawnSync('git', ['ls-files', '--', ...AGENT_FILES], { encoding: 'utf8' }).stdout?.split('\n').filter(Boolean) ?? [];
+const absentAtStart = AGENT_FILES.filter((f) => !tracked.includes(f) && !fs.existsSync(f));
 function restoreAgentFiles() {
-  for (const [f, content] of agentFiles) {
-    if (content === null) fs.rmSync(f, { force: true });
-    else if (!fs.readFileSync(f).equals(content)) fs.writeFileSync(f, content);
-  }
+  if (tracked.length > 0) spawnSync('git', ['checkout', '--', ...tracked], { stdio: 'ignore' });
+  for (const f of absentAtStart) fs.rmSync(f, { force: true });
 }
+restoreAgentFiles();
 
+// On Linux `next dev` gets SIGTERM when this script dies, even by SIGKILL (setpriv --pdeathsig), and stops its own
+// children; elsewhere only the process-group kill below stops it.
+const nextArgs = [require.resolve('next/dist/bin/next'), 'dev', '-p'];
+const pdeathsig = process.platform === 'linux' && spawnSync('setpriv', ['--help'], { stdio: 'ignore' }).status === 0;
 const port = await freePort();
 const baseUrl = `http://localhost:${port}`;
-const server = spawn(process.execPath, [require.resolve('next/dist/bin/next'), 'dev', '-p', String(port)], {
-  stdio: ['ignore', 'inherit', 'inherit'],
-  detached: !isWindows,
-  windowsHide: true,
-});
+const [cmd, args] = pdeathsig
+  ? ['setpriv', ['--pdeathsig', 'TERM', '--', process.execPath, ...nextArgs, String(port)]]
+  : [process.execPath, [...nextArgs, String(port)]];
+const server = spawn(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'], detached: !isWindows, windowsHide: true });
+server.on('error', (err) => console.error(`e2e: dev server: ${err.message}`));
+
 let stopping = false;
-const cleanup = () => { if (stopping) return; stopping = true; stopTree(server); restoreAgentFiles(); };
+const cleanup = () => {
+  if (stopping) return;
+  stopping = true;
+  stopTree(server);
+  restoreAgentFiles();
+};
 process.on('exit', cleanup);
-for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { cleanup(); process.exit(130); });
+
+let pw = null;
+for (const sig of SIGNALS) {
+  process.on(sig, () => {
+    // Playwright gets the signal and is waited for (it runs its teardown); the main flow then cleans up and exits.
+    if (pw !== null && !exited(pw)) pw.kill(sig);
+    else {
+      cleanup();
+      process.exit(130);
+    }
+  });
+}
 
 let code = 1;
 try {
   await waitUntilUp(baseUrl, server);
   console.error(`e2e: dev server up on ${baseUrl}`);
-  const pw = spawn(process.execPath, [require.resolve('@playwright/test/cli'), 'test', ...process.argv.slice(2)], {
-    stdio: 'inherit',
-    env: { ...process.env, BASE_URL: baseUrl },
+  code = await new Promise((resolve) => {
+    pw = spawn(process.execPath, [require.resolve('@playwright/test/cli'), 'test', ...process.argv.slice(2)], {
+      stdio: 'inherit',
+      env: { ...process.env, BASE_URL: baseUrl },
+    });
+    pw.on('error', (err) => {
+      console.error(`e2e: playwright: ${err.message}`);
+      resolve(1);
+    });
+    pw.on('exit', (c, s) => resolve(c ?? (s ? 1 : 0)));
   });
-  code = await new Promise((resolve) => pw.on('exit', (c, s) => resolve(c ?? (s ? 1 : 0))));
 } catch (err) {
   console.error(`e2e: ${err.message}`);
 } finally {
