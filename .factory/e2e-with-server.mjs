@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Runs the Playwright e2e suite against its own dev server: picks a free port, starts `next dev`, waits until it answers,
-// runs `playwright test <args>` with BASE_URL pointing at it, then stops the whole server process tree.
+// Runs the Playwright e2e suite against its own production server: builds the app (`next build`), picks a free port,
+// starts `next start`, waits until it answers, runs `playwright test <args>` with BASE_URL pointing at it, then stops the
+// whole server process tree. A production server, not `next dev`: the offline specs need the service worker, which only
+// a production build serves (CLAUDE.md, "E2E needs a production server").
 // Usage: node .factory/e2e-with-server.mjs <playwright test arguments...>   (used by suites.e2e.run in .factory/project.yaml)
 import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -39,7 +41,7 @@ function stopTree(child) {
 async function waitUntilUp(url, server) {
   const deadline = Date.now() + STARTUP_TIMEOUT_MS;
   while (Date.now() < deadline) {
-    if (exited(server)) throw new Error(`the dev server exited early (${server.signalCode ?? `code ${server.exitCode}`})`);
+    if (exited(server)) throw new Error(`the server exited early (${server.signalCode ?? `code ${server.exitCode}`})`);
     try {
       await fetch(url, { signal: AbortSignal.timeout(10_000), redirect: 'manual' }); // any HTTP answer means it is up
       return;
@@ -47,10 +49,10 @@ async function waitUntilUp(url, server) {
       await new Promise((r) => setTimeout(r, 1000));
     }
   }
-  throw new Error(`the dev server did not answer on ${url} within ${STARTUP_TIMEOUT_MS / 1000}s`);
+  throw new Error(`the server did not answer on ${url} within ${STARTUP_TIMEOUT_MS / 1000}s`);
 }
 
-// `next dev` rewrites CLAUDE.md / AGENTS.md (Next.js agent rules). The tracked ones are restored from git at start and
+// `next dev` and `next build` rewrite CLAUDE.md / AGENTS.md (Next.js agent rules). The tracked ones are restored from git at start and
 // end, so the worktree stays clean; an untracked one that did not exist at start is removed.
 const AGENT_FILES = ['CLAUDE.md', 'AGENTS.md'];
 const tracked = spawnSync('git', ['ls-files', '--', ...AGENT_FILES], { encoding: 'utf8' }).stdout?.split('\n').filter(Boolean) ?? [];
@@ -61,9 +63,17 @@ function restoreAgentFiles() {
 }
 restoreAgentFiles();
 
-// On Linux `next dev` gets SIGTERM when this script dies, even by SIGKILL (setpriv --pdeathsig), and stops its own
+const nextBin = require.resolve('next/dist/bin/next');
+const build = spawnSync(process.execPath, [nextBin, 'build'], { stdio: ['ignore', 'inherit', 'inherit'], windowsHide: true });
+if (build.status !== 0) {
+  restoreAgentFiles();
+  console.error(`e2e: next build failed (${build.signal ?? `code ${build.status}`})`);
+  process.exit(1);
+}
+
+// On Linux `next start` gets SIGTERM when this script dies, even by SIGKILL (setpriv --pdeathsig), and stops its own
 // children; elsewhere only the process-group kill below stops it.
-const nextArgs = [require.resolve('next/dist/bin/next'), 'dev', '-p'];
+const nextArgs = [nextBin, 'start', '-p'];
 const pdeathsig = process.platform === 'linux' && spawnSync('setpriv', ['--help'], { stdio: 'ignore' }).status === 0;
 const port = await freePort();
 const baseUrl = `http://localhost:${port}`;
@@ -71,7 +81,7 @@ const [cmd, args] = pdeathsig
   ? ['setpriv', ['--pdeathsig', 'TERM', '--', process.execPath, ...nextArgs, String(port)]]
   : [process.execPath, [...nextArgs, String(port)]];
 const server = spawn(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'], detached: !isWindows, windowsHide: true });
-server.on('error', (err) => console.error(`e2e: dev server: ${err.message}`));
+server.on('error', (err) => console.error(`e2e: server: ${err.message}`));
 
 let stopping = false;
 const cleanup = () => {
@@ -97,7 +107,7 @@ for (const sig of SIGNALS) {
 let code = 1;
 try {
   await waitUntilUp(baseUrl, server);
-  console.error(`e2e: dev server up on ${baseUrl}`);
+  console.error(`e2e: production server up on ${baseUrl}`);
   code = await new Promise((resolve) => {
     pw = spawn(process.execPath, [require.resolve('@playwright/test/cli'), 'test', ...process.argv.slice(2)], {
       stdio: 'inherit',
