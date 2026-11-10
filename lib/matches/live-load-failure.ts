@@ -1,3 +1,5 @@
+import { SYNC_TIMEOUT_MS } from "@/lib/rxdb/sync/manager";
+
 /**
  * Why the live page couldn't load a match. The page then leaves for the match list and says why
  * (`matches.live.left.reasons.<reason>`), so the user never lands on the list without a reason.
@@ -42,5 +44,5 @@ export function missingMatchReason({ online, synced }: { online: boolean; synced
  * with `dataMissing`: the match download limit online, not at all offline (nothing can arrive).
  */
 export function referenceDataWaitMs(online: boolean): number {
-  return -1;
+  return online ? SYNC_TIMEOUT_MS : 0;
 }

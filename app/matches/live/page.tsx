@@ -63,7 +63,7 @@ import { claimBecameHeld, claimFollowUp, offlineConfirmFollowUp } from "@/lib/rx
 import type { ClaimState } from "@/lib/rxdb/sync/tracked-matches";
 import { useRouteId } from "@/hooks/use-route-id";
 import { routes } from "@/lib/routes";
-import { LiveLoadError, liveLoadFailureReason, missingMatchReason } from "@/lib/matches/live-load-failure";
+import { LiveLoadError, liveLoadFailureReason, missingMatchReason, referenceDataWaitMs } from "@/lib/matches/live-load-failure";
 import { LoadingPage } from "@/components/loading-page";
 import { LandscapeHint } from "@/components/matches/live/landscape-hint";
 import { useKeepAwake } from "@/hooks/use-keep-awake";
@@ -255,6 +255,11 @@ function LiveMatchPage({ matchId }: { matchId: string }) {
       }
 
       const match = matchDoc.toMutableJSON() as Match;
+      // Right after sign-in the format and teams may still be downloading: wait for them (not offline).
+      await db.syncManager.awaitReferenceRows(
+        { match_formats: [match.match_format_id], teams: [match.home_team_id, match.away_team_id] },
+        referenceDataWaitMs(online)
+      );
       const formatDoc = await db.match_formats
         .findOne(match.match_format_id)
         .exec();

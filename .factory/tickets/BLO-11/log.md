@@ -1,1 +1,3 @@
 - 2026-11-10 implement: small ticket, light path (code and tests only); mini plan and criteria written.
+- 2026-11-10 implement: tests locked (62223ce); the e2e red run reproduced the bug (redirect to the match list).
+- 2026-11-10 implement: SyncManager.awaitReferenceRows + referenceDataWaitMs, called by the live page before reading the format and teams.
