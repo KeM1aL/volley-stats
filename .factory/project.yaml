@@ -13,7 +13,7 @@ commands:
 suites:
   unit:
     run: "pnpm vitest run --reporter=json --outputFile={report}"
-    list: "pnpm vitest list --json={report}"
+    list: "pnpm vitest list --staticParse=false --json={report}"   # Vitest 5 parses statically by default: loop and template titles stay unexpanded
     format: vitest-json
   e2e:
     run: "node .factory/e2e-with-server.mjs --reporter=json --output={evidence}/playwright"
