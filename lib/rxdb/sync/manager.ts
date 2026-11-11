@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { BehaviorSubject, distinctUntilChanged, filter, firstValueFrom, of, timeout, type Observable, type Subscription } from "rxjs";
+import { BehaviorSubject, combineLatest, distinctUntilChanged, filter, firstValueFrom, map, merge, of, timeout, type Observable, type Subscription } from "rxjs";
+import type { RxCollection } from "rxdb";
 import type { User } from "@/lib/types";
 import type { LocalDatabase } from "../collections";
 import type { ClaimCheck } from "./dependencies";
@@ -12,7 +13,7 @@ import { SyncStates } from "./sync-state";
 import { applyDiscardPlan, discardSupersededChanges, planRejectedDiscard, type DiscardPlan } from "./take-back";
 import { DiscardBlockedError } from "./errors";
 import { TRACKED_MATCH_TTL_MS, TrackedMatches, type TrackedMatch, type TrackedMatchMap } from "./tracked-matches";
-import type { SyncUser } from "./types";
+import type { ReferenceCollectionName, SyncUser } from "./types";
 import { runSyncUpgrade } from "./upgrade";
 
 /** How long the live page waits for a match's first pull. */
@@ -408,6 +409,31 @@ export class SyncManager {
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  /**
+   * Waits for reference rows (e.g. a match's format and teams) to be on this device. Resolves true at once
+   * when they are; otherwise pulls the reference tables again (rows created on the server since the last
+   * pull) and resolves true once every row is here, false after `timeoutMs` or once the manager is destroyed.
+   */
+  async awaitReferenceRows(
+    rows: Partial<Record<ReferenceCollectionName, string[]>>,
+    timeoutMs: number
+  ): Promise<boolean> {
+    const tables = Object.entries(rows) as [ReferenceCollectionName, string[]][];
+    const allHere$ = combineLatest(
+      tables.map(([table, ids]) =>
+        (this.options.db[table] as RxCollection).findByIds(ids).$.pipe(map((found) => ids.every((id) => found.has(id))))
+      )
+    ).pipe(map((here) => here.every(Boolean)));
+    if (await firstValueFrom(allHere$)) return true;
+    if (timeoutMs <= 0 || this.destroyed) return false;
+    this.reference.reSync();
+    return firstValueFrom(
+      merge(allHere$.pipe(filter(Boolean)), this.whenDestroyed$.pipe(map(() => false))).pipe(
+        timeout({ first: timeoutMs, with: () => of(false) })
+      )
+    );
   }
 
   /** Waits until the match's replications are in sync; false if the match isn't replicated here. */

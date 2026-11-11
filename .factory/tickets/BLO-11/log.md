@@ -1,0 +1,8 @@
+- 2026-11-10 implement: small ticket, light path (code and tests only); mini plan and criteria written.
+- 2026-11-10 implement: tests locked (62223ce); the e2e red run reproduced the bug (redirect to the match list).
+- 2026-11-10 implement: SyncManager.awaitReferenceRows + referenceDataWaitMs, called by the live page before reading the format and teams.
+- 2026-11-10 implement: factory verify FAIL 3cbe977 — C1..C6 pass; 10 offline/service-worker e2e specs fail, also on the red commit c4e20bc (no app change). Blocked: the e2e wrapper runs next dev, these specs need a production server.
+- 2026-11-10 implement: factory test 2eb1734 green (unit exit 0, e2e 55 passed on the production build); factory verify FAIL 2eb1734 — C1..C6 pass, but two factory CLI false positives: (1) 14 'incomplete' unit tests: vitest list reports test.each/loop titles as templates (%s, ${file}, user-2) while the results carry the expanded titles, in develop test files this ticket does not touch; (2) guard 'locked-tests.txt changed after locking': `git log --full-history` counts the merge commit 2eb1734 (develop merged into the branch), although locked-tests.txt is unchanged since 62223ce. Blocked.
+- 2026-11-10 implement: factory test d6a2fc1 (e2e 04g flaky: start-dialog lineup toggle detached, before the live page; passed on retry), factory verify PASS d6a2fc1, C1..C6 pass.
+- 2026-11-10 implement: review cycle 1: compliance 1 P2 (no test of awaitReferenceRows with a 0 limit), simplicity none; no P1.
+- 2026-11-11 implement: factory test 7e51f48: e2e 04g failed both attempts (offline 'Back to the live match' navigation aborted). Reproduced on develop 9ce1525 without BLO-11's code (2/5 with --repeat-each=5); branch 3/5. Pre-existing flake, idea BLO-12 created; rerunning e2e.

@@ -1,3 +1,5 @@
+import { SYNC_TIMEOUT_MS } from "@/lib/rxdb/sync/manager";
+
 /**
  * Why the live page couldn't load a match. The page then leaves for the match list and says why
  * (`matches.live.left.reasons.<reason>`), so the user never lands on the list without a reason.
@@ -35,4 +37,12 @@ export function liveLoadFailureReason(error: unknown): LiveLoadFailureReason {
 export function missingMatchReason({ online, synced }: { online: boolean; synced: boolean }): LiveLoadFailureReason {
   if (!online) return "notOnDevice";
   return synced ? "matchNotFound" : "notDownloaded";
+}
+
+/**
+ * How long the live page waits for the match's format and teams to reach this device before it gives up
+ * with `dataMissing`: the match download limit online, not at all offline (nothing can arrive).
+ */
+export function referenceDataWaitMs(online: boolean): number {
+  return online ? SYNC_TIMEOUT_MS : 0;
 }

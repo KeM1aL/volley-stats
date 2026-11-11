@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { LiveLoadError, liveLoadFailureReason, missingMatchReason } from "@/lib/matches/live-load-failure";
+import { LiveLoadError, liveLoadFailureReason, missingMatchReason, referenceDataWaitMs } from "@/lib/matches/live-load-failure";
+import { SYNC_TIMEOUT_MS } from "@/lib/rxdb/sync/manager";
 
 describe("why the live page leaves for the match list", () => {
   it("keeps the reason of a known failure", () => {
@@ -18,5 +19,15 @@ describe("why the live page leaves for the match list", () => {
     expect(missingMatchReason({ online: false, synced: false })).toBe("notOnDevice");
     expect(missingMatchReason({ online: true, synced: false })).toBe("notDownloaded");
     expect(missingMatchReason({ online: true, synced: true })).toBe("matchNotFound");
+  });
+});
+
+describe("how long the live page waits for the match format and teams", () => {
+  it("waits at most the match download limit online", () => {
+    expect(referenceDataWaitMs(true)).toBe(SYNC_TIMEOUT_MS);
+  });
+
+  it("does not wait offline", () => {
+    expect(referenceDataWaitMs(false)).toBe(0);
   });
 });

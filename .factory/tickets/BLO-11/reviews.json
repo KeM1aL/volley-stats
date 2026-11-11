@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "cycle": 1,
+    "reviewer": "compliance",
+    "priority": "P2",
+    "text": "tests/unit/sync/manager-reference-rows.test.ts: C6 has no test for the zero-limit path of awaitReferenceRows (timeoutMs <= 0 returns false at once, without reSync or waiting); the C6 tests only check referenceDataWaitMs(false) === 0, so they would still pass if a 0 limit made the page wait without end. Add a test calling awaitReferenceRows with a missing row and 0 and checking it resolves false immediately.",
+    "status": "open"
+  }
+]
